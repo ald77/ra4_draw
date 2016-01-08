@@ -73,25 +73,28 @@ NamedFunc & NamedFunc::operator /= (const NamedFunc &func){
   return *this;
 }
 
-NamedFunc NamedFunc::operator+(){
-  name_ = "POS" + name_;
+NamedFunc NamedFunc::operator+() const{
+  NamedFunc copy = *this;
+  copy.name_ = "POS" + name_;
   auto orig = function_;
-  function_ = [orig](const Baby &b){return +orig(b);};
-  return *this;
+  copy.function_ = [orig](const Baby &b){return +orig(b);};
+  return copy;
 }
 
-NamedFunc NamedFunc::operator-(){
-  name_ = "NEG" + name_;
+NamedFunc NamedFunc::operator-() const{
+  NamedFunc copy = *this;
+  copy.name_ = "NEG" + name_;
   auto orig = function_;
-  function_ = [orig](const Baby &b){return -orig(b);};
-  return *this;
+  copy.function_ = [orig](const Baby &b){return -orig(b);};
+  return copy;
 }
 
-NamedFunc NamedFunc::operator!(){
-  name_ = "NOT" + name_;
+NamedFunc NamedFunc::operator!() const{
+  NamedFunc copy = *this;
+  copy.name_ = "NOT" + name_;
   auto orig = function_;
-  function_ = [orig](const Baby &b){return !orig(b);};
-  return *this;
+  copy.function_ = [orig](const Baby &b){return !orig(b);};
+  return copy;
 }
 
 void NamedFunc::CleanName(){

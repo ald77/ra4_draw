@@ -32,9 +32,9 @@ public:
   NamedFunc & operator *= (const NamedFunc &func);
   NamedFunc & operator /= (const NamedFunc &func);
 
-  NamedFunc operator + ();
-  NamedFunc operator - ();
-  NamedFunc operator ! ();
+  NamedFunc operator + () const;
+  NamedFunc operator - () const;
+  NamedFunc operator ! () const;
 
 private:
   NamedFunc() = delete;
