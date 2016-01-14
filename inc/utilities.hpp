@@ -8,8 +8,8 @@
 #include <sstream>
 #include <limits>
 
-#define ERROR(x) throw std::runtime_error(string("Error in file ")+__FILE__+" at line "+to_string(__LINE__)+" (in "+__func__+"): "+x);
-#define DBG(x) std::cerr << "In " << __FILE__ << " at line " << __LINE__ << " (in function " << __func__ << "): " << x << std::endl;
+#define ERROR(x) do{throw std::runtime_error(string("Error in file ")+__FILE__+" at line "+to_string(__LINE__)+" (in "+__func__+"): "+x);}while(false)
+#define DBG(x) do{std::cerr << "In " << __FILE__ << " at line " << __LINE__ << " (in function " << __func__ << "): " << x << std::endl;}while(false)
 
 bool Contains(const std::string &str, const std::string &pat);
 bool StartsWith(const std::string &str, const std::string &pat);
