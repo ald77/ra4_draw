@@ -2,6 +2,22 @@
 
 using namespace std;
 
+ThreadPool::ThreadPool():
+  tasks_(),
+  threads_(),
+  stop_thread_now_(),
+  stop_at_empty_(),
+  mutex_(),
+  cv_(){
+  size_t num_threads = thread::hardware_concurrency();
+  if(num_threads > 2){
+    --num_threads;
+  }else{
+    num_threads = 1;
+  }
+  Resize(num_threads);
+}
+
 ThreadPool::ThreadPool(size_t num_threads):
   tasks_(),
   threads_(),
@@ -14,14 +30,15 @@ ThreadPool::ThreadPool(size_t num_threads):
 
 ThreadPool::~ThreadPool(){
   stop_at_empty_ = true;
-
   {
     lock_guard<mutex> lock(mutex_);
     cv_.notify_all();
   }
 
   for(size_t ithread = 0; ithread < Size(); ++ithread){
-    if(threads_.at(ithread)->joinable()) threads_.at(ithread)->join();
+    if(threads_.at(ithread)->joinable()){
+      threads_.at(ithread)->join();
+    }
   }
 }
 
@@ -59,18 +76,12 @@ void ThreadPool::DoTasksFromQueue(size_t ithread){
   while(true){
     while(task != nullptr){
       (*task)();
-      if(stop_thread_now_.at(ithread)){
-        return;
-      }else{
-        task = tasks_.Pop();
-      }
-    }
-    
-    {
-      unique_lock<mutex> lock(mutex_);
-      cv_.wait(lock, bind(&ThreadPool::ReadyToAct, this, ithread, ref(task)));
+      if(stop_thread_now_.at(ithread)) return;
+      task = tasks_.Pop();
     }
 
+    unique_lock<mutex> lock(mutex_);
+    cv_.wait(lock, bind(&ThreadPool::ReadyToAct, this, ithread, ref(task)));
     if(task == nullptr) return;
   }
 }

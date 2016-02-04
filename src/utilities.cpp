@@ -10,6 +10,8 @@
 
 using namespace std;
 
+mutex Multithreading::root_mutex;
+
 bool Contains(const string &str, const string &pat){
   return str.find(pat) != string::npos;
 }

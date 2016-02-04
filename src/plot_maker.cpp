@@ -4,6 +4,7 @@
 
 #include "utilities.hpp"
 #include "timer.hpp"
+#include "thread_pool.hpp"
 
 using namespace std;
 
@@ -31,22 +32,35 @@ void PlotMaker::MakePlots(){
 void PlotMaker::FillHistograms(){
   //Iterates over all processes needed for requested plots and fills the necessary histograms
   set<shared_ptr<Process> > processes = GetProcesses();
+  ThreadPool tp;
+  vector<future<void> > done_flags;
   for(const auto &proc: processes){
-    cout << "Filling histograms for the " << proc->name_ << " process..." << endl;
-    vector<pair<HistoDef, TH1D * const> > histos = GetHistos(proc);
-    long num_entries = proc->baby_->GetEntries();
-    Timer timer(num_entries, 1.);
-    timer.Start();
-    for(long entry = 0; entry < num_entries; ++entry){
-      timer.Iterate();
-      proc->baby_->GetEntry(entry);
-      for(auto &histo: histos){
-        const auto &baby = *(proc->baby_);
-        if(!(histo.first.cut_(baby) && proc->cut_(baby))) continue;
-        double x = histo.first.var_(baby);
-        double weight = histo.first.weight_(baby);
-        histo.second->Fill(x, weight);
-      }
+    tp.Push(bind(&PlotMaker::FillHistogram, this, ref(proc)));
+  }
+  for(auto &done: done_flags){
+    done.get();
+  }
+}
+
+void PlotMaker::FillHistogram(const shared_ptr<Process> &proc){
+  cout << "Filling histograms for the " << proc->name_ << " process..." << endl;
+  vector<pair<HistoDef, TH1D * const> > histos;
+  {
+    lock_guard<mutex> lock(Multithreading::root_mutex);
+    histos = GetHistos(proc);
+  }
+  long num_entries = proc->baby_->GetEntries();
+  Timer timer(num_entries, 1.);
+  timer.Start();
+  for(long entry = 0; entry < num_entries; ++entry){
+    timer.Iterate();
+    proc->baby_->GetEntry(entry);
+    for(auto &histo: histos){
+      const auto &baby = *(proc->baby_);
+      if(!(histo.first.cut_(baby) && proc->cut_(baby))) continue;
+      double x = histo.first.var_(baby);
+      double weight = histo.first.weight_(baby);
+      histo.second->Fill(x, weight);
     }
   }
 }

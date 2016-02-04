@@ -305,6 +305,7 @@ void WriteBaseSource(const set<Variable> &vars){
   ofstream file("src/baby.cpp");
   file << "#include \"baby.hpp\"\n\n";
 
+  file << "#include <mutex>\n";
   file << "#include <stdexcept>\n\n";
 
   file << "#include \"utilities.hpp\"\n\n";
@@ -312,7 +313,7 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "using namespace std;\n\n";
 
   file << "Baby::Baby(const set<string> &file_names):\n";
-  file << "  chain_(new TChain(\"tree\")),\n";
+  file << "  chain_(nullptr),\n";
   file << "  file_names_(file_names),\n";
   file << "  total_entries_(0),\n";
   auto last_base = vars.cbegin();
@@ -337,6 +338,8 @@ void WriteBaseSource(const set<Variable> &vars){
     file << "  b_" << last_base->Name() << "_(nullptr),\n";
     file << "  c_" << last_base->Name() << "_(false){\n";
   }
+  file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
+  file << "  chain_ = unique_ptr<TChain>(new TChain(\"tree\"));\n";
   file << "  for(const auto &file: file_names){\n";
   file << "    chain_->Add((file+\"/tree\").c_str());\n";
   file << "  }\n";
@@ -344,8 +347,9 @@ void WriteBaseSource(const set<Variable> &vars){
 
   file << "long Baby::GetEntries() const{\n";
   file << "  if(!cached_total_entries_){\n";
-  file << "    total_entries_ = chain_->GetEntries();\n";
   file << "    cached_total_entries_ = true;\n";
+  file << "    lock_guard<mutex> lock(Multithreading::root_mutex);\n";
+  file << "    total_entries_ = chain_->GetEntries();\n";
   file << "  }\n";
   file << "  return total_entries_;\n";
   file << "}\n\n";
@@ -355,10 +359,12 @@ void WriteBaseSource(const set<Variable> &vars){
     if(!var.ImplementInBase()) continue;
     file << "  c_" << var.Name() << "_ = false;\n";
   }
+  file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
   file << "  entry_ = chain_->LoadTree(entry);\n";
   file << "}\n\n";
 
   file << "void Baby::Initialize(){\n";
+  file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
   file << "  chain_->SetMakeClass(1);\n";
   for(const auto &var: vars){
     if(!var.ImplementInBase()) continue;
@@ -479,6 +485,9 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
 
   file << "void Baby_" << type << "::Initialize(){\n";
   file << "  Baby::Initialize();\n";
+  if(vars.size() > 0){
+    file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
+  }
   for(const auto &var: vars){
     if(var.ImplementIn(type) || var.EverythingIn(type)){
       file << "  chain_->SetBranchAddress(\"" << var.Name() << "\", &"

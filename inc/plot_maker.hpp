@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "histo_def.hpp"
-#include "Process.hpp"
+#include "process.hpp"
 #include "histo_stack.hpp"
 
 class PlotMaker{
@@ -35,6 +35,7 @@ private:
   std::vector<HistoStack> stacks_;
 
   void FillHistograms();
+  void FillHistogram(const std::shared_ptr<Process> &process);
   void PrintPlots();
   std::set<std::shared_ptr<Process> > GetProcesses() const;
   std::vector<std::pair<HistoDef, const TH1D * const> > GetHistos(const std::shared_ptr<Process> &process) const;

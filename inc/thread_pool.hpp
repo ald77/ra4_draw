@@ -1,6 +1,7 @@
 #ifndef H_THREAD_POOL
 #define H_THREAD_POOL
 
+#include <algorithm>
 #include <thread>
 #include <future>
 #include <memory>
@@ -13,7 +14,8 @@
 
 class ThreadPool{
 public:
-  explicit ThreadPool(std::size_t num_threads = std::thread::hardware_concurrency() - 1);
+  ThreadPool();
+  explicit ThreadPool(std::size_t num_threads);
   ~ThreadPool();
 
   std::size_t Size() const;
