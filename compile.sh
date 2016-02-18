@@ -10,7 +10,7 @@ then
 else
     bad_file=$(mktemp -t compile_XXXXXXXXXXXXXXXX)
 
-    make -j 4 -k -r -R 2> $bad_file
+    make -j $(getconf _NPROCESSORS_ONLN) -k -r -R 2> $bad_file
     exit_code=$?
     
     if [[ $exit_code != 0 ]] ; then
