@@ -1,6 +1,7 @@
 #include "utilities.hpp"
 
 #include <cstdlib>
+#include <cstring>
 
 #include <string>
 #include <vector>

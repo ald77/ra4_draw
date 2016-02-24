@@ -395,9 +395,7 @@ void WriteSpecializedHeader(const set<Variable> &vars, const string &type){
 
   file << "class Baby_" << type << ": virtual public Baby{\n";
   file << "public:\n";
-  file << "  explicit Baby_" << type << "(const std::set<std::string> &file_names);\n\n";
-  file << "  Baby_" << type << "(Baby_" << type << " &&) = default;\n";
-  file << "  Baby_" << type << "& operator=(Baby_" << type << " &&) = default;\n";
+  file << "  explicit Baby_" << type << "(const std::set<std::string> &file_names);\n";
   file << "  virtual ~Baby_" << type << "() = default;\n\n";
 
   file << "  virtual void GetEntry(long entry);\n\n";
@@ -419,7 +417,9 @@ void WriteSpecializedHeader(const set<Variable> &vars, const string &type){
   file << "private:\n";
   file << "  Baby_" << type << "() = delete;\n";
   file << "  Baby_" << type << "(const Baby_" << type << " &) = delete;\n";
-  file << "  Baby_" << type << "& operator=(const Baby_" << type << " &) = delete;\n\n";
+  file << "  Baby_" << type << "& operator=(const Baby_" << type << " &) = delete;\n";
+  file << "  Baby_" << type << "(Baby_" << type << " &&) = delete;\n";
+  file << "  Baby_" << type << "& operator=(Baby_" << type << " &&) = delete;\n";
 
   file << "  virtual void Initialize();\n\n";
 
