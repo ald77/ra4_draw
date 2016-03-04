@@ -41,3 +41,9 @@
 # LaTeX
 *.tex
 *.aux
+
+# Auto-generated files
+inc/baby.hpp
+inc/baby_*.hpp
+src/baby.cpp
+src/baby_*.cpp
