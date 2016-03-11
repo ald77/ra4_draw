@@ -57,10 +57,27 @@ void PlotMaker::FillHistogram(const shared_ptr<Process> &proc){
     proc->baby_->GetEntry(entry);
     for(auto &histo: histos){
       const auto &baby = *(proc->baby_);
-      if(!(histo.first.cut_(baby) && proc->cut_(baby))) continue;
-      double x = histo.first.var_(baby);
-      double weight = histo.first.weight_(baby);
-      histo.second->Fill(x, weight);
+      vector<double> values = histo.first.var_(baby);
+      vector<double> hist_cuts = histo.first.cut_(baby);
+      vector<double> proc_cuts = proc->cut_(baby);
+      vector<double> weights = histo.first.weight_(baby);
+      bool sc_values = histo.first.var_.IsScalar();
+      bool sc_hist_cuts = histo.first.cut_.IsScalar();
+      bool sc_proc_cuts = proc->cut_.IsScalar();
+      bool sc_weights = histo.first.weight_.IsScalar();
+      for(size_t i = 0; (i < 1 || !sc_values || !sc_hist_cuts || !sc_proc_cuts || ! sc_weights)
+            && (sc_values || i < values.size())
+            && (sc_hist_cuts || i < hist_cuts.size())
+            && (sc_proc_cuts || i < proc_cuts.size())
+            && (sc_weights || i < weights.size());
+            ++i){
+        bool hist_cut = sc_hist_cuts ? (hist_cuts.size() ? hist_cuts[0] : false) : hist_cuts.at(i);
+        bool proc_cut = sc_proc_cuts ? (proc_cuts.size() ? proc_cuts[0] : false) : proc_cuts.at(i);
+        if(!(hist_cut && proc_cut)) continue;
+        double x = sc_values ? (values.size() ? values[0] : false) : values.at(i);
+        double w = sc_weights ? (weights.size() ? weights[0] : false) : weights.at(i);
+        histo.second->Fill(x, w);
+      }
     }
   }
 }
