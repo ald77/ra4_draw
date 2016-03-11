@@ -267,6 +267,8 @@ void WriteBaseHeader(const set<Variable> &vars,
   }
   file << "\n";
 
+  file << "  const std::unique_ptr<TChain> & GetTree() const;\n\n";
+
   file << "protected:\n";
   file << "  virtual void Initialize();\n\n";
 
@@ -363,6 +365,10 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  entry_ = chain_->LoadTree(entry);\n";
   file << "}\n\n";
 
+  file << "const unique_ptr<TChain> & Baby::GetTree() const{\n";
+  file << "  return chain_;\n";
+  file << "}\n\n";
+
   file << "void Baby::Initialize(){\n";
   file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
   file << "  chain_->SetMakeClass(1);\n";
@@ -370,7 +376,7 @@ void WriteBaseSource(const set<Variable> &vars){
     if(!var.ImplementInBase()) continue;
     file << "  chain_->SetBranchAddress(\"" << var.Name() << "\", &" << var.Name() << "_, &b_" << var.Name() << "_);\n";
   }
-  file << "}\n";
+  file << "}\n\n";
 
   for(const auto &var: vars){
     if(!var.ImplementInBase()) continue;

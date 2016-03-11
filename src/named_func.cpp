@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "TTreeFormula.h"
+
 #include "utilities.hpp"
 
 using namespace std;
@@ -12,6 +14,33 @@ NamedFunc::NamedFunc(const string &name,
   function_(function){
   CleanName();
   }
+
+NamedFunc::NamedFunc(const string &function):
+  NamedFunc(function.c_str()){
+}
+
+NamedFunc::NamedFunc(const char *function):
+  name_(function),
+  function_(){
+  map<TChain *, pair<shared_ptr<TTreeFormula>, int> > fmap;
+  function_ = [fmap,function](const Baby &b) mutable {
+    TChain *tree_ptr = b.GetTree().get();
+    auto loc = fmap.find(tree_ptr);
+    if(loc == fmap.end()){
+      fmap[tree_ptr] = make_pair(make_shared<TTreeFormula>("",function,tree_ptr), -1);
+      fmap.at(tree_ptr).first->SetQuickLoad(true);
+    }
+    pair<shared_ptr<TTreeFormula>, int> &entry = fmap.at(tree_ptr);
+    shared_ptr<TTreeFormula> &ttf = entry.first;
+    int &last_num = entry.second;
+    int tree_num = tree_ptr->GetTreeNumber();
+    if(tree_num != last_num){
+      ttf->UpdateFormulaLeaves();
+      last_num = tree_num;
+    }
+    return static_cast<double>(ttf->EvalInstance());
+  };
+}
 
 NamedFunc::NamedFunc(double x):
   name_(ToString(x)),

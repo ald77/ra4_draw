@@ -12,6 +12,8 @@ public:
   using FuncType = double(const Baby &);
 
   NamedFunc(const std::string &name, const std::function<FuncType> &function);
+  NamedFunc(const std::string &function);
+  NamedFunc(const char *function);
   NamedFunc(double x);
   NamedFunc(const NamedFunc &) = default;
   NamedFunc & operator=(const NamedFunc &) = default;
