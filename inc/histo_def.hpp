@@ -12,14 +12,14 @@ public:
            const NamedFunc &var,
            const std::string &x_title = "",
            const NamedFunc &cut = NamedFunc(1.),
-           const NamedFunc &weight = FUNC(b.weight()));
+           const NamedFunc &weight = "weight");
   HistoDef(size_t nbins,
            double xmin,
            double xmax,
            const NamedFunc &var,
            const std::string &x_title = "",
            const NamedFunc &cut = NamedFunc(1.),
-           const NamedFunc &weight = FUNC(b.weight()));
+           const NamedFunc &weight = "weight");
   HistoDef(const HistoDef &) = default;
   HistoDef& operator=(const HistoDef &) = default;
   HistoDef(HistoDef &&) = default;

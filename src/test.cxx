@@ -1,11 +1,6 @@
-#include <cmath>
-
 #include <iostream>
 #include <string>
 #include <vector>
-#include <utility>
-#include <functional>
-#include <stdexcept>
 #include <memory>
 
 #include "TError.h"
@@ -15,9 +10,6 @@
 #include "named_func.hpp"
 #include "plot_maker.hpp"
 #include "styles.hpp"
-#include "utilities.hpp"
-
-#include "thread_pool.hpp"
 
 using namespace std;
 
@@ -26,30 +18,7 @@ unique_ptr<Baby> BabyPtr(const set<string> &names){
   return unique_ptr<Baby>(new T(names));
 }
 
-int dumb = 0;
-mutex m;
-
-int Dumb(){
-  this_thread::sleep_for(chrono::seconds(2));
-  lock_guard<mutex> lock(m);
-  return ++dumb;
-}
-
 int main(){
-  if(false){
-    ThreadPool tp;
-    vector<future<int> > v(10);
-    for(size_t i = 0; i < v.size(); ++i){
-      v.at(i) = tp.Push(Dumb);
-    }
-    for(size_t i = 0; i < v.size(); ++i){
-      cout << "Waiting for " << i << endl;
-      double x = v.at(i).get();
-      cout << "Found x = " << x << " for i = " << i << endl;
-    }
-  }
-  //return 0;
-
   gErrorIgnoreLevel = 6000;
   styles style("RA4");
   style.setDefaultStyle();
@@ -67,8 +36,6 @@ int main(){
 
   PlotMaker pm;
   pm.AddPlot({qcd, ttjets, ttjets2, sms_nc, sms_c},
-             HistoDef(20, 0., 1000., FUNC(b.ht()), "H_{T} [GeV]"));
-  pm.AddPlot({qcd, ttjets, ttjets2, sms_nc, sms_c},
-             HistoDef(20, 0., 1000., FUNC(b.met()+b.jets_csv()->size()+b.jets_eta()->size()+b.jets_m()->size()+b.jets_phi()->size()+b.jets_pt()->size()+b.jets_islep()->size()), "MET [GeV]", FUNC(b.ht()>500)));
+             HistoDef(20, 0., 1000., "ht", "H_{T} [GeV]"));
   pm.MakePlots();
 }

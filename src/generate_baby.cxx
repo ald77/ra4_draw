@@ -244,6 +244,8 @@ void WriteBaseHeader(const set<Variable> &vars,
 
   file << "#include \"TChain.h\"\n\n";
 
+  file << "class NamedFunc;\n\n";
+
   file << "class Baby{\n";
   file << "public:\n";
   file << "  explicit Baby(const std::set<std::string> &file_names);\n";
@@ -268,6 +270,8 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "\n";
 
   file << "  const std::unique_ptr<TChain> & GetTree() const;\n\n";
+  
+  file << "  static NamedFunc GetFunction(const std::string &var_name);\n\n";
 
   file << "protected:\n";
   file << "  virtual void Initialize();\n\n";
@@ -308,11 +312,65 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "#include \"baby.hpp\"\n\n";
 
   file << "#include <mutex>\n";
+  file << "#include <type_traits>\n";
+  file << "#include <utility>\n";
   file << "#include <stdexcept>\n\n";
 
+  file << "#include \"named_func.hpp\"\n";
   file << "#include \"utilities.hpp\"\n\n";
 
   file << "using namespace std;\n\n";
+
+  file << "namespace{\n";
+  file << "  using func_type = function<NamedFunc::FuncType>;\n";
+  file << "  using vector_type = func_type::result_type;\n";
+  file << "  using scalar_type = vector_type::value_type;\n\n";
+  
+  file << "  template<typename T>\n";
+  file << "    NamedFunc GetFunction(T,\n";
+  file << "                          const string &name){\n";
+  file << "    DBG(\"Function lookup failed for \" << name << \".\");\n";
+  file << "    return NamedFunc(name, [](const Baby &){return vector_type(1, 0.);}, false);\n";
+  file << "  }\n\n";
+
+  file << "  template<typename T>\n";
+  file << "    NamedFunc GetFunction(T const &(Baby::*baby_func)() const,\n";
+  file << "                          const string &name){\n";
+  file << "    return NamedFunc(name,\n";
+  file << "                     [baby_func](const Baby &b){return vector_type(1,(b.*baby_func)());},\n";
+  file << "                     false);\n";
+  file << "  }\n\n";
+
+  file << "  template<typename T>\n";
+  file << "    NamedFunc GetFunction(vector<T>* const &(Baby::*baby_func)() const,\n";
+  file << "                          const string &name){\n";
+  file << "    return NamedFunc(name,\n";
+  file << "                     [baby_func](const Baby &b){\n";
+  file << "                       auto raw = (b.*baby_func)();\n";
+  file << "                       vector_type out(raw->size());\n";
+  file << "                       for(size_t i = 0; i < out.size(); ++i){\n";
+  file << "                         out.at(i) = raw->at(i);\n";
+  file << "                       }\n";
+  file << "                       return out;\n";
+  file << "                     },\n";
+  file << "                     true);\n";
+  file << "  }\n\n";
+
+  bool have_vector_double = false;
+  for(auto var = vars.cbegin(); var != vars.cend() && !have_vector_double; ++var){
+    if(var->Type().find("vector<double>") != string::npos){
+      have_vector_double = true;
+    }
+  }
+  
+  if(have_vector_double){
+    file << "    template<>\n";
+    file << "      NamedFunc GetFunction<vector<double>* const &(Baby::*)() const>(vector<double>* const &(Baby::*baby_func)() const,\n";
+    file << "                                                                      const string &name){\n";
+    file << "      return NamedFunc(name, [baby_func](const Baby &b){return *((b.*baby_func)());}, true);\n";
+    file << "  }\n";
+  }
+  file << "}\n\n";
 
   file << "Baby::Baby(const set<string> &file_names):\n";
   file << "  chain_(nullptr),\n";
@@ -367,6 +425,29 @@ void WriteBaseSource(const set<Variable> &vars){
 
   file << "const unique_ptr<TChain> & Baby::GetTree() const{\n";
   file << "  return chain_;\n";
+  file << "}\n\n";
+
+  file << "NamedFunc Baby::GetFunction(const std::string &var_name){\n";
+  if(vars.size() != 0){
+    file << "  if(var_name == \"" << vars.cbegin()->Name() << "\"){\n";
+    file << "    return ::GetFunction(&Baby::" << vars.cbegin()->Name() << ", \"" << vars.cbegin()->Name() << "\");\n";
+    for(auto var = ++vars.cbegin(); var != vars.cend(); ++var){
+      file << "  }else if(var_name == \"" << var->Name() << "\"){\n";
+      file << "    return ::GetFunction(&Baby::" << var->Name() << ", \"" << var->Name() << "\");\n";
+    }
+    file << "  }else{\n";
+    file << "    return NamedFunc(var_name,\n";
+    file << "                     [](const Baby &){\n";
+    file << "                       return function<NamedFunc::FuncType>::result_type(1, 0.);\n";
+    file << "                     });\n";
+    file << "  }\n";
+  }else{
+    file << "  DBG(\"No variables defined in Baby.\");\n";
+    file << "  return NamedFunc(var_name,\n";
+    file << "                   [](const Baby &){\n";
+    file << "                     return function<NamedFunc::FuncType>::result_type(1, 0.);\n";
+    file << "                   });\n";
+  }
   file << "}\n\n";
 
   file << "void Baby::Initialize(){\n";

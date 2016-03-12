@@ -2,9 +2,8 @@
 
 #include <iostream>
 
-#include "TTreeFormula.h"
-
 #include "utilities.hpp"
+#include "function_parser.hpp"
 
 using namespace std;
 
@@ -91,30 +90,11 @@ NamedFunc::NamedFunc(const string &name,
   }
 
 NamedFunc::NamedFunc(const string &function):
-  NamedFunc(function.c_str()){
+  NamedFunc(FunctionParser(function).ResolveAsNamedFunc()){
 }
 
 NamedFunc::NamedFunc(const char *function):
-  name_(function),
-  function_(){
-  map<TChain *, pair<shared_ptr<TTreeFormula>, int> > fmap;
-  function_ = [fmap,function](const Baby &b) mutable {
-    TChain *tree_ptr = b.GetTree().get();
-    auto loc = fmap.find(tree_ptr);
-    if(loc == fmap.end()){
-      fmap[tree_ptr] = make_pair(make_shared<TTreeFormula>("",function,tree_ptr), -1);
-      fmap.at(tree_ptr).first->SetQuickLoad(true);
-    }
-    pair<shared_ptr<TTreeFormula>, int> &entry = fmap.at(tree_ptr);
-    shared_ptr<TTreeFormula> &ttf = entry.first;
-    int &last_num = entry.second;
-    int tree_num = tree_ptr->GetTreeNumber();
-    if(tree_num != last_num){
-      ttf->UpdateFormulaLeaves();
-      last_num = tree_num;
-    }
-    return vector<double>(1,static_cast<double>(ttf->EvalInstance()));
-  };
+  NamedFunc(string(function)){
 }
 
 NamedFunc::NamedFunc(double x):
@@ -207,38 +187,38 @@ NamedFunc & NamedFunc::operator %= (const NamedFunc &func){
 
 void NamedFunc::CleanName(){
   ReplaceAll(name_, " ", "");
-  ReplaceAll(name_, "b.", "");
-  ReplaceAll(name_, "()", "");
-  ReplaceAll(name_, ".", "p");
-  ReplaceAll(name_, "(", "OP");
-  ReplaceAll(name_, ")", "CP");
-  ReplaceAll(name_, "[", "OB");
-  ReplaceAll(name_, "]", "CB");
-  ReplaceAll(name_, "{", "OC");
-  ReplaceAll(name_, "}", "CC");
-  ReplaceAll(name_, "+", "PLS");
-  ReplaceAll(name_, "-", "MNS");
-  ReplaceAll(name_, "*", "TMS");
-  ReplaceAll(name_, "/", "DIV");
-  ReplaceAll(name_, "%", "MOD");
-  ReplaceAll(name_, "!", "NOT");
-  ReplaceAll(name_, "&&", "AND");
-  ReplaceAll(name_, "||", "OR");
-  ReplaceAll(name_, "==", "EQL");
-  ReplaceAll(name_, "<=", "GEQ");
-  ReplaceAll(name_, ">=", "LEQ");
-  ReplaceAll(name_, ">", "GTR");
-  ReplaceAll(name_, "<", "LES");
-  ReplaceAll(name_, "=", "EQL");
-  ReplaceAll(name_, "&", "BITAND");
-  ReplaceAll(name_, "|", "BITOR");
-  ReplaceAll(name_, "^", "BITXOR");
-  ReplaceAll(name_, "~", "BITNOT");
-  ReplaceAll(name_, "__", "_");
-  for(size_t i = 0; i < name_.size(); ++i){
-    if(isalnum(name_.at(i)) || name_.at(i) == '.' || name_.at(i) == '_') continue;
-    name_ = name_.substr(0,i)+name_.substr(i+1);
-  }
+  //ReplaceAll(name_, "b.", "");
+  //ReplaceAll(name_, "()", "");
+  //ReplaceAll(name_, ".", "p");
+  //ReplaceAll(name_, "(", "OP");
+  //ReplaceAll(name_, ")", "CP");
+  //ReplaceAll(name_, "[", "OB");
+  //ReplaceAll(name_, "]", "CB");
+  //ReplaceAll(name_, "{", "OC");
+  //ReplaceAll(name_, "}", "CC");
+  //ReplaceAll(name_, "+", "PLS");
+  //ReplaceAll(name_, "-", "MNS");
+  //ReplaceAll(name_, "*", "TMS");
+  //ReplaceAll(name_, "/", "DIV");
+  //ReplaceAll(name_, "%", "MOD");
+  //ReplaceAll(name_, "!", "NOT");
+  //ReplaceAll(name_, "&&", "AND");
+  //ReplaceAll(name_, "||", "OR");
+  //ReplaceAll(name_, "==", "EQL");
+  //ReplaceAll(name_, "<=", "GEQ");
+  //ReplaceAll(name_, ">=", "LEQ");
+  //ReplaceAll(name_, ">", "GTR");
+  //ReplaceAll(name_, "<", "LES");
+  //ReplaceAll(name_, "=", "EQL");
+  //ReplaceAll(name_, "&", "BITAND");
+  //ReplaceAll(name_, "|", "BITOR");
+  //ReplaceAll(name_, "^", "BITXOR");
+  //ReplaceAll(name_, "~", "BITNOT");
+  //ReplaceAll(name_, "__", "_");
+  //for(size_t i = 0; i < name_.size(); ++i){
+  //  if(isalnum(name_.at(i)) || name_.at(i) == '.' || name_.at(i) == '_') continue;
+  //  name_ = name_.substr(0,i)+name_.substr(i+1);
+  //}
 }
 
 NamedFunc operator+(NamedFunc f, NamedFunc g){

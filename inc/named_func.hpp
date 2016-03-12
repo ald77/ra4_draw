@@ -71,6 +71,4 @@ NamedFunc operator ! (NamedFunc f);
 
 std::ostream & operator<<(std::ostream &stream, NamedFunc function);
 
-#define FUNC(x) NamedFunc(#x, [](const Baby &b){return std::vector<double>(1,x);})
-
 #endif
