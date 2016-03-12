@@ -8,17 +8,21 @@
 using namespace std;
 
 namespace{
-  double DoubleModulus(double x, double y){
+  using VectorType = function<NamedFunc::FuncType>::result_type;
+  using ScalarType = VectorType::value_type;
+
+  ScalarType MyModulus(ScalarType x, ScalarType y){
     return fmod(x,y);
   }
   
   template<typename Operator>
     static function<NamedFunc::FuncType> ApplyOp(const function<NamedFunc::FuncType> &f, bool /*is_vector*/,
                                                  const Operator &op){
-    return [f,op](const Baby &b){
+    function<ScalarType(ScalarType)> op_c(op);
+    return [f,op_c](const Baby &b){
       auto result = f(b);
       for(auto &x: result){
-        op(x);
+        op_c(x);
       }
       return result;
     };
@@ -28,43 +32,44 @@ namespace{
     static function<NamedFunc::FuncType> ApplyOp(const function<NamedFunc::FuncType> &f, bool f_is_vector,
                                                  const function<NamedFunc::FuncType> &g, bool g_is_vector,
                                                  const Operator &op){
+    function<ScalarType(ScalarType,ScalarType)> op_c(op);
     if(f_is_vector && g_is_vector){
-      return [f,g,op](const Baby &b){
+      return [f,g,op_c](const Baby &b){
         auto result_f = f(b);
         auto result_g = g(b);
         size_t num_elements = min(result_f.size(), result_g.size());
         vector<function<NamedFunc::FuncType>::result_type::value_type> result(num_elements);
         for(size_t i = 0; i < num_elements; ++i){
-          result[i] = op(result_f[i], result_g[i]);
+          result[i] = op_c(result_f[i], result_g[i]);
         }
         return result;
       };
     }else if(f_is_vector && !g_is_vector){
-      return [f,g,op](const Baby &b){
+      return [f,g,op_c](const Baby &b){
         auto result_f = f(b);
         auto vector_g = g(b);
         auto result_g = vector_g.size() ? vector_g[0] : 0.;
         size_t num_elements = result_f.size();
         vector<function<NamedFunc::FuncType>::result_type::value_type> result(num_elements);
         for(size_t i = 0; i < num_elements; ++i){
-          result[i] = op(result_f[i], result_g);
+          result[i] = op_c(result_f[i], result_g);
         }
         return result;
       };
     }else if(!f_is_vector && g_is_vector){
-      return [f,g,op](const Baby &b){
+      return [f,g,op_c](const Baby &b){
         auto vector_f = f(b);
         auto result_f = vector_f.size() ? vector_f[0] : 0.;
         auto result_g = g(b);
         size_t num_elements = result_g.size();
         vector<function<NamedFunc::FuncType>::result_type::value_type> result(num_elements);
         for(size_t i = 0; i < num_elements; ++i){
-          result[i] = op(result_f, result_g[i]);
+          result[i] = op_c(result_f, result_g[i]);
         }
         return result;
       };
     }else{
-      return [f,g,op](const Baby &b){
+      return [f,g,op_c](const Baby &b){
         auto vector_f = f(b);
         auto result_f = vector_f.size() ? vector_f[0] : 0.;
         auto vector_g = g(b);
@@ -72,7 +77,7 @@ namespace{
         size_t num_elements = 1;
         vector<function<NamedFunc::FuncType>::result_type::value_type> result(num_elements);
         for(size_t i = 0; i < num_elements; ++i){
-          result[i] = op(result_f, result_g);
+          result[i] = op_c(result_f, result_g);
         }
         return result;
       };
@@ -180,7 +185,7 @@ NamedFunc & NamedFunc::operator %= (const NamedFunc &func){
   name_ = "("+name_ + ")%(" + func.name_ + ")";
   function_ = ApplyOp(function_, is_vector_,
                       func.function_, func.is_vector_,
-                      DoubleModulus);
+                      MyModulus);
   is_vector_ = is_vector_ || func.is_vector_;
   return *this;
 }
