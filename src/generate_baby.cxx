@@ -329,7 +329,7 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  template<typename T>\n";
   file << "    NamedFunc GetFunction(T,\n";
   file << "                          const string &name){\n";
-  file << "    DBG(\"Function lookup failed for \" << name << \".\");\n";
+  file << "    DBG(\"Could not find appropriate type for \\\"\" << name << \".\\\"\");\n";
   file << "    return NamedFunc(name, [](const Baby &){return vector_type(1, 0.);}, false);\n";
   file << "  }\n\n";
 
@@ -436,6 +436,7 @@ void WriteBaseSource(const set<Variable> &vars){
       file << "    return ::GetFunction(&Baby::" << var->Name() << ", \"" << var->Name() << "\");\n";
     }
     file << "  }else{\n";
+    file << "    DBG(\"Function lookup failed for \\\"\" << var_name << \".\\\"\");\n";
     file << "    return NamedFunc(var_name,\n";
     file << "                     [](const Baby &){\n";
     file << "                       return function<NamedFunc::FuncType>::result_type(1, 0.);\n";
