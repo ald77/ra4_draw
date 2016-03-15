@@ -45,10 +45,7 @@ void PlotMaker::FillHistograms(){
 void PlotMaker::FillHistogram(const shared_ptr<Process> &proc){
   cout << "Filling histograms for the " << proc->name_ << " process..." << endl;
   vector<pair<HistoDef, TH1D * const> > histos;
-  {
-    lock_guard<mutex> lock(Multithreading::root_mutex);
-    histos = GetHistos(proc);
-  }
+  histos = GetHistos(proc);
   long num_entries = proc->baby_->GetEntries();
   Timer timer(num_entries, 1.);
   timer.Start();

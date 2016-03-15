@@ -9,30 +9,29 @@
 #include "process.hpp"
 #include "named_func.hpp"
 #include "plot_maker.hpp"
-#include "styles.hpp"
 
 using namespace std;
 
 template<typename T>
-unique_ptr<Baby> BabyPtr(const set<string> &names){
-  return unique_ptr<Baby>(new T(names));
+shared_ptr<Process> Proc(const string process_name, Process::Type type,
+                         int color, const set<string> &files){
+  return make_shared<Process>(process_name, type, color,
+                              unique_ptr<Baby>(new T(files)));
 }
 
 int main(){
   gErrorIgnoreLevel = 6000;
-  styles style("RA4");
-  style.setDefaultStyle();
-  
-  auto qcd = make_shared<Process>("QCD", Process::Type::background, kGreen+2,
-                                  BabyPtr<Baby_basic>({"~/ntuples/2015_09_28_ana/skim/*_QCD*.root"}));
-  auto ttjets = make_shared<Process>("t#bar{t}", Process::Type::background, kBlue+2,
-                                     BabyPtr<Baby_basic>({"~/ntuples/2015_09_28_ana/skim/*_TTJets*.root"}));
-  auto ttjets2 = make_shared<Process>("t#bar{t}2", Process::Type::background, kBlue+1,
-                                      BabyPtr<Baby_basic>({"~/ntuples/2015_09_28_ana/skim2/*_TTJets*.root"}));
-  auto sms_nc = make_shared<Process>("T1tttt(1500,100)", Process::Type::signal, kRed,
-                                     BabyPtr<Baby_basic>({"~/ntuples/2015_09_28_ana/skim/*_SMS-1500*100*.root"}));
-  auto sms_c = make_shared<Process>("T1tttt(1200,800)", Process::Type::signal, kRed+2,
-                                    BabyPtr<Baby_basic>({"~/ntuples/2015_09_28_ana/skim/*_SMS-1200*800*.root"}));
+
+  auto qcd = Proc<Baby_basic>("QCD", Process::Type::background, kGreen+2,
+    {"~/ntuples/2015_09_28_ana/skim/*_QCD*.root"});
+  auto ttjets = Proc<Baby_basic>("t#bar{t}", Process::Type::background, kBlue+2,
+    {"~/ntuples/2015_09_28_ana/skim/*_TTJets*.root"});
+  auto ttjets2 = Proc<Baby_basic>("t#bar{t}2", Process::Type::background, kBlue+1,
+    {"~/ntuples/2015_09_28_ana/skim2/*_TTJets*.root"});
+  auto sms_nc = Proc<Baby_basic>("T1tttt(1500,100)", Process::Type::signal, kRed,
+    {"~/ntuples/2015_09_28_ana/skim/*_SMS-1500*100*.root"});
+  auto sms_c = Proc<Baby_basic>("T1tttt(1200,800)", Process::Type::signal, kRed+2,
+    {"~/ntuples/2015_09_28_ana/skim/*_SMS-1200*800*.root"});
 
   PlotMaker pm;
   pm.AddPlot({qcd, ttjets, ttjets2, sms_nc, sms_c},
