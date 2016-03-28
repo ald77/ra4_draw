@@ -81,8 +81,8 @@ void PlotMaker::FillHistogram(const shared_ptr<Process> &proc){
   vector<pair<HistoDef, TH1D * const> > histos;
   histos = GetHistos(proc);
 
-  bool values_b, hist_cuts_b, proc_cuts_b, weights_b;
-  ScalarType values_s, hist_cuts_s, proc_cuts_s, weights_s;
+  bool values_b = true, hist_cuts_b = true, proc_cuts_b = true, weights_b = true;
+  ScalarType values_s = 0., hist_cuts_s = 0., proc_cuts_s = 0., weights_s = 0.;
   VectorType values_v, hist_cuts_v, proc_cuts_v, weights_v;
 
   long num_entries = baby.GetEntries();
