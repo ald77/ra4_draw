@@ -34,7 +34,17 @@ int main(){
     {"~/ntuples/2015_09_28_ana/skim/*_SMS-1200*800*.root"});
 
   PlotMaker pm;
-  pm.AddPlot({qcd, ttjets, ttjets2, sms_nc, sms_c},
-             HistoDef(20, 0., 1000., "ht", "H_{T} [GeV]"));
+  for(int i = 0; i < 1; ++i){
+    pm.AddPlot({qcd, ttjets, ttjets2, sms_nc, sms_c},
+               HistoDef(20, 0., 1000., "ht", "H_{T} [GeV]"));
+    pm.AddPlot({qcd, ttjets, ttjets2, sms_nc, sms_c},
+               HistoDef(20, 0., 1000., "ht+met", "H_{T} [GeV]"));
+    pm.AddPlot({qcd, ttjets, ttjets2, sms_nc, sms_c},
+               HistoDef(20, 0., 1000., "njets", "H_{T} [GeV]"));
+    pm.AddPlot({qcd, ttjets, ttjets2, sms_nc, sms_c},
+               HistoDef(20, 0., 1000., "jets_pt", "H_{T} [GeV]"));
+    pm.AddPlot({qcd, ttjets, ttjets2, sms_nc, sms_c},
+               HistoDef(20, 0., 1000., "jets_pt[0]", "H_{T} [GeV]"));
+  }
   pm.MakePlots();
 }

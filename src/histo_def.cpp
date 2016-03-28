@@ -33,7 +33,7 @@ size_t HistoDef::GetNbins() const{
 }
 
 string HistoDef::GetName() const{
-  return var_.Name() + "_CUT_" + cut_.Name() + "_WGT_" + weight_.Name();
+  return var_.PlainName() + "_CUT_" + cut_.PlainName() + "_WGT_" + weight_.PlainName();
 }
 
 vector<double> HistoDef::GetEdges(size_t nbins, double xmin, double xmax){

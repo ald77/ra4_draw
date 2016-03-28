@@ -8,6 +8,11 @@
 
 using namespace std;
 
+using ScalarType = NamedFunc::ScalarType;
+using VectorType = NamedFunc::VectorType;
+using ScalarFunc = NamedFunc::ScalarFunc;
+using VectorFunc = NamedFunc::VectorFunc;
+
 FunctionParser::FunctionParser(const string &function_string):
   input_string_(function_string),
   tokens_(),
@@ -42,7 +47,7 @@ NamedFunc FunctionParser::ResolveAsNamedFunc() const{
   return tokens_.size() ? tokens_.at(0).function_
     : NamedFunc(input_string_,
                 [](const Baby &){
-                  return function<NamedFunc::FuncType>::result_type(1, 0.);
+                  return 0.;
                 });
 }
 
@@ -123,10 +128,10 @@ void FunctionParser::ResolveVariables() const{
       token.type_ = token.function_.IsScalar() ? Token::Type::resolved_scalar : Token::Type::resolved_vector;
     }else if(token.type_ == Token::Type::number){
       char *cp = nullptr;
-      double val = strtod(&token.string_rep_[0], &cp);
+      NamedFunc::ScalarType val = strtod(&token.string_rep_[0], &cp);
       token.function_ = NamedFunc(token.string_rep_,
                                   [val](const Baby &){
-                                    return function<NamedFunc::FuncType>::result_type(1, val);
+                                    return val;
                                   });
       token.type_ = Token::Type::resolved_scalar;
     }
@@ -181,14 +186,13 @@ void FunctionParser::ApplySubscripts() const{
       continue;
     }
 
-    using FuncType = function<NamedFunc::FuncType>;
-    FuncType vec_func = vec.function_;
-    FuncType sub_func = sub.function_;
-    FuncType function = [vec_func,sub_func](const Baby &b){
-      return FuncType::result_type(1, vec_func(b).at(sub_func(b).at(0)));
+    function<VectorFunc> vec_func = vec.function_.VectorFunction();
+    function<ScalarFunc> sub_func = sub.function_.ScalarFunction();
+    function<ScalarFunc> function = [vec_func,sub_func](const Baby &b){
+      return vec_func(b).at(sub_func(b));
     };
     string name = ConcatenateTokenStrings(i, i+4);
-    Token merged(NamedFunc(name, function, false));
+    Token merged(NamedFunc(name, function));
     
     CondenseTokens(i, i+4, merged);
   }

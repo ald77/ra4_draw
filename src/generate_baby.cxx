@@ -322,23 +322,25 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "using namespace std;\n\n";
 
   file << "namespace{\n";
-  file << "  using func_type = function<NamedFunc::FuncType>;\n";
-  file << "  using vector_type = func_type::result_type;\n";
-  file << "  using scalar_type = vector_type::value_type;\n\n";
+  file << "  using ScalarType = NamedFunc::ScalarType;\n";
+  file << "  using VectorType = NamedFunc::VectorType;\n";
+  file << "  using ScalarFunc = NamedFunc::ScalarFunc;\n";
+  file << "  using VectorFunc = NamedFunc::VectorFunc;\n\n";
   
   file << "  template<typename T>\n";
   file << "    NamedFunc GetFunction(T,\n";
   file << "                          const string &name){\n";
   file << "    DBG(\"Could not find appropriate type for \\\"\" << name << \".\\\"\");\n";
-  file << "    return NamedFunc(name, [](const Baby &){return vector_type(1, 0.);}, false);\n";
+  file << "    return NamedFunc(name, [](const Baby &){return 0.;}, false);\n";
   file << "  }\n\n";
 
   file << "  template<typename T>\n";
   file << "    NamedFunc GetFunction(T const &(Baby::*baby_func)() const,\n";
   file << "                          const string &name){\n";
   file << "    return NamedFunc(name,\n";
-  file << "                     [baby_func](const Baby &b){return vector_type(1,(b.*baby_func)());},\n";
-  file << "                     false);\n";
+  file << "                     [baby_func](const Baby &b){\n";
+  file << "                       return ScalarType((b.*baby_func)());\n";
+  file << "                     });\n";
   file << "  }\n\n";
 
   file << "  template<typename T>\n";
@@ -346,14 +348,9 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "                          const string &name){\n";
   file << "    return NamedFunc(name,\n";
   file << "                     [baby_func](const Baby &b){\n";
-  file << "                       auto raw = (b.*baby_func)();\n";
-  file << "                       vector_type out(raw->size());\n";
-  file << "                       for(size_t i = 0; i < out.size(); ++i){\n";
-  file << "                         out.at(i) = raw->at(i);\n";
-  file << "                       }\n";
-  file << "                       return out;\n";
-  file << "                     },\n";
-  file << "                     true);\n";
+  file << "                       const auto &raw = (b.*baby_func)();\n";
+  file << "                       return VectorType(raw->cbegin(), raw->cend());\n";
+  file << "                     });\n";
   file << "  }\n\n";
 
   bool have_vector_double = false;
@@ -439,14 +436,14 @@ void WriteBaseSource(const set<Variable> &vars){
     file << "    DBG(\"Function lookup failed for \\\"\" << var_name << \".\\\"\");\n";
     file << "    return NamedFunc(var_name,\n";
     file << "                     [](const Baby &){\n";
-    file << "                       return function<NamedFunc::FuncType>::result_type(1, 0.);\n";
+    file << "                       return 0.;\n";
     file << "                     });\n";
     file << "  }\n";
   }else{
     file << "  DBG(\"No variables defined in Baby.\");\n";
     file << "  return NamedFunc(var_name,\n";
     file << "                   [](const Baby &){\n";
-    file << "                     return function<NamedFunc::FuncType>::result_type(1, 0.);\n";
+    file << "                     return 0.;\n";
     file << "                   });\n";
   }
   file << "}\n\n";

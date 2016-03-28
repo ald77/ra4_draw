@@ -1,98 +1,110 @@
 #include "named_func.hpp"
 
 #include <iostream>
+#include <utility>
 
 #include "utilities.hpp"
 #include "function_parser.hpp"
 
 using namespace std;
 
-namespace{
-  using VectorType = function<NamedFunc::FuncType>::result_type;
-  using ScalarType = VectorType::value_type;
+using ScalarType = NamedFunc::ScalarType;
+using VectorType = NamedFunc::VectorType;
+using ScalarFunc = NamedFunc::ScalarFunc;
+using VectorFunc = NamedFunc::VectorFunc;
 
+namespace{
   ScalarType MyModulus(ScalarType x, ScalarType y){
     return fmod(x,y);
   }
   
   template<typename Operator>
-    static function<NamedFunc::FuncType> ApplyOp(const function<NamedFunc::FuncType> &f, bool /*is_vector*/,
-                                                 const Operator &op){
+    static function<ScalarFunc> ApplyOp(const function<ScalarFunc> &f,
+                                        const Operator &op){
+    if(!static_cast<bool>(f)) return f;
     function<ScalarType(ScalarType)> op_c(op);
     return [f,op_c](const Baby &b){
-      auto result = f(b);
-      for(auto &x: result){
-        op_c(x);
-      }
-      return result;
+      return op_c(f(b));
     };
   }
-  
+
   template<typename Operator>
-    static function<NamedFunc::FuncType> ApplyOp(const function<NamedFunc::FuncType> &f, bool f_is_vector,
-                                                 const function<NamedFunc::FuncType> &g, bool g_is_vector,
-                                                 const Operator &op){
+    static function<VectorFunc> ApplyOp(const function<VectorFunc> &f,
+                                        const Operator &op){
+    if(!static_cast<bool>(f)) return f;
+    function<ScalarType(ScalarType)> op_c(op);
+    return [f,op_c](const Baby &b){
+      VectorType v = f(b);
+      for(auto &x: v){
+        x = op_c(x);
+      }
+      return v;
+    };
+  }
+
+  template<typename Operator>
+    static pair<function<ScalarFunc>, function<VectorFunc> > ApplyOp(const function<ScalarFunc> &sfa,
+                                                                     const function<VectorFunc> &vfa,
+                                                                     const function<ScalarFunc> &sfb,
+                                                                     const function<VectorFunc> &vfb,
+                                                                     const Operator &op){
     function<ScalarType(ScalarType,ScalarType)> op_c(op);
-    if(f_is_vector && g_is_vector){
-      return [f,g,op_c](const Baby &b){
-        auto result_f = f(b);
-        auto result_g = g(b);
-        size_t num_elements = min(result_f.size(), result_g.size());
-        vector<function<NamedFunc::FuncType>::result_type::value_type> result(num_elements);
-        for(size_t i = 0; i < num_elements; ++i){
-          result[i] = op_c(result_f[i], result_g[i]);
-        }
-        return result;
+    function<ScalarFunc> sfo;
+    function<VectorFunc> vfo;
+    if(static_cast<bool>(sfa) && static_cast<bool>(sfb)){
+      sfo = [sfa,sfb,op_c](const Baby &b){
+        return op_c(sfa(b), sfb(b));
       };
-    }else if(f_is_vector && !g_is_vector){
-      return [f,g,op_c](const Baby &b){
-        auto result_f = f(b);
-        auto vector_g = g(b);
-        auto result_g = vector_g.size() ? vector_g[0] : 0.;
-        size_t num_elements = result_f.size();
-        vector<function<NamedFunc::FuncType>::result_type::value_type> result(num_elements);
-        for(size_t i = 0; i < num_elements; ++i){
-          result[i] = op_c(result_f[i], result_g);
+    }else if(static_cast<bool>(sfa) && static_cast<bool>(vfb)){
+      vfo = [sfa,vfb,op_c](const Baby &b){
+        ScalarType sa = sfa(b);
+        VectorType vb = vfb(b);
+        VectorType vo(vb.size());
+        for(size_t i = 0; i < vo.size(); ++i){
+          vo.at(i) = op_c(sa, vb.at(i));
         }
-        return result;
+        return vo;
       };
-    }else if(!f_is_vector && g_is_vector){
-      return [f,g,op_c](const Baby &b){
-        auto vector_f = f(b);
-        auto result_f = vector_f.size() ? vector_f[0] : 0.;
-        auto result_g = g(b);
-        size_t num_elements = result_g.size();
-        vector<function<NamedFunc::FuncType>::result_type::value_type> result(num_elements);
-        for(size_t i = 0; i < num_elements; ++i){
-          result[i] = op_c(result_f, result_g[i]);
+    }else if(static_cast<bool>(vfa) && static_cast<bool>(sfb)){
+      vfo = [vfa,sfb,op_c](const Baby &b){
+        VectorType va = vfa(b);
+        ScalarType sb = sfb(b);
+        VectorType vo(va.size());
+        for(size_t i = 0; i < vo.size(); ++i){
+          vo.at(i) = op_c(va.at(i), sb);
         }
-        return result;
+        return vo;
       };
-    }else{
-      return [f,g,op_c](const Baby &b){
-        auto vector_f = f(b);
-        auto result_f = vector_f.size() ? vector_f[0] : 0.;
-        auto vector_g = g(b);
-        auto result_g = vector_g.size() ? vector_g[0] : 0.;
-        size_t num_elements = 1;
-        vector<function<NamedFunc::FuncType>::result_type::value_type> result(num_elements);
-        for(size_t i = 0; i < num_elements; ++i){
-          result[i] = op_c(result_f, result_g);
+    }else if(static_cast<bool>(vfa) && static_cast<bool>(vfb)){
+      vfo = [vfa,vfb,op_c](const Baby &b){
+        VectorType va = vfa(b);
+        VectorType vb = vfb(b);
+        VectorType vo(va.size() > vb.size() ? vb.size() : va.size());
+        for(size_t i = 0; i < vo.size(); ++i){
+          vo.at(i) = op_c(va.at(i), vb.at(i));
         }
-        return result;
+        return vo;
       };
     }
+    return make_pair(sfo, vfo);
   }
 }
 
 NamedFunc::NamedFunc(const string &name,
-                     const function<FuncType> &function,
-                     bool is_vector):
+                     const function<ScalarFunc> &function):
   name_(name),
-  function_(function),
-  is_vector_(is_vector){
+  scalar_func_(function),
+  vector_func_(){
   CleanName();
-  }
+}
+
+NamedFunc::NamedFunc(const string &name,
+                     const function<VectorFunc> &function):
+  name_(name),
+  scalar_func_(),
+  vector_func_(function){
+  CleanName();
+}
 
 NamedFunc::NamedFunc(const string &function):
   NamedFunc(FunctionParser(function).ResolveAsNamedFunc()){
@@ -102,10 +114,10 @@ NamedFunc::NamedFunc(const char *function):
   NamedFunc(string(function)){
 }
 
-NamedFunc::NamedFunc(double x):
+NamedFunc::NamedFunc(ScalarType x):
   name_(ToString(x)),
-  function_([x](const Baby&){return vector<double>(1,x);}),
-  is_vector_(false){
+  scalar_func_([x](const Baby&){return x;}),
+  vector_func_(){
 }
 
 const string & NamedFunc::Name() const{
@@ -118,112 +130,133 @@ NamedFunc & NamedFunc::Name(const string &name){
   return *this;
 }
 
-const std::function<NamedFunc::FuncType> & NamedFunc::Function() const{
-  return function_;
+string NamedFunc::PlainName() const{
+  string plain = name_;
+  ReplaceAll(plain, "b.", "");
+  ReplaceAll(plain, "()", "");
+  ReplaceAll(plain, ".", "p");
+  ReplaceAll(plain, "(", "OP");
+  ReplaceAll(plain, ")", "CP");
+  ReplaceAll(plain, "[", "OB");
+  ReplaceAll(plain, "]", "CB");
+  ReplaceAll(plain, "{", "OC");
+  ReplaceAll(plain, "}", "CC");
+  ReplaceAll(plain, "+", "PLS");
+  ReplaceAll(plain, "-", "MNS");
+  ReplaceAll(plain, "*", "TMS");
+  ReplaceAll(plain, "/", "DIV");
+  ReplaceAll(plain, "%", "MOD");
+  ReplaceAll(plain, "!", "NOT");
+  ReplaceAll(plain, "&&", "AND");
+  ReplaceAll(plain, "||", "OR");
+  ReplaceAll(plain, "==", "EQL");
+  ReplaceAll(plain, "<=", "GEQ");
+  ReplaceAll(plain, ">=", "LEQ");
+  ReplaceAll(plain, ">", "GTR");
+  ReplaceAll(plain, "<", "LES");
+  ReplaceAll(plain, "=", "EQL");
+  ReplaceAll(plain, "&", "BITAND");
+  ReplaceAll(plain, "|", "BITOR");
+  ReplaceAll(plain, "^", "BITXOR");
+  ReplaceAll(plain, "~", "BITNOT");
+  ReplaceAll(plain, "__", "_");
+  for(size_t i = 0; i < plain.size(); ++i){
+    if(isalnum(plain.at(i)) || plain.at(i) == '.' || plain.at(i) == '_') continue;
+    plain = plain.substr(0,i)+plain.substr(i+1);
+  }
+  return plain;
 }
 
-NamedFunc & NamedFunc::Function(const std::function<FuncType> & function, bool is_vector){
-  function_ = function;
-  is_vector_ = is_vector;
+NamedFunc & NamedFunc::Function(const function<ScalarFunc> &f){
+  if(!static_cast<bool>(f)) return *this;
+  scalar_func_ = f;
+  vector_func_ = function<VectorFunc>();
   return *this;
 }
 
-bool NamedFunc::IsVector() const{
-  return is_vector_;
+NamedFunc & NamedFunc::Function(const function<VectorFunc> &f){
+  if(!static_cast<bool>(f)) return *this;
+  scalar_func_ = function<ScalarFunc>();
+  vector_func_ = f;
+  return *this;
+}
+
+const function<ScalarFunc> & NamedFunc::ScalarFunction() const{
+  return scalar_func_;
+}
+
+const function<VectorFunc> & NamedFunc::VectorFunction() const{
+  return vector_func_;
 }
 
 bool NamedFunc::IsScalar() const{
-  return !is_vector_;
+  return static_cast<bool>(scalar_func_);
 }
 
-function<NamedFunc::FuncType>::result_type NamedFunc::operator()(const Baby &b){
-  return function_(b);
+bool NamedFunc::IsVector() const{
+  return static_cast<bool>(vector_func_);
 }
 
-function<NamedFunc::FuncType>::result_type::value_type NamedFunc::operator()(const Baby &b, size_t i){
-  auto result = function_(b);
-  return is_vector_ ? result[i] : (result.size() ? result[0] : 0.);
+ScalarType NamedFunc::GetScalar(const Baby &b) const{
+  return scalar_func_(b);
+}
+
+VectorType NamedFunc::GetVector(const Baby &b) const{
+  return vector_func_(b);
 }
 
 NamedFunc & NamedFunc::operator += (const NamedFunc &func){
   name_ = "("+name_ + ")+(" + func.name_ + ")";
-  function_ = ApplyOp(function_, is_vector_,
-                      func.function_, func.is_vector_,
-                      std::plus<double>());
-  is_vector_ = is_vector_ || func.is_vector_;
+  auto fp = ApplyOp(scalar_func_, vector_func_,
+                    func.scalar_func_, func.vector_func_,
+                    plus<ScalarType>());
+  scalar_func_ = fp.first;
+  vector_func_ = fp.second;
   return *this;
 }
 
 NamedFunc & NamedFunc::operator -= (const NamedFunc &func){
   name_ = "("+name_ + ")-(" + func.name_ + ")";
-  function_ = ApplyOp(function_, is_vector_,
-                      func.function_, func.is_vector_,
-                      std::minus<double>());
-  is_vector_ = is_vector_ || func.is_vector_;
+  auto fp = ApplyOp(scalar_func_, vector_func_,
+                    func.scalar_func_, func.vector_func_,
+                    minus<ScalarType>());
+  scalar_func_ = fp.first;
+  vector_func_ = fp.second;
   return *this;
 }
 
 NamedFunc & NamedFunc::operator *= (const NamedFunc &func){
   name_ = "("+name_ + ")*(" + func.name_ + ")";
-  function_ = ApplyOp(function_, is_vector_,
-                      func.function_, func.is_vector_,
-                      std::multiplies<double>());
-  is_vector_ = is_vector_ || func.is_vector_;
+  auto fp = ApplyOp(scalar_func_, vector_func_,
+                    func.scalar_func_, func.vector_func_,
+                    multiplies<ScalarType>());
+  scalar_func_ = fp.first;
+  vector_func_ = fp.second;
   return *this;
 }
 
 NamedFunc & NamedFunc::operator /= (const NamedFunc &func){
   name_ = "("+name_ + ")/(" + func.name_ + ")";
-  function_ = ApplyOp(function_, is_vector_,
-                      func.function_, func.is_vector_,
-                      std::divides<double>());
-  is_vector_ = is_vector_ || func.is_vector_;
+  auto fp = ApplyOp(scalar_func_, vector_func_,
+                    func.scalar_func_, func.vector_func_,
+                    divides<ScalarType>());
+  scalar_func_ = fp.first;
+  vector_func_ = fp.second;
   return *this;
 }
 
 NamedFunc & NamedFunc::operator %= (const NamedFunc &func){
   name_ = "("+name_ + ")%(" + func.name_ + ")";
-  function_ = ApplyOp(function_, is_vector_,
-                      func.function_, func.is_vector_,
-                      MyModulus);
-  is_vector_ = is_vector_ || func.is_vector_;
+  auto fp = ApplyOp(scalar_func_, vector_func_,
+                    func.scalar_func_, func.vector_func_,
+                    MyModulus);
+  scalar_func_ = fp.first;
+  vector_func_ = fp.second;
   return *this;
 }
 
 void NamedFunc::CleanName(){
   ReplaceAll(name_, " ", "");
-  //ReplaceAll(name_, "b.", "");
-  //ReplaceAll(name_, "()", "");
-  //ReplaceAll(name_, ".", "p");
-  //ReplaceAll(name_, "(", "OP");
-  //ReplaceAll(name_, ")", "CP");
-  //ReplaceAll(name_, "[", "OB");
-  //ReplaceAll(name_, "]", "CB");
-  //ReplaceAll(name_, "{", "OC");
-  //ReplaceAll(name_, "}", "CC");
-  //ReplaceAll(name_, "+", "PLS");
-  //ReplaceAll(name_, "-", "MNS");
-  //ReplaceAll(name_, "*", "TMS");
-  //ReplaceAll(name_, "/", "DIV");
-  //ReplaceAll(name_, "%", "MOD");
-  //ReplaceAll(name_, "!", "NOT");
-  //ReplaceAll(name_, "&&", "AND");
-  //ReplaceAll(name_, "||", "OR");
-  //ReplaceAll(name_, "==", "EQL");
-  //ReplaceAll(name_, "<=", "GEQ");
-  //ReplaceAll(name_, ">=", "LEQ");
-  //ReplaceAll(name_, ">", "GTR");
-  //ReplaceAll(name_, "<", "LES");
-  //ReplaceAll(name_, "=", "EQL");
-  //ReplaceAll(name_, "&", "BITAND");
-  //ReplaceAll(name_, "|", "BITOR");
-  //ReplaceAll(name_, "^", "BITXOR");
-  //ReplaceAll(name_, "~", "BITNOT");
-  //ReplaceAll(name_, "__", "_");
-  //for(size_t i = 0; i < name_.size(); ++i){
-  //  if(isalnum(name_.at(i)) || name_.at(i) == '.' || name_.at(i) == '_') continue;
-  //  name_ = name_.substr(0,i)+name_.substr(i+1);
-  //}
 }
 
 NamedFunc operator+(NamedFunc f, NamedFunc g){
@@ -253,87 +286,95 @@ NamedFunc operator + (NamedFunc f){
 
 NamedFunc operator - (NamedFunc f){
   f.Name("-(" + f.Name() + ")");
-  f.Function(ApplyOp(f.Function(), f.IsVector(), std::negate<double>()),
-             f.IsVector());
+  f.Function(ApplyOp(f.ScalarFunction(), negate<ScalarType>()));
+  f.Function(ApplyOp(f.VectorFunction(), negate<ScalarType>()));
   return f;
 }
 
 NamedFunc operator == (NamedFunc f, NamedFunc g){
   f.Name("(" + f.Name() + ")==(" + g.Name() + ")");
-  f.Function(ApplyOp(f.Function(), f.IsVector(),
-                    g.Function(), g.IsVector(),
-                    std::equal_to<double>()),
-             f.IsVector() || g.IsVector());
+  auto fp = ApplyOp(f.ScalarFunction(), f.VectorFunction(),
+                    g.ScalarFunction(), g.VectorFunction(),
+                    equal_to<ScalarType>());
+  f.Function(fp.first);
+  f.Function(fp.second);
   return f;
 }
 
 NamedFunc operator != (NamedFunc f, NamedFunc g){
   f.Name("(" + f.Name() + ")!=(" + g.Name() + ")");
-  f.Function(ApplyOp(f.Function(), f.IsVector(),
-                    g.Function(), g.IsVector(),
-                    std::not_equal_to<double>()),
-             f.IsVector() || g.IsVector());
+  auto fp = ApplyOp(f.ScalarFunction(), f.VectorFunction(),
+                    g.ScalarFunction(), g.VectorFunction(),
+                    not_equal_to<ScalarType>());
+  f.Function(fp.first);
+  f.Function(fp.second);
   return f;
 }
 
 NamedFunc operator > (NamedFunc f, NamedFunc g){
   f.Name("(" + f.Name() + ")>(" + g.Name() + ")");
-  f.Function(ApplyOp(f.Function(), f.IsVector(),
-                    g.Function(), g.IsVector(),
-                    std::greater<double>()),
-             f.IsVector() || g.IsVector());
+  auto fp = ApplyOp(f.ScalarFunction(), f.VectorFunction(),
+                    g.ScalarFunction(), g.VectorFunction(),
+                    greater<ScalarType>());
+  f.Function(fp.first);
+  f.Function(fp.second);
   return f;
 }
 
 NamedFunc operator < (NamedFunc f, NamedFunc g){
   f.Name("(" + f.Name() + ")<(" + g.Name() + ")");
-  f.Function(ApplyOp(f.Function(), f.IsVector(),
-                    g.Function(), g.IsVector(),
-                    std::less<double>()),
-             f.IsVector() || g.IsVector());
+  auto fp = ApplyOp(f.ScalarFunction(), f.VectorFunction(),
+                    g.ScalarFunction(), g.VectorFunction(),
+                    less<ScalarType>());
+  f.Function(fp.first);
+  f.Function(fp.second);
   return f;
 }
 
 NamedFunc operator >= (NamedFunc f, NamedFunc g){
   f.Name("(" + f.Name() + ")>=(" + g.Name() + ")");
-  f.Function(ApplyOp(f.Function(), f.IsVector(),
-                    g.Function(), g.IsVector(),
-                    std::greater_equal<double>()),
-             f.IsVector() || g.IsVector());
+  auto fp = ApplyOp(f.ScalarFunction(), f.VectorFunction(),
+                    g.ScalarFunction(), g.VectorFunction(),
+                    greater_equal<ScalarType>());
+  f.Function(fp.first);
+  f.Function(fp.second);
   return f;
 }
 
 NamedFunc operator <= (NamedFunc f, NamedFunc g){
   f.Name("(" + f.Name() + ")<=(" + g.Name() + ")");
-  f.Function(ApplyOp(f.Function(), f.IsVector(),
-                    g.Function(), g.IsVector(),
-                    std::less_equal<double>()),
-             f.IsVector() || g.IsVector());
+  auto fp = ApplyOp(f.ScalarFunction(), f.VectorFunction(),
+                    g.ScalarFunction(), g.VectorFunction(),
+                    less_equal<ScalarType>());
+  f.Function(fp.first);
+  f.Function(fp.second);
   return f;
 }
 
 NamedFunc operator && (NamedFunc f, NamedFunc g){
   f.Name("(" + f.Name() + ")&&(" + g.Name() + ")");
-  f.Function(ApplyOp(f.Function(), f.IsVector(),
-                    g.Function(), g.IsVector(),
-                    std::logical_and<double>()),
-             f.IsVector() || g.IsVector());
+  auto fp = ApplyOp(f.ScalarFunction(), f.VectorFunction(),
+                    g.ScalarFunction(), g.VectorFunction(),
+                    logical_and<ScalarType>());
+  f.Function(fp.first);
+  f.Function(fp.second);
   return f;
 }
 
 NamedFunc operator || (NamedFunc f, NamedFunc g){
   f.Name("(" + f.Name() + ")||(" + g.Name() + ")");
-  f.Function(ApplyOp(f.Function(), f.IsVector(),
-                    g.Function(), g.IsVector(),
-                    std::logical_or<double>()),
-             f.IsVector() || g.IsVector());
+  auto fp = ApplyOp(f.ScalarFunction(), f.VectorFunction(),
+                    g.ScalarFunction(), g.VectorFunction(),
+                    logical_or<ScalarType>());
+  f.Function(fp.first);
+  f.Function(fp.second);
   return f;
 }
 
 NamedFunc operator ! (NamedFunc f){
   f.Name("!(" + f.Name() + ")");
-  f.Function(ApplyOp(f.Function(), f.IsVector(), std::logical_not<double>()),
-             f.IsVector());
+  f.Function(ApplyOp(f.ScalarFunction(), logical_not<ScalarType>()));
+  f.Function(ApplyOp(f.VectorFunction(), logical_not<ScalarType>()));
   return f;
 }
 

@@ -10,12 +10,18 @@
 
 class NamedFunc{
 public:
-  using FuncType = std::vector<double>(const Baby &);
+  using ScalarType = double;
+  using VectorType = std::vector<ScalarType>;
+  using ScalarFunc = ScalarType(const Baby &);
+  using VectorFunc = VectorType(const Baby &);
 
-  NamedFunc(const std::string &name, const std::function<FuncType> &function, bool is_vector=false);
+  NamedFunc(const std::string &name,
+            const std::function<ScalarFunc> &function);
+  NamedFunc(const std::string &name,
+            const std::function<VectorFunc> &function);
   NamedFunc(const std::string &function);
   NamedFunc(const char *function);
-  NamedFunc(double x);
+  NamedFunc(ScalarType x);
   NamedFunc(const NamedFunc &) = default;
   NamedFunc & operator=(const NamedFunc &) = default;
   NamedFunc(NamedFunc &&) = default;
@@ -24,14 +30,18 @@ public:
 
   const std::string & Name() const;
   NamedFunc & Name(const std::string &name);
+  std::string PlainName() const;
+  
+  NamedFunc & Function(const std::function<ScalarFunc> &function);
+  NamedFunc & Function(const std::function<VectorFunc> &function);
+  const std::function<ScalarFunc> & ScalarFunction() const;
+  const std::function<VectorFunc> & VectorFunction() const;
 
-  const std::function<FuncType> & Function() const;
-  NamedFunc & Function(const std::function<FuncType> & function, bool is_vector=false);
-  bool IsVector() const;
   bool IsScalar() const;
+  bool IsVector() const;
 
-  std::function<FuncType>::result_type operator()(const Baby &b);
-  std::function<FuncType>::result_type::value_type operator()(const Baby &b, size_t);
+  ScalarType GetScalar(const Baby &b) const;
+  VectorType GetVector(const Baby &b) const;
 
   NamedFunc & operator += (const NamedFunc &func);
   NamedFunc & operator -= (const NamedFunc &func);
@@ -42,7 +52,8 @@ public:
 private:
   NamedFunc() = delete;
   std::string name_;
-  std::function<FuncType> function_;
+  std::function<ScalarFunc> scalar_func_;
+  std::function<VectorFunc> vector_func_;
   bool is_vector_;
 
   void CleanName();
