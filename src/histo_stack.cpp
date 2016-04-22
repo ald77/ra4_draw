@@ -292,7 +292,7 @@ const vector<HistoStack::SingleHist> & HistoStack::GetHistoList(const shared_ptr
   case Process::Type::signal:
     return signals_;
   default:
-    ERROR("Did not understand process type "+static_cast<long>(process->type_)+".");
+    ERROR("Did not understand process type "+to_string(static_cast<long>(process->type_))+".");
     return backgrounds_;
   }
 }
@@ -306,7 +306,7 @@ vector<HistoStack::SingleHist> & HistoStack::GetHistoList(const shared_ptr<Proce
   case Process::Type::signal:
     return signals_;
   default:
-    ERROR("Did not understand process type "+static_cast<long>(process->type_)+".");
+    ERROR("Did not understand process type "+to_string(static_cast<long>(process->type_))+".");
     return backgrounds_;
   }
 }
