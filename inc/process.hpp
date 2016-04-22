@@ -10,6 +10,7 @@
 class Process : public TAttFill, public TAttLine, public TAttMarker{
 public:
   enum class Type{data, background, signal};
+  
   Process(const std::string & name,
           Type type,
           int color,

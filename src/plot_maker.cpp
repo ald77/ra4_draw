@@ -1,6 +1,7 @@
 #include "plot_maker.hpp"
 
 #include "TCanvas.h"
+#include "TLegend.h"
 
 #include "utilities.hpp"
 #include "timer.hpp"
@@ -8,6 +9,8 @@
 #include "named_func.hpp"
 
 using namespace std;
+using namespace PlotOptTypes;
+
 using ScalarType = NamedFunc::ScalarType;
 using VectorType = NamedFunc::VectorType;
 using ScalarFunc = NamedFunc::ScalarFunc;
@@ -41,6 +44,14 @@ namespace{
     }
     return false;
   }
+
+  void DrawAll(vector<HistoStack::SingleHist> &hists,
+               string &draw_opt){
+    for(auto hist = hists.rbegin(); hist!= hists.rend(); ++hist){
+      hist->scaled_hist_.Draw(draw_opt.c_str());
+      draw_opt = "hist same";
+    }
+  }
 }
 
 PlotMaker::PlotMaker():
@@ -49,9 +60,10 @@ PlotMaker::PlotMaker():
 }
 
 void PlotMaker::AddPlot(const vector<shared_ptr<Process> > &processes,
-                        const HistoDef &histo_def){
+                        const HistoDef &histo_def,
+                        const PlotOpt &plot_options){
   //Adds a plot to the list of plots to be produced. Does NOT fill or draw the histogram.
-  stacks_.push_back(HistoStack(processes, histo_def));
+  stacks_.emplace_back(processes, histo_def, plot_options);
 }
 
 void PlotMaker::MakePlots(){
@@ -61,7 +73,11 @@ void PlotMaker::MakePlots(){
     return;
   }
   FillHistograms();
-  PrintPlots();
+
+  for(auto &stack: stacks_){
+    stack.RefreshScaledHistos();
+    PrintPlot(stack);
+  }
 }
 
 void PlotMaker::FillHistograms(){
@@ -150,40 +166,72 @@ void PlotMaker::FillHistogram(const shared_ptr<Process> &proc){
   }
 }
 
-void PlotMaker::PrintPlots(){
+void PlotMaker::PrintPlot(HistoStack &stack){
   //Takes already filled histograms and prints to file
   if(file_extensions_.size() == 0){
     DBG("No file extensions provided => no plots produced.");
     return;
   }
-  TCanvas c;
-  for(auto &stack: stacks_){
-    bool drawn = false;
-    vector<TH1D> bkgs(stack.backgrounds_.size());
-    for(size_t ihist = stack.backgrounds_.size() - 1; ihist < stack.backgrounds_.size(); --ihist){
-      bkgs.at(ihist) = stack.backgrounds_.at(ihist).second;
-      for(size_t jhist = 0; jhist < ihist; ++jhist){
-        bkgs.at(ihist) = bkgs.at(ihist) + stack.backgrounds_.at(jhist).second;
-      }
-      bkgs.at(ihist).Draw(drawn ? "hist same" : "hist");
-      drawn = true;
-    }
-    for(auto &signal: stack.signals_){
-      signal.second.Draw(drawn ? "hist same" : "hist");
-      drawn = true;
-    }
-    for(auto &data: stack.datas_){
-      data.second.Draw(drawn ? "hist same" : "hist");
-      drawn = true;
-    }
-
-    string base_name = "plots/"+stack.definition_.GetName();
-    for(const auto &ext: file_extensions_){
-      string full_name = base_name+"."+ext;
-      c.Print(full_name.c_str());
-      cout << "Wrote plot to " << full_name << "." << endl;
-    }
+  TCanvas c("", "",
+            stack.plot_options_.CanvasWidth(),
+            stack.plot_options_.CanvasHeight());
+  c.SetMargin(stack.plot_options_.LeftMargin(),
+              stack.plot_options_.RightMargin(),
+              stack.plot_options_.BottomMargin(),
+              stack.plot_options_.TopMargin());
+  c.SetTicks(1,1);
+  
+  if(stack.plot_options_.YAxis() == YAxisType::log){
+    c.SetLogy(true);
+  }else{
+    c.SetLogy(false);
   }
+
+  string draw_opt = "hist";
+  DrawAll(stack.backgrounds_, draw_opt);
+  DrawAll(stack.signals_, draw_opt);
+  ReplaceAll(draw_opt, "hist", "ep");
+  DrawAll(stack.datas_, draw_opt);
+  auto legend = GetLegend(stack);
+  legend->Draw();
+  c.RedrawAxis();
+  c.RedrawAxis("g");
+
+  string base_name = "plots/"+stack.definition_.GetName();
+  for(const auto &ext: file_extensions_){
+    string full_name = base_name+"."+ext;
+    c.Print(full_name.c_str());
+    cout << "Wrote plot to " << full_name << "." << endl;
+  }
+}
+
+unique_ptr<TLegend> PlotMaker::GetLegend(HistoStack &stack){
+  size_t num_procs = stack.backgrounds_.size()+stack.signals_.size()+stack.datas_.size();
+  
+  double left = stack.plot_options_.LeftMargin()+0.03;
+  double right = 1.-stack.plot_options_.RightMargin()-0.03;
+  double top = 1.-stack.plot_options_.TopMargin()-0.03;
+  double bottom = top-stack.plot_options_.LegendHeight(num_procs);
+  top = stack.plot_options_.GlobalToTopYNDC(top);
+  bottom = stack.plot_options_.GlobalToTopYNDC(bottom);
+
+  auto legend = unique_ptr<TLegend>(new TLegend(left, bottom, right, top));
+  legend->SetNColumns(2);
+  legend->SetFillStyle(0);
+  legend->SetFillColor(0);
+  legend->SetBorderSize(0);
+  
+  for(const auto &hist: stack.datas_){
+    legend->AddEntry(&hist.scaled_hist_, hist.process_->name_.c_str(), "e0p");
+  }
+  for(const auto &hist: stack.backgrounds_){
+    legend->AddEntry(&hist.scaled_hist_, hist.process_->name_.c_str(), "f");
+  }
+  for(const auto &hist: stack.signals_){
+    legend->AddEntry(&hist.scaled_hist_, hist.process_->name_.c_str(), "l");
+  }
+
+  return legend;
 }
 
 set<shared_ptr<Process> > PlotMaker::GetProcesses() const{
@@ -204,7 +252,7 @@ vector<pair<HistoDef, TH1D * const> > PlotMaker::GetHistos(const shared_ptr<Proc
     auto procs = stack.GetProcesses();
     auto loc = procs.find(process);
     if(loc == procs.end()) continue;
-    histos.push_back(pair<HistoDef, TH1D * const>(stack.definition_, stack.GetHisto(process)));
+    histos.emplace_back(stack.definition_, &stack.RawHisto(process));
   }
   return histos;
 }
@@ -216,7 +264,7 @@ vector<pair<HistoDef, const TH1D * const> > PlotMaker::GetHistos(const shared_pt
     auto procs = stack.GetProcesses();
     auto loc = procs.find(process);
     if(loc == procs.end()) continue;
-    histos.push_back(pair<HistoDef, const TH1D * const>(stack.definition_, stack.GetHisto(process)));
+    histos.emplace_back(stack.definition_, &stack.RawHisto(process));
   }
   return histos;
 }

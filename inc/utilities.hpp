@@ -9,6 +9,8 @@
 #include <limits>
 #include <mutex>
 
+#include "TH1D.h"
+
 #define ERROR(x) do{throw std::runtime_error(string("Error in file ")+__FILE__+" at line "+to_string(__LINE__)+" (in "+__func__+"): "+x);}while(false)
 #define DBG(x) do{std::cerr << "In " << __FILE__ << " at line " << __LINE__ << " (in function " << __func__ << "): " << x << std::endl;}while(false)
 
@@ -26,6 +28,9 @@ std::vector<std::string> Tokenize(const std::string& input,
                                   const std::string& tokens=" ");
 
 std::string MakeDir(std::string prefix);
+
+void Scale(TH1D &h, bool adjust_width = false, double normalization = -1.);
+void MergeOverflow(TH1D &h, bool merge_underflow, bool merge_overflow);
 
 template<typename T>
 void Append(T &collection, const typename T::value_type &value){

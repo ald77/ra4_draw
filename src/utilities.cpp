@@ -64,6 +64,43 @@ string MakeDir(string prefix){
   strcpy(dir_name, prefix.c_str());
   mkdtemp(dir_name);
   prefix = dir_name;
-  delete dir_name;
+  delete[] dir_name;
   return prefix;
+}
+
+void Scale(TH1D &h, bool adjust_width, double normalization){
+  double integral = h.Integral("width");
+  double entries = h.GetEntries();
+  int nbins = h.GetNbinsX();
+  double low = h.GetBinLowEdge(1);
+  double high = h.GetBinLowEdge(nbins+1);
+  double width = (high-low)/nbins;
+  
+  if(normalization < 0.) normalization = integral;
+  double scale = integral != 0. ? normalization/integral : 1.;
+  for(int bin = 0; bin <= nbins+1; ++bin){
+    double this_width = h.GetBinWidth(bin);
+    double this_scale = scale;
+    if(adjust_width) this_scale *= width/this_width;
+
+    h.SetBinContent(bin, h.GetBinContent(bin)*this_scale);
+    h.SetBinError(bin, h.GetBinError(bin)*this_scale);
+  }
+  h.SetEntries(entries);
+}
+
+void MergeOverflow(TH1D &h, bool merge_underflow, bool merge_overflow){
+  if(merge_underflow){
+    h.SetBinContent(1, h.GetBinContent(0)+h.GetBinContent(1));
+    h.SetBinContent(0, 0.);
+    h.SetBinError(1, hypot(h.GetBinError(0), h.GetBinError(1)));
+    h.SetBinError(0, 0.);
+  }
+  int nbins = h.GetNbinsX();
+  if(merge_overflow){
+    h.SetBinContent(nbins, h.GetBinContent(nbins)+h.GetBinContent(nbins+1));
+    h.SetBinContent(nbins+1, 0.);
+    h.SetBinError(nbins, hypot(h.GetBinError(nbins), h.GetBinError(nbins+1)));
+    h.SetBinError(nbins+1, 0.);
+  }
 }

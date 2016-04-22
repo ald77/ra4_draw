@@ -5,27 +5,31 @@ using namespace std;
 HistoDef::HistoDef(const vector<double> &bins,
                    const NamedFunc &var,
                    const string &x_title,
+                   const string &units,
                    const NamedFunc &cut,
                    const NamedFunc &weight):
   bins_(bins),
   var_(var),
   cut_(cut),
   weight_(weight),
-  x_title_(x_title){
+  x_title_(x_title),
+  units_(units){
   }
 
 HistoDef::HistoDef(size_t nbins,
                    double xmin,
                    double xmax,
                    const NamedFunc &var,
-                   const std::string &x_title,
+                   const string &x_title,
+                   const string &units,
                    const NamedFunc &cut,
                    const NamedFunc &weight):
   bins_(GetEdges(nbins, xmin, xmax)),
   var_(var),
   cut_(cut),
   weight_(weight),
-  x_title_(x_title){
+  x_title_(x_title),
+  units_(units){
   }
 
 size_t HistoDef::GetNbins() const{
