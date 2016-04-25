@@ -3,6 +3,8 @@
 
 #include <cstddef>
 
+#include <string>
+
 namespace PlotOptTypes{
   enum class BottomType{off, ratio, diff, signif};
   enum class YAxisType{linear, log};
@@ -14,6 +16,8 @@ namespace PlotOptTypes{
 class PlotOpt{
 public:
   PlotOpt();
+  PlotOpt(const std::string &file_name,
+          const std::string &config_name);
   PlotOpt(const PlotOpt &) = default;
   PlotOpt& operator=(const PlotOpt &) = default;
   PlotOpt(PlotOpt &&) = default;
@@ -21,6 +25,9 @@ public:
   ~PlotOpt() = default;
 
   PlotOpt operator()() const;
+
+  PlotOpt & LoadOptions(const std::string &file_name,
+                        const std::string &config_name);
 
   PlotOpt & Bottom(PlotOptTypes::BottomType bottom_type);
   PlotOptTypes::BottomType Bottom() const;
@@ -38,7 +45,9 @@ public:
   PlotOptTypes::OverflowType Overflow() const;
 
   PlotOpt & CanvasSize(int width, int height);
+  PlotOpt & CanvasWidth(int width);
   int CanvasWidth() const;
+  PlotOpt & CanvasHeight(int height);
   int CanvasHeight() const;
 
   PlotOpt & Margin(double left, double right, double bottom, double top);
@@ -76,6 +85,9 @@ private:
   double left_margin_, right_margin_, bottom_margin_, top_margin_;
   double bottom_height_;
   double legend_entry_height_, legend_max_height_;
+
+  void SetProperty(const std::string &property_name,
+                   const std::string &value_string);
 };
 
 #endif

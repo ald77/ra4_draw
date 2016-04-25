@@ -1,0 +1,196 @@
+[General]
+    nFont	    = 42
+    nDivisions	    = 506
+
+[RA4]
+    CanvasW	    = 800
+    CanvasH	    = 600
+    LegendSize	    = 0.05
+    TitleSize	    = 0.045 
+    LabelSize	    = 0.06     
+    PadRightMargin  = 0.047
+    PadTopMargin    = 0.075
+    PadBottomMargin = 0.14
+    xTitleOffset    = 1.05     
+    PadLeftMargin   = 0.175
+    yTitleOffset    = 1.5
+
+[RA4_Log]
+    yTitleOffset    = 1.2
+[RA4_Digits_2]
+    yTitleOffset    = 1.
+[RA4_Digits_3]
+    yTitleOffset    = 1.28
+[RA4_Digits_4]
+    yTitleOffset    = 1.5
+[RA4_Digits_5]
+    yTitleOffset    = 1.55
+
+[RA4long]
+    CanvasW	    = 1400
+    CanvasH	    = 600
+    LegendSize	    = 0.05
+    TitleSize	    = 0.047 
+    LabelSize	    = 0.06     
+    PadRightMargin  = 0.047
+    PadTopMargin    = 0.075
+    PadBottomMargin = 0.14
+    xTitleOffset    = 1.05     
+    PadLeftMargin   = 0.12
+    yTitleOffset    = 0.8
+
+[RA4long_Log]
+    yTitleOffset    = 1.
+[RA4long_Digits_2]
+    yTitleOffset    = 0.8
+[RA4long_Digits_3]
+    yTitleOffset    = 0.8
+[RA4long_Digits_4]
+    yTitleOffset    = 0.95
+[RA4long_Digits_5]
+    yTitleOffset    = 1.55
+
+[CMSPaper]
+    CanvasW	    = 600
+    CanvasH	    = 600
+    LegendSize	    = 0.06
+    TitleSize	    = 0.043
+    LabelSize	    = 0.06     
+    PadRightMargin  = 0.05
+    PadTopMargin    = 0.09
+    PadBottomMargin = 0.14
+    xTitleOffset    = 1.1     
+    PadLeftMargin   = 0.19
+    yTitleOffset    = 1.5
+
+[CMSPaper_Log]
+    yTitleOffset    = 1.45
+[CMSPaper_Digits_2]
+    yTitleOffset    = 1.3
+[CMSPaper_Digits_3]
+    yTitleOffset    = 1.45
+[CMSPaper_Digits_4]
+    yTitleOffset    = 1.65
+[CMSPaper_Digits_5]
+    yTitleOffset    = 1.55
+
+[CMSPaperNoRatio]
+    CanvasW         = 600
+    CanvasH         = 420
+    LegendSize      = 0.053
+    TitleSize       = 0.043
+    LabelSize       = 0.06
+    PadRightMargin  = 0.05
+    PadTopMargin    = 0.09
+    PadBottomMargin = 0.14
+    xTitleOffset    = 1.1
+    PadLeftMargin   = 0.19
+    yTitleOffset    = 1.5
+
+[CMSPaperNoRatio_Log]
+    yTitleOffset    = 1.1
+[CMSPaperNoRatio_Digits_2]
+    yTitleOffset    = 1.3
+[CMSPaperNoRatio_Digits_3]
+    yTitleOffset    = 1.45
+[CMSPaperNoRatio_Digits_4]
+    yTitleOffset    = 1.65
+[CMSPaperNoRatio_Digits_5]
+    yTitleOffset    = 1.55
+
+
+[HLTStyle]
+    CanvasW	    = 670
+    CanvasH	    = 600
+    LegendSize	    = 0.054
+    TitleSize	    = 0.043
+    LabelSize	    = 0.048     
+    PadRightMargin  = 0.145
+    PadTopMargin    = 0.09
+    PadBottomMargin = 0.14
+    xTitleOffset    = 1.1     
+    PadLeftMargin   = 0.12
+    yTitleOffset    = 1.2
+
+[LargeLabels]
+    CanvasW	    = 1000
+    CanvasH	    = 660
+    LegendSize	    = 0.055     
+    TitleSize	    = 0.07    
+    LabelSize	    = 0.065     
+    PadRightMargin  = 0.042
+    PadTopMargin    = 0.1
+    PadBottomMargin = 0.155
+    xTitleOffset    = 1.05
+    PadLeftMargin   = 0.131
+    yTitleOffset    = 0.92
+
+[1Dtitle]
+    CanvasW	    = 1000
+    CanvasH	    = 600
+    LegendSize	    = 0.069     
+    TitleSize	    = 0.052    
+    LabelSize	    = 0.052     
+    PadRightMargin  = 0.038
+    PadTopMargin    = 0.1
+    PadBottomMargin = 0.12
+    xTitleOffset    = 0.977     
+    PadLeftMargin   = 0.1 
+    yTitleOffset    = 0.82
+
+[2D]
+    CanvasW	    = 800 
+    CanvasH	    = 600 
+    LegendSize	    = 0.05 
+    TitleSize	    = 0.045 
+    LabelSize	    = 0.054    
+    PadRightMargin  = 0.155 
+    PadTopMargin    = 0.075 
+    PadBottomMargin = 0.14 
+    xTitleOffset    = 1.1     
+    PadLeftMargin   = 0.13 
+    yTitleOffset    = 1.1 
+    zTitleOffset    = 0.95 
+
+[2Dnobar]
+    CanvasW	    = 800 
+    CanvasH	    = 600 
+    LegendSize	    = 0.05 
+    TitleSize	    = 0.045 
+    LabelSize	    = 0.054    
+    PadRightMargin  = 0.05 
+    PadTopMargin    = 0.075 
+    PadBottomMargin = 0.14 
+    xTitleOffset    = 1.1     
+    PadLeftMargin   = 0.13 
+    yTitleOffset    = 1.1 
+    zTitleOffset    = 0.95 
+
+[2Dtitle]
+    CanvasW	    = 800 
+    CanvasH	    = 600 
+    LegendSize	    = 0.05 
+    TitleSize	    = 0.045 
+    LabelSize	    = 0.054  
+    PadRightMargin  = 0.155 
+    PadTopMargin    = 0.075 
+    PadBottomMargin = 0.14 
+    xTitleOffset    = 1.1     
+    PadLeftMargin   = 0.13 
+    yTitleOffset    = 1.1
+    zTitleOffset    = 0.95 
+
+[2Dscan]
+    CanvasW	    = 600 
+    CanvasH	    = 600 
+    LegendSize	    = 0.05 
+    TitleSize	    = 0.045 
+    LabelSize	    = 0.045 
+    PadRightMargin  = 0.202
+    PadTopMargin    = 0.08 
+    PadBottomMargin = 0.14 
+    xTitleOffset    = 1.2    
+    PadLeftMargin   = 0.155
+    yTitleOffset    = 1.7
+    zTitleOffset    = 1.6
+

@@ -3,6 +3,9 @@
 #include <cmath>
 
 #include <algorithm>
+#include <fstream>
+
+#include "utilities.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -24,7 +27,46 @@ PlotOpt::PlotOpt():
   legend_max_height_(0.3){
 }
 
+PlotOpt::PlotOpt(const string &file_name,
+                 const string &config_name):
+  PlotOpt(){
+  LoadOptions(file_name, config_name);
+}
+
 PlotOpt PlotOpt::operator()() const{
+  return *this;
+}
+
+PlotOpt & PlotOpt::LoadOptions(const string &file_name,
+                               const string &config_name){
+  ifstream file(file_name);
+  string line;
+  string current_config = "";
+  int line_num = 0;
+  while(getline(file, line)){
+    ++line_num;
+    ReplaceAll(line, " ", "");
+    ReplaceAll(line, "\t", "");
+    auto start  = line.find('[');
+    auto end = line.find(']');
+    if(start==string::npos && end!=string::npos){
+      ERROR("Could not find closing brace in line "+to_string(line_num));
+    }
+    if(start!=string::npos && end==string::npos){
+      ERROR("Could not find closing brace in line "+to_string(line_num));
+    }
+    if(start<end && start != string::npos && end != string::npos){
+      current_config = line.substr(start+1, end-start-1);
+    }else if(current_config == config_name
+             && line.size()
+             && line.at(0)!='#'){
+      auto pos = line.find("=");
+      if(pos == string::npos) continue;
+      string prop_name = line.substr(0,pos);
+      string value = line.substr(pos+1);
+      SetProperty(prop_name, value);
+    }
+  }
   return *this;
 }
 
@@ -79,8 +121,18 @@ PlotOpt & PlotOpt::CanvasSize(int width, int height){
   return *this;
 }
 
+PlotOpt & PlotOpt::CanvasWidth(int width){
+  canvas_width_ = width;
+  return *this;
+}
+
 int PlotOpt::CanvasWidth() const{
   return canvas_width_;
+}
+
+PlotOpt & PlotOpt::CanvasHeight(int height){
+  canvas_height_ = height;
+  return *this;
 }
 
 int PlotOpt::CanvasHeight() const{
@@ -180,4 +232,39 @@ double PlotOpt::GlobalToBottomYNDC(double global_y) const{
 
 double PlotOpt::LegendHeight(size_t num_entries) const{
   return min(legend_max_height_, legend_entry_height_*ceil(num_entries*0.5));
+}
+
+void PlotOpt::SetProperty(const string &property,
+                          const string &value){
+  if(property == "BottomType"){
+    Bottom(static_cast<BottomType>(stoi(value)));
+  }else if(property == "YAxisType"){
+    YAxis(static_cast<YAxisType>(stoi(value)));
+  }else if(property == "TitleType"){
+    Title(static_cast<TitleType>(stoi(value)));
+  }else if(property == "StackType"){
+    Stack(static_cast<StackType>(stoi(value)));
+  }else if(property == "OverflowType"){
+    Overflow(static_cast<OverflowType>(stoi(value)));
+  }else if(property == "CanvasWidth" || property == "CanvasW"){
+    CanvasWidth(stoi(value));
+  }else if(property == "CanvasHeight" || property == "CanvasH"){
+    CanvasHeight(stoi(value));
+  }else if(property == "PadLeftMargin"){
+    LeftMargin(stod(value));
+  }else if(property == "PadRightMargin"){
+    RightMargin(stod(value));
+  }else if(property == "PadBottomMargin"){
+    BottomMargin(stod(value));
+  }else if(property == "PadTopMargin"){
+    TopMargin(stod(value));
+  }else if(property == "LegendEntrySize" || property == "LegendSize"){
+    LegendEntryHeight(stod(value));
+  }else if(property == "LegendMaxSize"){
+    LegendMaxHeight(stod(value));
+  }else if(property == "BottomPlotHeight"){
+    BottomHeight(stod(value));
+  }else{
+    DBG("Did not understand property name "<<property);
+  }
 }

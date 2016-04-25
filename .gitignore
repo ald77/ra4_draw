@@ -36,6 +36,7 @@
 *.pdf
 *.txt
 !txt/*/*txt
+!txt/plot_styles.txt
 *.#*
 
 # LaTeX
