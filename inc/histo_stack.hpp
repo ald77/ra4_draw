@@ -8,6 +8,7 @@
 #include <limits>
 
 #include "TH1D.h"
+#include "TLegend.h"
 
 #include "process.hpp"
 #include "histo_def.hpp"
@@ -24,7 +25,7 @@ public:
   HistoStack& operator=(HistoStack &&) = default;
   ~HistoStack() = default;
 
-  std::set<std::shared_ptr<Process> > GetProcesses() const;
+  void PrintPlot();
 
   const TH1D & RawHisto(const std::shared_ptr<Process> &process) const;
   TH1D & RawHisto(const std::shared_ptr<Process> &process);
@@ -35,6 +36,9 @@ public:
   const PlotOpt & GetPlotOptions() const;
 
   void RefreshScaledHistos();
+
+  std::set<std::shared_ptr<Process> > GetProcesses() const;
+  std::unique_ptr<TLegend> GetLegend();
 
   class SingleHist{
   public:

@@ -33,7 +33,7 @@ int main(){
   auto data = Proc<Baby_basic>("Data", Process::Type::data, kBlack,
     {"~/ntuples/2015_09_28_ana/skim/*_QCD*.root"}, "nbm>2");
 
-  PlotOpt opt("txt/plot_styles.txt", "RA4");
+  PlotOpt opt("txt/plot_styles.txt", "CMSpaper");
   
   PlotMaker pm;
   for(int i = 0; i < 1; ++i){

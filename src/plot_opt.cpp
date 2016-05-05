@@ -16,6 +16,7 @@ PlotOpt::PlotOpt():
   title_type_(TitleType::variable),
   stack_type_(StackType::signal_overlay),
   overflow_type_(OverflowType::both),
+  file_extensions_({"pdf"}),
   canvas_width_(800),
   canvas_height_(800),
   left_margin_(0.15),
@@ -113,6 +114,15 @@ PlotOpt & PlotOpt::Overflow(OverflowType overflow_type){
 
 OverflowType PlotOpt::Overflow() const{
   return overflow_type_;
+}
+
+PlotOpt & PlotOpt::FileExtensions(const set<string> &file_extensions){
+  file_extensions_ = file_extensions;
+  return *this;
+}
+
+const set<string> & PlotOpt::FileExtensions() const{
+  return file_extensions_;
 }
 
 PlotOpt & PlotOpt::CanvasSize(int width, int height){

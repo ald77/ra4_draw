@@ -3,10 +3,22 @@
 #include <algorithm>
 #include <sstream>
 
+#include "TCanvas.h"
+
 #include "utilities.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
+
+namespace{
+  void DrawAll(vector<HistoStack::SingleHist> &hists,
+               string &draw_opt){
+    for(auto hist = hists.rbegin(); hist!= hists.rend(); ++hist){
+      hist->scaled_hist_.Draw(draw_opt.c_str());
+      draw_opt = "hist same";
+    }
+  }
+}
 
 HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
                        const HistoDef &definition,
@@ -70,18 +82,39 @@ HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
   }
 }
 
-set<shared_ptr<Process> > HistoStack::GetProcesses() const{
-  set<shared_ptr<Process> > processes;
-  for(const auto &proc: backgrounds_){
-    processes.insert(proc.process_);
+void HistoStack::PrintPlot(){
+  //Takes already filled histograms and prints to file
+  TCanvas c("", "",
+            plot_options_.CanvasWidth(),
+            plot_options_.CanvasHeight());
+  c.SetMargin(plot_options_.LeftMargin(),
+              plot_options_.RightMargin(),
+              plot_options_.BottomMargin(),
+              plot_options_.TopMargin());
+  c.SetTicks(1,1);
+  
+  if(plot_options_.YAxis() == YAxisType::log){
+    c.SetLogy(true);
+  }else{
+    c.SetLogy(false);
   }
-  for(const auto &proc: signals_){
-    processes.insert(proc.process_);
+
+  string draw_opt = "hist";
+  DrawAll(backgrounds_, draw_opt);
+  DrawAll(signals_, draw_opt);
+  ReplaceAll(draw_opt, "hist", "ep");
+  DrawAll(datas_, draw_opt);
+  auto legend = GetLegend();
+  legend->Draw();
+  c.RedrawAxis();
+  c.RedrawAxis("g");
+
+  string base_name = "plots/"+definition_.GetName();
+  for(const auto &ext: plot_options_.FileExtensions()){
+    string full_name = base_name+"."+ext;
+    c.Print(full_name.c_str());
+    cout << "Wrote plot to " << full_name << "." << endl;
   }
-  for(const auto &proc: datas_){
-    processes.insert(proc.process_);
-  }
-  return processes;
 }
 
 const TH1D & HistoStack::RawHisto(const shared_ptr<Process> &process) const{
@@ -109,6 +142,49 @@ void HistoStack::RefreshScaledHistos(){
   StackHistos();
   MergeOverflow();
   SetRanges();
+}
+
+set<shared_ptr<Process> > HistoStack::GetProcesses() const{
+  set<shared_ptr<Process> > processes;
+  for(const auto &proc: backgrounds_){
+    processes.insert(proc.process_);
+  }
+  for(const auto &proc: signals_){
+    processes.insert(proc.process_);
+  }
+  for(const auto &proc: datas_){
+    processes.insert(proc.process_);
+  }
+  return processes;
+}
+
+unique_ptr<TLegend> HistoStack::GetLegend(){
+  size_t num_procs = backgrounds_.size()+signals_.size()+datas_.size();
+  
+  double left = plot_options_.LeftMargin()+0.03;
+  double right = 1.-plot_options_.RightMargin()-0.03;
+  double top = 1.-plot_options_.TopMargin()-0.03;
+  double bottom = top-plot_options_.LegendHeight(num_procs);
+  top = plot_options_.GlobalToTopYNDC(top);
+  bottom = plot_options_.GlobalToTopYNDC(bottom);
+
+  auto legend = unique_ptr<TLegend>(new TLegend(left, bottom, right, top));
+  legend->SetNColumns(2);
+  legend->SetFillStyle(0);
+  legend->SetFillColor(0);
+  legend->SetBorderSize(0);
+  
+  for(const auto &hist: datas_){
+    legend->AddEntry(&hist.scaled_hist_, hist.process_->name_.c_str(), "e0p");
+  }
+  for(const auto &hist: backgrounds_){
+    legend->AddEntry(&hist.scaled_hist_, hist.process_->name_.c_str(), "f");
+  }
+  for(const auto &hist: signals_){
+    legend->AddEntry(&hist.scaled_hist_, hist.process_->name_.c_str(), "l");
+  }
+
+  return legend;
 }
 
 HistoStack::SingleHist::SingleHist(const shared_ptr<Process> &process,

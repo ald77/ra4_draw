@@ -3,6 +3,7 @@
 
 #include <cstddef>
 
+#include <set>
 #include <string>
 
 namespace PlotOptTypes{
@@ -44,6 +45,9 @@ public:
   PlotOpt & Overflow(PlotOptTypes::OverflowType overflow_type);
   PlotOptTypes::OverflowType Overflow() const;
 
+  PlotOpt & FileExtensions(const std::set<std::string> &file_extensions);
+  const std::set<std::string> & FileExtensions() const;
+
   PlotOpt & CanvasSize(int width, int height);
   PlotOpt & CanvasWidth(int width);
   int CanvasWidth() const;
@@ -81,6 +85,7 @@ private:
   PlotOptTypes::TitleType title_type_;
   PlotOptTypes::StackType stack_type_;
   PlotOptTypes::OverflowType overflow_type_;
+  std::set<std::string> file_extensions_;
   int canvas_width_, canvas_height_;
   double left_margin_, right_margin_, bottom_margin_, top_margin_;
   double bottom_height_;
