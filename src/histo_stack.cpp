@@ -111,10 +111,46 @@ void HistoStack::StripTopPlotLabels(){
   }
 }
 
-void HistoStack::PrintPlot(){
+void HistoStack::GetPads(unique_ptr<TCanvas> &c,
+                         unique_ptr<TPad> &top,
+                         unique_ptr<TPad> &bottom) const{
+  c.reset(new TCanvas("", "", plot_options_.CanvasWidth(),
+                      plot_options_.CanvasHeight()));
+  c->cd();
+  top.reset(new TPad("", "", 0., 0., 1., 1.));
+  bottom.reset(new TPad("", "", 0., 0., 1., 1.));
+  c->SetMargin(0., 0., 0., 0.);
+  c->SetTicks(1,1);
+  c->SetFillStyle(4000);
+  top->SetTicks(1,1);
+  top->SetFillStyle(4000);
+  bottom->SetTicks(1,1);
+  bottom->SetFillStyle(4000);
+  if(plot_options_.Bottom() == BottomType::off){
+    top->SetMargin(plot_options_.LeftMargin(),
+                   plot_options_.RightMargin(),
+                   plot_options_.BottomMargin(),
+                   plot_options_.TopMargin());
+  }else{
+    top->SetMargin(plot_options_.LeftMargin(),
+                   plot_options_.RightMargin(),
+                   plot_options_.BottomHeight(),
+                   plot_options_.TopMargin());
+    bottom->SetMargin(plot_options_.LeftMargin(),
+                      plot_options_.RightMargin(),
+                      plot_options_.BottomMargin(),
+                      1.-plot_options_.BottomHeight());
+  }
+  bottom->Draw();
+  top->Draw();
+}
+
+void HistoStack::PrintPlot(double luminosity){
   //Takes already filled histograms and prints to file
-  RefreshScaledHistos();
+  RefreshScaledHistos(luminosity);
   vector<TH1D> bot_plots = GetBottomPlots();
+
+  //I don't know why I can't make this in GetBottomPlots...
   TGraphAsymmErrors bottom_background;
   if(plot_options_.Bottom() != BottomType::off){
     bottom_background = TGraphAsymmErrors(&bot_plots.back());
@@ -125,48 +161,11 @@ void HistoStack::PrintPlot(){
 
   StripTopPlotLabels();
   
-  TCanvas full("", "",
-               plot_options_.CanvasWidth(),
-               plot_options_.CanvasHeight());
-  full.cd();
+  unique_ptr<TCanvas> full;
   unique_ptr<TPad> top, bottom;
-  full.SetMargin(plot_options_.LeftMargin(),
-                 plot_options_.RightMargin(),
-                 plot_options_.BottomMargin(),
-                 plot_options_.TopMargin());
-  full.SetMargin(0., 0., 0., 0.);
-  full.SetTicks(1,1);
-  full.SetFillStyle(4000);
-  if(plot_options_.Bottom() == BottomType::off){
-    top.reset(new TPad("", "", 0., 0., 1., 1.));
-    bottom.reset();
-    top->SetTicks(1,1);
-    top->SetFillStyle(4000);
-    top->SetMargin(plot_options_.LeftMargin(),
-                   plot_options_.RightMargin(),
-                   plot_options_.BottomMargin(),
-                   plot_options_.TopMargin());
-    top->Draw();
-  }else{
-    top.reset(new TPad("", "", 0., 0., 1., 1.));
-    bottom.reset(new TPad("", "", 0., 0., 1., 1.));
-    top->SetTicks(1,1);
-    bottom->SetTicks(1,1);
-    top->SetFillStyle(4000);
-    bottom->SetFillStyle(4000);
-    top->SetMargin(plot_options_.LeftMargin(),
-                   plot_options_.RightMargin(),
-                   plot_options_.BottomHeight(),
-                   plot_options_.TopMargin());
-    bottom->SetMargin(plot_options_.LeftMargin(),
-                      plot_options_.RightMargin(),
-                      plot_options_.BottomMargin(),
-                      1.-plot_options_.BottomHeight());
-    bottom->Draw();
-    top->Draw();
-  }
+  GetPads(full, top, bottom);
   
-  if(bottom){
+  if(plot_options_.Bottom() != BottomType::off){
     bottom->cd();
 
     string draw_opt = "ep";
@@ -180,27 +179,26 @@ void HistoStack::PrintPlot(){
     bottom->RedrawAxis("g");
   }
 
-  string draw_opt = "hist";
   top->cd();
-  if(plot_options_.YAxis() == YAxisType::log){
-    top->SetLogy(true);
-  }else{
-    top->SetLogy(false);
-  }
+  if(plot_options_.YAxis() == YAxisType::log) top->SetLogy(true);
+  else top->SetLogy(false);
 
+  string draw_opt = "hist";
   DrawAll(backgrounds_, draw_opt);
   DrawAll(signals_, draw_opt);
   ReplaceAll(draw_opt, "hist", "ep");
   DrawAll(datas_, draw_opt);
+  
   auto legend = GetLegend();
   legend->Draw();
+  
   top->RedrawAxis();
   top->RedrawAxis("g");
 
   string base_name = "plots/"+definition_.GetName();
   for(const auto &ext: plot_options_.FileExtensions()){
     string full_name = base_name+"."+ext;
-    full.Print(full_name.c_str());
+    full->Print(full_name.c_str());
     cout << "Wrote plot to " << full_name << "." << endl;
   }
 }
@@ -226,8 +224,8 @@ const PlotOpt & HistoStack::GetPlotOptions() const{
   return plot_options_;
 }
 
-void HistoStack::RefreshScaledHistos(){
-  StackHistos();
+void HistoStack::RefreshScaledHistos(double luminosity){
+  StackHistos(luminosity);
   MergeOverflow();
   SetRanges();
 }
@@ -386,14 +384,16 @@ double HistoStack::SingleHist::GetMin(double min_bound,
   return the_min;
 }
 
-void HistoStack::StackHistos(){
+void HistoStack::StackHistos(double luminosity){
   for(auto &hist: backgrounds_){
     hist.scaled_hist_ = hist.raw_hist_;
     Scale(hist.scaled_hist_, true);
+    hist.scaled_hist_.Scale(luminosity);
   }
   for(auto &hist: signals_){
     hist.scaled_hist_ = hist.raw_hist_;
     Scale(hist.scaled_hist_, true);
+    hist.scaled_hist_.Scale(luminosity);
   }
   for(auto &hist: datas_){
     hist.scaled_hist_ = hist.raw_hist_;

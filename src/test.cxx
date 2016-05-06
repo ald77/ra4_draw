@@ -25,6 +25,8 @@ shared_ptr<Process> Proc(const string process_name, Process::Type type,
 int main(){
   gErrorIgnoreLevel = 6000;
 
+  double lumi = 0.5;
+
   auto bkg1 = Proc<Baby_basic>("Background 1", Process::Type::background, kBlue,
     {"~/ntuples/2015_09_28_ana/skim/*_QCD*.root"}, "nbm>2");
   auto bkg2 = Proc<Baby_basic>("Background 2", Process::Type::background, kGreen,
@@ -49,5 +51,5 @@ int main(){
     pm.AddPlot({bkg1, bkg2, sig, data},
                HistoDef(10, 0., 1000., "jets_pt[0]", "Lead Jet p_{T}", "GeV"), opt);
   }
-  pm.MakePlots();
+  pm.MakePlots(lumi);
 }

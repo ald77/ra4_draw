@@ -56,13 +56,18 @@ void PlotMaker::AddPlot(const vector<shared_ptr<Process> > &processes,
   stacks_.emplace_back(processes, histo_def, plot_options);
 }
 
-void PlotMaker::MakePlots(){
+void PlotMaker::MakePlots(double luminosity){
   //Processes this list of plots provided with AddPlot and writes the results to disk
   FillHistograms();
 
   for(auto &stack: stacks_){
-    stack.PrintPlot();
+    stack.PrintPlot(luminosity);
   }
+}
+
+void PlotMaker::Clear(){
+  //Removes current plots from list to be drawn at next MakePlots call
+  stacks_.clear();
 }
 
 void PlotMaker::FillHistograms(){

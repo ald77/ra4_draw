@@ -9,6 +9,8 @@
 
 #include "TH1D.h"
 #include "TLegend.h"
+#include "TCanvas.h"
+#include "TPad.h"
 
 #include "process.hpp"
 #include "histo_def.hpp"
@@ -51,7 +53,10 @@ public:
   ~HistoStack() = default;
 
   void StripTopPlotLabels();
-  void PrintPlot();
+  void GetPads(std::unique_ptr<TCanvas> &c,
+               std::unique_ptr<TPad> &top,
+               std::unique_ptr<TPad> &bottom) const;
+  void PrintPlot(double luminosity);
 
   const TH1D & RawHisto(const std::shared_ptr<Process> &process) const;
   TH1D & RawHisto(const std::shared_ptr<Process> &process);
@@ -61,7 +66,7 @@ public:
   HistoStack & SetPlotOptions(const PlotOpt &plot_opt);
   const PlotOpt & GetPlotOptions() const;
 
-  void RefreshScaledHistos();
+  void RefreshScaledHistos(double luminosity);
 
   std::vector<TH1D> GetBottomPlots() const;
 
@@ -75,7 +80,7 @@ public:
 private:
   HistoStack() = delete;
 
-  void StackHistos();
+  void StackHistos(double luminosity);
   void MergeOverflow();
   void SetRanges();
 

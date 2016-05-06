@@ -24,7 +24,9 @@ public:
                const HistoDef &histo_def,
                const PlotOpt &plot_options = PlotOpt());
   
-  void MakePlots();
+  void MakePlots(double luminosity);
+
+  void Clear();
 
 private:
   std::vector<HistoStack> stacks_;
