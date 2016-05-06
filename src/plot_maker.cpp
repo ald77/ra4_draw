@@ -61,7 +61,6 @@ void PlotMaker::MakePlots(){
   FillHistograms();
 
   for(auto &stack: stacks_){
-    stack.RefreshScaledHistos();
     stack.PrintPlot();
   }
 }

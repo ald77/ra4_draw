@@ -17,6 +17,10 @@ PlotOpt::PlotOpt():
   stack_type_(StackType::signal_overlay),
   overflow_type_(OverflowType::both),
   file_extensions_({"pdf"}),
+  title_size_(0.05),
+  label_size_(0.05),
+  x_title_offset_(1.),
+  y_title_offset_(2.),
   canvas_width_(800),
   canvas_height_(800),
   left_margin_(0.15),
@@ -25,7 +29,11 @@ PlotOpt::PlotOpt():
   top_margin_(0.1),
   bottom_height_(1./3.),
   legend_entry_height_(0.05),
-  legend_max_height_(0.3){
+  legend_max_height_(0.3),
+  legend_pad_(0.03),
+  log_minimum_(0.01),
+  n_divisions_(606),
+  font_(42){
 }
 
 PlotOpt::PlotOpt(const string &file_name,
@@ -125,6 +133,42 @@ const set<string> & PlotOpt::FileExtensions() const{
   return file_extensions_;
 }
 
+PlotOpt & PlotOpt::TitleSize(double title_size){
+  title_size_ = title_size;
+  return *this;
+}
+
+double PlotOpt::TitleSize() const{
+  return title_size_;
+}
+
+PlotOpt & PlotOpt::LabelSize(double label_size){
+  label_size_ = label_size;
+  return *this;
+}
+
+double PlotOpt::LabelSize() const{
+  return label_size_;
+}
+
+PlotOpt & PlotOpt::XTitleOffset(double x_title_offset){
+  x_title_offset_ = x_title_offset;
+  return *this;
+}
+
+double PlotOpt::XTitleOffset() const{
+  return x_title_offset_;
+}
+
+PlotOpt & PlotOpt::YTitleOffset(double y_title_offset){
+  y_title_offset_ = y_title_offset;
+  return *this;
+}
+
+double PlotOpt::YTitleOffset() const{
+  return y_title_offset_;
+}
+
 PlotOpt & PlotOpt::CanvasSize(int width, int height){
   canvas_width_ = width;
   canvas_height_ = height;
@@ -220,6 +264,42 @@ double PlotOpt::LegendMaxHeight() const{
   return legend_max_height_;
 }
 
+PlotOpt & PlotOpt::LegendPad(double pad){
+  legend_pad_ = pad;
+  return *this;
+}
+
+double PlotOpt::LegendPad() const{
+  return legend_pad_;
+}
+
+PlotOpt & PlotOpt::NDivisions(int n_divisions){
+  n_divisions_ = n_divisions;
+  return *this;
+}
+
+int PlotOpt::NDivisions() const{
+  return n_divisions_;
+}
+
+PlotOpt & PlotOpt::LogMinimum(double log_minimum){
+  log_minimum_ = log_minimum;
+  return *this;
+}
+
+double PlotOpt::LogMinimum() const{
+  return log_minimum_;
+}
+
+PlotOpt & PlotOpt::Font(int font){
+  font_ = font;
+  return *this;
+}
+
+int PlotOpt::Font() const{
+  return font_;
+}
+
 double PlotOpt::TopToGlobalYNDC(double top_y) const{
   if(bottom_type_ == BottomType::off) return top_y;
   else return 1.-(1.-top_y)*(1. - bottom_margin_ - bottom_height_);
@@ -256,6 +336,18 @@ void PlotOpt::SetProperty(const string &property,
     Stack(static_cast<StackType>(stoi(value)));
   }else if(property == "OverflowType"){
     Overflow(static_cast<OverflowType>(stoi(value)));
+  }else if(property == "FileExtensions"){
+    auto exts = FileExtensions();
+    exts.insert(value);
+    FileExtensions(exts);
+  }else if(property == "TitleSize"){
+    TitleSize(stod(value));
+  }else if(property == "LabelSize"){
+    LabelSize(stod(value));
+  }else if(property == "xTitleOffset" || property == "XTitleOffset"){
+    XTitleOffset(stod(value));
+  }else if(property == "yTitleOffset" || property == "YTitleOffset"){
+    YTitleOffset(stod(value));
   }else if(property == "CanvasWidth" || property == "CanvasW"){
     CanvasWidth(stoi(value));
   }else if(property == "CanvasHeight" || property == "CanvasH"){
@@ -272,8 +364,16 @@ void PlotOpt::SetProperty(const string &property,
     LegendEntryHeight(stod(value));
   }else if(property == "LegendMaxSize"){
     LegendMaxHeight(stod(value));
+  }else if(property == "LegendPad"){
+    LegendPad(stod(value));
   }else if(property == "BottomPlotHeight"){
     BottomHeight(stod(value));
+  }else if(property == "LogMinimum"){
+    LogMinimum(stod(value));
+  }else if(property == "nDivisions" || property == "NDivisions"){
+    NDivisions(stoi(value));
+  }else if(property == "Font"){
+    Font(stoi(value));
   }else{
     DBG("Did not understand property name "<<property);
   }

@@ -12,6 +12,7 @@
 #include "plot_opt.hpp"
 
 using namespace std;
+using namespace PlotOptTypes;
 
 template<typename T>
 shared_ptr<Process> Proc(const string process_name, Process::Type type,
@@ -33,12 +34,12 @@ int main(){
   auto data = Proc<Baby_basic>("Data", Process::Type::data, kBlack,
     {"~/ntuples/2015_09_28_ana/skim/*_QCD*.root"}, "nbm>2");
 
-  PlotOpt opt("txt/plot_styles.txt", "CMSpaper");
+  PlotOpt opt("txt/plot_styles.txt", "CMSPaper");
   
   PlotMaker pm;
   for(int i = 0; i < 1; ++i){
     pm.AddPlot({bkg1, bkg2, sig, data},
-               HistoDef(40, 0., 2000., "ht", "H_{T}", "GeV"), opt);
+               HistoDef(40, 0., 2000., "ht", "H_{T}", "GeV"), opt().Bottom(BottomType::ratio));
     pm.AddPlot({bkg1, bkg2, sig, data},
                HistoDef(40, 0., 2000., "ht+met", "H_{T}+MET", "GeV"), opt);
     pm.AddPlot({bkg1, bkg2, sig, data},

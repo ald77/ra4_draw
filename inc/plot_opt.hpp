@@ -48,6 +48,18 @@ public:
   PlotOpt & FileExtensions(const std::set<std::string> &file_extensions);
   const std::set<std::string> & FileExtensions() const;
 
+  PlotOpt & LabelSize(double label_size);
+  double LabelSize() const;
+
+  PlotOpt & TitleSize(double title_size);
+  double TitleSize() const;
+
+  PlotOpt & XTitleOffset(double x_title_offset);
+  double XTitleOffset() const;
+
+  PlotOpt & YTitleOffset(double y_title_offset);
+  double YTitleOffset() const;
+
   PlotOpt & CanvasSize(int width, int height);
   PlotOpt & CanvasWidth(int width);
   int CanvasWidth() const;
@@ -71,6 +83,17 @@ public:
   double LegendEntryHeight() const;
   PlotOpt & LegendMaxHeight(double height);
   double LegendMaxHeight() const;
+  PlotOpt & LegendPad(double pad);
+  double LegendPad() const;
+
+  PlotOpt & LogMinimum(double log_minimum);
+  double LogMinimum() const;
+
+  PlotOpt & NDivisions(int n_divisions);
+  int NDivisions() const;
+
+  PlotOpt & Font(int font);
+  int Font() const;
 
   double TopToGlobalYNDC(double top_y) const;
   double GlobalToTopYNDC(double global_y) const;
@@ -86,10 +109,16 @@ private:
   PlotOptTypes::StackType stack_type_;
   PlotOptTypes::OverflowType overflow_type_;
   std::set<std::string> file_extensions_;
+  double title_size_, label_size_;
+  double x_title_offset_, y_title_offset_;
   int canvas_width_, canvas_height_;
   double left_margin_, right_margin_, bottom_margin_, top_margin_;
   double bottom_height_;
   double legend_entry_height_, legend_max_height_;
+  double legend_pad_;
+  double log_minimum_;
+  int n_divisions_;
+  int font_;
 
   void SetProperty(const std::string &property_name,
                    const std::string &value_string);

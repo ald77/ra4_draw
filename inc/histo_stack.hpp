@@ -16,30 +16,6 @@
 
 class HistoStack{  
 public:
-  HistoStack(const std::vector<std::shared_ptr<Process> > &processes,
-             const HistoDef &definition,
-             const PlotOpt &plot_options = PlotOpt());
-  HistoStack(const HistoStack &) = default;
-  HistoStack& operator=(const HistoStack &) = default;
-  HistoStack(HistoStack &&) = default;
-  HistoStack& operator=(HistoStack &&) = default;
-  ~HistoStack() = default;
-
-  void PrintPlot();
-
-  const TH1D & RawHisto(const std::shared_ptr<Process> &process) const;
-  TH1D & RawHisto(const std::shared_ptr<Process> &process);
-
-  const TH1D & ScaledHisto(const std::shared_ptr<Process> &process) const;
-
-  HistoStack & SetPlotOptions(const PlotOpt &plot_opt);
-  const PlotOpt & GetPlotOptions() const;
-
-  void RefreshScaledHistos();
-
-  std::set<std::shared_ptr<Process> > GetProcesses() const;
-  std::unique_ptr<TLegend> GetLegend();
-
   class SingleHist{
   public:
     SingleHist(const std::shared_ptr<Process> &process,
@@ -64,6 +40,33 @@ public:
   private:
     SingleHist() = delete;
   };
+
+  HistoStack(const std::vector<std::shared_ptr<Process> > &processes,
+             const HistoDef &definition,
+             const PlotOpt &plot_options = PlotOpt());
+  HistoStack(const HistoStack &) = default;
+  HistoStack& operator=(const HistoStack &) = default;
+  HistoStack(HistoStack &&) = default;
+  HistoStack& operator=(HistoStack &&) = default;
+  ~HistoStack() = default;
+
+  void ResizeTopPlotLabels();
+  void PrintPlot();
+
+  const TH1D & RawHisto(const std::shared_ptr<Process> &process) const;
+  TH1D & RawHisto(const std::shared_ptr<Process> &process);
+
+  const TH1D & ScaledHisto(const std::shared_ptr<Process> &process) const;
+
+  HistoStack & SetPlotOptions(const PlotOpt &plot_opt);
+  const PlotOpt & GetPlotOptions() const;
+
+  void RefreshScaledHistos();
+
+  std::vector<TH1D> GetBottomPlots() const;
+
+  std::set<std::shared_ptr<Process> > GetProcesses() const;
+  std::unique_ptr<TLegend> GetLegend();
 
   std::vector<SingleHist> backgrounds_, signals_, datas_;
   HistoDef definition_;

@@ -18,6 +18,29 @@ namespace{
       draw_opt = "hist same";
     }
   }
+
+  void ResizeLabels(TH1D &h, double scale){
+    h.GetXaxis()->SetTitle("");
+    h.SetLabelSize(0., "x");
+    h.SetTitleSize(0., "x");
+    return;
+    h.SetMarkerSize(h.GetMarkerSize()*scale);
+    h.SetLabelSize(h.GetLabelSize("x")*scale, "x");
+    h.SetLabelSize(h.GetLabelSize("y")*scale, "y");
+    h.SetLabelSize(h.GetLabelSize("z")*scale, "z");
+    h.SetTitleSize(h.GetTitleSize("x")*scale, "x");
+    h.SetTitleSize(h.GetTitleSize("y")*scale, "y");
+    h.SetTitleSize(h.GetTitleSize("z")*scale, "z");
+    h.SetLabelOffset(h.GetLabelOffset("x")/scale, "x");
+    h.SetLabelOffset(h.GetLabelOffset("y")/scale, "y");
+    h.SetLabelOffset(h.GetLabelOffset("z")/scale, "x");
+    h.SetTitleOffset(h.GetTitleOffset("x")/scale, "x");
+    h.SetTitleOffset(h.GetTitleOffset("y")/scale, "y");
+    h.SetTitleOffset(h.GetTitleOffset("z")/scale, "x");
+    h.SetTickLength(h.GetTickLength("x")*scale, "x");
+    //h.SetTickLength(h.GetTickLength("y")/scale, "y");
+    //h.SetTickLength(h.GetTickLength("z")*scale, "z");
+  }
 }
 
 HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
@@ -52,6 +75,14 @@ HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
   }
   
   TH1D empty("", (";"+x_title+";"+oss.str()).c_str(), definition.GetNbins(), &definition.bins_.at(0));
+  empty.SetStats(false);
+  empty.GetXaxis()->SetTitleOffset(plot_options_.XTitleOffset());
+  empty.GetYaxis()->SetTitleOffset(plot_options_.YTitleOffset());
+  empty.SetNdivisions(plot_options_.NDivisions(), "xyz");
+  empty.SetLabelSize(plot_options_.LabelSize(), "xyz");
+  empty.SetTitleSize(plot_options_.TitleSize(), "xyz");
+  empty.SetLabelFont(plot_options_.Font(), "xyz");
+  empty.SetTitleFont(plot_options_.Font(), "xyz");
   empty.Sumw2(true);
   for(const auto &process: processes){
     SingleHist hist(process, empty);
@@ -63,8 +94,6 @@ HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
     hist.raw_hist_.SetMarkerColor(process->GetMarkerColor());
     hist.raw_hist_.SetMarkerStyle(process->GetMarkerStyle());
     hist.raw_hist_.SetMarkerSize(process->GetMarkerSize());
-    hist.raw_hist_.SetStats(false);
-    hist.raw_hist_.GetYaxis()->SetTitleOffset(2.);
 
     switch(process->type_){
     case Process::Type::data:
@@ -82,37 +111,102 @@ HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
   }
 }
 
+void HistoStack::ResizeTopPlotLabels(){
+  if(plot_options_.Bottom() == BottomType::off) return;
+  double scale = 1./(1.-plot_options_.BottomHeight());
+  for(auto &hist: backgrounds_){
+    ResizeLabels(hist.scaled_hist_, scale);
+  }
+  for(auto &hist: signals_){
+    ResizeLabels(hist.scaled_hist_, scale);
+  }
+  for(auto &hist: datas_){
+    ResizeLabels(hist.scaled_hist_, scale);
+  }
+}
+
 void HistoStack::PrintPlot(){
   //Takes already filled histograms and prints to file
-  TCanvas c("", "",
-            plot_options_.CanvasWidth(),
-            plot_options_.CanvasHeight());
-  c.SetMargin(plot_options_.LeftMargin(),
-              plot_options_.RightMargin(),
-              plot_options_.BottomMargin(),
-              plot_options_.TopMargin());
-  c.SetTicks(1,1);
+  RefreshScaledHistos();  
+  vector<TH1D> bot_plots = GetBottomPlots();
+  ResizeTopPlotLabels();
   
-  if(plot_options_.YAxis() == YAxisType::log){
-    c.SetLogy(true);
+  TCanvas full("", "",
+               plot_options_.CanvasWidth(),
+               plot_options_.CanvasHeight());
+  full.cd();
+  unique_ptr<TPad> top, bottom;
+  full.SetMargin(plot_options_.LeftMargin(),
+                 plot_options_.RightMargin(),
+                 plot_options_.BottomMargin(),
+                 plot_options_.TopMargin());
+  full.SetMargin(0., 0., 0., 0.);
+  full.SetTicks(1,1);
+  full.SetFillStyle(4000);
+  if(plot_options_.Bottom() == BottomType::off){
+    top.reset(new TPad("", "", 0., 0., 1., 1.));
+    bottom.reset();
+    top->SetTicks(1,1);
+    top->SetFillStyle(4000);
+    top->SetMargin(plot_options_.LeftMargin(),
+                   plot_options_.RightMargin(),
+                   plot_options_.BottomMargin(),
+                   plot_options_.TopMargin());
+    top->Draw();
   }else{
-    c.SetLogy(false);
+    top.reset(new TPad("", "", 0., 0., 1., 1.));
+    bottom.reset(new TPad("", "", 0., 0., 1., 1.));
+    top->SetTicks(1,1);
+    bottom->SetTicks(1,1);
+    top->SetFillStyle(4000);
+    bottom->SetFillStyle(4000);
+    top->SetMargin(plot_options_.LeftMargin(),
+                   plot_options_.RightMargin(),
+                   plot_options_.BottomHeight(),
+                   plot_options_.TopMargin());///(1.-plot_options_.BottomHeight()));
+    bottom->SetMargin(plot_options_.LeftMargin(),
+                      plot_options_.RightMargin(),
+                      plot_options_.BottomMargin(),
+                      1.-plot_options_.BottomHeight());
+    bottom->Draw();
+    top->Draw();
+  }
+  
+  string draw_opt = "hist";
+  if(bottom){
+    bottom->cd();
+    
+    for(auto &h: bot_plots){
+      h.Draw(draw_opt.c_str());
+      draw_opt = "hist same";
+      break;
+    }
+    
+    bottom->RedrawAxis();
+    bottom->RedrawAxis("g");
+    draw_opt = "hist";
   }
 
-  string draw_opt = "hist";
+  top->cd();
+  if(plot_options_.YAxis() == YAxisType::log){
+    top->SetLogy(true);
+  }else{
+    top->SetLogy(false);
+  }
+
   DrawAll(backgrounds_, draw_opt);
   DrawAll(signals_, draw_opt);
   ReplaceAll(draw_opt, "hist", "ep");
   DrawAll(datas_, draw_opt);
   auto legend = GetLegend();
   legend->Draw();
-  c.RedrawAxis();
-  c.RedrawAxis("g");
+  top->RedrawAxis();
+  top->RedrawAxis("g");
 
   string base_name = "plots/"+definition_.GetName();
   for(const auto &ext: plot_options_.FileExtensions()){
     string full_name = base_name+"."+ext;
-    c.Print(full_name.c_str());
+    full.Print(full_name.c_str());
     cout << "Wrote plot to " << full_name << "." << endl;
   }
 }
@@ -158,15 +252,60 @@ set<shared_ptr<Process> > HistoStack::GetProcesses() const{
   return processes;
 }
 
+std::vector<TH1D> HistoStack::GetBottomPlots() const{
+  if(backgrounds_.size() == 0) return vector<TH1D>();
+
+  TH1D denom = backgrounds_.front().scaled_hist_;
+  for(int bin = 0; bin <= denom.GetNbinsX()+1; ++bin){
+    denom.SetBinError(bin, 0.);
+  }
+
+  vector<TH1D> out(datas_.size()+1);
+  
+  for(size_t i = 0; i < datas_.size(); ++i){
+    out.at(i) = TH1D(datas_.at(i).scaled_hist_);
+    out.at(i).Divide(&denom);
+  }
+  out.back() = TH1D(backgrounds_.back().scaled_hist_);
+  out.back().Divide(&denom);
+
+  double the_min = numeric_limits<double>::infinity();
+  double the_max = -numeric_limits<double>::infinity();
+  for(auto &h: out){
+    for(int bin = 1; bin <= h.GetNbinsX(); ++bin){
+      double hi = h.GetBinContent(bin)+h.GetBinErrorUp(bin);
+      double lo = h.GetBinContent(bin)-fabs(h.GetBinErrorLow(bin));
+      if(hi>the_max) the_max = hi;
+      if(lo<the_min) the_min = lo;
+    }
+  }
+
+  if(plot_options_.Bottom() == BottomType::ratio){
+    for(auto &h: out){
+      h.GetYaxis()->SetTitle("Data/MC");
+      h.SetMinimum(0.1);
+      h.SetMaximum(1.9);
+    }
+  }else if(plot_options_.Bottom() == BottomType::diff){
+    for(auto &h: out){
+      h.GetYaxis()->SetTitle("Data-MC");
+      h.SetMinimum(the_min);
+      h.SetMaximum(the_max);
+    }
+  }
+  
+  return out;
+}
+
 unique_ptr<TLegend> HistoStack::GetLegend(){
   size_t num_procs = backgrounds_.size()+signals_.size()+datas_.size();
   
-  double left = plot_options_.LeftMargin()+0.03;
-  double right = 1.-plot_options_.RightMargin()-0.03;
-  double top = 1.-plot_options_.TopMargin()-0.03;
+  double left = plot_options_.LeftMargin()+plot_options_.LegendPad();
+  double right = 1.-plot_options_.RightMargin()-plot_options_.LegendPad();
+  double top = 1.-plot_options_.TopMargin()-plot_options_.LegendPad();
   double bottom = top-plot_options_.LegendHeight(num_procs);
-  top = plot_options_.GlobalToTopYNDC(top);
-  bottom = plot_options_.GlobalToTopYNDC(bottom);
+  //top = plot_options_.GlobalToTopYNDC(top);
+  //bottom = plot_options_.GlobalToTopYNDC(bottom);
 
   auto legend = unique_ptr<TLegend>(new TLegend(left, bottom, right, top));
   legend->SetNColumns(2);
@@ -322,15 +461,14 @@ void HistoStack::SetRanges(){
   double the_max = GetMaxDraw();
 
   size_t num_plots = backgrounds_.size() + signals_.size() + datas_.size();
-  double legend_size = plot_options_.LegendHeight(num_plots);
-  double legend_top = plot_options_.GlobalToTopYNDC(1.-plot_options_.TopMargin());
-  double legend_bottom = plot_options_.GlobalToTopYNDC(1.-plot_options_.TopMargin()-legend_size-0.05);
-  double ratio;
+  double legend_height = plot_options_.LegendHeight(num_plots);
+  double top_plot_height;
   if(plot_options_.Bottom() == BottomType::off){
-    ratio = (legend_top-plot_options_.BottomMargin())/(legend_bottom-plot_options_.BottomMargin());
+    top_plot_height = 1.-plot_options_.TopMargin()-plot_options_.BottomMargin();
   }else{
-    ratio = legend_top/legend_bottom;
+    top_plot_height = 1.-plot_options_.TopMargin()-plot_options_.BottomHeight();
   }
+  double ratio = top_plot_height/(top_plot_height-legend_height-2.*plot_options_.LegendPad());
 
   double bottom, top;
   switch(plot_options_.YAxis()){
@@ -340,11 +478,11 @@ void HistoStack::SetRanges(){
     top = bottom+ratio*(the_max-bottom);
     break;
   case YAxisType::log:
-    bottom = the_min > 0. ? the_min : 0.01;
+    bottom = the_min > 0. ? the_min : plot_options_.LogMinimum();
     top = exp(log(bottom)+ratio*(log(the_max)-log(bottom)));
     break;
   }
-  
+
   for(auto &hist: backgrounds_){
     hist.scaled_hist_.SetMinimum(bottom);
     hist.scaled_hist_.SetMaximum(top);
