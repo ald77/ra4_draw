@@ -50,7 +50,7 @@ public:
   HistoStack& operator=(HistoStack &&) = default;
   ~HistoStack() = default;
 
-  void ResizeTopPlotLabels();
+  void StripTopPlotLabels();
   void PrintPlot();
 
   const TH1D & RawHisto(const std::shared_ptr<Process> &process) const;
