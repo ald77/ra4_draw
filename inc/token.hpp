@@ -14,7 +14,7 @@ struct Token{
       open_paren, close_paren, //22-23
       open_square, close_square, //24-25
       unknown};//26
-  
+
   Token(const std::string &function_string="", Type type = Type::unknown);
   Token(const NamedFunc &function);
   Token(const Token &) = default;
@@ -22,7 +22,7 @@ struct Token{
   Token(Token &&) = default;
   Token & operator=(Token &&) = default;
   ~Token() = default;
-  
+
   static Type GetType(char x);
   static Type GetType(const std::string &x);
 

@@ -37,7 +37,7 @@ int main(){
     {"~/ntuples/2015_09_28_ana/skim/*_QCD*.root"}, "nbm>2");
 
   PlotOpt opt("txt/plot_styles.txt", "CMSPaper");
-  
+
   PlotMaker pm;
   for(int i = 0; i < 1; ++i){
     pm.AddPlot({bkg1, bkg2, sig, data},

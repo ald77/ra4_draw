@@ -11,7 +11,7 @@ public:
   GammaParams & operator=(const GammaParams &) = default;
   GammaParams(GammaParams &&) = default;
   GammaParams & operator=(GammaParams &&) = default;
-  ~GammaParams() = default;  
+  ~GammaParams() = default;
 
   void SetNEffectiveAndWeight(double n_effective, double weight);
   void SetYieldAndUncertainty(double yield, double uncertainty);

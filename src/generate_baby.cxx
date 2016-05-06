@@ -270,7 +270,7 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "\n";
 
   file << "  const std::unique_ptr<TChain> & GetTree() const;\n\n";
-  
+
   file << "  static NamedFunc GetFunction(const std::string &var_name);\n\n";
 
   file << "protected:\n";
@@ -302,7 +302,7 @@ void WriteBaseHeader(const set<Variable> &vars,
     file << "#include \"baby_" << type << ".hpp\"\n";
   }
   file << '\n';
-  
+
   file << "#endif" << endl;
   file.close();
 }
@@ -326,7 +326,7 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  using VectorType = NamedFunc::VectorType;\n";
   file << "  using ScalarFunc = NamedFunc::ScalarFunc;\n";
   file << "  using VectorFunc = NamedFunc::VectorFunc;\n\n";
-  
+
   file << "  template<typename T>\n";
   file << "    NamedFunc GetFunction(T,\n";
   file << "                          const string &name){\n";
@@ -359,7 +359,7 @@ void WriteBaseSource(const set<Variable> &vars){
       have_vector_double = true;
     }
   }
-  
+
   if(have_vector_double){
     file << "    template<>\n";
     file << "      NamedFunc GetFunction<vector<double>* const &(Baby::*)() const>(vector<double>* const &(Baby::*baby_func)() const,\n";
@@ -526,7 +526,7 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
   file << "#include \"baby_" << type << ".hpp\"\n\n";
 
   file << "#include \"utilities.hpp\"\n\n";
-  
+
   file << "using namespace std;\n\n";
 
   file << "Baby_" << type << "::Baby_" << type << "(const set<string> &file_names):\n";

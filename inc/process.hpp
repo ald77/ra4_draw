@@ -10,7 +10,7 @@
 class Process : public TAttFill, public TAttLine, public TAttMarker{
 public:
   enum class Type{data, background, signal};
-  
+
   Process(const std::string & name,
           Type type,
           int color,
@@ -19,7 +19,7 @@ public:
   Process(Process &&) = default;
   Process& operator=(Process &&) = default;
   ~Process() = default;
-  
+
   std::string name_;
   Type type_;
   std::unique_ptr<Baby> baby_;

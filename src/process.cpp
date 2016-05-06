@@ -4,7 +4,7 @@ using namespace std;
 
 Process::Process(const string &name,
                  Type type,
-                 int color,                 
+                 int color,
                  unique_ptr<Baby> baby,
                  const NamedFunc &cut):
   TAttFill(color, type == Type::background ? 1001 : 0),

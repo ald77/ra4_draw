@@ -9,7 +9,7 @@ Token::Token(const string &function_string, Type type):
   if(type_ == Type::unknown){
     type_ = GetType(function_string);
   }
-}
+  }
 
 Token::Token(const NamedFunc &function):
   function_(function),

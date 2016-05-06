@@ -42,7 +42,7 @@ HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
   if(definition.units_ != "") x_title += " ["+definition.units_+"]";
 
   double bin_width = (definition.bins_.back()-definition.bins_.front())/(definition.bins_.size()-1);
-  
+
   ostringstream oss;
   switch(plot_options.Stack()){
   default:
@@ -60,7 +60,7 @@ HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
     oss << ")";
     break;
   }
-  
+
   TH1D empty("", (";"+x_title+";"+oss.str()).c_str(), definition.GetNbins(), &definition.bins_.at(0));
   empty.SetStats(false);
   empty.GetXaxis()->SetTitleOffset(plot_options_.XTitleOffset());
@@ -160,11 +160,11 @@ void HistoStack::PrintPlot(double luminosity){
   }
 
   StripTopPlotLabels();
-  
+
   unique_ptr<TCanvas> full;
   unique_ptr<TPad> top, bottom;
   GetPads(full, top, bottom);
-  
+
   if(plot_options_.Bottom() != BottomType::off){
     bottom->cd();
 
@@ -174,7 +174,7 @@ void HistoStack::PrintPlot(double luminosity){
       draw_opt = "ep same";
     }
     bottom_background.Draw("2 same");
-    
+
     bottom->RedrawAxis();
     bottom->RedrawAxis("g");
   }
@@ -188,10 +188,10 @@ void HistoStack::PrintPlot(double luminosity){
   DrawAll(signals_, draw_opt);
   ReplaceAll(draw_opt, "hist", "ep");
   DrawAll(datas_, draw_opt);
-  
+
   auto legend = GetLegend();
   legend->Draw();
-  
+
   top->RedrawAxis();
   top->RedrawAxis("g");
 
@@ -255,7 +255,7 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
   }
 
   vector<TH1D> out(datas_.size()+1);
-  
+
   for(size_t i = 0; i < datas_.size(); ++i){
     out.at(i) = TH1D(datas_.at(i).scaled_hist_);
   }
@@ -314,7 +314,7 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
 
 unique_ptr<TLegend> HistoStack::GetLegend(){
   size_t num_procs = backgrounds_.size()+signals_.size()+datas_.size();
-  
+
   double left = plot_options_.LeftMargin()+plot_options_.LegendPad();
   double right = 1.-plot_options_.RightMargin()-plot_options_.LegendPad();
   double top = 1.-plot_options_.TopMargin()-plot_options_.LegendPad();
@@ -325,7 +325,7 @@ unique_ptr<TLegend> HistoStack::GetLegend(){
   legend->SetFillStyle(0);
   legend->SetFillColor(0);
   legend->SetBorderSize(0);
-  
+
   for(const auto &hist: datas_){
     legend->AddEntry(&hist.scaled_hist_, hist.process_->name_.c_str(), "e0p");
   }
@@ -399,7 +399,7 @@ void HistoStack::StackHistos(double luminosity){
     hist.scaled_hist_ = hist.raw_hist_;
     Scale(hist.scaled_hist_, true);
   }
-  
+
   switch(plot_options_.Stack()){
   case StackType::signal_on_top:
     for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){
@@ -459,7 +459,7 @@ void HistoStack::MergeOverflow(){
     overflow = true;
     break;
   }
-  
+
   for(auto &hist: backgrounds_){
     ::MergeOverflow(hist.scaled_hist_, underflow, overflow);
   }

@@ -20,7 +20,7 @@ public:
 
   std::size_t Size() const;
   void Resize(size_t num_threads);
-  
+
   template<typename FuncType, typename...ArgTypes>
   auto Push(FuncType &&func, ArgTypes&&... args) -> std::future<decltype(func(args...))>;
 

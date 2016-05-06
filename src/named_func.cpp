@@ -17,7 +17,7 @@ namespace{
   ScalarType MyModulus(ScalarType x, ScalarType y){
     return fmod(x,y);
   }
-  
+
   template<typename Operator>
     static function<ScalarFunc> ApplyOp(const function<ScalarFunc> &f,
                                         const Operator &op){
@@ -104,7 +104,7 @@ NamedFunc::NamedFunc(const string &name,
   scalar_func_(),
   vector_func_(function){
   CleanName();
-}
+  }
 
 NamedFunc::NamedFunc(const string &function):
   NamedFunc(FunctionParser(function).ResolveAsNamedFunc()){

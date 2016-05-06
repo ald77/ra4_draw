@@ -26,12 +26,12 @@ public:
   NamedFunc & operator=(const NamedFunc &) = default;
   NamedFunc(NamedFunc &&) = default;
   NamedFunc & operator=(NamedFunc &&) = default;
-  ~NamedFunc() = default;  
+  ~NamedFunc() = default;
 
   const std::string & Name() const;
   NamedFunc & Name(const std::string &name);
   std::string PlainName() const;
-  
+
   NamedFunc & Function(const std::function<ScalarFunc> &function);
   NamedFunc & Function(const std::function<VectorFunc> &function);
   const std::function<ScalarFunc> & ScalarFunction() const;
@@ -67,14 +67,14 @@ NamedFunc operator % (NamedFunc f, NamedFunc g);
 
 NamedFunc operator + (NamedFunc f);
 NamedFunc operator - (NamedFunc f);
-  
+
 NamedFunc operator == (NamedFunc f, NamedFunc g);
 NamedFunc operator != (NamedFunc f, NamedFunc g);
 NamedFunc operator > (NamedFunc f, NamedFunc g);
 NamedFunc operator < (NamedFunc f, NamedFunc g);
 NamedFunc operator >= (NamedFunc f, NamedFunc g);
 NamedFunc operator <= (NamedFunc f, NamedFunc g);
-  
+
 NamedFunc operator && (NamedFunc f, NamedFunc g);
 NamedFunc operator || (NamedFunc f, NamedFunc g);
 

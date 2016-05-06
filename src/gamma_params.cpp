@@ -91,6 +91,6 @@ GammaParams operator*(GammaParams gp, double scale){
 
 std::ostream & operator<<(std::ostream &stream, const GammaParams &gp){
   stream << gp.Yield() << "+-" << gp.CorrectedUncertainty()
-	 << " (N=" << gp.NEffective() << ", w=" << gp.Weight() << ")";
+         << " (N=" << gp.NEffective() << ", w=" << gp.Weight() << ")";
   return stream;
 }

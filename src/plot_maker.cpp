@@ -83,7 +83,7 @@ void PlotMaker::FillHistogram(const shared_ptr<Process> &proc){
   cout << "Filling histograms for the " << proc->name_ << " process..." << endl;
 
   Baby &baby = *(proc->baby_);
-  
+
   vector<pair<HistoDef, TH1D * const> > histos;
   histos = GetHistos(proc);
 
@@ -106,7 +106,7 @@ void PlotMaker::FillHistogram(const shared_ptr<Process> &proc){
       proc_cuts_v = proc->cut_.GetVector(baby);
     }
     if(!(proc_cuts_b || HavePass(proc_cuts_v))) continue;
-      
+
     for(auto &histo: histos){
       const HistoDef &histo_def = histo.first;
       TH1D * const hist = histo.second;
@@ -133,14 +133,14 @@ void PlotMaker::FillHistogram(const shared_ptr<Process> &proc){
         if(weights_v.size() < min_vec_size) min_vec_size = weights_v.size();
       }
       if(!(proc_cuts_b || hist_cuts_b || weights_b || HavePass(proc_cuts_v, hist_cuts_v, weights_v))) continue;
-      
+
       if(values_b){
         values_s = histo_def.var_.GetScalar(baby);
       }else{
         values_v = histo_def.var_.GetVector(baby);
         if(values_v.size() < min_vec_size) min_vec_size = values_v.size();
       }
-      
+
       for(size_t i = 0;
           i < min_vec_size
             && (!(proc_cuts_b && hist_cuts_b && weights_b && values_b) || i < 1);

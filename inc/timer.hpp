@@ -10,7 +10,7 @@ public:
   Timer & operator=(const Timer &) = default;
   Timer(Timer &&) = default;
   Timer & operator=(Timer &&) = default;
-  ~Timer() = default;  
+  ~Timer() = default;
 
   void SetAutoPrint(double auto_print);
   void SetNumIterations(unsigned long num_its);

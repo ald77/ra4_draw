@@ -75,7 +75,7 @@ void Scale(TH1D &h, bool adjust_width, double normalization){
   double low = h.GetBinLowEdge(1);
   double high = h.GetBinLowEdge(nbins+1);
   double width = (high-low)/nbins;
-  
+
   if(normalization < 0.) normalization = integral;
   double scale = integral != 0. ? normalization/integral : 1.;
   for(int bin = 0; bin <= nbins+1; ++bin){

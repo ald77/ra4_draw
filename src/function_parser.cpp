@@ -142,10 +142,10 @@ void FunctionParser::EvaluateGroupings() const{
   for(size_t i_open = 0; i_open < tokens_.size(); ++i_open){
     size_t i_close = FindClose(i_open);
     if(i_close <= i_open || i_close >= tokens_.size()) continue;
-    
+
     FunctionParser fp(vector<Token>(tokens_.cbegin()+i_open+1, tokens_.cbegin()+i_close));
     Token merged = fp.ResolveAsToken();
-    
+
     CondenseTokens(i_open+1, i_close, merged);
   }
 }
@@ -167,7 +167,7 @@ void FunctionParser::MergeParentheses() const{
     NamedFunc merged_func = inner.function_;
     merged_func.Name(name);
     Token merged(merged_func);
-    
+
     CondenseTokens(i, i+3, merged);
   }
 }
@@ -193,7 +193,7 @@ void FunctionParser::ApplySubscripts() const{
     };
     string name = ConcatenateTokenStrings(i, i+4);
     Token merged(NamedFunc(name, function));
-    
+
     CondenseTokens(i, i+4, merged);
   }
 }
@@ -217,7 +217,7 @@ void FunctionParser::DisambiguatePlusMinus() const{
       unary_type = Token::Type::unary_minus;
       ambiguous_type = Token::Type::ambiguous_minus;
     }
-    
+
     switch(prev.type_){
     case Token::Type::resolved_scalar:
     case Token::Type::resolved_vector:
@@ -465,13 +465,13 @@ void FunctionParser::Solve() const{
 
 size_t FunctionParser::FindClose(size_t i_open_token) const{
   if(i_open_token > tokens_.size()) return tokens_.size();
-  
+
   const auto &open_token = tokens_.at(i_open_token);
   if(open_token.type_ != Token::Type::open_paren
      && open_token.type_ != Token::Type::open_square){
     return i_open_token;
   }
-  
+
   Token::Type open_type, close_type;
   if(open_token.type_ == Token::Type::open_square){
     open_type = Token::Type::open_square;

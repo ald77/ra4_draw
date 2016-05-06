@@ -94,7 +94,7 @@ PlotOpt & PlotOpt::YAxis(YAxisType y_axis_type){
 }
 
 YAxisType PlotOpt::YAxis() const{
-  return y_axis_type_;  
+  return y_axis_type_;
 }
 
 PlotOpt & PlotOpt::Title(TitleType title_type){

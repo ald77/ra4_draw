@@ -48,10 +48,10 @@ vector<double> HistoDef::GetEdges(size_t nbins, double xmin, double xmax){
       edges.at(i) = i*delta + xmin;
     }
   }
-  
+
   //Not necessary, but make sure that first and last edge are correct to available precision
   edges.front() = xmin;
   edges.back() = xmax;
-  
+
   return edges;
 }
