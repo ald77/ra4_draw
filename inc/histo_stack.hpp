@@ -57,7 +57,9 @@ public:
   void GetPads(std::unique_ptr<TCanvas> &c,
                std::unique_ptr<TPad> &top,
                std::unique_ptr<TPad> &bottom) const;
-  std::vector<std::shared_ptr<TLatex> > GetTitleTexts(double luminosity) const;
+  std::vector<std::shared_ptr<TLatex> > GetTitleTexts(double luminosity, double left_margin) const;
+  double GetLegendRatio() const;
+  double FixYAxis(std::vector<TH1D> &bottom_plots, TPad *top, TPad *bottom);
   void PrintPlot(double luminosity);
 
   const TH1D & RawHisto(const std::shared_ptr<Process> &process) const;
@@ -73,7 +75,7 @@ public:
   std::vector<TH1D> GetBottomPlots() const;
 
   std::set<std::shared_ptr<Process> > GetProcesses() const;
-  std::unique_ptr<TLegend> GetLegend();
+  std::unique_ptr<TLegend> GetLegend(double left_margin);
 
   std::vector<SingleHist> backgrounds_, signals_, datas_;
   HistoDef definition_;

@@ -60,6 +60,9 @@ public:
   PlotOpt & YTitleOffset(double y_title_offset);
   double YTitleOffset() const;
 
+  PlotOpt & AutoYAxis(bool auto_y_axis);
+  bool AutoYAxis() const;
+
   PlotOpt & CanvasSize(int width, int height);
   PlotOpt & CanvasWidth(int width);
   int CanvasWidth() const;
@@ -111,6 +114,7 @@ private:
   std::set<std::string> file_extensions_;
   double title_size_, label_size_;
   double x_title_offset_, y_title_offset_;
+  bool auto_y_axis_;
   int canvas_width_, canvas_height_;
   double left_margin_, right_margin_, bottom_margin_, top_margin_;
   double bottom_height_;

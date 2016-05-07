@@ -1,5 +1,7 @@
 #include "histo_stack.hpp"
 
+#include <cmath>
+
 #include <algorithm>
 #include <sstream>
 
@@ -7,6 +9,7 @@
 #include "TGraph.h"
 #include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
+#include "TMath.h"
 
 #include "utilities.hpp"
 
@@ -145,9 +148,9 @@ void HistoStack::GetPads(unique_ptr<TCanvas> &c,
   top->Draw();
 }
 
-vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity) const{
+vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity, double left_margin) const{
   vector<shared_ptr<TLatex> > out;
-  double left = plot_options_.LeftMargin();
+  double left = left_margin;
   double right = 1.-plot_options_.RightMargin();
   double bottom = 1.-plot_options_.TopMargin();
   double top = 1.;
@@ -185,11 +188,50 @@ vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity) const{
   return out;
 }
 
+double HistoStack::FixYAxis(vector<TH1D> &bottom_plots, TPad *top, TPad *bottom){
+  double offset = plot_options_.YTitleOffset();
+  double margin = plot_options_.LeftMargin();
+  if(plot_options_.YAxis() == YAxisType::log){
+    margin = 0.15;
+    offset = 1.25;
+  }else{
+    double the_max = GetMaxDraw()*GetLegendRatio();
+    int digits = fabs(floor(log10(the_max))-1)+2;
+
+    switch(digits){
+    case 0: //Shouldn't happen, but just in case...
+    case 1: //Shouldn't happen, but just in case...
+    case 2: margin = 0.15; offset = 1.; break;
+    default: //For huge axis scale, reverts to scientific notation
+    case 3: margin = 0.17; offset = 1.25; break;
+    case 4: margin = 0.19; offset = 1.5; break;
+    case 5: margin = 0.21; offset = 1.75; break;
+    }
+  }
+
+  for(auto &h: backgrounds_){
+    h.scaled_hist_.SetTitleOffset(offset, "y");
+  }
+  for(auto &h: signals_){
+    h.scaled_hist_.SetTitleOffset(offset, "y");
+  }
+  for(auto &h: datas_){
+    h.scaled_hist_.SetTitleOffset(offset, "y");
+  }
+  for(auto &h: bottom_plots){
+    h.SetTitleOffset(offset, "y");
+  }
+  top->SetLeftMargin(margin);
+  bottom->SetLeftMargin(margin);
+
+  return margin;
+}
+
 void HistoStack::PrintPlot(double luminosity){
   //Takes already filled histograms and prints to file
   RefreshScaledHistos(luminosity);
-  vector<TH1D> bot_plots = GetBottomPlots();
 
+  vector<TH1D> bot_plots = GetBottomPlots();
   //I don't know why I can't make this in GetBottomPlots...
   TGraphAsymmErrors bottom_background;
   if(plot_options_.Bottom() != BottomType::off){
@@ -204,6 +246,11 @@ void HistoStack::PrintPlot(double luminosity){
   unique_ptr<TCanvas> full;
   unique_ptr<TPad> top, bottom;
   GetPads(full, top, bottom);
+
+  double left_margin = plot_options_.LeftMargin();
+  if(plot_options_.AutoYAxis()){
+    left_margin = FixYAxis(bot_plots, top.get(), bottom.get());
+  }
 
   if(plot_options_.Bottom() != BottomType::off){
     bottom->cd();
@@ -229,13 +276,13 @@ void HistoStack::PrintPlot(double luminosity){
   ReplaceAll(draw_opt, "hist", "ep");
   DrawAll(datas_, draw_opt);
 
-  auto legend = GetLegend();
+  auto legend = GetLegend(left_margin);
   legend->Draw();
 
   top->RedrawAxis();
   top->RedrawAxis("g");
 
-  vector<shared_ptr<TLatex> > title_text = GetTitleTexts(luminosity);
+  vector<shared_ptr<TLatex> > title_text = GetTitleTexts(luminosity, left_margin);
   for(auto &x: title_text){
     x->Draw();
   }
@@ -357,10 +404,10 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
   return out;
 }
 
-unique_ptr<TLegend> HistoStack::GetLegend(){
+unique_ptr<TLegend> HistoStack::GetLegend(double left_margin){
   size_t num_procs = backgrounds_.size()+signals_.size()+datas_.size();
 
-  double left = plot_options_.LeftMargin()+plot_options_.LegendPad();
+  double left = left_margin+plot_options_.LegendPad();
   double right = 1.-plot_options_.RightMargin()-plot_options_.LegendPad();
   double top = 1.-plot_options_.TopMargin()-plot_options_.LegendPad();
   double bottom = top-plot_options_.LegendHeight(num_procs);
@@ -516,10 +563,7 @@ void HistoStack::MergeOverflow(){
   }
 }
 
-void HistoStack::SetRanges(){
-  double the_min = GetMinDraw();
-  double the_max = GetMaxDraw();
-
+double HistoStack::GetLegendRatio() const{
   size_t num_plots = backgrounds_.size() + signals_.size() + datas_.size();
   double legend_height = plot_options_.LegendHeight(num_plots);
   double top_plot_height;
@@ -528,9 +572,16 @@ void HistoStack::SetRanges(){
   }else{
     top_plot_height = 1.-plot_options_.TopMargin()-plot_options_.BottomHeight();
   }
-  double ratio = top_plot_height/(top_plot_height-legend_height-2.*plot_options_.LegendPad());
+  return top_plot_height/(top_plot_height-legend_height-2.*plot_options_.LegendPad());
+}
 
-  double bottom, top;
+void HistoStack::SetRanges(){
+  double the_min = GetMinDraw();
+  double the_max = GetMaxDraw();
+
+  double ratio = GetLegendRatio();
+
+  double top, bottom;
   switch(plot_options_.YAxis()){
   default:
   case YAxisType::linear:

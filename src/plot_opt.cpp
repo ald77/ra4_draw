@@ -21,6 +21,7 @@ PlotOpt::PlotOpt():
   label_size_(0.05),
   x_title_offset_(1.),
   y_title_offset_(2.),
+  auto_y_axis_(true),
   canvas_width_(800),
   canvas_height_(800),
   left_margin_(0.15),
@@ -167,6 +168,15 @@ PlotOpt & PlotOpt::YTitleOffset(double y_title_offset){
 
 double PlotOpt::YTitleOffset() const{
   return y_title_offset_;
+}
+
+PlotOpt & PlotOpt::AutoYAxis(bool auto_y_axis){
+  auto_y_axis_ = auto_y_axis;
+  return *this;
+}
+
+bool PlotOpt::AutoYAxis() const{
+  return auto_y_axis_;
 }
 
 PlotOpt & PlotOpt::CanvasSize(int width, int height){
@@ -348,6 +358,8 @@ void PlotOpt::SetProperty(const string &property,
     XTitleOffset(stod(value));
   }else if(property == "yTitleOffset" || property == "YTitleOffset"){
     YTitleOffset(stod(value));
+  }else if(property == "AutoYAxis"){
+    AutoYAxis(static_cast<bool>(stoi(value)));
   }else if(property == "CanvasWidth" || property == "CanvasW"){
     CanvasWidth(stoi(value));
   }else if(property == "CanvasHeight" || property == "CanvasH"){
