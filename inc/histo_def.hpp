@@ -29,6 +29,7 @@ public:
   ~HistoDef() = default;
 
   size_t GetNbins() const;
+  const std::vector<double> & GetBins() const;
   std::string GetName() const;
 
   std::string GetTitle() const;

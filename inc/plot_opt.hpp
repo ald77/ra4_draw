@@ -7,7 +7,7 @@
 #include <string>
 
 namespace PlotOptTypes{
-  enum class BottomType{off, ratio, diff, signif};
+  enum class BottomType{off, ratio, diff};
   enum class YAxisType{linear, log};
   enum class TitleType{variable, preliminary, simulation, supplementary, data};
   enum class StackType{signal_overlay, signal_on_top, lumi_shapes, shapes};
@@ -82,6 +82,8 @@ public:
   PlotOpt & BottomHeight(double bottom_height);
   double BottomHeight() const;
 
+  PlotOpt & LegendColumns(int columns);
+  int LegendColumns() const;
   PlotOpt & LegendEntryHeight(double height);
   double LegendEntryHeight() const;
   PlotOpt & LegendMaxHeight(double height);
@@ -94,6 +96,8 @@ public:
 
   PlotOpt & NDivisions(int n_divisions);
   int NDivisions() const;
+  PlotOpt & NDivisionsBottom(int n_divisions);
+  int NDivisionsBottom() const;
 
   PlotOpt & Font(int font);
   int Font() const;
@@ -118,10 +122,11 @@ private:
   int canvas_width_, canvas_height_;
   double left_margin_, right_margin_, bottom_margin_, top_margin_;
   double bottom_height_;
+  int legend_columns_;
   double legend_entry_height_, legend_max_height_;
   double legend_pad_;
   double log_minimum_;
-  int n_divisions_;
+  int n_divisions_, n_divisions_bottom_;
   int font_;
 
   void SetProperty(const std::string &property_name,

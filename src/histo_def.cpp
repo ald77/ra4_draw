@@ -36,6 +36,10 @@ size_t HistoDef::GetNbins() const{
   return bins_.size()-1;
 }
 
+const vector<double> & HistoDef::GetBins() const{
+  return bins_;
+}
+
 string HistoDef::GetName() const{
   return var_.PlainName() + "_CUT_" + cut_.PlainName() + "_WGT_" + weight_.PlainName();
 }

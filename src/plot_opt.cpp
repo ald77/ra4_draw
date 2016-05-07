@@ -17,23 +17,25 @@ PlotOpt::PlotOpt():
   stack_type_(StackType::signal_overlay),
   overflow_type_(OverflowType::both),
   file_extensions_({"pdf"}),
-  title_size_(0.05),
-  label_size_(0.05),
+  title_size_(0.06),
+  label_size_(0.045),
   x_title_offset_(1.),
-  y_title_offset_(2.),
+  y_title_offset_(2.2),
   auto_y_axis_(true),
-  canvas_width_(800),
-  canvas_height_(800),
-  left_margin_(0.15),
-  right_margin_(0.05),
-  bottom_margin_(0.1),
-  top_margin_(0.1),
-  bottom_height_(1./3.),
+  canvas_width_(600),
+  canvas_height_(600),
+  left_margin_(0.18),
+  right_margin_(0.055),
+  bottom_margin_(0.14),
+  top_margin_(0.07),
+  bottom_height_(0.35),
+  legend_columns_(2),
   legend_entry_height_(0.05),
   legend_max_height_(0.3),
-  legend_pad_(0.03),
+  legend_pad_(0.025),
   log_minimum_(0.01),
   n_divisions_(606),
+  n_divisions_bottom_(606),
   font_(42){
 }
 
@@ -256,6 +258,15 @@ double PlotOpt::BottomHeight() const{
   return bottom_height_;
 }
 
+PlotOpt & PlotOpt::LegendColumns(int columns){
+  legend_columns_ = columns;
+  return *this;
+}
+
+int PlotOpt::LegendColumns() const{
+  return legend_columns_;
+}
+
 PlotOpt & PlotOpt::LegendEntryHeight(double height){
   legend_entry_height_ = height;
   return *this;
@@ -290,6 +301,15 @@ PlotOpt & PlotOpt::NDivisions(int n_divisions){
 
 int PlotOpt::NDivisions() const{
   return n_divisions_;
+}
+
+PlotOpt & PlotOpt::NDivisionsBottom(int n_divisions){
+  n_divisions_bottom_ = n_divisions;
+  return *this;
+}
+
+int PlotOpt::NDivisionsBottom() const{
+  return n_divisions_bottom_;
 }
 
 PlotOpt & PlotOpt::LogMinimum(double log_minimum){
@@ -372,6 +392,8 @@ void PlotOpt::SetProperty(const string &property,
     BottomMargin(stod(value));
   }else if(property == "PadTopMargin"){
     TopMargin(stod(value));
+  }else if(property == "LegendColumns"){
+    LegendColumns(stoi(value));
   }else if(property == "LegendEntrySize" || property == "LegendSize"){
     LegendEntryHeight(stod(value));
   }else if(property == "LegendMaxSize"){
@@ -384,6 +406,8 @@ void PlotOpt::SetProperty(const string &property,
     LogMinimum(stod(value));
   }else if(property == "nDivisions" || property == "NDivisions"){
     NDivisions(stoi(value));
+  }else if(property == "nDivisionsBottom" || property == "NDivisionsBottom"){
+    NDivisionsBottom(stoi(value));
   }else if(property == "Font"){
     Font(stoi(value));
   }else{

@@ -29,7 +29,34 @@ namespace{
     h.GetXaxis()->SetTitle("");
     h.SetLabelSize(0., "x");
     h.SetTitleSize(0., "x");
-    return;
+  }
+
+  size_t GetLegendIndex(size_t entry, size_t n_entries, size_t n_columns){
+    size_t entries_per_column = n_entries / n_columns;
+    size_t cols_with_extra_entry = n_entries % n_columns;
+    size_t this_col = -1;
+    size_t this_col_end = 0;
+    while(this_col_end <= entry){
+      ++this_col;
+      this_col_end += entries_per_column;
+      if(this_col < cols_with_extra_entry){
+        ++this_col_end;
+      }
+    }
+    return this_col;
+  }
+
+  void AddEntries(vector<shared_ptr<TLegend> > &legends,
+                  const vector<HistoStack::SingleHist> &hists,
+                  const string &style,
+                  size_t n_entries,
+                  size_t &entries_added){
+    for(const auto &hist: hists){
+      size_t legend_index = GetLegendIndex(entries_added, n_entries, legends.size());
+      TLegend &legend = *legends.at(legend_index);
+      legend.AddEntry(&hist.scaled_hist_, hist.process_->name_.c_str(), style.c_str());
+      ++entries_added;
+    }
   }
 }
 
@@ -227,6 +254,27 @@ double HistoStack::FixYAxis(vector<TH1D> &bottom_plots, TPad *top, TPad *bottom)
   return margin;
 }
 
+TLine HistoStack::GetBottomHorizontal() const{
+  double left = definition_.GetBins().front();
+  double right = definition_.GetBins().back();
+  double y;
+  switch(plot_options_.Bottom()){
+  case BottomType::ratio: y = 1.; break;
+  case BottomType::diff: y = 0.; break;
+  case BottomType::off: y = 0.; break;
+  default:
+    y = 0.;
+    DBG("Invalid BottomType: " << to_string(static_cast<int>(plot_options_.Bottom())));
+  }
+
+  TLine line(left, y, right, y);
+  line.SetNDC(false);
+  line.SetLineStyle(3);
+  line.SetLineColor(kBlack);
+  line.SetLineWidth(2);
+  return line;
+}
+
 void HistoStack::PrintPlot(double luminosity){
   //Takes already filled histograms and prints to file
   RefreshScaledHistos(luminosity);
@@ -242,6 +290,7 @@ void HistoStack::PrintPlot(double luminosity){
   }
 
   StripTopPlotLabels();
+  TLine horizontal = GetBottomHorizontal();
 
   unique_ptr<TCanvas> full;
   unique_ptr<TPad> top, bottom;
@@ -262,6 +311,8 @@ void HistoStack::PrintPlot(double luminosity){
     }
     bottom_background.Draw("2 same");
 
+    horizontal.Draw("same");
+
     bottom->RedrawAxis();
     bottom->RedrawAxis("g");
   }
@@ -276,8 +327,10 @@ void HistoStack::PrintPlot(double luminosity){
   ReplaceAll(draw_opt, "hist", "ep");
   DrawAll(datas_, draw_opt);
 
-  auto legend = GetLegend(left_margin);
-  legend->Draw();
+  vector<shared_ptr<TLegend> > legends = GetLegends(left_margin);
+  for(auto &legend: legends){
+    legend->Draw();
+  }
 
   top->RedrawAxis();
   top->RedrawAxis("g");
@@ -369,7 +422,6 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
       h = h - denom;
     }
     break;
-  case BottomType::signif:
   case BottomType::off:
   default:
     ERROR("Bad type for bottom plot: "+to_string(static_cast<int>(plot_options_.Bottom())));
@@ -379,6 +431,7 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
   double the_min = numeric_limits<double>::infinity();
   double the_max = -numeric_limits<double>::infinity();
   for(auto &h: out){
+    h.SetNdivisions(plot_options_.NDivisionsBottom(), "y");
     for(int bin = 1; bin <= h.GetNbinsX(); ++bin){
       double hi = h.GetBinContent(bin)+h.GetBinErrorUp(bin);
       double lo = h.GetBinContent(bin)-fabs(h.GetBinErrorLow(bin));
@@ -404,7 +457,7 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
   return out;
 }
 
-unique_ptr<TLegend> HistoStack::GetLegend(double left_margin){
+vector<shared_ptr<TLegend> > HistoStack::GetLegends(double left_margin){
   size_t num_procs = backgrounds_.size()+signals_.size()+datas_.size();
 
   double left = left_margin+plot_options_.LegendPad();
@@ -412,23 +465,26 @@ unique_ptr<TLegend> HistoStack::GetLegend(double left_margin){
   double top = 1.-plot_options_.TopMargin()-plot_options_.LegendPad();
   double bottom = top-plot_options_.LegendHeight(num_procs);
 
-  auto legend = unique_ptr<TLegend>(new TLegend(left, bottom, right, top));
-  legend->SetNColumns(2);
-  legend->SetFillStyle(0);
-  legend->SetFillColor(0);
-  legend->SetBorderSize(0);
+  size_t n_entries = datas_.size() + signals_.size() + backgrounds_.size();
+  size_t n_columns = min(n_entries, static_cast<size_t>(plot_options_.LegendColumns()));
 
-  for(const auto &hist: datas_){
-    legend->AddEntry(&hist.scaled_hist_, hist.process_->name_.c_str(), "e0p");
-  }
-  for(const auto &hist: backgrounds_){
-    legend->AddEntry(&hist.scaled_hist_, hist.process_->name_.c_str(), "f");
-  }
-  for(const auto &hist: signals_){
-    legend->AddEntry(&hist.scaled_hist_, hist.process_->name_.c_str(), "l");
+  double delta_x = (right-left)/n_columns;
+  vector<shared_ptr<TLegend> > legends(n_columns);
+  for(size_t i = 0; i < n_columns; ++i){
+    double x = left+i*delta_x;
+    legends.at(i) = make_shared<TLegend>(x, bottom, x+0.12, top);
+    legends.at(i)->SetFillStyle(0);
+    legends.at(i)->SetBorderSize(0);
+    legends.at(i)->SetTextSize(plot_options_.LegendEntryHeight());
+    legends.at(i)->SetTextFont(plot_options_.Font());
   }
 
-  return legend;
+  size_t entries_added = 0;
+  AddEntries(legends, datas_, "lep", n_entries, entries_added);
+  AddEntries(legends, signals_, "l", n_entries, entries_added);
+  AddEntries(legends, backgrounds_, "f", n_entries, entries_added);
+
+  return legends;
 }
 
 HistoStack::SingleHist::SingleHist(const shared_ptr<Process> &process,
