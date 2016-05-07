@@ -69,8 +69,10 @@ $(EXEDIR)/%.exe: $(OBJDIR)/%.o $(LIBFILE)
 .PRECIOUS: generate_baby.o
 
 $(BABY_SRCS) $(BABY_INCS) $(SRCDIR)/baby.cpp $(INCDIR)/baby.hpp: dummy_baby.all
+	echo "Regenerated baby source code $@"
+
 dummy_baby.all: $(EXEDIR)/generate_baby.exe $(BABY_FILES) $(BABYDIR)
-	rm -f src/baby*.cpp inc/baby*.hpp
+	rm -f src/baby*.cpp inc/baby*.hpp bin/baby*.o bin/baby*.d
 	./$< $(BABY_TYPES)
 
 .DELETE_ON_ERROR:
