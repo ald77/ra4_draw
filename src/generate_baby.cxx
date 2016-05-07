@@ -593,7 +593,7 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
     }else if(var.VirtualInBase()){
       file << var.DecoratedType() << " const & Baby_" << type << "::" << var.Name() << "()  const{\n";
       file << "  ERROR(\"" << var.DecoratedType() << ' ' << var.Name()
-           << " not available in babies of type " << type << ".\")\n";
+           << " not available in babies of type " << type << ".\");\n";
       file << "}\n\n";
     }
   }

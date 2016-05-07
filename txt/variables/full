@@ -24,6 +24,8 @@ float mt_nohf
 float mt_tru
 float mt_tru_nuw
 float mt_rebal
+float mt2
+float mt2_0mass
 float dphi_wlep
 bool jetmismeas
 
@@ -43,6 +45,24 @@ float met_tru_phi
 float met_tru_nuw
 float met_tru_nuw_phi
 float met_rebal
+
+###################   Higgsinos   ##################
+int   hig_bin
+float hig_dm
+float hig_am
+float hig_drmax
+float hig5_dm
+float hig5_am
+float hig5_drmax
+float hig_dphi
+float hig1_pt
+float hig1_eta
+float hig1_phi
+float hig1_m
+float hig2_pt
+float hig2_eta
+float hig2_phi
+float hig2_m
 
 ###################   Jets   ##################
 int njets
@@ -73,7 +93,13 @@ std::vector<float> jets_pt_res
 std::vector<bool>  jets_islep
 std::vector<int>   jets_fjet_index
 std::vector<int>   jets_fjet08_index
+std::vector<int>   jets_fjet13_index
+std::vector<int>   jets_fjet14_index
+std::vector<int>   jets_fjet15_index
+std::vector<int>   jets_fjet16_index
 std::vector<int>   jets_hflavor
+std::vector<bool>  jets_h1
+std::vector<bool>  jets_h2
 
 ##################   Leptons   ################
 int nleps
@@ -171,6 +197,42 @@ float mumuv_w
 
 std::vector<float> dr_bb
 
+##################   Di-objects   ################
+
+float dr_bb_2
+float dr_bb_max
+float dr_bb_min
+float dphi_bb_2
+float dphi_bb_max
+float dphi_bb_min
+float m_bb_2
+float m_bb_max
+float m_bb_min
+
+float dr_bl_min
+float dr_bl_max
+float dr_bl_min2
+float dr_bl_max2
+float dphi_bl_min
+float dphi_bl_max
+float dphi_bl_min2
+float dphi_bl_max2
+float m_bl_min
+float m_bl_max
+float m_bl_min2
+float m_bl_max2
+
+float dphi_bmet_min
+float dphi_bmet_max
+float dphi_bmet_min2
+float dphi_bmet_max2
+float mt_bmet_min
+float mt_bmet_max
+float mt_bmet_min2
+float mt_bmet_max2
+
+float dphi_lmet
+
 ##################   Photons   ###################
 int nph
 std::vector<float> ph_pt
@@ -186,11 +248,14 @@ int nveto
 std::vector<float> tks_pt
 std::vector<float> tks_eta
 std::vector<float> tks_phi
+std::vector<float> tks_d0
+std::vector<float> tks_dz
 std::vector<int> tks_pdg
 std::vector<float> tks_miniso
+std::vector<float> tks_reliso
 std::vector<float> tks_mt2
 std::vector<float> tks_mt
-
+std::vector<bool> tks_tm
 
 ###################   Trigger   ##################
 std::vector<bool> trig;
@@ -255,6 +320,50 @@ std::vector<float> fjets08_poscsv
 std::vector<int> fjets08_btags
 std::vector<int> fjets08_nconst
 
+int nfjets13
+float mj13
+std::vector<float> fjets13_pt
+std::vector<float> fjets13_eta
+std::vector<float> fjets13_phi
+std::vector<float> fjets13_m
+std::vector<float> fjets13_sumcsv
+std::vector<float> fjets13_poscsv
+std::vector<int> fjets13_btags
+std::vector<int> fjets13_nconst
+
+int nfjets14
+float mj14
+std::vector<float> fjets14_pt
+std::vector<float> fjets14_eta
+std::vector<float> fjets14_phi
+std::vector<float> fjets14_m
+std::vector<float> fjets14_sumcsv
+std::vector<float> fjets14_poscsv
+std::vector<int> fjets14_btags
+std::vector<int> fjets14_nconst
+
+int nfjets15
+float mj15
+std::vector<float> fjets15_pt
+std::vector<float> fjets15_eta
+std::vector<float> fjets15_phi
+std::vector<float> fjets15_m
+std::vector<float> fjets15_sumcsv
+std::vector<float> fjets15_poscsv
+std::vector<int> fjets15_btags
+std::vector<int> fjets15_nconst
+
+int nfjets16
+float mj16
+std::vector<float> fjets16_pt
+std::vector<float> fjets16_eta
+std::vector<float> fjets16_phi
+std::vector<float> fjets16_m
+std::vector<float> fjets16_sumcsv
+std::vector<float> fjets16_poscsv
+std::vector<int> fjets16_btags
+std::vector<int> fjets16_nconst
+
 ################  Truth   ##################
 int nisr_me
 float ht_isr_me
@@ -264,6 +373,7 @@ std::vector<float> mc_phi
 std::vector<float> mc_mass
 std::vector<int>   mc_id
 std::vector<int>   mc_mom
+std::vector<int>   mc_status
 float m_tt
 bool fromGS
 int ntruleps
@@ -299,6 +409,11 @@ std::vector<int>   sys_njets
 std::vector<int>   sys_nbm
 std::vector<bool>  sys_pass
 std::vector<float> sys_mj
+std::vector<float> sys_mj08
+std::vector<float> sys_mj13
+std::vector<float> sys_mj14
+std::vector<float> sys_mj15
+std::vector<float> sys_mj16
 std::vector<float> sys_met
 std::vector<float> sys_mt
 
