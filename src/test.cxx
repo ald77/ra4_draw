@@ -45,9 +45,9 @@ int main(){
     pm.AddPlot({bkg1, bkg2, sig, data},
                HistoDef(20, 0., 2000., "ht+met", "H_{T}+MET", "GeV"), opt().Bottom(BottomType::diff));
     pm.AddPlot({bkg1, bkg2, sig, data},
-               HistoDef(11, -0.5, 10.5, "njets", "N_{jets}"), opt);
+               HistoDef(11, -0.5, 10.5, "njets", "N_{jets}"), opt().Title(TitleType::preliminary));
     pm.AddPlot({bkg1, bkg2, sig, data},
-               HistoDef(10, 0., 1000., "jets_pt", "Jet p_{T}", "GeV"), opt);
+               HistoDef(10, 0., 1000., "jets_pt", "Jet p_{T}", "GeV", "nbm<=4", "2.*weight"), opt);
     pm.AddPlot({bkg1, bkg2, sig, data},
                HistoDef(10, 0., 1000., "jets_pt[0]", "Lead Jet p_{T}", "GeV"), opt);
   }

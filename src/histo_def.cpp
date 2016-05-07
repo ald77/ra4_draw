@@ -40,6 +40,20 @@ string HistoDef::GetName() const{
   return var_.PlainName() + "_CUT_" + cut_.PlainName() + "_WGT_" + weight_.PlainName();
 }
 
+string HistoDef::GetTitle() const{
+  bool cut = (cut_.Name() != "" && cut_.Name() != "1");
+  bool weight = weight_.Name() != "weight";
+  if(cut && weight){
+    return cut_.Name()+" (weight="+weight_.Name()+")";
+  }else if(cut){
+    return cut_.Name();
+  }else if(weight){
+    return "weight="+weight_.Name();
+  }else{
+    return "";
+  }
+}
+
 vector<double> HistoDef::GetEdges(size_t nbins, double xmin, double xmax){
   vector<double> edges(nbins+1);
   if(nbins != 0){

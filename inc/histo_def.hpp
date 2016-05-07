@@ -31,6 +31,8 @@ public:
   size_t GetNbins() const;
   std::string GetName() const;
 
+  std::string GetTitle() const;
+
   std::vector<double> bins_;
   NamedFunc var_, cut_, weight_;
   std::string x_title_, units_;

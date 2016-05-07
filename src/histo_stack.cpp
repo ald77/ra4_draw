@@ -145,6 +145,46 @@ void HistoStack::GetPads(unique_ptr<TCanvas> &c,
   top->Draw();
 }
 
+vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity) const{
+  vector<shared_ptr<TLatex> > out;
+  double left = plot_options_.LeftMargin();
+  double right = 1.-plot_options_.RightMargin();
+  double bottom = 1.-plot_options_.TopMargin();
+  double top = 1.;
+  if(plot_options_.Title() == TitleType::variable){
+    out.push_back(make_shared<TLatex>(0.5*(left+right), 0.5*(bottom+top),
+                                      definition_.GetTitle().c_str()));
+    out.back()->SetNDC();
+    out.back()->SetTextAlign(22);
+    out.back()->SetTextFont(plot_options_.Font());
+  }else{
+    string extra;
+    switch(plot_options_.Title()){
+    case TitleType::preliminary: extra = "Preliminary"; break;
+    case TitleType::simulation: extra = "Simulation"; break;
+    case TitleType::supplementary: extra = "Supplementary"; break;
+    case TitleType::data: extra = "Data"; break;
+    case TitleType::variable:
+    default:
+      ERROR("Did not understand title type "+to_string(static_cast<int>(plot_options_.Title())));
+    }
+    out.push_back(make_shared<TLatex>(left, 0.5*(bottom+top),
+                                      ("#font[62]{CMS}#scale[0.76]{#font[52]{ "+extra+"}}").c_str()));
+    out.back()->SetNDC();
+    out.back()->SetTextAlign(12);
+    out.back()->SetTextFont(plot_options_.Font());
+
+    ostringstream oss;
+    oss << luminosity << " fb^{-1} (13 TeV)" << flush;
+    out.push_back(make_shared<TLatex>(right, 0.5*(bottom+top),
+                                      oss.str().c_str()));
+    out.back()->SetNDC();
+    out.back()->SetTextAlign(32);
+    out.back()->SetTextFont(plot_options_.Font());
+  }
+  return out;
+}
+
 void HistoStack::PrintPlot(double luminosity){
   //Takes already filled histograms and prints to file
   RefreshScaledHistos(luminosity);
@@ -194,6 +234,11 @@ void HistoStack::PrintPlot(double luminosity){
 
   top->RedrawAxis();
   top->RedrawAxis("g");
+
+  vector<shared_ptr<TLatex> > title_text = GetTitleTexts(luminosity);
+  for(auto &x: title_text){
+    x->Draw();
+  }
 
   string base_name = "plots/"+definition_.GetName();
   for(const auto &ext: plot_options_.FileExtensions()){

@@ -11,12 +11,13 @@
 #include "TLegend.h"
 #include "TCanvas.h"
 #include "TPad.h"
+#include "TLatex.h"
 
 #include "process.hpp"
 #include "histo_def.hpp"
 #include "plot_opt.hpp"
 
-class HistoStack{  
+class HistoStack{
 public:
   class SingleHist{
   public:
@@ -56,6 +57,7 @@ public:
   void GetPads(std::unique_ptr<TCanvas> &c,
                std::unique_ptr<TPad> &top,
                std::unique_ptr<TPad> &bottom) const;
+  std::vector<std::shared_ptr<TLatex> > GetTitleTexts(double luminosity) const;
   void PrintPlot(double luminosity);
 
   const TH1D & RawHisto(const std::shared_ptr<Process> &process) const;
