@@ -109,6 +109,8 @@ public:
 
   double LegendHeight(size_t num_entries) const;
 
+  bool BackgroundsStacked() const;
+
 private:
   PlotOptTypes::BottomType bottom_type_;
   PlotOptTypes::YAxisType y_axis_type_;

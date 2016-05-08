@@ -354,6 +354,19 @@ double PlotOpt::LegendHeight(size_t num_entries) const{
   return min(legend_max_height_, legend_entry_height_*ceil(num_entries*0.5));
 }
 
+bool PlotOpt::BackgroundsStacked() const{
+  switch(stack_type_){
+  default:
+    DBG("Invalid stack type " << static_cast<int>(stack_type_));
+  case StackType::signal_overlay:
+  case StackType::signal_on_top:
+    return true;
+  case StackType::lumi_shapes:
+  case StackType::shapes:
+    return false;
+  }
+}
+
 void PlotOpt::SetProperty(const string &property,
                           const string &value){
   if(property == "BottomType"){

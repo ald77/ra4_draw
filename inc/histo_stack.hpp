@@ -89,6 +89,7 @@ private:
   void StackHistos(double luminosity);
   void MergeOverflow();
   void SetRanges();
+  void AdjustFillStyles();
 
   const std::vector<SingleHist> & GetHistoList(const std::shared_ptr<Process> &process) const;
   std::vector<SingleHist> & GetHistoList(const std::shared_ptr<Process> &process);
@@ -98,6 +99,15 @@ private:
 
   double GetMaxDraw(double max_bound = std::numeric_limits<double>::infinity()) const;
   double GetMinDraw(double min_bound = 0.) const;
+
+  void AddEntries(std::vector<std::shared_ptr<TLegend> > &legends,
+                  const std::vector<HistoStack::SingleHist> &hists,
+                  const std::string &style,
+                  std::size_t n_entries,
+                  std::size_t &entries_added) const;
+
+  double GetYield(std::vector<HistoStack::SingleHist>::const_iterator h) const;
+  double GetMean(std::vector<HistoStack::SingleHist>::const_iterator h) const;
 };
 
 #endif

@@ -45,19 +45,6 @@ namespace{
     }
     return this_col;
   }
-
-  void AddEntries(vector<shared_ptr<TLegend> > &legends,
-                  const vector<HistoStack::SingleHist> &hists,
-                  const string &style,
-                  size_t n_entries,
-                  size_t &entries_added){
-    for(const auto &hist: hists){
-      size_t legend_index = GetLegendIndex(entries_added, n_entries, legends.size());
-      TLegend &legend = *legends.at(legend_index);
-      legend.AddEntry(&hist.scaled_hist_, hist.process_->name_.c_str(), style.c_str());
-      ++entries_added;
-    }
-  }
 }
 
 HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
@@ -373,6 +360,7 @@ void HistoStack::RefreshScaledHistos(double luminosity){
   StackHistos(luminosity);
   MergeOverflow();
   SetRanges();
+  AdjustFillStyles();
 }
 
 set<shared_ptr<Process> > HistoStack::GetProcesses() const{
@@ -482,7 +470,7 @@ vector<shared_ptr<TLegend> > HistoStack::GetLegends(double left_margin){
   size_t entries_added = 0;
   AddEntries(legends, datas_, "lep", n_entries, entries_added);
   AddEntries(legends, signals_, "l", n_entries, entries_added);
-  AddEntries(legends, backgrounds_, "f", n_entries, entries_added);
+  AddEntries(legends, backgrounds_, plot_options_.BackgroundsStacked() ? "f" : "l", n_entries, entries_added);
 
   return legends;
 }
@@ -533,6 +521,7 @@ double HistoStack::SingleHist::GetMin(double min_bound,
 }
 
 void HistoStack::StackHistos(double luminosity){
+  //Scale to luminosity
   for(auto &hist: backgrounds_){
     hist.scaled_hist_ = hist.raw_hist_;
     Scale(hist.scaled_hist_, true);
@@ -548,6 +537,7 @@ void HistoStack::StackHistos(double luminosity){
     Scale(hist.scaled_hist_, true);
   }
 
+  //Stack histograms
   switch(plot_options_.Stack()){
   case StackType::signal_on_top:
     for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){
@@ -664,6 +654,17 @@ void HistoStack::SetRanges(){
   }
 }
 
+void HistoStack::AdjustFillStyles(){
+  if(plot_options_.BackgroundsStacked()) return;
+
+  for(auto &bkg: backgrounds_){
+    TH1D &h = bkg.scaled_hist_;
+    h.SetFillStyle(0);
+    h.SetLineColor(h.GetLineColor());
+    h.SetLineWidth(5);
+  }
+}
+
 const vector<HistoStack::SingleHist> & HistoStack::GetHistoList(const shared_ptr<Process> &process) const{
   switch(process->type_){
   case Process::Type::data:
@@ -758,4 +759,73 @@ double HistoStack::GetMinDraw(double min_bound) const{
     }
   }
   return the_min;
+}
+
+void HistoStack::AddEntries(vector<shared_ptr<TLegend> > &legends,
+                            const vector<HistoStack::SingleHist> &hists,
+                            const string &style,
+                            size_t n_entries,
+                            size_t &entries_added) const{
+  for(auto h = hists.cbegin(); h != hists.cend(); ++h){
+    size_t legend_index = GetLegendIndex(entries_added, n_entries, legends.size());
+    TLegend &legend = *legends.at(legend_index);
+    string label = h->process_->name_.c_str();
+    if(plot_options_.Title() == TitleType::variable){
+      double value;
+      switch(plot_options_.Stack()){
+      default:
+        DBG("Bad stack option: " << static_cast<int>(plot_options_.Stack()));
+      case StackType::signal_overlay:
+      case StackType::signal_on_top:
+        value = GetYield(h);
+        if(value>=1.){
+          label = label + " [N=" + FixedDigits(value, 2) + "]";
+        }else{
+          label = label + " [N=" + FixedDigits(value, 1) + "]";
+        }
+        break;
+      case StackType::lumi_shapes:
+      case StackType::shapes:
+        value = GetMean(h);
+        label = label + " [#mu=" + FixedDigits(value,3) + "]";
+        break;
+      }
+    }
+
+    legend.AddEntry(&h->scaled_hist_, label.c_str(), style.c_str());
+    ++entries_added;
+  }
+}
+
+double HistoStack::GetYield(vector<HistoStack::SingleHist>::const_iterator h) const{
+  TH1D hist = h->scaled_hist_;
+
+  //Subtract underlying histogram
+  if(h->process_->type_ == Process::Type::background
+     && h != backgrounds_.cbegin()
+     && plot_options_.BackgroundsStacked()){
+    hist = hist - (--h)->scaled_hist_;
+  }
+
+  //Want yield, not area, so divide out average bin width
+  //N.B.: Can't just use hist.Integral() in case of varying bin width
+  double raw_integral = hist.Integral("width");
+  int nbins = hist.GetNbinsX();
+  double left = hist.GetBinLowEdge(1);
+  double right = hist.GetBinLowEdge(nbins+1);
+  double width = (right-left)/nbins;
+  return raw_integral/width;
+}
+
+double HistoStack::GetMean(vector<HistoStack::SingleHist>::const_iterator h) const{
+  TH1D hist = h->scaled_hist_;
+
+  //Subtract underlying histogram
+  if(h->process_->type_ == Process::Type::background
+     && h != backgrounds_.cbegin()
+     && plot_options_.BackgroundsStacked()){
+    hist = hist - (--h)->scaled_hist_;
+  }
+
+  return hist.GetMean();
 }

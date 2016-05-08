@@ -32,6 +32,8 @@ std::string MakeDir(std::string prefix);
 void Scale(TH1D &h, bool adjust_width = false, double normalization = -1.);
 void MergeOverflow(TH1D &h, bool merge_underflow, bool merge_overflow);
 
+std::string FixedDigits(double x, int n_digits);
+
 template<typename T>
 void Append(T &collection, const typename T::value_type &value){
   collection.insert(collection.end(), value);

@@ -2,7 +2,9 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <cstdint>
 
+#include <sstream>
 #include <string>
 #include <vector>
 #include <memory>
@@ -103,4 +105,19 @@ void MergeOverflow(TH1D &h, bool merge_underflow, bool merge_overflow){
     h.SetBinError(nbins, hypot(h.GetBinError(nbins), h.GetBinError(nbins+1)));
     h.SetBinError(nbins+1, 0.);
   }
+}
+
+string FixedDigits(double x, int n_digits){
+  int digits_left = max(floor(log10(x))+1., 0.);
+  int digits_right = max(n_digits-digits_left, 0);
+
+  double multiplier = pow(10., digits_right);
+
+  ostringstream oss;
+  oss << setprecision(numeric_limits<double>::max_digits10) << round(x*multiplier)/multiplier << flush;
+  string out = oss.str();
+  if(out.substr(0,2) == "0."){
+    out = out.substr(1);
+  }
+  return out;
 }
