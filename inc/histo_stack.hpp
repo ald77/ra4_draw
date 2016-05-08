@@ -13,6 +13,7 @@
 #include "TPad.h"
 #include "TLatex.h"
 #include "TLine.h"
+#include "TGraphAsymmErrors.h"
 
 #include "process.hpp"
 #include "histo_def.hpp"
@@ -108,6 +109,8 @@ private:
 
   double GetYield(std::vector<HistoStack::SingleHist>::const_iterator h) const;
   double GetMean(std::vector<HistoStack::SingleHist>::const_iterator h) const;
+
+  TGraphAsymmErrors GetBackgroundError() const;
 };
 
 #endif

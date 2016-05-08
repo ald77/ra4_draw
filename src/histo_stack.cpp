@@ -276,6 +276,8 @@ void HistoStack::PrintPlot(double luminosity){
     bot_plots.pop_back();
   }
 
+  TGraphAsymmErrors bkg_error = GetBackgroundError();
+
   StripTopPlotLabels();
   TLine horizontal = GetBottomHorizontal();
 
@@ -310,6 +312,7 @@ void HistoStack::PrintPlot(double luminosity){
 
   string draw_opt = "hist";
   DrawAll(backgrounds_, draw_opt);
+  if(plot_options_.ShowBackgroundError() && backgrounds_.size()) bkg_error.Draw("2 same");
   DrawAll(signals_, draw_opt);
   ReplaceAll(draw_opt, "hist", "ep");
   DrawAll(datas_, draw_opt);
@@ -828,4 +831,19 @@ double HistoStack::GetMean(vector<HistoStack::SingleHist>::const_iterator h) con
   }
 
   return hist.GetMean();
+}
+
+TGraphAsymmErrors HistoStack::GetBackgroundError() const{
+  TGraphAsymmErrors g;
+  if(backgrounds_.size() == 0){
+    TH1D h("", "", definition_.GetNbins(), &definition_.GetBins().at(0));
+    g = TGraphAsymmErrors(&h);
+  }else{
+    g = TGraphAsymmErrors(&(backgrounds_.back().scaled_hist_));
+  }
+  g.SetFillStyle(3003);
+  g.SetFillColor(kBlack);
+  g.SetLineWidth(0);
+  g.SetMarkerSize(0);
+  return g;
 }

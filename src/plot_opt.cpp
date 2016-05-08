@@ -36,7 +36,8 @@ PlotOpt::PlotOpt():
   log_minimum_(0.01),
   n_divisions_(606),
   n_divisions_bottom_(606),
-  font_(42){
+  font_(42),
+  show_background_error_(true){
 }
 
 PlotOpt::PlotOpt(const string &file_name,
@@ -330,6 +331,15 @@ int PlotOpt::Font() const{
   return font_;
 }
 
+PlotOpt & PlotOpt::ShowBackgroundError(bool show_background_error){
+  show_background_error_ = show_background_error;
+  return *this;
+}
+
+bool PlotOpt::ShowBackgroundError() const{
+  return show_background_error_;
+}
+
 double PlotOpt::TopToGlobalYNDC(double top_y) const{
   if(bottom_type_ == BottomType::off) return top_y;
   else return 1.-(1.-top_y)*(1. - bottom_margin_ - bottom_height_);
@@ -423,6 +433,8 @@ void PlotOpt::SetProperty(const string &property,
     NDivisionsBottom(stoi(value));
   }else if(property == "Font"){
     Font(stoi(value));
+  }else if(property == "ShowBackgroundError"){
+    ShowBackgroundError(stoi(value));
   }else{
     DBG("Did not understand property name "<<property);
   }

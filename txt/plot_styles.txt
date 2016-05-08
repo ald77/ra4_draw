@@ -18,3 +18,4 @@
   NDivisions = 606
   NDivisionsBottom = 606
   Font = 42
+  ShowBackgroundError = 1

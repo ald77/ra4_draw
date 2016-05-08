@@ -102,6 +102,9 @@ public:
   PlotOpt & Font(int font);
   int Font() const;
 
+  PlotOpt & ShowBackgroundError(bool show_background_error);
+  bool ShowBackgroundError() const;
+
   double TopToGlobalYNDC(double top_y) const;
   double GlobalToTopYNDC(double global_y) const;
   double BottomToGlobalYNDC(double bottom_y) const;
@@ -130,6 +133,7 @@ private:
   double log_minimum_;
   int n_divisions_, n_divisions_bottom_;
   int font_;
+  bool show_background_error_;
 
   void SetProperty(const std::string &property_name,
                    const std::string &value_string);
