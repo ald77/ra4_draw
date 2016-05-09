@@ -1,5 +1,7 @@
 #include "histo_def.hpp"
 
+#include <algorithm>
+
 using namespace std;
 
 HistoDef::HistoDef(const vector<double> &bins,
@@ -7,13 +9,16 @@ HistoDef::HistoDef(const vector<double> &bins,
                    const string &x_title,
                    const string &units,
                    const NamedFunc &cut,
-                   const NamedFunc &weight):
-  bins_(bins),
+                   const NamedFunc &weight,
+                   const set<double> &cut_vals):
   var_(var),
   cut_(cut),
   weight_(weight),
   x_title_(x_title),
-  units_(units){
+  units_(units),
+  cut_vals_(cut_vals),
+  bins_(bins){
+  sort(bins_.begin(), bins_.end());
   }
 
 HistoDef::HistoDef(size_t nbins,
@@ -23,28 +28,36 @@ HistoDef::HistoDef(size_t nbins,
                    const string &x_title,
                    const string &units,
                    const NamedFunc &cut,
-                   const NamedFunc &weight):
-  bins_(GetEdges(nbins, xmin, xmax)),
+                   const NamedFunc &weight,
+                   const set<double> &cut_vals):
   var_(var),
   cut_(cut),
   weight_(weight),
   x_title_(x_title),
-  units_(units){
-  }
+  units_(units),
+  cut_vals_(cut_vals),
+  bins_(GetEdges(nbins, xmin, xmax)){
+}
 
-size_t HistoDef::GetNbins() const{
+size_t HistoDef::Nbins() const{
   return bins_.size()-1;
 }
 
-const vector<double> & HistoDef::GetBins() const{
+HistoDef & HistoDef::Bins(const std::vector<double> &bins){
+  bins_ = bins;
+  sort(bins_.begin(), bins_.end());
+  return *this;
+}
+
+const vector<double> & HistoDef::Bins() const{
   return bins_;
 }
 
-string HistoDef::GetName() const{
+string HistoDef::Name() const{
   return var_.PlainName() + "_CUT_" + cut_.PlainName() + "_WGT_" + weight_.PlainName();
 }
 
-string HistoDef::GetTitle() const{
+string HistoDef::Title() const{
   bool cut = (cut_.Name() != "" && cut_.Name() != "1");
   bool weight = weight_.Name() != "weight";
   if(cut && weight){

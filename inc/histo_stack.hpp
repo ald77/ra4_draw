@@ -63,6 +63,7 @@ public:
   double GetLegendRatio() const;
   double FixYAxis(std::vector<TH1D> &bottom_plots, TPad *top, TPad *bottom);
   TLine GetBottomHorizontal() const;
+  std::vector<TLine> GetCutLines() const;
   void PrintPlot(double luminosity);
 
   const TH1D & RawHisto(const std::shared_ptr<Process> &process) const;

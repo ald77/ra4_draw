@@ -58,7 +58,7 @@ HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
   string x_title = definition.x_title_;
   if(definition.units_ != "") x_title += " ["+definition.units_+"]";
 
-  double bin_width = (definition.bins_.back()-definition.bins_.front())/(definition.bins_.size()-1);
+  double bin_width = (definition.Bins().back()-definition.Bins().front())/(definition.Nbins());
 
   ostringstream oss;
   switch(plot_options.Stack()){
@@ -78,7 +78,7 @@ HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
     break;
   }
 
-  TH1D empty("", (";"+x_title+";"+oss.str()).c_str(), definition.GetNbins(), &definition.bins_.at(0));
+  TH1D empty("", (";"+x_title+";"+oss.str()).c_str(), definition.Nbins(), &definition.Bins().at(0));
   empty.SetStats(false);
   empty.GetXaxis()->SetTitleOffset(plot_options_.XTitleOffset());
   empty.GetYaxis()->SetTitleOffset(plot_options_.YTitleOffset());
@@ -170,7 +170,7 @@ vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity, double 
   double top = 1.;
   if(plot_options_.Title() == TitleType::variable){
     out.push_back(make_shared<TLatex>(0.5*(left+right), 0.5*(bottom+top),
-                                      definition_.GetTitle().c_str()));
+                                      definition_.Title().c_str()));
     out.back()->SetNDC();
     out.back()->SetTextAlign(22);
     out.back()->SetTextFont(plot_options_.Font());
@@ -242,8 +242,8 @@ double HistoStack::FixYAxis(vector<TH1D> &bottom_plots, TPad *top, TPad *bottom)
 }
 
 TLine HistoStack::GetBottomHorizontal() const{
-  double left = definition_.GetBins().front();
-  double right = definition_.GetBins().back();
+  double left = definition_.Bins().front();
+  double right = definition_.Bins().back();
   double y;
   switch(plot_options_.Bottom()){
   case BottomType::ratio: y = 1.; break;
@@ -260,6 +260,30 @@ TLine HistoStack::GetBottomHorizontal() const{
   line.SetLineColor(kBlack);
   line.SetLineWidth(2);
   return line;
+}
+
+vector<TLine> HistoStack::GetCutLines() const{
+  double the_max = GetMaxDraw();
+  double the_min = GetMinDraw();
+
+  double bottom;
+  switch(plot_options_.YAxis()){
+  default:
+    DBG("Bad YAxis type " << static_cast<int>(plot_options_.YAxis()));
+  case YAxisType::linear: bottom = the_min >= 0. ? 0. : the_min; break;
+  case YAxisType::log:    bottom = the_min > 0. ? the_min : plot_options_.LogMinimum(); break;
+  }
+
+  vector<TLine> out(definition_.cut_vals_.size());
+  for(double cut: definition_.cut_vals_){
+    out.emplace_back(cut, bottom, cut, the_max);
+    out.back().SetNDC(false);
+    out.back().SetLineStyle(2);
+    out.back().SetLineColor(kGray);
+    out.back().SetLineWidth(3);
+  }
+
+  return out;
 }
 
 void HistoStack::PrintPlot(double luminosity){
@@ -280,6 +304,7 @@ void HistoStack::PrintPlot(double luminosity){
 
   StripTopPlotLabels();
   TLine horizontal = GetBottomHorizontal();
+  vector<TLine> cut_vals = GetCutLines();
 
   unique_ptr<TCanvas> full;
   unique_ptr<TPad> top, bottom;
@@ -316,6 +341,7 @@ void HistoStack::PrintPlot(double luminosity){
   DrawAll(signals_, draw_opt);
   ReplaceAll(draw_opt, "hist", "ep");
   DrawAll(datas_, draw_opt);
+  for(auto &cut: cut_vals) cut.Draw();
 
   vector<shared_ptr<TLegend> > legends = GetLegends(left_margin);
   for(auto &legend: legends){
@@ -330,7 +356,7 @@ void HistoStack::PrintPlot(double luminosity){
     x->Draw();
   }
 
-  string base_name = "plots/"+definition_.GetName();
+  string base_name = "plots/"+definition_.Name();
   for(const auto &ext: plot_options_.FileExtensions()){
     string full_name = base_name+"."+ext;
     full->Print(full_name.c_str());
@@ -836,7 +862,7 @@ double HistoStack::GetMean(vector<HistoStack::SingleHist>::const_iterator h) con
 TGraphAsymmErrors HistoStack::GetBackgroundError() const{
   TGraphAsymmErrors g;
   if(backgrounds_.size() == 0){
-    TH1D h("", "", definition_.GetNbins(), &definition_.GetBins().at(0));
+    TH1D h("", "", definition_.Nbins(), &definition_.Bins().at(0));
     g = TGraphAsymmErrors(&h);
   }else{
     g = TGraphAsymmErrors(&(backgrounds_.back().scaled_hist_));
