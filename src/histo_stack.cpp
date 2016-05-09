@@ -160,7 +160,7 @@ HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
   }
   }
 
-void HistoStack::PrintPlot(double luminosity){
+void HistoStack::PrintPlot(double luminosity/**<[in]The lumi*/){
   //Takes already filled histograms and prints to file
   RefreshScaledHistos(luminosity);
 
@@ -538,7 +538,7 @@ vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity, double 
   double right = 1.-plot_options_.RightMargin();
   double bottom = 1.-plot_options_.TopMargin();
   double top = 1.;
-  if(plot_options_.Title() == TitleType::variable){
+  if(plot_options_.Title() == TitleType::info){
     out.push_back(make_shared<TLatex>(0.5*(left+right), 0.5*(bottom+top),
                                       definition_.Title().c_str()));
     out.back()->SetNDC();
@@ -550,8 +550,8 @@ vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity, double 
     case TitleType::preliminary: extra = "Preliminary"; break;
     case TitleType::simulation: extra = "Simulation"; break;
     case TitleType::supplementary: extra = "Supplementary"; break;
-    case TitleType::data: extra = "Data"; break;
-    case TitleType::variable:
+    case TitleType::data: extra = ""; break;
+    case TitleType::info:
     default:
       ERROR("Did not understand title type "+to_string(static_cast<int>(plot_options_.Title())));
     }
@@ -798,7 +798,7 @@ void HistoStack::AddEntries(vector<shared_ptr<TLegend> > &legends,
     size_t legend_index = GetLegendIndex(entries_added, n_entries, legends.size());
     TLegend &legend = *legends.at(legend_index);
     string label = h->process_->name_.c_str();
-    if(plot_options_.Title() == TitleType::variable){
+    if(plot_options_.Title() == TitleType::info){
       double value;
       switch(plot_options_.Stack()){
       default:

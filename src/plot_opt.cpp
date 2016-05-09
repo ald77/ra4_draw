@@ -13,7 +13,7 @@ using namespace PlotOptTypes;
 PlotOpt::PlotOpt():
   bottom_type_(BottomType::off),
   y_axis_type_(YAxisType::linear),
-  title_type_(TitleType::variable),
+  title_type_(TitleType::info),
   stack_type_(StackType::signal_overlay),
   overflow_type_(OverflowType::both),
   file_extensions_({"pdf"}),
