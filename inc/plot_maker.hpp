@@ -22,7 +22,7 @@ public:
 
   void AddPlot(const std::vector<std::shared_ptr<Process> > & processes,
                const HistoDef &histo_def,
-               const PlotOpt &plot_options = PlotOpt());
+               const std::vector<PlotOpt> &plot_options = {PlotOpt()});
 
   void MakePlots(double luminosity);
 

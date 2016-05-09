@@ -50,7 +50,7 @@ public:
 
   HistoStack(const std::vector<std::shared_ptr<Process> > &processes,
              const HistoDef &definition,
-             const PlotOpt &plot_options = PlotOpt());
+             const std::vector<PlotOpt> &plot_options = {PlotOpt()});
   HistoStack(const HistoStack &) = default;
   HistoStack& operator=(const HistoStack &) = default;
   HistoStack(HistoStack &&) = default;
@@ -62,16 +62,15 @@ public:
   const TH1D & RawHisto(const std::shared_ptr<Process> &process) const;
   TH1D & RawHisto(const std::shared_ptr<Process> &process);
 
-  HistoStack & PlotOptions(const PlotOpt &plot_opt);
-  const PlotOpt & PlotOptions() const;
-
   std::set<std::shared_ptr<Process> > GetProcesses() const;
 
   std::vector<SingleHist> backgrounds_, signals_, datas_;
   HistoDef definition_;
-  PlotOpt plot_options_;
+  std::vector<PlotOpt> plot_options_;
 
 private:
+  mutable PlotOpt this_opt_;
+
   HistoStack() = delete;
 
   const std::vector<SingleHist> & GetHistoList(const std::shared_ptr<Process> &process) const;
@@ -80,7 +79,9 @@ private:
   const SingleHist & Histo(const std::shared_ptr<Process> &process) const;
   SingleHist & Histo(const std::shared_ptr<Process> &process);
 
-  void RefreshScaledHistos(double luminosity) const;
+  void StyleHisto(TH1D &h);
+
+  void RefreshScaledHistos(double luminosity);
   void ScaleHistos(double luminosity) const;
   void StackHistos() const;
   void MergeOverflow() const;
