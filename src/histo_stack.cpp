@@ -320,30 +320,32 @@ HistoStack::SingleHist & HistoStack::Histo(const shared_ptr<Process> &process){
 }
 
 void HistoStack::RefreshScaledHistos(double luminosity) const{
-  StackHistos(luminosity);
+  for(auto &hist: backgrounds_) hist.scaled_hist_ = hist.raw_hist_;
+  for(auto &hist: signals_) hist.scaled_hist_ = hist.raw_hist_;
+  for(auto &hist: datas_) hist.scaled_hist_ = hist.raw_hist_;
+
   MergeOverflow();
+  ScaleHistos(luminosity);
+  StackHistos();
   SetRanges();
   AdjustFillStyles();
 }
 
-void HistoStack::StackHistos(double luminosity) const{
-  //Scale to luminosity
+void HistoStack::ScaleHistos(double luminosity) const{
   for(auto &hist: backgrounds_){
-    hist.scaled_hist_ = hist.raw_hist_;
     Scale(hist.scaled_hist_, true);
     hist.scaled_hist_.Scale(luminosity);
   }
   for(auto &hist: signals_){
-    hist.scaled_hist_ = hist.raw_hist_;
     Scale(hist.scaled_hist_, true);
     hist.scaled_hist_.Scale(luminosity);
   }
   for(auto &hist: datas_){
-    hist.scaled_hist_ = hist.raw_hist_;
     Scale(hist.scaled_hist_, true);
   }
+}
 
-  //Stack histograms
+void HistoStack::StackHistos() const{
   switch(plot_options_.Stack()){
   case StackType::signal_on_top:
     for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){

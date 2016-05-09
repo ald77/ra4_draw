@@ -81,7 +81,8 @@ private:
   SingleHist & Histo(const std::shared_ptr<Process> &process);
 
   void RefreshScaledHistos(double luminosity) const;
-  void StackHistos(double luminosity) const;
+  void ScaleHistos(double luminosity) const;
+  void StackHistos() const;
   void MergeOverflow() const;
   void SetRanges() const;
   void AdjustFillStyles() const;
