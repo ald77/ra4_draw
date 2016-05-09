@@ -210,7 +210,7 @@ void HistoStack::PrintPlot(double luminosity/**<[in]The lumi*/){
 
     string base_name = "plots/"+definition_.Name();
     for(const auto &ext: this_opt_.FileExtensions()){
-      string full_name = base_name+"."+ext;
+      string full_name = base_name+"_OPT_"+this_opt_.TypeString()+'.'+ext;
       full->Print(full_name.c_str());
       cout << "Wrote plot to " << full_name << "." << endl;
     }

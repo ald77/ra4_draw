@@ -113,6 +113,7 @@ public:
   double LegendHeight(size_t num_entries) const;
 
   bool BackgroundsStacked() const;
+  std::string TypeString() const;
 
 private:
   PlotOptTypes::BottomType bottom_type_;
