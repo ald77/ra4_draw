@@ -516,15 +516,16 @@ double HistoStack::FixYAxis(vector<TH1D> &bottom_plots, TPad *top, TPad *bottom)
     double the_max = GetMaxDraw()*GetLegendRatio();
     int digits = fabs(floor(log10(the_max))-1)+2;
 
-    switch(digits){
-    case 0: //Shouldn't happen, but just in case...
-    case 1: //Shouldn't happen, but just in case...
-    case 2: margin = 0.15; offset = 1.; break;
-    default: //For huge axis scale, reverts to scientific notation
-    case 3: margin = 0.17; offset = 1.25; break;
-    case 4: margin = 0.19; offset = 1.5; break;
-    case 5: margin = 0.21; offset = 1.75; break;
+    if(digits<=2){
+      digits = 2;
+    }else if(digits>6){
+      //For huge axis scale, reverts to scientific notation
+      digits = 3;
     }
+
+    //Scale margin by good empirical numbers
+    margin = 0.07+0.02*digits;
+    offset = 0.6+0.25*digits;
   }
 
   for(auto &h: backgrounds_){
@@ -821,15 +822,15 @@ void HistoStack::AddEntries(vector<shared_ptr<TLegend> > &legends,
       case StackType::signal_on_top:
         value = GetYield(h);
         if(value>=1.){
-          label = label + " [N=" + FixedDigits(value, 2) + "]";
+          label += " [N=" + FixedDigits(value, 2) + "]";
         }else{
-          label = label + " [N=" + FixedDigits(value, 1) + "]";
+          label += " [N=" + FixedDigits(value, 1) + "]";
         }
         break;
       case StackType::lumi_shapes:
       case StackType::shapes:
         value = GetMean(h);
-        label = label + " [#mu=" + FixedDigits(value,3) + "]";
+        label += " [#mu=" + FixedDigits(value,3) + "]";
         break;
       }
     }
