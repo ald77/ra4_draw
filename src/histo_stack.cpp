@@ -47,6 +47,51 @@ namespace{
   }
 }
 
+HistoStack::SingleHist::SingleHist(const shared_ptr<Process> &process,
+                                   const TH1D &hist):
+  process_(process),
+  raw_hist_(hist),
+  scaled_hist_(){
+  raw_hist_.Sumw2();
+  scaled_hist_.Sumw2();
+}
+
+double HistoStack::SingleHist::GetMax(double max_bound,
+                                      bool include_error_bar,
+                                      bool include_overflow) const{
+  int start_bin = include_overflow ? 0 : 1;
+  int end_bin = include_overflow ? (scaled_hist_.GetNbinsX()+1) : scaled_hist_.GetNbinsX();
+  double the_max = -numeric_limits<double>::infinity();
+  for(int bin = start_bin; bin <= end_bin; ++bin){
+    double content = scaled_hist_.GetBinContent(bin);
+    if(include_error_bar){
+      content += scaled_hist_.GetBinErrorUp(bin);
+    }
+    if(content > the_max && content < max_bound){
+      the_max = content;
+    }
+  }
+  return the_max;
+}
+
+double HistoStack::SingleHist::GetMin(double min_bound,
+                                      bool include_error_bar,
+                                      bool include_overflow) const{
+  int start_bin = include_overflow ? 0 : 1;
+  int end_bin = include_overflow ? scaled_hist_.GetNbinsX() : (scaled_hist_.GetNbinsX()+1);
+  double the_min = numeric_limits<double>::infinity();
+  for(int bin = start_bin; bin <= end_bin; ++bin){
+    double content = scaled_hist_.GetBinContent(bin);
+    if(include_error_bar){
+      content -= fabs(scaled_hist_.GetBinErrorLow(bin));
+    }
+    if(content < the_min && content > min_bound){
+      the_min = content;
+    }
+  }
+  return the_min;
+}
+
 HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
                        const HistoDef &definition,
                        const PlotOpt &plot_options):
@@ -114,177 +159,6 @@ HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
     }
   }
   }
-
-void HistoStack::StripTopPlotLabels(){
-  if(plot_options_.Bottom() == BottomType::off) return;
-  for(auto &hist: backgrounds_){
-    StripXLabels(hist.scaled_hist_);
-  }
-  for(auto &hist: signals_){
-    StripXLabels(hist.scaled_hist_);
-  }
-  for(auto &hist: datas_){
-    StripXLabels(hist.scaled_hist_);
-  }
-}
-
-void HistoStack::GetPads(unique_ptr<TCanvas> &c,
-                         unique_ptr<TPad> &top,
-                         unique_ptr<TPad> &bottom) const{
-  c.reset(new TCanvas("", "", plot_options_.CanvasWidth(),
-                      plot_options_.CanvasHeight()));
-  c->cd();
-  top.reset(new TPad("", "", 0., 0., 1., 1.));
-  bottom.reset(new TPad("", "", 0., 0., 1., 1.));
-  c->SetMargin(0., 0., 0., 0.);
-  c->SetTicks(1,1);
-  c->SetFillStyle(4000);
-  top->SetTicks(1,1);
-  top->SetFillStyle(4000);
-  bottom->SetTicks(1,1);
-  bottom->SetFillStyle(4000);
-  if(plot_options_.Bottom() == BottomType::off){
-    top->SetMargin(plot_options_.LeftMargin(),
-                   plot_options_.RightMargin(),
-                   plot_options_.BottomMargin(),
-                   plot_options_.TopMargin());
-  }else{
-    top->SetMargin(plot_options_.LeftMargin(),
-                   plot_options_.RightMargin(),
-                   plot_options_.BottomHeight(),
-                   plot_options_.TopMargin());
-    bottom->SetMargin(plot_options_.LeftMargin(),
-                      plot_options_.RightMargin(),
-                      plot_options_.BottomMargin(),
-                      1.-plot_options_.BottomHeight());
-  }
-  bottom->Draw();
-  top->Draw();
-}
-
-vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity, double left_margin) const{
-  vector<shared_ptr<TLatex> > out;
-  double left = left_margin;
-  double right = 1.-plot_options_.RightMargin();
-  double bottom = 1.-plot_options_.TopMargin();
-  double top = 1.;
-  if(plot_options_.Title() == TitleType::variable){
-    out.push_back(make_shared<TLatex>(0.5*(left+right), 0.5*(bottom+top),
-                                      definition_.Title().c_str()));
-    out.back()->SetNDC();
-    out.back()->SetTextAlign(22);
-    out.back()->SetTextFont(plot_options_.Font());
-  }else{
-    string extra;
-    switch(plot_options_.Title()){
-    case TitleType::preliminary: extra = "Preliminary"; break;
-    case TitleType::simulation: extra = "Simulation"; break;
-    case TitleType::supplementary: extra = "Supplementary"; break;
-    case TitleType::data: extra = "Data"; break;
-    case TitleType::variable:
-    default:
-      ERROR("Did not understand title type "+to_string(static_cast<int>(plot_options_.Title())));
-    }
-    out.push_back(make_shared<TLatex>(left, 0.5*(bottom+top),
-                                      ("#font[62]{CMS}#scale[0.76]{#font[52]{ "+extra+"}}").c_str()));
-    out.back()->SetNDC();
-    out.back()->SetTextAlign(12);
-    out.back()->SetTextFont(plot_options_.Font());
-
-    ostringstream oss;
-    oss << luminosity << " fb^{-1} (13 TeV)" << flush;
-    out.push_back(make_shared<TLatex>(right, 0.5*(bottom+top),
-                                      oss.str().c_str()));
-    out.back()->SetNDC();
-    out.back()->SetTextAlign(32);
-    out.back()->SetTextFont(plot_options_.Font());
-  }
-  return out;
-}
-
-double HistoStack::FixYAxis(vector<TH1D> &bottom_plots, TPad *top, TPad *bottom){
-  double offset = plot_options_.YTitleOffset();
-  double margin = plot_options_.LeftMargin();
-  if(plot_options_.YAxis() == YAxisType::log){
-    margin = 0.15;
-    offset = 1.25;
-  }else{
-    double the_max = GetMaxDraw()*GetLegendRatio();
-    int digits = fabs(floor(log10(the_max))-1)+2;
-
-    switch(digits){
-    case 0: //Shouldn't happen, but just in case...
-    case 1: //Shouldn't happen, but just in case...
-    case 2: margin = 0.15; offset = 1.; break;
-    default: //For huge axis scale, reverts to scientific notation
-    case 3: margin = 0.17; offset = 1.25; break;
-    case 4: margin = 0.19; offset = 1.5; break;
-    case 5: margin = 0.21; offset = 1.75; break;
-    }
-  }
-
-  for(auto &h: backgrounds_){
-    h.scaled_hist_.SetTitleOffset(offset, "y");
-  }
-  for(auto &h: signals_){
-    h.scaled_hist_.SetTitleOffset(offset, "y");
-  }
-  for(auto &h: datas_){
-    h.scaled_hist_.SetTitleOffset(offset, "y");
-  }
-  for(auto &h: bottom_plots){
-    h.SetTitleOffset(offset, "y");
-  }
-  top->SetLeftMargin(margin);
-  bottom->SetLeftMargin(margin);
-
-  return margin;
-}
-
-TLine HistoStack::GetBottomHorizontal() const{
-  double left = definition_.Bins().front();
-  double right = definition_.Bins().back();
-  double y;
-  switch(plot_options_.Bottom()){
-  case BottomType::ratio: y = 1.; break;
-  case BottomType::diff: y = 0.; break;
-  case BottomType::off: y = 0.; break;
-  default:
-    y = 0.;
-    DBG("Invalid BottomType: " << to_string(static_cast<int>(plot_options_.Bottom())));
-  }
-
-  TLine line(left, y, right, y);
-  line.SetNDC(false);
-  line.SetLineStyle(3);
-  line.SetLineColor(kBlack);
-  line.SetLineWidth(2);
-  return line;
-}
-
-vector<TLine> HistoStack::GetCutLines() const{
-  double the_max = GetMaxDraw();
-  double the_min = GetMinDraw();
-
-  double bottom;
-  switch(plot_options_.YAxis()){
-  default:
-    DBG("Bad YAxis type " << static_cast<int>(plot_options_.YAxis()));
-  case YAxisType::linear: bottom = the_min >= 0. ? 0. : the_min; break;
-  case YAxisType::log:    bottom = the_min > 0. ? the_min : plot_options_.LogMinimum(); break;
-  }
-
-  vector<TLine> out(definition_.cut_vals_.size());
-  for(double cut: definition_.cut_vals_){
-    out.emplace_back(cut, bottom, cut, the_max);
-    out.back().SetNDC(false);
-    out.back().SetLineStyle(2);
-    out.back().SetLineColor(kGray);
-    out.back().SetLineWidth(3);
-  }
-
-  return out;
-}
 
 void HistoStack::PrintPlot(double luminosity){
   //Takes already filled histograms and prints to file
@@ -372,24 +246,13 @@ TH1D & HistoStack::RawHisto(const shared_ptr<Process> &process){
   return Histo(process).raw_hist_;
 }
 
-const TH1D & HistoStack::ScaledHisto(const shared_ptr<Process> &process) const{
-  return Histo(process).scaled_hist_;
-}
-
-HistoStack & HistoStack::SetPlotOptions(const PlotOpt &plot_opt){
+HistoStack & HistoStack::PlotOptions(const PlotOpt &plot_opt){
   plot_options_ = plot_opt;
   return *this;
 }
 
-const PlotOpt & HistoStack::GetPlotOptions() const{
+const PlotOpt & HistoStack::PlotOptions() const{
   return plot_options_;
-}
-
-void HistoStack::RefreshScaledHistos(double luminosity){
-  StackHistos(luminosity);
-  MergeOverflow();
-  SetRanges();
-  AdjustFillStyles();
 }
 
 set<shared_ptr<Process> > HistoStack::GetProcesses() const{
@@ -404,6 +267,348 @@ set<shared_ptr<Process> > HistoStack::GetProcesses() const{
     processes.insert(proc.process_);
   }
   return processes;
+}
+
+const vector<HistoStack::SingleHist> & HistoStack::GetHistoList(const shared_ptr<Process> &process) const{
+  switch(process->type_){
+  case Process::Type::data:
+    return datas_;
+  case Process::Type::background:
+    return backgrounds_;
+  case Process::Type::signal:
+    return signals_;
+  default:
+    ERROR("Did not understand process type "+to_string(static_cast<long>(process->type_))+".");
+    return backgrounds_;
+  }
+}
+
+vector<HistoStack::SingleHist> & HistoStack::GetHistoList(const shared_ptr<Process> &process){
+  switch(process->type_){
+  case Process::Type::data:
+    return datas_;
+  case Process::Type::background:
+    return backgrounds_;
+  case Process::Type::signal:
+    return signals_;
+  default:
+    ERROR("Did not understand process type "+to_string(static_cast<long>(process->type_))+".");
+    return backgrounds_;
+  }
+}
+
+const HistoStack::SingleHist & HistoStack::Histo(const shared_ptr<Process> &process) const{
+  const auto &hist_list = GetHistoList(process);
+  for(const auto &hist: hist_list){
+    if(hist.process_ == process){
+      return hist;
+    }
+  }
+  ERROR("Could not find histogram for process "+process->name_+".");
+  return hist_list.front();
+}
+
+HistoStack::SingleHist & HistoStack::Histo(const shared_ptr<Process> &process){
+  auto &hist_list = GetHistoList(process);
+  for(auto &hist: hist_list){
+    if(hist.process_ == process){
+      return hist;
+    }
+  }
+  ERROR("Could not find histogram for process "+process->name_+".");
+  return hist_list.front();
+}
+
+void HistoStack::RefreshScaledHistos(double luminosity) const{
+  StackHistos(luminosity);
+  MergeOverflow();
+  SetRanges();
+  AdjustFillStyles();
+}
+
+void HistoStack::StackHistos(double luminosity) const{
+  //Scale to luminosity
+  for(auto &hist: backgrounds_){
+    hist.scaled_hist_ = hist.raw_hist_;
+    Scale(hist.scaled_hist_, true);
+    hist.scaled_hist_.Scale(luminosity);
+  }
+  for(auto &hist: signals_){
+    hist.scaled_hist_ = hist.raw_hist_;
+    Scale(hist.scaled_hist_, true);
+    hist.scaled_hist_.Scale(luminosity);
+  }
+  for(auto &hist: datas_){
+    hist.scaled_hist_ = hist.raw_hist_;
+    Scale(hist.scaled_hist_, true);
+  }
+
+  //Stack histograms
+  switch(plot_options_.Stack()){
+  case StackType::signal_on_top:
+    for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){
+      backgrounds_.at(ibkg).scaled_hist_ = backgrounds_.at(ibkg).scaled_hist_ + backgrounds_.at(ibkg-1).scaled_hist_;
+    }
+    if(backgrounds_.size()){
+      for(auto &hist: signals_){
+        hist.scaled_hist_ = hist.scaled_hist_ + backgrounds_.back().scaled_hist_;
+      }
+    }
+    break;
+  case StackType::signal_overlay:
+    for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){
+      backgrounds_.at(ibkg).scaled_hist_ = backgrounds_.at(ibkg).scaled_hist_ + backgrounds_.at(ibkg-1).scaled_hist_;
+    }
+    break;
+  case StackType::lumi_shapes:
+    //Don't need to do anything further
+    break;
+  case StackType::shapes:
+    for(auto &hist: backgrounds_){
+      Scale(hist.scaled_hist_, false, 100.);
+    }
+    for(auto &hist: signals_){
+      hist.scaled_hist_ = hist.raw_hist_;
+      Scale(hist.scaled_hist_, false, 100.);
+    }
+    for(auto &hist: datas_){
+      hist.scaled_hist_ = hist.raw_hist_;
+      Scale(hist.scaled_hist_, false, 100.);
+    }
+    break;
+  default:
+    DBG("Unknown StackType "+to_string(static_cast<int>(plot_options_.Stack()))+".");
+    break;
+  }
+}
+
+void HistoStack::MergeOverflow() const{
+  bool underflow = false, overflow = false;
+  switch(plot_options_.Overflow()){
+  default:
+  case OverflowType::none:
+    underflow = false;
+    overflow = false;
+    break;
+  case OverflowType::underflow:
+    underflow = true;
+    overflow = false;
+    break;
+  case OverflowType::overflow:
+    underflow = false;
+    overflow = true;
+    break;
+  case OverflowType::both:
+    underflow = true;
+    overflow = true;
+    break;
+  }
+
+  for(auto &hist: backgrounds_){
+    ::MergeOverflow(hist.scaled_hist_, underflow, overflow);
+  }
+  for(auto &hist: signals_){
+    ::MergeOverflow(hist.scaled_hist_, underflow, overflow);
+  }
+  for(auto &hist: datas_){
+    ::MergeOverflow(hist.scaled_hist_, underflow, overflow);
+  }
+}
+
+void HistoStack::SetRanges() const{
+  double the_min = GetMinDraw();
+  double the_max = GetMaxDraw();
+
+  double ratio = GetLegendRatio();
+
+  double top, bottom;
+  switch(plot_options_.YAxis()){
+  default:
+  case YAxisType::linear:
+    bottom = the_min >= 0. ? 0. : the_min;
+    top = bottom+ratio*(the_max-bottom);
+    break;
+  case YAxisType::log:
+    bottom = the_min > 0. ? the_min : plot_options_.LogMinimum();
+    top = exp(log(bottom)+ratio*(log(the_max)-log(bottom)));
+    break;
+  }
+
+  for(auto &hist: backgrounds_){
+    hist.scaled_hist_.SetMinimum(bottom);
+    hist.scaled_hist_.SetMaximum(top);
+  }
+  for(auto &hist: signals_){
+    hist.scaled_hist_.SetMinimum(bottom);
+    hist.scaled_hist_.SetMaximum(top);
+  }
+  for(auto &hist: datas_){
+    hist.scaled_hist_.SetMinimum(bottom);
+    hist.scaled_hist_.SetMaximum(top);
+  }
+}
+
+void HistoStack::AdjustFillStyles() const{
+  if(plot_options_.BackgroundsStacked()) return;
+
+  for(auto &bkg: backgrounds_){
+    TH1D &h = bkg.scaled_hist_;
+    h.SetFillStyle(0);
+    h.SetLineColor(h.GetLineColor());
+    h.SetLineWidth(5);
+  }
+}
+
+void HistoStack::GetPads(unique_ptr<TCanvas> &c,
+                         unique_ptr<TPad> &top,
+                         unique_ptr<TPad> &bottom) const{
+  c.reset(new TCanvas("", "", plot_options_.CanvasWidth(),
+                      plot_options_.CanvasHeight()));
+  c->cd();
+  top.reset(new TPad("", "", 0., 0., 1., 1.));
+  bottom.reset(new TPad("", "", 0., 0., 1., 1.));
+  c->SetMargin(0., 0., 0., 0.);
+  c->SetTicks(1,1);
+  c->SetFillStyle(4000);
+  top->SetTicks(1,1);
+  top->SetFillStyle(4000);
+  bottom->SetTicks(1,1);
+  bottom->SetFillStyle(4000);
+  if(plot_options_.Bottom() == BottomType::off){
+    top->SetMargin(plot_options_.LeftMargin(),
+                   plot_options_.RightMargin(),
+                   plot_options_.BottomMargin(),
+                   plot_options_.TopMargin());
+  }else{
+    top->SetMargin(plot_options_.LeftMargin(),
+                   plot_options_.RightMargin(),
+                   plot_options_.BottomHeight(),
+                   plot_options_.TopMargin());
+    bottom->SetMargin(plot_options_.LeftMargin(),
+                      plot_options_.RightMargin(),
+                      plot_options_.BottomMargin(),
+                      1.-plot_options_.BottomHeight());
+  }
+  bottom->Draw();
+  top->Draw();
+}
+
+double HistoStack::FixYAxis(vector<TH1D> &bottom_plots, TPad *top, TPad *bottom) const{
+  double offset = plot_options_.YTitleOffset();
+  double margin = plot_options_.LeftMargin();
+  if(plot_options_.YAxis() == YAxisType::log){
+    margin = 0.15;
+    offset = 1.25;
+  }else{
+    double the_max = GetMaxDraw()*GetLegendRatio();
+    int digits = fabs(floor(log10(the_max))-1)+2;
+
+    switch(digits){
+    case 0: //Shouldn't happen, but just in case...
+    case 1: //Shouldn't happen, but just in case...
+    case 2: margin = 0.15; offset = 1.; break;
+    default: //For huge axis scale, reverts to scientific notation
+    case 3: margin = 0.17; offset = 1.25; break;
+    case 4: margin = 0.19; offset = 1.5; break;
+    case 5: margin = 0.21; offset = 1.75; break;
+    }
+  }
+
+  for(auto &h: backgrounds_){
+    h.scaled_hist_.SetTitleOffset(offset, "y");
+  }
+  for(auto &h: signals_){
+    h.scaled_hist_.SetTitleOffset(offset, "y");
+  }
+  for(auto &h: datas_){
+    h.scaled_hist_.SetTitleOffset(offset, "y");
+  }
+  for(auto &h: bottom_plots){
+    h.SetTitleOffset(offset, "y");
+  }
+  top->SetLeftMargin(margin);
+  bottom->SetLeftMargin(margin);
+
+  return margin;
+}
+
+vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity, double left_margin) const{
+  vector<shared_ptr<TLatex> > out;
+  double left = left_margin;
+  double right = 1.-plot_options_.RightMargin();
+  double bottom = 1.-plot_options_.TopMargin();
+  double top = 1.;
+  if(plot_options_.Title() == TitleType::variable){
+    out.push_back(make_shared<TLatex>(0.5*(left+right), 0.5*(bottom+top),
+                                      definition_.Title().c_str()));
+    out.back()->SetNDC();
+    out.back()->SetTextAlign(22);
+    out.back()->SetTextFont(plot_options_.Font());
+  }else{
+    string extra;
+    switch(plot_options_.Title()){
+    case TitleType::preliminary: extra = "Preliminary"; break;
+    case TitleType::simulation: extra = "Simulation"; break;
+    case TitleType::supplementary: extra = "Supplementary"; break;
+    case TitleType::data: extra = "Data"; break;
+    case TitleType::variable:
+    default:
+      ERROR("Did not understand title type "+to_string(static_cast<int>(plot_options_.Title())));
+    }
+    out.push_back(make_shared<TLatex>(left, 0.5*(bottom+top),
+                                      ("#font[62]{CMS}#scale[0.76]{#font[52]{ "+extra+"}}").c_str()));
+    out.back()->SetNDC();
+    out.back()->SetTextAlign(12);
+    out.back()->SetTextFont(plot_options_.Font());
+
+    ostringstream oss;
+    oss << luminosity << " fb^{-1} (13 TeV)" << flush;
+    out.push_back(make_shared<TLatex>(right, 0.5*(bottom+top),
+                                      oss.str().c_str()));
+    out.back()->SetNDC();
+    out.back()->SetTextAlign(32);
+    out.back()->SetTextFont(plot_options_.Font());
+  }
+  return out;
+}
+
+TGraphAsymmErrors HistoStack::GetBackgroundError() const{
+  TGraphAsymmErrors g;
+  if(backgrounds_.size() == 0){
+    TH1D h("", "", definition_.Nbins(), &definition_.Bins().at(0));
+    g = TGraphAsymmErrors(&h);
+  }else{
+    g = TGraphAsymmErrors(&(backgrounds_.back().scaled_hist_));
+  }
+  g.SetFillStyle(3003);
+  g.SetFillColor(kBlack);
+  g.SetLineWidth(0);
+  g.SetMarkerSize(0);
+  return g;
+}
+
+vector<TLine> HistoStack::GetCutLines() const{
+  double the_max = GetMaxDraw();
+  double the_min = GetMinDraw();
+
+  double bottom;
+  switch(plot_options_.YAxis()){
+  default:
+    DBG("Bad YAxis type " << static_cast<int>(plot_options_.YAxis()));
+  case YAxisType::linear: bottom = the_min >= 0. ? 0. : the_min; break;
+  case YAxisType::log:    bottom = the_min > 0. ? the_min : plot_options_.LogMinimum(); break;
+  }
+
+  vector<TLine> out(definition_.cut_vals_.size());
+  for(double cut: definition_.cut_vals_){
+    out.emplace_back(cut, bottom, cut, the_max);
+    out.back().SetNDC(false);
+    out.back().SetLineStyle(2);
+    out.back().SetLineColor(kGray);
+    out.back().SetLineWidth(3);
+  }
+
+  return out;
 }
 
 std::vector<TH1D> HistoStack::GetBottomPlots() const{
@@ -474,274 +679,38 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
   return out;
 }
 
-vector<shared_ptr<TLegend> > HistoStack::GetLegends(double left_margin){
-  size_t num_procs = backgrounds_.size()+signals_.size()+datas_.size();
-
-  double left = left_margin+plot_options_.LegendPad();
-  double right = 1.-plot_options_.RightMargin()-plot_options_.LegendPad();
-  double top = 1.-plot_options_.TopMargin()-plot_options_.LegendPad();
-  double bottom = top-plot_options_.LegendHeight(num_procs);
-
-  size_t n_entries = datas_.size() + signals_.size() + backgrounds_.size();
-  size_t n_columns = min(n_entries, static_cast<size_t>(plot_options_.LegendColumns()));
-
-  double delta_x = (right-left)/n_columns;
-  vector<shared_ptr<TLegend> > legends(n_columns);
-  for(size_t i = 0; i < n_columns; ++i){
-    double x = left+i*delta_x;
-    legends.at(i) = make_shared<TLegend>(x, bottom, x+0.12, top);
-    legends.at(i)->SetFillStyle(0);
-    legends.at(i)->SetBorderSize(0);
-    legends.at(i)->SetTextSize(plot_options_.LegendEntryHeight());
-    legends.at(i)->SetTextFont(plot_options_.Font());
+TLine HistoStack::GetBottomHorizontal() const{
+  double left = definition_.Bins().front();
+  double right = definition_.Bins().back();
+  double y;
+  switch(plot_options_.Bottom()){
+  case BottomType::ratio: y = 1.; break;
+  case BottomType::diff: y = 0.; break;
+  case BottomType::off: y = 0.; break;
+  default:
+    y = 0.;
+    DBG("Invalid BottomType: " << to_string(static_cast<int>(plot_options_.Bottom())));
   }
 
-  size_t entries_added = 0;
-  AddEntries(legends, datas_, "lep", n_entries, entries_added);
-  AddEntries(legends, signals_, "l", n_entries, entries_added);
-  AddEntries(legends, backgrounds_, plot_options_.BackgroundsStacked() ? "f" : "l", n_entries, entries_added);
-
-  return legends;
+  TLine line(left, y, right, y);
+  line.SetNDC(false);
+  line.SetLineStyle(3);
+  line.SetLineColor(kBlack);
+  line.SetLineWidth(2);
+  return line;
 }
 
-HistoStack::SingleHist::SingleHist(const shared_ptr<Process> &process,
-                                   const TH1D &hist):
-  process_(process),
-  raw_hist_(hist),
-  scaled_hist_(){
-  raw_hist_.Sumw2();
-  scaled_hist_.Sumw2();
-}
-
-double HistoStack::SingleHist::GetMax(double max_bound,
-                                      bool include_error_bar,
-                                      bool include_overflow) const{
-  int start_bin = include_overflow ? 0 : 1;
-  int end_bin = include_overflow ? (scaled_hist_.GetNbinsX()+1) : scaled_hist_.GetNbinsX();
-  double the_max = -numeric_limits<double>::infinity();
-  for(int bin = start_bin; bin <= end_bin; ++bin){
-    double content = scaled_hist_.GetBinContent(bin);
-    if(include_error_bar){
-      content += scaled_hist_.GetBinErrorUp(bin);
-    }
-    if(content > the_max && content < max_bound){
-      the_max = content;
-    }
-  }
-  return the_max;
-}
-
-double HistoStack::SingleHist::GetMin(double min_bound,
-                                      bool include_error_bar,
-                                      bool include_overflow) const{
-  int start_bin = include_overflow ? 0 : 1;
-  int end_bin = include_overflow ? scaled_hist_.GetNbinsX() : (scaled_hist_.GetNbinsX()+1);
-  double the_min = numeric_limits<double>::infinity();
-  for(int bin = start_bin; bin <= end_bin; ++bin){
-    double content = scaled_hist_.GetBinContent(bin);
-    if(include_error_bar){
-      content -= fabs(scaled_hist_.GetBinErrorLow(bin));
-    }
-    if(content < the_min && content > min_bound){
-      the_min = content;
-    }
-  }
-  return the_min;
-}
-
-void HistoStack::StackHistos(double luminosity){
-  //Scale to luminosity
+void HistoStack::StripTopPlotLabels() const{
+  if(plot_options_.Bottom() == BottomType::off) return;
   for(auto &hist: backgrounds_){
-    hist.scaled_hist_ = hist.raw_hist_;
-    Scale(hist.scaled_hist_, true);
-    hist.scaled_hist_.Scale(luminosity);
+    StripXLabels(hist.scaled_hist_);
   }
   for(auto &hist: signals_){
-    hist.scaled_hist_ = hist.raw_hist_;
-    Scale(hist.scaled_hist_, true);
-    hist.scaled_hist_.Scale(luminosity);
+    StripXLabels(hist.scaled_hist_);
   }
   for(auto &hist: datas_){
-    hist.scaled_hist_ = hist.raw_hist_;
-    Scale(hist.scaled_hist_, true);
+    StripXLabels(hist.scaled_hist_);
   }
-
-  //Stack histograms
-  switch(plot_options_.Stack()){
-  case StackType::signal_on_top:
-    for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){
-      backgrounds_.at(ibkg).scaled_hist_ = backgrounds_.at(ibkg).scaled_hist_ + backgrounds_.at(ibkg-1).scaled_hist_;
-    }
-    if(backgrounds_.size()){
-      for(auto &hist: signals_){
-        hist.scaled_hist_ = hist.scaled_hist_ + backgrounds_.back().scaled_hist_;
-      }
-    }
-    break;
-  case StackType::signal_overlay:
-    for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){
-      backgrounds_.at(ibkg).scaled_hist_ = backgrounds_.at(ibkg).scaled_hist_ + backgrounds_.at(ibkg-1).scaled_hist_;
-    }
-    break;
-  case StackType::lumi_shapes:
-    //Don't need to do anything further
-    break;
-  case StackType::shapes:
-    for(auto &hist: backgrounds_){
-      Scale(hist.scaled_hist_, false, 100.);
-    }
-    for(auto &hist: signals_){
-      hist.scaled_hist_ = hist.raw_hist_;
-      Scale(hist.scaled_hist_, false, 100.);
-    }
-    for(auto &hist: datas_){
-      hist.scaled_hist_ = hist.raw_hist_;
-      Scale(hist.scaled_hist_, false, 100.);
-    }
-    break;
-  default:
-    DBG("Unknown StackType "+to_string(static_cast<int>(plot_options_.Stack()))+".");
-    break;
-  }
-}
-
-void HistoStack::MergeOverflow(){
-  bool underflow = false, overflow = false;
-  switch(plot_options_.Overflow()){
-  default:
-  case OverflowType::none:
-    underflow = false;
-    overflow = false;
-    break;
-  case OverflowType::underflow:
-    underflow = true;
-    overflow = false;
-    break;
-  case OverflowType::overflow:
-    underflow = false;
-    overflow = true;
-    break;
-  case OverflowType::both:
-    underflow = true;
-    overflow = true;
-    break;
-  }
-
-  for(auto &hist: backgrounds_){
-    ::MergeOverflow(hist.scaled_hist_, underflow, overflow);
-  }
-  for(auto &hist: signals_){
-    ::MergeOverflow(hist.scaled_hist_, underflow, overflow);
-  }
-  for(auto &hist: datas_){
-    ::MergeOverflow(hist.scaled_hist_, underflow, overflow);
-  }
-}
-
-double HistoStack::GetLegendRatio() const{
-  size_t num_plots = backgrounds_.size() + signals_.size() + datas_.size();
-  double legend_height = plot_options_.LegendHeight(num_plots);
-  double top_plot_height;
-  if(plot_options_.Bottom() == BottomType::off){
-    top_plot_height = 1.-plot_options_.TopMargin()-plot_options_.BottomMargin();
-  }else{
-    top_plot_height = 1.-plot_options_.TopMargin()-plot_options_.BottomHeight();
-  }
-  return top_plot_height/(top_plot_height-legend_height-2.*plot_options_.LegendPad());
-}
-
-void HistoStack::SetRanges(){
-  double the_min = GetMinDraw();
-  double the_max = GetMaxDraw();
-
-  double ratio = GetLegendRatio();
-
-  double top, bottom;
-  switch(plot_options_.YAxis()){
-  default:
-  case YAxisType::linear:
-    bottom = the_min >= 0. ? 0. : the_min;
-    top = bottom+ratio*(the_max-bottom);
-    break;
-  case YAxisType::log:
-    bottom = the_min > 0. ? the_min : plot_options_.LogMinimum();
-    top = exp(log(bottom)+ratio*(log(the_max)-log(bottom)));
-    break;
-  }
-
-  for(auto &hist: backgrounds_){
-    hist.scaled_hist_.SetMinimum(bottom);
-    hist.scaled_hist_.SetMaximum(top);
-  }
-  for(auto &hist: signals_){
-    hist.scaled_hist_.SetMinimum(bottom);
-    hist.scaled_hist_.SetMaximum(top);
-  }
-  for(auto &hist: datas_){
-    hist.scaled_hist_.SetMinimum(bottom);
-    hist.scaled_hist_.SetMaximum(top);
-  }
-}
-
-void HistoStack::AdjustFillStyles(){
-  if(plot_options_.BackgroundsStacked()) return;
-
-  for(auto &bkg: backgrounds_){
-    TH1D &h = bkg.scaled_hist_;
-    h.SetFillStyle(0);
-    h.SetLineColor(h.GetLineColor());
-    h.SetLineWidth(5);
-  }
-}
-
-const vector<HistoStack::SingleHist> & HistoStack::GetHistoList(const shared_ptr<Process> &process) const{
-  switch(process->type_){
-  case Process::Type::data:
-    return datas_;
-  case Process::Type::background:
-    return backgrounds_;
-  case Process::Type::signal:
-    return signals_;
-  default:
-    ERROR("Did not understand process type "+to_string(static_cast<long>(process->type_))+".");
-    return backgrounds_;
-  }
-}
-
-vector<HistoStack::SingleHist> & HistoStack::GetHistoList(const shared_ptr<Process> &process){
-  switch(process->type_){
-  case Process::Type::data:
-    return datas_;
-  case Process::Type::background:
-    return backgrounds_;
-  case Process::Type::signal:
-    return signals_;
-  default:
-    ERROR("Did not understand process type "+to_string(static_cast<long>(process->type_))+".");
-    return backgrounds_;
-  }
-}
-
-const HistoStack::SingleHist & HistoStack::Histo(const shared_ptr<Process> &process) const{
-  const auto &hist_list = GetHistoList(process);
-  for(const auto &hist: hist_list){
-    if(hist.process_ == process){
-      return hist;
-    }
-  }
-  ERROR("Could not find histogram for process "+process->name_+".");
-  return hist_list.front();
-}
-
-HistoStack::SingleHist & HistoStack::Histo(const shared_ptr<Process> &process){
-  auto &hist_list = GetHistoList(process);
-  for(auto &hist: hist_list){
-    if(hist.process_ == process){
-      return hist;
-    }
-  }
-  ERROR("Could not find histogram for process "+process->name_+".");
-  return hist_list.front();
 }
 
 double HistoStack::GetMaxDraw(double max_bound) const{
@@ -790,6 +759,36 @@ double HistoStack::GetMinDraw(double min_bound) const{
   return the_min;
 }
 
+vector<shared_ptr<TLegend> > HistoStack::GetLegends(double left_margin){
+  size_t num_procs = backgrounds_.size()+signals_.size()+datas_.size();
+
+  double left = left_margin+plot_options_.LegendPad();
+  double right = 1.-plot_options_.RightMargin()-plot_options_.LegendPad();
+  double top = 1.-plot_options_.TopMargin()-plot_options_.LegendPad();
+  double bottom = top-plot_options_.LegendHeight(num_procs);
+
+  size_t n_entries = datas_.size() + signals_.size() + backgrounds_.size();
+  size_t n_columns = min(n_entries, static_cast<size_t>(plot_options_.LegendColumns()));
+
+  double delta_x = (right-left)/n_columns;
+  vector<shared_ptr<TLegend> > legends(n_columns);
+  for(size_t i = 0; i < n_columns; ++i){
+    double x = left+i*delta_x;
+    legends.at(i) = make_shared<TLegend>(x, bottom, x+0.12, top);
+    legends.at(i)->SetFillStyle(0);
+    legends.at(i)->SetBorderSize(0);
+    legends.at(i)->SetTextSize(plot_options_.LegendEntryHeight());
+    legends.at(i)->SetTextFont(plot_options_.Font());
+  }
+
+  size_t entries_added = 0;
+  AddEntries(legends, datas_, "lep", n_entries, entries_added);
+  AddEntries(legends, signals_, "l", n_entries, entries_added);
+  AddEntries(legends, backgrounds_, plot_options_.BackgroundsStacked() ? "f" : "l", n_entries, entries_added);
+
+  return legends;
+}
+
 void HistoStack::AddEntries(vector<shared_ptr<TLegend> > &legends,
                             const vector<HistoStack::SingleHist> &hists,
                             const string &style,
@@ -826,6 +825,18 @@ void HistoStack::AddEntries(vector<shared_ptr<TLegend> > &legends,
   }
 }
 
+double HistoStack::GetLegendRatio() const{
+  size_t num_plots = backgrounds_.size() + signals_.size() + datas_.size();
+  double legend_height = plot_options_.LegendHeight(num_plots);
+  double top_plot_height;
+  if(plot_options_.Bottom() == BottomType::off){
+    top_plot_height = 1.-plot_options_.TopMargin()-plot_options_.BottomMargin();
+  }else{
+    top_plot_height = 1.-plot_options_.TopMargin()-plot_options_.BottomHeight();
+  }
+  return top_plot_height/(top_plot_height-legend_height-2.*plot_options_.LegendPad());
+}
+
 double HistoStack::GetYield(vector<HistoStack::SingleHist>::const_iterator h) const{
   TH1D hist = h->scaled_hist_;
 
@@ -857,19 +868,4 @@ double HistoStack::GetMean(vector<HistoStack::SingleHist>::const_iterator h) con
   }
 
   return hist.GetMean();
-}
-
-TGraphAsymmErrors HistoStack::GetBackgroundError() const{
-  TGraphAsymmErrors g;
-  if(backgrounds_.size() == 0){
-    TH1D h("", "", definition_.Nbins(), &definition_.Bins().at(0));
-    g = TGraphAsymmErrors(&h);
-  }else{
-    g = TGraphAsymmErrors(&(backgrounds_.back().scaled_hist_));
-  }
-  g.SetFillStyle(3003);
-  g.SetFillColor(kBlack);
-  g.SetLineWidth(0);
-  g.SetMarkerSize(0);
-  return g;
 }

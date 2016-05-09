@@ -33,7 +33,9 @@ public:
 
     std::shared_ptr<Process> process_;
     TH1D raw_hist_;
-    TH1D scaled_hist_;
+    //Probably a better way to do this than using scaled_hist_
+    //as mutable storage for formatted plot
+    mutable TH1D scaled_hist_;
 
     double GetMax(double max_bound = std::numeric_limits<double>::infinity(),
                   bool include_error_bar = false,
@@ -55,31 +57,15 @@ public:
   HistoStack& operator=(HistoStack &&) = default;
   ~HistoStack() = default;
 
-  void StripTopPlotLabels();
-  void GetPads(std::unique_ptr<TCanvas> &c,
-               std::unique_ptr<TPad> &top,
-               std::unique_ptr<TPad> &bottom) const;
-  std::vector<std::shared_ptr<TLatex> > GetTitleTexts(double luminosity, double left_margin) const;
-  double GetLegendRatio() const;
-  double FixYAxis(std::vector<TH1D> &bottom_plots, TPad *top, TPad *bottom);
-  TLine GetBottomHorizontal() const;
-  std::vector<TLine> GetCutLines() const;
   void PrintPlot(double luminosity);
 
   const TH1D & RawHisto(const std::shared_ptr<Process> &process) const;
   TH1D & RawHisto(const std::shared_ptr<Process> &process);
 
-  const TH1D & ScaledHisto(const std::shared_ptr<Process> &process) const;
-
-  HistoStack & SetPlotOptions(const PlotOpt &plot_opt);
-  const PlotOpt & GetPlotOptions() const;
-
-  void RefreshScaledHistos(double luminosity);
-
-  std::vector<TH1D> GetBottomPlots() const;
+  HistoStack & PlotOptions(const PlotOpt &plot_opt);
+  const PlotOpt & PlotOptions() const;
 
   std::set<std::shared_ptr<Process> > GetProcesses() const;
-  std::vector<std::shared_ptr<TLegend> > GetLegends(double left_margin);
 
   std::vector<SingleHist> backgrounds_, signals_, datas_;
   HistoDef definition_;
@@ -88,30 +74,45 @@ public:
 private:
   HistoStack() = delete;
 
-  void StackHistos(double luminosity);
-  void MergeOverflow();
-  void SetRanges();
-  void AdjustFillStyles();
-
   const std::vector<SingleHist> & GetHistoList(const std::shared_ptr<Process> &process) const;
   std::vector<SingleHist> & GetHistoList(const std::shared_ptr<Process> &process);
 
   const SingleHist & Histo(const std::shared_ptr<Process> &process) const;
   SingleHist & Histo(const std::shared_ptr<Process> &process);
 
+  void RefreshScaledHistos(double luminosity) const;
+  void StackHistos(double luminosity) const;
+  void MergeOverflow() const;
+  void SetRanges() const;
+  void AdjustFillStyles() const;
+
+  void GetPads(std::unique_ptr<TCanvas> &c,
+               std::unique_ptr<TPad> &top,
+               std::unique_ptr<TPad> &bottom) const;
+
+  double FixYAxis(std::vector<TH1D> &bottom_plots, TPad *top, TPad *bottom) const;
+
+  std::vector<std::shared_ptr<TLatex> > GetTitleTexts(double luminosity, double left_margin) const;
+  TGraphAsymmErrors GetBackgroundError() const;
+  std::vector<TLine> GetCutLines() const;
+  std::vector<TH1D> GetBottomPlots() const;
+  TLine GetBottomHorizontal() const;
+
+  void StripTopPlotLabels() const;
+
   double GetMaxDraw(double max_bound = std::numeric_limits<double>::infinity()) const;
   double GetMinDraw(double min_bound = 0.) const;
 
+  std::vector<std::shared_ptr<TLegend> > GetLegends(double left_margin);
   void AddEntries(std::vector<std::shared_ptr<TLegend> > &legends,
                   const std::vector<HistoStack::SingleHist> &hists,
                   const std::string &style,
                   std::size_t n_entries,
                   std::size_t &entries_added) const;
+  double GetLegendRatio() const;
 
   double GetYield(std::vector<HistoStack::SingleHist>::const_iterator h) const;
   double GetMean(std::vector<HistoStack::SingleHist>::const_iterator h) const;
-
-  TGraphAsymmErrors GetBackgroundError() const;
 };
 
 #endif
