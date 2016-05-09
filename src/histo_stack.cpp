@@ -139,6 +139,8 @@ HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
 void HistoStack::PrintPlot(double luminosity/**<[in]The lumi*/){
   for(const auto &opt: plot_options_){
     this_opt_ = opt;
+    this_opt_.MakeSane();
+
     //Takes already filled histograms and prints to file
     RefreshScaledHistos(luminosity);
 
@@ -381,11 +383,9 @@ void HistoStack::StackHistos() const{
       Scale(hist.scaled_hist_, false, 100.);
     }
     for(auto &hist: signals_){
-      hist.scaled_hist_ = hist.raw_hist_;
       Scale(hist.scaled_hist_, false, 100.);
     }
     for(auto &hist: datas_){
-      hist.scaled_hist_ = hist.raw_hist_;
       Scale(hist.scaled_hist_, false, 100.);
     }
     break;
@@ -467,7 +467,7 @@ void HistoStack::AdjustFillStyles() const{
   for(auto &bkg: backgrounds_){
     TH1D &h = bkg.scaled_hist_;
     h.SetFillStyle(0);
-    h.SetLineColor(h.GetLineColor());
+    h.SetLineColor(h.GetFillColor());
     h.SetLineWidth(5);
   }
 }

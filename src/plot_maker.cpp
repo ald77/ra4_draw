@@ -49,8 +49,8 @@ PlotMaker::PlotMaker():
   stacks_(){
 }
 
-void PlotMaker::AddPlot(const vector<shared_ptr<Process> > &processes,
-                        const HistoDef &histo_def,
+void PlotMaker::AddPlot(const HistoDef &histo_def,
+                        const vector<shared_ptr<Process> > &processes,
                         const vector<PlotOpt> &plot_options){
   //Adds a plot to the list of plots to be produced. Does NOT fill or draw the histogram.
   stacks_.emplace_back(processes, histo_def, plot_options);

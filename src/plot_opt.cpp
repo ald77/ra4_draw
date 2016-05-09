@@ -419,6 +419,20 @@ string PlotOpt::TypeString() const{
   return out;
 }
 
+void PlotOpt::MakeSane(){
+  if(!BackgroundsStacked()){
+    if(bottom_type_ != BottomType::off){
+      DBG("Don't (yet) know how to make data/MC comparison with unstacked MC. Turning off bottom plot.");
+      bottom_type_ = BottomType::off;
+    }
+
+    if(ShowBackgroundError()){
+      DBG("Don't know how to show total MC uncertainty with unstacked MC. Turning off MC uncertainty band.");
+      show_background_error_ = false;
+    }
+  }
+}
+
 void PlotOpt::SetProperty(const string &property,
                           const string &value){
   if(property == "BottomType"){

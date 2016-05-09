@@ -20,8 +20,8 @@ public:
   PlotMaker& operator=(PlotMaker &&) = default;
   ~PlotMaker() = default;
 
-  void AddPlot(const std::vector<std::shared_ptr<Process> > & processes,
-               const HistoDef &histo_def,
+  void AddPlot(const HistoDef &histo_def,
+               const std::vector<std::shared_ptr<Process> > & processes,
                const std::vector<PlotOpt> &plot_options = {PlotOpt()});
 
   void MakePlots(double luminosity);

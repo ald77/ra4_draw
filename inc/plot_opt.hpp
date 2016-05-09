@@ -115,6 +115,8 @@ public:
   bool BackgroundsStacked() const;
   std::string TypeString() const;
 
+  void MakeSane();
+
 private:
   PlotOptTypes::BottomType bottom_type_;
   PlotOptTypes::YAxisType y_axis_type_;
