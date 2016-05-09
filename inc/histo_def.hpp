@@ -12,7 +12,6 @@ public:
   HistoDef(const std::vector<double> &bins,
            const NamedFunc &var,
            const std::string &x_title = "",
-           const std::string &units = "",
            const NamedFunc &cut = 1.,
            const NamedFunc &weight = "weight",
            const std::set<double> &cut_vals = {});
@@ -21,7 +20,6 @@ public:
            double xmax,
            const NamedFunc &var,
            const std::string &x_title = "",
-           const std::string &units = "",
            const NamedFunc &cut = 1.,
            const NamedFunc &weight = "weight",
            const std::set<double> &cut_vals = {});
@@ -45,6 +43,7 @@ public:
 private:
   std::vector<double> bins_;
   static std::vector<double> GetEdges(size_t nbins, double xmin, double xmax);
+  void ParseUnits();
 };
 
 #endif
