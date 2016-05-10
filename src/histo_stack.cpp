@@ -791,7 +791,7 @@ vector<shared_ptr<TLegend> > HistoStack::GetLegends(){
   double left = this_opt_.LeftMargin()+this_opt_.LegendPad();
   double right = 1.-this_opt_.RightMargin()-this_opt_.LegendPad();
   double top = 1.-this_opt_.TopMargin()-this_opt_.LegendPad();
-  double bottom = top-this_opt_.LegendHeight(num_procs);
+  double bottom = top-this_opt_.TrueLegendHeight(num_procs);
 
   size_t n_entries = datas_.size() + signals_.size() + backgrounds_.size();
   size_t n_columns = min(n_entries, static_cast<size_t>(this_opt_.LegendColumns()));
@@ -800,10 +800,10 @@ vector<shared_ptr<TLegend> > HistoStack::GetLegends(){
   vector<shared_ptr<TLegend> > legends(n_columns);
   for(size_t i = 0; i < n_columns; ++i){
     double x = left+i*delta_x;
-    legends.at(i) = make_shared<TLegend>(x, bottom, x+0.12, top);
+    legends.at(i) = make_shared<TLegend>(x, bottom, x+this_opt_.LegendMarkerWidth(), top);
     legends.at(i)->SetFillStyle(0);
     legends.at(i)->SetBorderSize(0);
-    legends.at(i)->SetTextSize(this_opt_.LegendEntryHeight());
+    legends.at(i)->SetTextSize(this_opt_.TrueLegendEntryHeight(n_entries)*this_opt_.LegendDensity());
     legends.at(i)->SetTextFont(this_opt_.Font());
   }
 
@@ -854,7 +854,7 @@ void HistoStack::AddEntries(vector<shared_ptr<TLegend> > &legends,
 
 double HistoStack::GetLegendRatio() const{
   size_t num_plots = backgrounds_.size() + signals_.size() + datas_.size();
-  double legend_height = this_opt_.LegendHeight(num_plots);
+  double legend_height = this_opt_.TrueLegendHeight(num_plots);
   double top_plot_height;
   if(this_opt_.Bottom() == BottomType::off){
     top_plot_height = 1.-this_opt_.TopMargin()-this_opt_.BottomMargin();

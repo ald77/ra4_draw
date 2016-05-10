@@ -13,7 +13,9 @@
   LegendEntrySize = 0.04
   LegendMaxSize = 0.3
   BottomPlotHeight = 0.35
+  LegendMarkerWidth = 0.12
   LegendPad = 0.03
+  LegendDensity = 0.75
   LogMinimum = 0.
   NDivisions = 606
   NDivisionsBottom = 606

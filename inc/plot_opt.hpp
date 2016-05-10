@@ -88,8 +88,12 @@ public:
   double LegendEntryHeight() const;
   PlotOpt & LegendMaxHeight(double height);
   double LegendMaxHeight() const;
+  PlotOpt & LegendMarkerWidth(double width);
+  double LegendMarkerWidth() const;
   PlotOpt & LegendPad(double pad);
   double LegendPad() const;
+  PlotOpt & LegendDensity(double density);
+  double LegendDensity() const;
 
   PlotOpt & LogMinimum(double log_minimum);
   double LogMinimum() const;
@@ -110,7 +114,8 @@ public:
   double BottomToGlobalYNDC(double bottom_y) const;
   double GlobalToBottomYNDC(double global_y) const;
 
-  double LegendHeight(size_t num_entries) const;
+  double TrueLegendHeight(size_t num_entries) const;
+  double TrueLegendEntryHeight(size_t num_entries) const;
 
   bool BackgroundsStacked() const;
   std::string TypeString() const;
@@ -132,7 +137,7 @@ private:
   double bottom_height_;
   int legend_columns_;
   double legend_entry_height_, legend_max_height_;
-  double legend_pad_;
+  double legend_marker_width_, legend_pad_, legend_density_;
   double log_minimum_;
   int n_divisions_, n_divisions_bottom_;
   int font_;

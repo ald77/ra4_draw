@@ -32,7 +32,9 @@ PlotOpt::PlotOpt():
   legend_columns_(2),
   legend_entry_height_(0.04),
   legend_max_height_(0.3),
+  legend_marker_width_(0.12),
   legend_pad_(0.025),
+  legend_density_(0.75),
   log_minimum_(0.0),
   n_divisions_(606),
   n_divisions_bottom_(606),
@@ -286,6 +288,15 @@ double PlotOpt::LegendMaxHeight() const{
   return legend_max_height_;
 }
 
+PlotOpt & PlotOpt::LegendMarkerWidth(double width){
+  legend_marker_width_ = width;
+  return *this;
+}
+
+double PlotOpt::LegendMarkerWidth() const{
+  return legend_marker_width_;
+}
+
 PlotOpt & PlotOpt::LegendPad(double pad){
   legend_pad_ = pad;
   return *this;
@@ -293,6 +304,15 @@ PlotOpt & PlotOpt::LegendPad(double pad){
 
 double PlotOpt::LegendPad() const{
   return legend_pad_;
+}
+
+PlotOpt & PlotOpt::LegendDensity(double density){
+  legend_density_ = density;
+  return *this;
+}
+
+double PlotOpt::LegendDensity() const{
+  return legend_density_;
 }
 
 PlotOpt & PlotOpt::NDivisions(int n_divisions){
@@ -360,8 +380,12 @@ double PlotOpt::GlobalToBottomYNDC(double global_y) const{
   else return global_y*(bottom_margin_+bottom_height_);
 }
 
-double PlotOpt::LegendHeight(size_t num_entries) const{
-  return min(legend_max_height_, legend_entry_height_*ceil(num_entries*0.5));
+double PlotOpt::TrueLegendHeight(size_t num_entries) const{
+  return min(legend_max_height_, legend_entry_height_*ceil(num_entries/legend_columns_));
+}
+
+double PlotOpt::TrueLegendEntryHeight(size_t num_entries) const{
+  return TrueLegendHeight(num_entries)/ceil(num_entries/legend_columns_);
 }
 
 bool PlotOpt::BackgroundsStacked() const{
@@ -479,8 +503,12 @@ void PlotOpt::SetProperty(const string &property,
     LegendEntryHeight(stod(value));
   }else if(property == "LegendMaxSize"){
     LegendMaxHeight(stod(value));
+  }else if(property == "LegendMarkerWidth"){
+    LegendMarkerWidth(stod(value));
   }else if(property == "LegendPad"){
     LegendPad(stod(value));
+  }else if(property == "LegendDensity"){
+    LegendDensity(stod(value));
   }else if(property == "BottomPlotHeight"){
     BottomHeight(stod(value));
   }else if(property == "LogMinimum"){
