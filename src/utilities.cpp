@@ -120,7 +120,7 @@ string FixedDigits(double x, int n_digits){
   double multiplier = pow(10., digits_right);
 
   ostringstream oss;
-  oss << setprecision(numeric_limits<double>::max_digits10) << round(x*multiplier)/multiplier << flush;
+  oss << setprecision(numeric_limits<double>::digits10) << round(x*multiplier)/multiplier << flush;
   string out = oss.str();
   if(out.substr(0,2) == "0."){
     out = out.substr(1);

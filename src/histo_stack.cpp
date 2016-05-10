@@ -632,7 +632,7 @@ vector<TLine> HistoStack::GetCutLines() const{
     out.emplace_back(cut, bottom, cut, the_max);
     out.back().SetNDC(false);
     out.back().SetLineStyle(2);
-    out.back().SetLineColor(kGray);
+    out.back().SetLineColor(kBlack);
     out.back().SetLineWidth(3);
   }
 
@@ -807,7 +807,6 @@ vector<shared_ptr<TLegend> > HistoStack::GetLegends(double left_margin){
     legends.at(i)->SetBorderSize(0);
     legends.at(i)->SetTextSize(this_opt_.LegendEntryHeight());
     legends.at(i)->SetTextFont(this_opt_.Font());
-    legends.at(i)->SetTextAlign(13);
   }
 
   size_t entries_added = 0;
