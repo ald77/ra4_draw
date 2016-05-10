@@ -166,10 +166,7 @@ void HistoStack::PrintPlot(double luminosity/**<[in]The lumi*/){
     unique_ptr<TPad> top, bottom;
     GetPads(full, top, bottom);
 
-    double left_margin = this_opt_.LeftMargin();
-    if(this_opt_.AutoYAxis()){
-      left_margin = FixYAxis(bot_plots, top.get(), bottom.get());
-    }
+    if(this_opt_.AutoYAxis()) FixYAxis(bot_plots);
 
     if(this_opt_.Bottom() != BottomType::off){
       bottom->cd();
@@ -199,7 +196,7 @@ void HistoStack::PrintPlot(double luminosity/**<[in]The lumi*/){
     DrawAll(datas_, draw_opt);
     for(auto &cut: cut_vals) cut.Draw();
 
-    vector<shared_ptr<TLegend> > legends = GetLegends(left_margin);
+    vector<shared_ptr<TLegend> > legends = GetLegends();
     for(auto &legend: legends){
       legend->Draw();
     }
@@ -207,7 +204,7 @@ void HistoStack::PrintPlot(double luminosity/**<[in]The lumi*/){
     top->RedrawAxis();
     top->RedrawAxis("g");
 
-    vector<shared_ptr<TLatex> > title_text = GetTitleTexts(luminosity, left_margin);
+    vector<shared_ptr<TLatex> > title_text = GetTitleTexts(luminosity);
     for(auto &x: title_text){
       x->Draw();
     }
@@ -520,25 +517,16 @@ void HistoStack::GetPads(unique_ptr<TCanvas> &c,
   top->Draw();
 }
 
-double HistoStack::FixYAxis(vector<TH1D> &bottom_plots, TPad *top, TPad *bottom) const{
+void HistoStack::FixYAxis(vector<TH1D> &bottom_plots) const{
   double offset = this_opt_.YTitleOffset();
-  double margin = this_opt_.LeftMargin();
   if(this_opt_.YAxis() == YAxisType::log){
-    margin = 0.15;
-    offset = 1.25;
+    offset = 1.5;
   }else{
     double the_max = GetMaxDraw()*GetLegendRatio();
     int digits = fabs(floor(log10(the_max))-1)+2;
+    digits = max(2, min(6, digits));//For huge axis scale, reverts to scientific notation
 
-    if(digits<=2){
-      digits = 2;
-    }else if(digits>6){
-      //For huge axis scale, reverts to scientific notation
-      digits = 3;
-    }
-
-    //Scale margin by good empirical numbers
-    margin = 0.07+0.02*digits;
+    //Scale offset by good empirical numbers
     offset = 0.6+0.25*digits;
   }
 
@@ -554,15 +542,11 @@ double HistoStack::FixYAxis(vector<TH1D> &bottom_plots, TPad *top, TPad *bottom)
   for(auto &h: bottom_plots){
     h.SetTitleOffset(offset, "y");
   }
-  top->SetLeftMargin(margin);
-  bottom->SetLeftMargin(margin);
-
-  return margin;
 }
 
-vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity, double left_margin) const{
+vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity) const{
   vector<shared_ptr<TLatex> > out;
-  double left = left_margin;
+  double left = this_opt_.LeftMargin();
   double right = 1.-this_opt_.RightMargin();
   double bottom = 1.-this_opt_.TopMargin();
   double top = 1.;
@@ -787,10 +771,10 @@ double HistoStack::GetMinDraw(double min_bound) const{
   return the_min;
 }
 
-vector<shared_ptr<TLegend> > HistoStack::GetLegends(double left_margin){
+vector<shared_ptr<TLegend> > HistoStack::GetLegends(){
   size_t num_procs = backgrounds_.size()+signals_.size()+datas_.size();
 
-  double left = left_margin+this_opt_.LegendPad();
+  double left = this_opt_.LeftMargin()+this_opt_.LegendPad();
   double right = 1.-this_opt_.RightMargin()-this_opt_.LegendPad();
   double top = 1.-this_opt_.TopMargin()-this_opt_.LegendPad();
   double bottom = top-this_opt_.LegendHeight(num_procs);

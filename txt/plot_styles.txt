@@ -6,7 +6,7 @@
   AutoYAxis = 1
   xTitleOffset = 1.
   yTitleOffset = 2.2
-  PadLeftMargin = 0.18
+  PadLeftMargin = 0.19
   PadRightMargin = 0.055
   PadTopMargin = 0.07
   PadBottomMargin = 0.12

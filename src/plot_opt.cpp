@@ -24,7 +24,7 @@ PlotOpt::PlotOpt():
   auto_y_axis_(true),
   canvas_width_(600),
   canvas_height_(600),
-  left_margin_(0.18),
+  left_margin_(0.19),
   right_margin_(0.055),
   bottom_margin_(0.12),
   top_margin_(0.07),

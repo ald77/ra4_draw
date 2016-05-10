@@ -96,9 +96,9 @@ private:
                std::unique_ptr<TPad> &top,
                std::unique_ptr<TPad> &bottom) const;
 
-  double FixYAxis(std::vector<TH1D> &bottom_plots, TPad *top, TPad *bottom) const;
+  void FixYAxis(std::vector<TH1D> &bottom_plots) const;
 
-  std::vector<std::shared_ptr<TLatex> > GetTitleTexts(double luminosity, double left_margin) const;
+  std::vector<std::shared_ptr<TLatex> > GetTitleTexts(double luminosity) const;
   TGraphAsymmErrors GetBackgroundError() const;
   std::vector<TLine> GetCutLines() const;
   std::vector<TH1D> GetBottomPlots() const;
@@ -109,7 +109,7 @@ private:
   double GetMaxDraw(double max_bound = std::numeric_limits<double>::infinity()) const;
   double GetMinDraw(double min_bound = 0.) const;
 
-  std::vector<std::shared_ptr<TLegend> > GetLegends(double left_margin);
+  std::vector<std::shared_ptr<TLegend> > GetLegends();
   void AddEntries(std::vector<std::shared_ptr<TLegend> > &legends,
                   const std::vector<HistoStack::SingleHist> &hists,
                   const std::string &style,
