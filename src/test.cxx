@@ -31,9 +31,9 @@ int main(){
   string trig_skim_mc = "/net/cms27/cms27r0/babymaker/2016_04_29/mc/merged_1lht500met200/";
 
   auto tt1l = Proc<Baby_full>("t#bar{t} (1l)", Process::Type::background, TColor::GetColor(86, 160, 211),
-    {trig_skim_mc+"*_TTJets_*.root"}, "nleps<=1");
+    {trig_skim_mc+"*_TTJets_*.root"}, "ntruleps<=1&&stitch");
   auto tt2l = Proc<Baby_full>("t#bar{t} (2l)", Process::Type::background, TColor::GetColor(1, 57, 166),
-    {trig_skim_mc+"*_TTJets_*.root"}, "nleps>=2");
+    {trig_skim_mc+"*_TTJets_*.root"}, "ntruleps>=2&&stitch");
   auto wjets = Proc<Baby_full>("W+jets", Process::Type::background, TColor::GetColor(0, 79, 39),
     {trig_skim_mc+"*_WJetsTo*.root"});
   auto single_t = Proc<Baby_full>("Single t", Process::Type::background, TColor::GetColor(52, 42, 123),
@@ -54,7 +54,7 @@ int main(){
   t1tttt_c->SetLineStyle(2);
 
   auto data = Proc<Baby_full>("Data", Process::Type::data, kBlack,
-    {"/net/cms27/cms27r0/babymaker/2016_04_29/data/merged_1lht500met200/*.root"});
+    {"/net/cms27/cms27r0/babymaker/2016_04_29/data/merged_1lht500met200/*.root"},"trig[4]||trig[8]");
 
   vector<shared_ptr<Process> > full_trig_skim = {other, ttv, single_t, wjets, tt2l, tt1l, t1tttt_c, t1tttt_nc, data};
 

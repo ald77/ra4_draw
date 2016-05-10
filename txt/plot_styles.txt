@@ -14,7 +14,7 @@
   LegendMaxSize = 0.3
   BottomPlotHeight = 0.35
   LegendPad = 0.03
-  LogMinimum = 0.01
+  LogMinimum = 0.
   NDivisions = 606
   NDivisionsBottom = 606
   Font = 42

@@ -70,25 +70,31 @@ string MakeDir(string prefix){
   return prefix;
 }
 
-void Scale(TH1D &h, bool adjust_width, double normalization){
-  double integral = h.Integral("width");
+void AdjustDensityForBinWidth(TH1D &h){
   double entries = h.GetEntries();
   int nbins = h.GetNbinsX();
   double low = h.GetBinLowEdge(1);
   double high = h.GetBinLowEdge(nbins+1);
   double width = (high-low)/nbins;
-
-  if(normalization < 0.) normalization = integral;
-  double scale = integral != 0. ? normalization/integral : 1.;
-  for(int bin = 0; bin <= nbins+1; ++bin){
+  for(int bin = 1; bin <= nbins; ++bin){
+    double content = h.GetBinContent(bin);
+    double error = h.GetBinError(bin);
     double this_width = h.GetBinWidth(bin);
-    double this_scale = scale;
-    if(adjust_width) this_scale *= width/this_width;
-
-    h.SetBinContent(bin, h.GetBinContent(bin)*this_scale);
-    h.SetBinError(bin, h.GetBinError(bin)*this_scale);
+    double scale = width/this_width;
+    h.SetBinContent(bin, content*scale);
+    h.SetBinError(bin, error*scale);
   }
   h.SetEntries(entries);
+}
+
+void Normalize(TH1D &h, double normalization, bool norm_per_avg_width){
+  int nbins = h.GetNbinsX();
+  double low = h.GetBinLowEdge(1);
+  double high = h.GetBinLowEdge(nbins+1);
+  double width = (high-low)/nbins;
+  if(norm_per_avg_width) normalization *= width;
+  double integral = h.Integral("width");
+  h.Scale(normalization/integral);
 }
 
 void MergeOverflow(TH1D &h, bool merge_underflow, bool merge_overflow){

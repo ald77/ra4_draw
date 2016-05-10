@@ -79,13 +79,16 @@ private:
   const SingleHist & Histo(const std::shared_ptr<Process> &process) const;
   SingleHist & Histo(const std::shared_ptr<Process> &process);
 
-  void StyleHisto(TH1D &h);
-
   void RefreshScaledHistos(double luminosity);
+  void InitializeHistos() const;
+  void MergeOverflow() const;
   void ScaleHistos(double luminosity) const;
   void StackHistos() const;
-  void MergeOverflow() const;
+
   void SetRanges() const;
+
+  void ApplyStyles() const;
+  void StyleHisto(TH1D &h) const;
   void AdjustFillStyles() const;
 
   void GetPads(std::unique_ptr<TCanvas> &c,

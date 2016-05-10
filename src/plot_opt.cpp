@@ -33,7 +33,7 @@ PlotOpt::PlotOpt():
   legend_entry_height_(0.04),
   legend_max_height_(0.3),
   legend_pad_(0.025),
-  log_minimum_(0.01),
+  log_minimum_(0.0),
   n_divisions_(606),
   n_divisions_bottom_(606),
   font_(42),

@@ -141,8 +141,10 @@ void HistoStack::PrintPlot(double luminosity/**<[in]The lumi*/){
     this_opt_ = opt;
     this_opt_.MakeSane();
 
-    //Takes already filled histograms and prints to file
     RefreshScaledHistos(luminosity);
+    SetRanges();
+    ApplyStyles();
+    AdjustFillStyles();
 
     vector<TH1D> bot_plots = GetBottomPlots();
     //I don't know why I can't make this in GetBottomPlots...
@@ -291,107 +293,22 @@ HistoStack::SingleHist & HistoStack::Histo(const shared_ptr<Process> &process){
   return hist_list.front();
 }
 
-void HistoStack::StyleHisto(TH1D &h){
-  h.GetXaxis()->SetTitleOffset(this_opt_.XTitleOffset());
-  h.GetYaxis()->SetTitleOffset(this_opt_.YTitleOffset());
-  h.SetNdivisions(this_opt_.NDivisions(), "xyz");
-  h.SetLabelSize(this_opt_.LabelSize(), "xyz");
-  h.SetTitleSize(this_opt_.TitleSize(), "xyz");
-  h.SetLabelFont(this_opt_.Font(), "xyz");
-  h.SetTitleFont(this_opt_.Font(), "xyz");
-
-  double bin_width = (definition_.Bins().back()-definition_.Bins().front())/(definition_.Nbins());
-
-  ostringstream title;
-  switch(this_opt_.Stack()){
-  default:
-    DBG("Unrecognized stack option " << static_cast<int>(this_opt_.Stack()) << ".");
-  case StackType::signal_overlay:
-  case StackType::signal_on_top:
-  case StackType::lumi_shapes:
-    title << "Entries/(" << bin_width;
-    if(definition_.units_ != "") title << " " << definition_.units_;
-    title << ")";
-    break;
-  case StackType::shapes:
-    title << "% entries/(" << bin_width;
-    if(definition_.units_ != "") title << " " << definition_.units_;
-    title << ")";
-    break;
-  }
-
-  h.GetYaxis()->SetTitle(title.str().c_str());
-}
-
 void HistoStack::RefreshScaledHistos(double luminosity){
-  for(auto &hist: backgrounds_){
-    hist.scaled_hist_ = hist.raw_hist_;
-    StyleHisto(hist.scaled_hist_);
-  }
-  for(auto &hist: signals_){
-    hist.scaled_hist_ = hist.raw_hist_;
-    StyleHisto(hist.scaled_hist_);
-  }
-  for(auto &hist: datas_){
-    hist.scaled_hist_ = hist.raw_hist_;
-    StyleHisto(hist.scaled_hist_);
-  }
-
+  InitializeHistos();
   MergeOverflow();
   ScaleHistos(luminosity);
   StackHistos();
-  SetRanges();
-  AdjustFillStyles();
 }
 
-void HistoStack::ScaleHistos(double luminosity) const{
+void HistoStack::InitializeHistos() const{
   for(auto &hist: backgrounds_){
-    Scale(hist.scaled_hist_, true);
-    hist.scaled_hist_.Scale(luminosity);
+    hist.scaled_hist_ = hist.raw_hist_;
   }
   for(auto &hist: signals_){
-    Scale(hist.scaled_hist_, true);
-    hist.scaled_hist_.Scale(luminosity);
+    hist.scaled_hist_ = hist.raw_hist_;
   }
   for(auto &hist: datas_){
-    Scale(hist.scaled_hist_, true);
-  }
-}
-
-void HistoStack::StackHistos() const{
-  switch(this_opt_.Stack()){
-  case StackType::signal_on_top:
-    for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){
-      backgrounds_.at(ibkg).scaled_hist_ = backgrounds_.at(ibkg).scaled_hist_ + backgrounds_.at(ibkg-1).scaled_hist_;
-    }
-    if(backgrounds_.size()){
-      for(auto &hist: signals_){
-        hist.scaled_hist_ = hist.scaled_hist_ + backgrounds_.back().scaled_hist_;
-      }
-    }
-    break;
-  case StackType::signal_overlay:
-    for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){
-      backgrounds_.at(ibkg).scaled_hist_ = backgrounds_.at(ibkg).scaled_hist_ + backgrounds_.at(ibkg-1).scaled_hist_;
-    }
-    break;
-  case StackType::lumi_shapes:
-    //Don't need to do anything further
-    break;
-  case StackType::shapes:
-    for(auto &hist: backgrounds_){
-      Scale(hist.scaled_hist_, false, 100.);
-    }
-    for(auto &hist: signals_){
-      Scale(hist.scaled_hist_, false, 100.);
-    }
-    for(auto &hist: datas_){
-      Scale(hist.scaled_hist_, false, 100.);
-    }
-    break;
-  default:
-    DBG("Unknown StackType "+to_string(static_cast<int>(this_opt_.Stack()))+".");
-    break;
+    hist.scaled_hist_ = hist.raw_hist_;
   }
 }
 
@@ -428,6 +345,57 @@ void HistoStack::MergeOverflow() const{
   }
 }
 
+void HistoStack::ScaleHistos(double luminosity) const{
+  for(auto &hist: backgrounds_){
+    AdjustDensityForBinWidth(hist.scaled_hist_);
+    hist.scaled_hist_.Scale(luminosity);
+  }
+  for(auto &hist: signals_){
+    AdjustDensityForBinWidth(hist.scaled_hist_);
+    hist.scaled_hist_.Scale(luminosity);
+  }
+  for(auto &hist: datas_){
+    AdjustDensityForBinWidth(hist.scaled_hist_);
+  }
+}
+
+void HistoStack::StackHistos() const{
+  switch(this_opt_.Stack()){
+  case StackType::signal_on_top:
+    for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){
+      backgrounds_.at(ibkg).scaled_hist_ = backgrounds_.at(ibkg).scaled_hist_ + backgrounds_.at(ibkg-1).scaled_hist_;
+    }
+    if(backgrounds_.size()){
+      for(auto &hist: signals_){
+        hist.scaled_hist_ = hist.scaled_hist_ + backgrounds_.back().scaled_hist_;
+      }
+    }
+    break;
+  case StackType::signal_overlay:
+    for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){
+      backgrounds_.at(ibkg).scaled_hist_ = backgrounds_.at(ibkg).scaled_hist_ + backgrounds_.at(ibkg-1).scaled_hist_;
+    }
+    break;
+  case StackType::lumi_shapes:
+    //Don't need to do anything further
+    break;
+  case StackType::shapes:
+    for(auto &hist: backgrounds_){
+      Normalize(hist.scaled_hist_, 100., true);
+    }
+    for(auto &hist: signals_){
+      Normalize(hist.scaled_hist_, 100., true);
+    }
+    for(auto &hist: datas_){
+      Normalize(hist.scaled_hist_, 100., true);
+    }
+    break;
+  default:
+    DBG("Unknown StackType "+to_string(static_cast<int>(this_opt_.Stack()))+".");
+    break;
+  }
+}
+
 void HistoStack::SetRanges() const{
   double the_min = GetMinDraw();
   double the_max = GetMaxDraw();
@@ -442,7 +410,7 @@ void HistoStack::SetRanges() const{
     top = bottom+ratio*(the_max-bottom);
     break;
   case YAxisType::log:
-    bottom = the_min > 0. ? the_min : this_opt_.LogMinimum();
+    bottom = the_min > this_opt_.LogMinimum() ? the_min : this_opt_.LogMinimum();
     top = exp(log(bottom)+ratio*(log(the_max)-log(bottom)));
     break;
   }
@@ -459,6 +427,50 @@ void HistoStack::SetRanges() const{
     hist.scaled_hist_.SetMinimum(bottom);
     hist.scaled_hist_.SetMaximum(top);
   }
+}
+
+void HistoStack::ApplyStyles() const{
+  for(auto &hist: backgrounds_){
+    StyleHisto(hist.scaled_hist_);
+  }
+  for(auto &hist: signals_){
+    StyleHisto(hist.scaled_hist_);
+  }
+  for(auto &hist: datas_){
+    StyleHisto(hist.scaled_hist_);
+  }
+}
+
+void HistoStack::StyleHisto(TH1D &h) const{
+  h.GetXaxis()->SetTitleOffset(this_opt_.XTitleOffset());
+  h.GetYaxis()->SetTitleOffset(this_opt_.YTitleOffset());
+  h.SetNdivisions(this_opt_.NDivisions(), "xyz");
+  h.SetLabelSize(this_opt_.LabelSize(), "xyz");
+  h.SetTitleSize(this_opt_.TitleSize(), "xyz");
+  h.SetLabelFont(this_opt_.Font(), "xyz");
+  h.SetTitleFont(this_opt_.Font(), "xyz");
+
+  double bin_width = (definition_.Bins().back()-definition_.Bins().front())/(definition_.Nbins());
+
+  ostringstream title;
+  switch(this_opt_.Stack()){
+  default:
+    DBG("Unrecognized stack option " << static_cast<int>(this_opt_.Stack()) << ".");
+  case StackType::signal_overlay:
+  case StackType::signal_on_top:
+  case StackType::lumi_shapes:
+    title << "Entries/(" << bin_width;
+    if(definition_.units_ != "") title << " " << definition_.units_;
+    title << ")";
+    break;
+  case StackType::shapes:
+    title << "% entries/(" << bin_width;
+    if(definition_.units_ != "") title << " " << definition_.units_;
+    title << ")";
+    break;
+  }
+
+  h.GetYaxis()->SetTitle(title.str().c_str());
 }
 
 void HistoStack::AdjustFillStyles() const{
@@ -610,7 +622,7 @@ vector<TLine> HistoStack::GetCutLines() const{
   default:
     DBG("Bad YAxis type " << static_cast<int>(this_opt_.YAxis()));
   case YAxisType::linear: bottom = the_min >= 0. ? 0. : the_min; break;
-  case YAxisType::log:    bottom = the_min > 0. ? the_min : this_opt_.LogMinimum(); break;
+  case YAxisType::log:    bottom = the_min > this_opt_.LogMinimum() ? the_min : this_opt_.LogMinimum(); break;
   }
 
   vector<TLine> out(definition_.cut_vals_.size());

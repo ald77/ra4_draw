@@ -29,7 +29,9 @@ std::vector<std::string> Tokenize(const std::string& input,
 
 std::string MakeDir(std::string prefix);
 
-void Scale(TH1D &h, bool adjust_width = false, double normalization = -1.);
+void AdjustDensityForBinWidth(TH1D &h);
+void Normalize(TH1D &h, double normalization, bool norm_per_avg_x);
+
 void MergeOverflow(TH1D &h, bool merge_underflow, bool merge_overflow);
 
 std::string FixedDigits(double x, int n_digits);
