@@ -789,21 +789,20 @@ vector<shared_ptr<TLegend> > HistoStack::GetLegends(){
   size_t num_procs = backgrounds_.size()+signals_.size()+datas_.size();
 
   double left = this_opt_.LeftMargin()+this_opt_.LegendPad();
-  double right = 1.-this_opt_.RightMargin()-this_opt_.LegendPad();
   double top = 1.-this_opt_.TopMargin()-this_opt_.LegendPad();
   double bottom = top-this_opt_.TrueLegendHeight(num_procs);
 
   size_t n_entries = datas_.size() + signals_.size() + backgrounds_.size();
   size_t n_columns = min(n_entries, static_cast<size_t>(this_opt_.LegendColumns()));
 
-  double delta_x = (right-left)/n_columns;
+  double delta_x = this_opt_.TrueLegendWidth(n_entries);
   vector<shared_ptr<TLegend> > legends(n_columns);
   for(size_t i = 0; i < n_columns; ++i){
     double x = left+i*delta_x;
     legends.at(i) = make_shared<TLegend>(x, bottom, x+this_opt_.LegendMarkerWidth(), top);
     legends.at(i)->SetFillStyle(0);
     legends.at(i)->SetBorderSize(0);
-    legends.at(i)->SetTextSize(this_opt_.TrueLegendEntryHeight(n_entries)*this_opt_.LegendDensity());
+    legends.at(i)->SetTextSize(this_opt_.TrueLegendEntryHeight(n_entries));
     legends.at(i)->SetTextFont(this_opt_.Font());
   }
 
@@ -845,6 +844,22 @@ void HistoStack::AddEntries(vector<shared_ptr<TLegend> > &legends,
         label += " [#mu=" + FixedDigits(value,3) + "]";
         break;
       }
+    }
+    //Shrink text size if label is long
+    double fudge_factor = 0.25;//Not sure how TLegend width affects marker width, but this seems to work
+    double max_width = (this_opt_.TrueLegendWidth(n_entries)-this_opt_.LegendMarkerWidth()*fudge_factor) * this_opt_.CanvasWidth();
+    double max_height = this_opt_.TrueLegendEntryHeight(n_entries) * this_opt_.LegendDensity() * this_opt_.CanvasHeight();
+    TLatex latex(0.5, 0.5, label.c_str());
+    latex.SetTextSize(legend.GetTextSize());
+    latex.SetTextFont(legend.GetTextFont());
+    UInt_t width, height;
+    latex.GetBoundingBox(width, height);
+    while(width > max_width || height > max_height){
+      latex.SetTextSize(0.95*latex.GetTextSize());
+      for(auto &leg: legends){
+        leg->SetTextSize(0.95*leg->GetTextSize());
+      }
+      latex.GetBoundingBox(width, height);
     }
 
     legend.AddEntry(&h->scaled_hist_, label.c_str(), style.c_str());

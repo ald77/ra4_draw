@@ -388,6 +388,12 @@ double PlotOpt::TrueLegendEntryHeight(size_t num_entries) const{
   return TrueLegendHeight(num_entries)/ceil(num_entries/legend_columns_);
 }
 
+double PlotOpt::TrueLegendWidth(size_t num_entries) const{
+  double left = left_margin_ + legend_pad_;
+  double right = 1. - right_margin_ - legend_pad_;
+  return (right-left)/min(num_entries, static_cast<size_t>(legend_columns_));
+}
+
 bool PlotOpt::BackgroundsStacked() const{
   switch(stack_type_){
   default:

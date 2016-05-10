@@ -15,7 +15,7 @@
   BottomPlotHeight = 0.35
   LegendMarkerWidth = 0.12
   LegendPad = 0.03
-  LegendDensity = 0.75
+  LegendDensity = 0.8
   LogMinimum = 0.
   NDivisions = 606
   NDivisionsBottom = 606

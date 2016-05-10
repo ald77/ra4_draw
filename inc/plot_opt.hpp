@@ -114,8 +114,9 @@ public:
   double BottomToGlobalYNDC(double bottom_y) const;
   double GlobalToBottomYNDC(double global_y) const;
 
-  double TrueLegendHeight(size_t num_entries) const;
-  double TrueLegendEntryHeight(size_t num_entries) const;
+  double TrueLegendHeight(std::size_t num_entries) const;
+  double TrueLegendEntryHeight(std::size_t num_entries) const;
+  double TrueLegendWidth(std::size_t num_entries) const;
 
   bool BackgroundsStacked() const;
   std::string TypeString() const;
