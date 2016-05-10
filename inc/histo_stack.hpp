@@ -119,6 +119,8 @@ private:
 
   double GetYield(std::vector<HistoStack::SingleHist>::const_iterator h) const;
   double GetMean(std::vector<HistoStack::SingleHist>::const_iterator h) const;
+
+  void GetTitleSize(double &width, double &height, bool in_pixels) const;
 };
 
 #endif

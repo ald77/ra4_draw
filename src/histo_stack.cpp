@@ -556,6 +556,20 @@ vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity) const{
     out.back()->SetNDC();
     out.back()->SetTextAlign(22);
     out.back()->SetTextFont(this_opt_.Font());
+
+    //Adjust title to fit in available space
+    double max_width, max_height;
+    GetTitleSize(max_width, max_height, true);
+    UInt_t width, height;
+    out.back()->GetBoundingBox(width, height);
+    while(width > max_width || height > max_height){
+      out.back()->SetTextSize(0.8*out.back()->GetTextSize());
+      out.back()->GetBoundingBox(width, height);
+    }
+    while(width < 0.5*max_width && height < 0.5*max_height){
+      out.back()->SetTextSize(1.25*out.back()->GetTextSize());
+      out.back()->GetBoundingBox(width, height);
+    }
   }else{
     string extra;
     switch(this_opt_.Title()){
@@ -881,4 +895,13 @@ double HistoStack::GetMean(vector<HistoStack::SingleHist>::const_iterator h) con
   }
 
   return hist.GetMean();
+}
+
+void HistoStack::GetTitleSize(double &width, double &height, bool in_pixels) const{
+  width = 1.-this_opt_.LeftMargin()-this_opt_.RightMargin();
+  height = this_opt_.TopMargin();
+  if(in_pixels){
+    width *= this_opt_.CanvasWidth();
+    height *= this_opt_.CanvasHeight();
+  }
 }
