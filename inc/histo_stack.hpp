@@ -84,6 +84,7 @@ private:
   void MergeOverflow() const;
   void ScaleHistos(double luminosity) const;
   void StackHistos() const;
+  void NormalizeHistos() const;
 
   void SetRanges() const;
 

@@ -370,6 +370,7 @@ bool PlotOpt::BackgroundsStacked() const{
     DBG("Invalid stack type " << static_cast<int>(stack_type_));
   case StackType::signal_overlay:
   case StackType::signal_on_top:
+  case StackType::data_norm:
     return true;
   case StackType::lumi_shapes:
   case StackType::shapes:
@@ -384,6 +385,7 @@ string PlotOpt::TypeString() const{
   default: DBG("Bad stack type: " << static_cast<int>(stack_type_));
   case StackType::signal_overlay: out += "lumi"; break;
   case StackType::signal_on_top: out += "lumi_sig_on_top"; break;
+  case StackType::data_norm: out += "data_norm"; break;
   case StackType::lumi_shapes: out += "lumi_shapes"; break;
   case StackType::shapes: out += "shapes"; break;
   }

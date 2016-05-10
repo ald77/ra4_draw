@@ -62,7 +62,7 @@ int main(){
   log_lumi.Title(TitleType::preliminary)
     .Bottom(BottomType::ratio)
     .YAxis(YAxisType::log)
-    .Stack(StackType::signal_overlay);
+    .Stack(StackType::data_norm);
   PlotOpt lin_lumi = log_lumi().YAxis(YAxisType::linear);
   PlotOpt log_shapes = log_lumi().Stack(StackType::shapes)
     .Bottom(BottomType::off)

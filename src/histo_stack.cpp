@@ -298,6 +298,7 @@ void HistoStack::RefreshScaledHistos(double luminosity){
   MergeOverflow();
   ScaleHistos(luminosity);
   StackHistos();
+  NormalizeHistos();
 }
 
 void HistoStack::InitializeHistos() const{
@@ -360,26 +361,30 @@ void HistoStack::ScaleHistos(double luminosity) const{
 }
 
 void HistoStack::StackHistos() const{
-  switch(this_opt_.Stack()){
-  case StackType::signal_on_top:
+  if(this_opt_.Stack() == StackType::signal_overlay
+     || this_opt_.Stack() == StackType::signal_on_top
+     || this_opt_.Stack() == StackType::data_norm){
     for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){
       backgrounds_.at(ibkg).scaled_hist_ = backgrounds_.at(ibkg).scaled_hist_ + backgrounds_.at(ibkg-1).scaled_hist_;
     }
-    if(backgrounds_.size()){
+    if(backgrounds_.size() && this_opt_.Stack() == StackType::signal_on_top){
       for(auto &hist: signals_){
         hist.scaled_hist_ = hist.scaled_hist_ + backgrounds_.back().scaled_hist_;
       }
     }
-    break;
-  case StackType::signal_overlay:
-    for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){
-      backgrounds_.at(ibkg).scaled_hist_ = backgrounds_.at(ibkg).scaled_hist_ + backgrounds_.at(ibkg-1).scaled_hist_;
+  }
+}
+
+void HistoStack::NormalizeHistos() const{
+  if(this_opt_.Stack() == StackType::data_norm){
+    if(datas_.size() == 0 || backgrounds_.size() == 0) return;
+    double data_norm = datas_.front().scaled_hist_.Integral("width");
+    double mc_norm = backgrounds_.back().scaled_hist_.Integral("width");
+    double scale = data_norm/mc_norm;
+    for(auto &hist: backgrounds_){
+      hist.scaled_hist_.Scale(scale);
     }
-    break;
-  case StackType::lumi_shapes:
-    //Don't need to do anything further
-    break;
-  case StackType::shapes:
+  }else if(this_opt_.Stack() == StackType::shapes){
     for(auto &hist: backgrounds_){
       Normalize(hist.scaled_hist_, 100., true);
     }
@@ -389,10 +394,6 @@ void HistoStack::StackHistos() const{
     for(auto &hist: datas_){
       Normalize(hist.scaled_hist_, 100., true);
     }
-    break;
-  default:
-    DBG("Unknown StackType "+to_string(static_cast<int>(this_opt_.Stack()))+".");
-    break;
   }
 }
 
@@ -458,6 +459,7 @@ void HistoStack::StyleHisto(TH1D &h) const{
     DBG("Unrecognized stack option " << static_cast<int>(this_opt_.Stack()) << ".");
   case StackType::signal_overlay:
   case StackType::signal_on_top:
+  case StackType::data_norm:
   case StackType::lumi_shapes:
     title << "Entries/(" << bin_width;
     if(definition_.units_ != "") title << " " << definition_.units_;
@@ -832,6 +834,7 @@ void HistoStack::AddEntries(vector<shared_ptr<TLegend> > &legends,
         DBG("Bad stack option: " << static_cast<int>(this_opt_.Stack()));
       case StackType::signal_overlay:
       case StackType::signal_on_top:
+      case StackType::data_norm:
         value = GetYield(h);
         if(value>=1.){
           label += " [N=" + FixedDigits(value, 2) + "]";
