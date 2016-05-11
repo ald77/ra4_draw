@@ -30,22 +30,25 @@ int main(){
 
   string trig_skim_mc = "/net/cms27/cms27r0/babymaker/2016_04_29/mc/merged_1lht500met200/";
 
-  auto tt1l = Proc<Baby_full>("t#bar{t} (1l)", Process::Type::background, TColor::GetColor(86, 160, 211),
-    {trig_skim_mc+"*_TTJets_*.root"}, "ntruleps<=1&&stitch");
-  auto tt2l = Proc<Baby_full>("t#bar{t} (2l)", Process::Type::background, TColor::GetColor(1, 57, 166),
-    {trig_skim_mc+"*_TTJets_*.root"}, "ntruleps>=2&&stitch");
+  auto tt1l = Proc<Baby_full>("t#bar{t} (1l)", Process::Type::background, TColor::GetColor(1, 57, 166),
+    {trig_skim_mc+"*_TTJets*Lept*.root", trig_skim_mc+"*_TTJets_HT*.root"},
+    "ntruleps<=1&&stitch");
+  auto tt2l = Proc<Baby_full>("t#bar{t} (2l)", Process::Type::background, TColor::GetColor(86, 160, 211),
+    {trig_skim_mc+"*_TTJets*Lept*.root", trig_skim_mc+"*_TTJets_HT*.root"},
+    "ntruleps>=2&&stitch");
   auto wjets = Proc<Baby_full>("W+jets", Process::Type::background, TColor::GetColor(0, 79, 39),
-    {trig_skim_mc+"*_WJetsTo*.root"});
+    {trig_skim_mc+"*_WJetsToLNu*.root"});
   auto single_t = Proc<Baby_full>("Single t", Process::Type::background, TColor::GetColor(52, 42, 123),
     {trig_skim_mc+"*_ST_*.root"});
   auto ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, TColor::GetColor(149, 0, 26),
-    {trig_skim_mc+"*_TTWJetsTo*.root", trig_skim_mc+"*_TTZTo*.root"});
+    {trig_skim_mc+"*_TTWJets*.root", trig_skim_mc+"*_TTZTo*.root"});
   auto other = Proc<Baby_full>("Other", Process::Type::background, TColor::GetColor(255, 200, 47),
-    {trig_skim_mc+"*_DYJets*.root", trig_skim_mc+"*_QCD_HT*.root",
+    {trig_skim_mc+"*DYJetsToLL*.root", trig_skim_mc+"*_QCD_HT*.root",
+        trig_skim_mc+"*_ZJet*.root", trig_skim_mc+"*_WWTo*.root",
+        trig_skim_mc+"*ggZH_HToBB*.root", trig_skim_mc+"*ttHJetTobb*.root",
         trig_skim_mc+"*_TTGJets*.root", trig_skim_mc+"*_TTTT_*.root",
-        trig_skim_mc+"*_WH_HToBB*.root", trig_skim_mc+"*_WWTo*.root",
-        trig_skim_mc+"*_WZTo*.root", trig_skim_mc+"*_ZH_HToBB*.root",
-        trig_skim_mc+"*_ZZ_*.root", trig_skim_mc+"*_ttHJetTobb*.root"});
+        trig_skim_mc+"*_WH_HToBB*.root", trig_skim_mc+"*_WZTo*.root",
+        trig_skim_mc+"*_ZH_HToBB*.root", trig_skim_mc+"_ZZ_*.root"});
 
   auto t1tttt_nc = Proc<Baby_full>("T1tttt(1500,100)", Process::Type::signal, kRed,
     {trig_skim_mc+"*SMS-T1tttt_mGluino-1500_mLSP-100*.root"});
