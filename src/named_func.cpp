@@ -167,6 +167,103 @@ string NamedFunc::PlainName() const{
   return plain;
 }
 
+string NamedFunc::PrettyName() const{
+  string pretty = name_;
+  if(pretty == "1") return "";
+  ReplaceAll(pretty, "1==1", "Full Sample");
+  ReplaceAll(pretty, "el_tks_chg*lep_charge<0", "OS");
+  ReplaceAll(pretty, "mu_tks_chg*lep_charge<0", "OS");
+  ReplaceAll(pretty, "had_tks_chg*lep_charge<0", "OS");
+  ReplaceAll(pretty, "Sum$(abs(mc_id)==11)","n^{true}_{e}");
+  ReplaceAll(pretty, "Sum$(abs(mc_id)==13)","n^{true}_{#mu}");
+  ReplaceAll(pretty, "Sum$(genels_pt>0)", "n^{true}_{e}");
+  ReplaceAll(pretty, "Sum$(genmus_pt>0)", "n^{true}_{#mu}");
+  ReplaceAll(pretty, "Sum$(mus_sigid&&mus_miniso<0.2)","n_{#mu}^{10}");
+  ReplaceAll(pretty, "Sum$(els_sigid&&els_miniso<0.1)","n_{e}^{10}");
+  ReplaceAll(pretty, "nvmus==1&&nmus==1&&nvels==0","1 #mu");
+  ReplaceAll(pretty, "nvmus10==0&&nvels10==0", "0 leptons");
+  ReplaceAll(pretty, "(nmus+nels)", "n_{lep}");
+  ReplaceAll(pretty, "(nels+nmus)", "n_{lep}");
+  ReplaceAll(pretty, "(nvmus+nvels)", "n^{veto}_{lep}");
+  ReplaceAll(pretty, "nvmus==2&&nmus>=1","n_{#mu}#geq1, n^{veto}_{#mu}=2");
+  ReplaceAll(pretty, "nvels==2&&nels>=1","n_{e}#geq1, n^{veto}_{e}=2");
+  ReplaceAll(pretty, "(nvmus>=2||nvels>=2)","n^{veto}_{lep} #geq 2");
+  ReplaceAll(pretty, "(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))>80&&(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))<100",
+             "80<m_{ll}<100");
+  ReplaceAll(pretty, "mumuv_m>80&&mumuv_m<100",
+             "80<m_{ll}<100");
+  ReplaceAll(pretty, "elelv_m>80&&elelv_m<100",
+             "80<m_{ll}<100");
+  ReplaceAll(pretty, "onht>350&&onmet>100&&","");
+  ReplaceAll(pretty, "jets_islep[0]==0","");
+  ReplaceAll(pretty, "(nels==0&&nmus==1)","n_{#mu}=1");
+  ReplaceAll(pretty, "(nels==1&&nmus==0)","n_{#font[12]{e}}=1");
+  ReplaceAll(pretty, "Max$(abs(els_eta)*(els_sigid&&els_miniso<0.1&&els_pt>20))<1.479","barrel #font[12]{e}");
+  ReplaceAll(pretty, "Max$(abs(els_eta)*(els_sigid&&els_miniso<0.1&&els_pt>20))>1.479","endcap #font[12]{e}");
+
+  ReplaceAll(pretty, "nleps", "n_{l}");
+  ReplaceAll(pretty, "nvleps", "n_{l}");
+  ReplaceAll(pretty, "nmus", "n_{#mu}");
+  ReplaceAll(pretty, "nels", "n_{e}");
+  ReplaceAll(pretty, "nvmus", "n^{veto}_{#mu}");
+  ReplaceAll(pretty, "nvels", "n^{veto}_{e}");
+  ReplaceAll(pretty, "ntruleps", "n^{true}_{l}");
+  ReplaceAll(pretty, "_ra2b", "^{ra2b}");
+  ReplaceAll(pretty, "npv", "n_{PV}");
+  ReplaceAll(pretty, "mumu_pt1", "p_{T}^{#mu}");
+  ReplaceAll(pretty, "elel_pt1", "p_{T}^{e}");
+
+  ReplaceAll(pretty, "abs(mc_id)==1000006", "stop");
+  ReplaceAll(pretty, "abs(mc_id)==1000022", "LSP");
+
+  ReplaceAll(pretty, "onmet", "MET^{on}");
+  ReplaceAll(pretty, "onht", "H_{T}^{on}");
+  ReplaceAll(pretty, "njets30","n_{jets}^{30}");
+  ReplaceAll(pretty, "els_pt","p^{e}_{T}");
+  ReplaceAll(pretty, "mus_pt","p^{#mu}_{T}");
+  ReplaceAll(pretty, "fjets_nconst","n_{const}^{fat jet}");
+  ReplaceAll(pretty, "fjets_30_m[0]","m(J_{1})");
+  ReplaceAll(pretty, "fjets_m[0]","m(J_{1})");
+  ReplaceAll(pretty, "(fjets_pt*cosh(fjets_eta))","p_{fatjet}");
+  ReplaceAll(pretty, "fjets_pt","p^{fatjet}_{T}");
+  ReplaceAll(pretty, "jets_pt","p^{jet}_{T}");
+  ReplaceAll(pretty, "mus_reliso","RelIso");
+  ReplaceAll(pretty, "els_reliso","RelIso");
+  ReplaceAll(pretty, "mus_miniso_tr15","MiniIso");
+  ReplaceAll(pretty, "els_miniso_tr15","MiniIso");
+  ReplaceAll(pretty, "njets","n_{jets}");
+  ReplaceAll(pretty, "abs(lep_id)==13&&","");
+  ReplaceAll(pretty, ">=", " #geq ");
+  ReplaceAll(pretty, ">", " > ");
+  ReplaceAll(pretty, "<=", " #leq ");
+  ReplaceAll(pretty, "<", " < ");
+  ReplaceAll(pretty, "&&", ", ");
+  ReplaceAll(pretty, "==", " = ");
+  ReplaceAll(pretty, "met", "MET");
+  ReplaceAll(pretty, "ht_hlt", "H_{T}^{HLT}");
+  ReplaceAll(pretty, "mht", "MHT");
+  ReplaceAll(pretty, "ht", "H_{T}");
+  ReplaceAll(pretty, "mt", "m_{T}");
+  ReplaceAll(pretty, "ntks_chg==0", " ITV");
+  ReplaceAll(pretty, "nbm","n_{b}");
+  ReplaceAll(pretty, "nbl","n_{b,l}");
+  ReplaceAll(pretty, "mj", " M_{J}");
+
+  ReplaceAll(pretty, "el_tks_mt", "Track m_{T}");
+  ReplaceAll(pretty, "mu_tks_mt", "Track m_{T}");
+  ReplaceAll(pretty, "had_tks_mt", "Track m_{T}");
+  ReplaceAll(pretty, "el_tks_pt", "Track p_{T}");
+  ReplaceAll(pretty, "mu_tks_pt", "Track p_{T}");
+  ReplaceAll(pretty, "had_tks_pt", "Track p_{T}");
+  ReplaceAll(pretty, "el_tks_miniso", "Track miniso");
+  ReplaceAll(pretty, "mu_tks_miniso", "Track miniso");
+  ReplaceAll(pretty, "had_tks_miniso", "Track miniso");
+  ReplaceAll(pretty, "el_tks_chg_miniso", "Track charged miniso");
+  ReplaceAll(pretty, "mu_tks_chg_miniso", "Track charged miniso");
+  ReplaceAll(pretty, "had_tks_chg_miniso", "Track charged miniso");
+  return pretty;
+}
+
 NamedFunc & NamedFunc::Function(const function<ScalarFunc> &f){
   if(!static_cast<bool>(f)) return *this;
   scalar_func_ = f;

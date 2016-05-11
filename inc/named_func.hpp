@@ -31,6 +31,7 @@ public:
   const std::string & Name() const;
   NamedFunc & Name(const std::string &name);
   std::string PlainName() const;
+  std::string PrettyName() const;
 
   NamedFunc & Function(const std::function<ScalarFunc> &function);
   NamedFunc & Function(const std::function<VectorFunc> &function);

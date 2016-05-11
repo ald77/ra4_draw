@@ -61,11 +61,11 @@ string HistoDef::Title() const{
   bool cut = (cut_.Name() != "" && cut_.Name() != "1");
   bool weight = weight_.Name() != "weight";
   if(cut && weight){
-    return cut_.Name()+" (weight="+weight_.Name()+")";
+    return cut_.PrettyName()+" (weight="+weight_.PrettyName()+")";
   }else if(cut){
-    return cut_.Name();
+    return cut_.PrettyName();
   }else if(weight){
-    return "weight="+weight_.Name();
+    return "weight="+weight_.PrettyName();
   }else{
     return "";
   }
