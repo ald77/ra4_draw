@@ -28,14 +28,14 @@ PlotOpt::PlotOpt():
   right_margin_(0.055),
   bottom_margin_(0.12),
   top_margin_(0.07),
-  bottom_height_(0.35),
+  bottom_height_(0.33),
   legend_columns_(2),
-  legend_entry_height_(0.04),
-  legend_max_height_(0.3),
+  legend_entry_height_(0.038),
+  legend_max_height_(0.28),
   legend_marker_width_(0.12),
-  legend_pad_(0.025),
-  legend_density_(0.75),
-  log_minimum_(0.0),
+  legend_pad_(0.028),
+  legend_density_(1.),
+  log_minimum_(0.),
   n_divisions_(606),
   n_divisions_bottom_(606),
   font_(42),
@@ -381,11 +381,11 @@ double PlotOpt::GlobalToBottomYNDC(double global_y) const{
 }
 
 double PlotOpt::TrueLegendHeight(size_t num_entries) const{
-  return min(legend_max_height_, legend_entry_height_*ceil(num_entries/legend_columns_));
+  return min(legend_max_height_, legend_entry_height_*ceil(static_cast<double>(num_entries)/legend_columns_));
 }
 
 double PlotOpt::TrueLegendEntryHeight(size_t num_entries) const{
-  return TrueLegendHeight(num_entries)/ceil(num_entries/legend_columns_);
+  return TrueLegendHeight(num_entries)/ceil(static_cast<double>(num_entries)/legend_columns_);
 }
 
 double PlotOpt::TrueLegendWidth(size_t num_entries) const{
@@ -406,6 +406,11 @@ bool PlotOpt::BackgroundsStacked() const{
   case StackType::shapes:
     return false;
   }
+}
+
+bool PlotOpt::DisplayLumiEntry() const{
+  return title_type_ == TitleType::info
+    && BackgroundsStacked();
 }
 
 string PlotOpt::TypeString() const{

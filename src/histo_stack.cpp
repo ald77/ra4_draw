@@ -5,11 +5,9 @@
 #include <algorithm>
 #include <sstream>
 
-#include "TCanvas.h"
-#include "TGraph.h"
-#include "TGraphErrors.h"
 #include "TGraphAsymmErrors.h"
 #include "TMath.h"
+#include "TLegendEntry.h"
 
 #include "utilities.hpp"
 
@@ -46,6 +44,8 @@ namespace{
     return this_col;
   }
 }
+
+TH1D HistoStack::blank_ = TH1D();
 
 HistoStack::SingleHist::SingleHist(const shared_ptr<Process> &process,
                                    const TH1D &hist):
@@ -100,7 +100,10 @@ HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
   datas_(),
   definition_(definition),
   plot_options_(plot_options),
-  this_opt_(PlotOpt()){
+  this_opt_(PlotOpt()),
+  luminosity_(),
+  mc_scale_(),
+  mc_scale_error_(){
   if(plot_options_.size() > 0) this_opt_ = plot_options_.front();
 
   string x_title = definition.x_title_;
@@ -134,14 +137,22 @@ HistoStack::HistoStack(const vector<shared_ptr<Process> > &processes,
       break;
     }
   }
+
+  blank_.SetFillStyle(0);
+  blank_.SetFillColor(kWhite);
+  blank_.SetLineWidth(0);
+  blank_.SetLineColor(kWhite);
+  blank_.SetMarkerSize(0);
+  blank_.SetMarkerColor(kWhite);
 }
 
-void HistoStack::PrintPlot(double luminosity/**<[in]The lumi*/){
+void HistoStack::PrintPlot(double luminosity){
+  luminosity_ = luminosity;
   for(const auto &opt: plot_options_){
     this_opt_ = opt;
     this_opt_.MakeSane();
 
-    RefreshScaledHistos(luminosity);
+    RefreshScaledHistos();
     SetRanges();
     ApplyStyles();
     AdjustFillStyles();
@@ -204,7 +215,7 @@ void HistoStack::PrintPlot(double luminosity/**<[in]The lumi*/){
     top->RedrawAxis();
     top->RedrawAxis("g");
 
-    vector<shared_ptr<TLatex> > title_text = GetTitleTexts(luminosity);
+    vector<shared_ptr<TLatex> > title_text = GetTitleTexts();
     for(auto &x: title_text){
       x->Draw();
     }
@@ -290,10 +301,10 @@ HistoStack::SingleHist & HistoStack::Histo(const shared_ptr<Process> &process){
   return hist_list.front();
 }
 
-void HistoStack::RefreshScaledHistos(double luminosity){
+void HistoStack::RefreshScaledHistos(){
   InitializeHistos();
   MergeOverflow();
-  ScaleHistos(luminosity);
+  ScaleHistos();
   StackHistos();
   NormalizeHistos();
 }
@@ -343,14 +354,14 @@ void HistoStack::MergeOverflow() const{
   }
 }
 
-void HistoStack::ScaleHistos(double luminosity) const{
+void HistoStack::ScaleHistos() const{
   for(auto &hist: backgrounds_){
     AdjustDensityForBinWidth(hist.scaled_hist_);
-    hist.scaled_hist_.Scale(luminosity);
+    hist.scaled_hist_.Scale(luminosity_);
   }
   for(auto &hist: signals_){
     AdjustDensityForBinWidth(hist.scaled_hist_);
-    hist.scaled_hist_.Scale(luminosity);
+    hist.scaled_hist_.Scale(luminosity_);
   }
   for(auto &hist: datas_){
     AdjustDensityForBinWidth(hist.scaled_hist_);
@@ -373,13 +384,18 @@ void HistoStack::StackHistos() const{
 }
 
 void HistoStack::NormalizeHistos() const{
+  mc_scale_ = 1.;
+  mc_scale_error_ = 1.;
   if(this_opt_.Stack() == StackType::data_norm){
     if(datas_.size() == 0 || backgrounds_.size() == 0) return;
-    double data_norm = datas_.front().scaled_hist_.Integral("width");
-    double mc_norm = backgrounds_.back().scaled_hist_.Integral("width");
-    double scale = data_norm/mc_norm;
+    int nbins = definition_.Nbins();
+    double data_error, mc_error;
+    double data_norm = datas_.front().scaled_hist_.IntegralAndError(0, nbins+1, data_error, "width");
+    double mc_norm = backgrounds_.back().scaled_hist_.IntegralAndError(0, nbins+1, mc_error, "width");
+    mc_scale_ = data_norm/mc_norm;
+    mc_scale_error_ = hypot(data_norm*mc_error, mc_norm*data_error)/(mc_norm*mc_norm);
     for(auto &hist: backgrounds_){
-      hist.scaled_hist_.Scale(scale);
+      hist.scaled_hist_.Scale(mc_scale_);
     }
   }else if(this_opt_.Stack() == StackType::shapes){
     for(auto &hist: backgrounds_){
@@ -544,7 +560,7 @@ void HistoStack::FixYAxis(vector<TH1D> &bottom_plots) const{
   }
 }
 
-vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity) const{
+vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts() const{
   vector<shared_ptr<TLatex> > out;
   double left = this_opt_.LeftMargin();
   double right = 1.-this_opt_.RightMargin();
@@ -588,7 +604,7 @@ vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts(double luminosity) const{
     out.back()->SetTextFont(this_opt_.Font());
 
     ostringstream oss;
-    oss << luminosity << " fb^{-1} (13 TeV)" << flush;
+    oss << luminosity_ << " fb^{-1} (13 TeV)" << flush;
     out.push_back(make_shared<TLatex>(right, 0.5*(bottom+top),
                                       oss.str().c_str()));
     out.back()->SetNDC();
@@ -786,14 +802,13 @@ double HistoStack::GetMinDraw(double min_bound) const{
 }
 
 vector<shared_ptr<TLegend> > HistoStack::GetLegends(){
-  size_t num_procs = backgrounds_.size()+signals_.size()+datas_.size();
+  size_t n_entries = datas_.size() + signals_.size() + backgrounds_.size();
+  if(this_opt_.DisplayLumiEntry()) ++n_entries;
+  size_t n_columns = min(n_entries, static_cast<size_t>(this_opt_.LegendColumns()));
 
   double left = this_opt_.LeftMargin()+this_opt_.LegendPad();
   double top = 1.-this_opt_.TopMargin()-this_opt_.LegendPad();
-  double bottom = top-this_opt_.TrueLegendHeight(num_procs);
-
-  size_t n_entries = datas_.size() + signals_.size() + backgrounds_.size();
-  size_t n_columns = min(n_entries, static_cast<size_t>(this_opt_.LegendColumns()));
+  double bottom = top-this_opt_.TrueLegendHeight(n_entries);
 
   double delta_x = this_opt_.TrueLegendWidth(n_entries);
   vector<shared_ptr<TLegend> > legends(n_columns);
@@ -810,6 +825,23 @@ vector<shared_ptr<TLegend> > HistoStack::GetLegends(){
   AddEntries(legends, datas_, "lep", n_entries, entries_added);
   AddEntries(legends, signals_, "l", n_entries, entries_added);
   AddEntries(legends, backgrounds_, this_opt_.BackgroundsStacked() ? "f" : "l", n_entries, entries_added);
+
+  //Add a dummy legend entry to display MC normalization
+  if(this_opt_.DisplayLumiEntry()){
+    auto &leg = legends.at(GetLegendIndex(entries_added, n_entries, legends.size()));
+    ostringstream label;
+    label << fixed << setprecision(1) << "L=" << luminosity_ << " fb^{-1}";
+    if(this_opt_.Stack() == StackType::data_norm){
+      label << ", (" << 100.*mc_scale_ << "#pm" << 100.*mc_scale_error_ << ")%";
+    }
+    auto entry = leg->AddEntry(&blank_, label.str().c_str(), "f");
+    entry->SetFillStyle(0);
+    entry->SetFillColor(kWhite);
+    entry->SetLineWidth(0);
+    entry->SetLineColor(kWhite);
+    entry->SetMarkerStyle(0);
+    entry->SetMarkerStyle(kWhite);
+  }
 
   return legends;
 }
@@ -869,6 +901,7 @@ void HistoStack::AddEntries(vector<shared_ptr<TLegend> > &legends,
 
 double HistoStack::GetLegendRatio() const{
   size_t num_plots = backgrounds_.size() + signals_.size() + datas_.size();
+  if(this_opt_.DisplayLumiEntry()) ++num_plots;
   double legend_height = this_opt_.TrueLegendHeight(num_plots);
   double top_plot_height;
   if(this_opt_.Bottom() == BottomType::off){

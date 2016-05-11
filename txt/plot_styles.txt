@@ -10,12 +10,12 @@
   PadRightMargin = 0.055
   PadTopMargin = 0.07
   PadBottomMargin = 0.12
-  LegendEntrySize = 0.04
-  LegendMaxSize = 0.3
-  BottomPlotHeight = 0.35
+  LegendEntrySize = 0.035
+  LegendMaxSize = 0.28
+  BottomPlotHeight = 0.33
   LegendMarkerWidth = 0.12
-  LegendPad = 0.03
-  LegendDensity = 0.8
+  LegendPad = 0.028
+  LegendDensity = 1.
   LogMinimum = 0.
   NDivisions = 606
   NDivisionsBottom = 606

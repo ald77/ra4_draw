@@ -70,6 +70,9 @@ public:
 
 private:
   mutable PlotOpt this_opt_;
+  mutable double luminosity_;
+  mutable double mc_scale_, mc_scale_error_;
+  static TH1D blank_;
 
   HistoStack() = delete;
 
@@ -79,10 +82,10 @@ private:
   const SingleHist & Histo(const std::shared_ptr<Process> &process) const;
   SingleHist & Histo(const std::shared_ptr<Process> &process);
 
-  void RefreshScaledHistos(double luminosity);
+  void RefreshScaledHistos();
   void InitializeHistos() const;
   void MergeOverflow() const;
-  void ScaleHistos(double luminosity) const;
+  void ScaleHistos() const;
   void StackHistos() const;
   void NormalizeHistos() const;
 
@@ -98,7 +101,7 @@ private:
 
   void FixYAxis(std::vector<TH1D> &bottom_plots) const;
 
-  std::vector<std::shared_ptr<TLatex> > GetTitleTexts(double luminosity) const;
+  std::vector<std::shared_ptr<TLatex> > GetTitleTexts() const;
   TGraphAsymmErrors GetBackgroundError() const;
   std::vector<TLine> GetCutLines() const;
   std::vector<TH1D> GetBottomPlots() const;

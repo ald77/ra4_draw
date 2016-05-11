@@ -119,6 +119,8 @@ public:
   double TrueLegendWidth(std::size_t num_entries) const;
 
   bool BackgroundsStacked() const;
+  bool DisplayLumiEntry() const;
+
   std::string TypeString() const;
 
   void MakeSane();
