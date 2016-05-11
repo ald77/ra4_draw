@@ -54,7 +54,7 @@ int main(){
   t1tttt_c->SetLineStyle(2);
 
   auto data = Proc<Baby_full>("Data", Process::Type::data, kBlack,
-    {"/net/cms27/cms27r0/babymaker/2016_04_29/data/merged_1lht500met200/*.root"},"trig[4]||trig[8]");
+    {"/net/cms27/cms27r0/babymaker/2016_04_29/data/merged_1lht500met200/*.root"},"pass&&(trig[4]||trig[8])");
 
   vector<shared_ptr<Process> > full_trig_skim = {data, t1tttt_nc, t1tttt_c, tt1l, tt2l, wjets, single_t, ttv, other};
 
@@ -96,6 +96,9 @@ int main(){
              full_trig_skim, all_plot_types);
   pm.AddPlot(HistoDef(12, 0., 420., "mt", "m_{T} [GeV]",
                       "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {140.}),
+             full_trig_skim, all_plot_types);
+  pm.AddPlot(HistoDef(15, 0., 1500., "mj08", "M_{J}^{0.8} [GeV]",
+                      "nleps==1&&ht>500&&met>200", "weight", {400.}),
              full_trig_skim, all_plot_types);
   pm.MakePlots(lumi);
 }
