@@ -56,7 +56,7 @@ int main(){
   auto data = Proc<Baby_full>("Data", Process::Type::data, kBlack,
     {"/net/cms27/cms27r0/babymaker/2016_04_29/data/merged_1lht500met200/*.root"},"trig[4]||trig[8]");
 
-  vector<shared_ptr<Process> > full_trig_skim = {other, ttv, single_t, wjets, tt2l, tt1l, t1tttt_c, t1tttt_nc, data};
+  vector<shared_ptr<Process> > full_trig_skim = {data, t1tttt_nc, t1tttt_c, tt1l, tt2l, wjets, single_t, ttv, other};
 
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
   log_lumi.Title(TitleType::preliminary)

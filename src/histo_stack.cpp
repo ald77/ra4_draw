@@ -17,8 +17,8 @@ using namespace PlotOptTypes;
 namespace{
   void DrawAll(vector<HistoStack::SingleHist> &hists,
                string &draw_opt){
-    for(auto hist = hists.rbegin(); hist!= hists.rend(); ++hist){
-      hist->scaled_hist_.Draw(draw_opt.c_str());
+    for(auto &hist: hists){
+      hist.scaled_hist_.Draw(draw_opt.c_str());
       draw_opt = "hist same";
     }
   }
@@ -372,12 +372,12 @@ void HistoStack::StackHistos() const{
   if(this_opt_.Stack() == StackType::signal_overlay
      || this_opt_.Stack() == StackType::signal_on_top
      || this_opt_.Stack() == StackType::data_norm){
-    for(size_t ibkg = 1; ibkg < backgrounds_.size(); ++ibkg){
-      backgrounds_.at(ibkg).scaled_hist_ = backgrounds_.at(ibkg).scaled_hist_ + backgrounds_.at(ibkg-1).scaled_hist_;
+    for(size_t ibkg = backgrounds_.size() - 2; ibkg < backgrounds_.size(); --ibkg){
+      backgrounds_.at(ibkg).scaled_hist_ = backgrounds_.at(ibkg).scaled_hist_ + backgrounds_.at(ibkg+1).scaled_hist_;
     }
     if(backgrounds_.size() && this_opt_.Stack() == StackType::signal_on_top){
       for(auto &hist: signals_){
-        hist.scaled_hist_ = hist.scaled_hist_ + backgrounds_.back().scaled_hist_;
+        hist.scaled_hist_ = hist.scaled_hist_ + backgrounds_.front().scaled_hist_;
       }
     }
   }
@@ -391,7 +391,7 @@ void HistoStack::NormalizeHistos() const{
     int nbins = definition_.Nbins();
     double data_error, mc_error;
     double data_norm = datas_.front().scaled_hist_.IntegralAndError(0, nbins+1, data_error, "width");
-    double mc_norm = backgrounds_.back().scaled_hist_.IntegralAndError(0, nbins+1, mc_error, "width");
+    double mc_norm = backgrounds_.front().scaled_hist_.IntegralAndError(0, nbins+1, mc_error, "width");
     mc_scale_ = data_norm/mc_norm;
     mc_scale_error_ = hypot(data_norm*mc_error, mc_norm*data_error)/(mc_norm*mc_norm);
     for(auto &hist: backgrounds_){
@@ -620,7 +620,7 @@ TGraphAsymmErrors HistoStack::GetBackgroundError() const{
     TH1D h("", "", definition_.Nbins(), &definition_.Bins().at(0));
     g = TGraphAsymmErrors(&h);
   }else{
-    g = TGraphAsymmErrors(&(backgrounds_.back().scaled_hist_));
+    g = TGraphAsymmErrors(&(backgrounds_.front().scaled_hist_));
   }
   g.SetFillStyle(3003);
   g.SetFillColor(kBlack);
@@ -658,7 +658,7 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
     return vector<TH1D>();
   }
 
-  TH1D denom = backgrounds_.back().scaled_hist_;
+  TH1D denom = backgrounds_.front().scaled_hist_;
   for(int bin = 0; bin <= denom.GetNbinsX()+1; ++bin){
     denom.SetBinError(bin, 0.);
   }
@@ -668,7 +668,7 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
   for(size_t i = 0; i < datas_.size(); ++i){
     out.at(i) = TH1D(datas_.at(i).scaled_hist_);
   }
-  out.back() = TH1D(backgrounds_.back().scaled_hist_);
+  out.back() = TH1D(backgrounds_.front().scaled_hist_);
   out.back().SetFillStyle(3003);
   out.back().SetFillColor(kBlack);
   out.back().SetLineWidth(0);
@@ -917,9 +917,9 @@ double HistoStack::GetYield(vector<HistoStack::SingleHist>::const_iterator h) co
 
   //Subtract underlying histogram
   if(h->process_->type_ == Process::Type::background
-     && h != backgrounds_.cbegin()
+     && h != (--backgrounds_.cend())
      && this_opt_.BackgroundsStacked()){
-    hist = hist - (--h)->scaled_hist_;
+    hist = hist - (++h)->scaled_hist_;
   }
 
   //Want yield, not area, so divide out average bin width
@@ -937,9 +937,9 @@ double HistoStack::GetMean(vector<HistoStack::SingleHist>::const_iterator h) con
 
   //Subtract underlying histogram
   if(h->process_->type_ == Process::Type::background
-     && h != backgrounds_.cbegin()
+     && h != (--backgrounds_.cend())
      && this_opt_.BackgroundsStacked()){
-    hist = hist - (--h)->scaled_hist_;
+    hist = hist - (++h)->scaled_hist_;
   }
 
   return hist.GetMean();
