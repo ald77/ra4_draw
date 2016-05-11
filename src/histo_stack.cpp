@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <sstream>
 
+#include "TROOT.h"
+#include "TStyle.h"
 #include "TGraphAsymmErrors.h"
 #include "TMath.h"
 #include "TLegendEntry.h"
@@ -151,6 +153,8 @@ void HistoStack::PrintPlot(double luminosity){
   for(const auto &opt: plot_options_){
     this_opt_ = opt;
     this_opt_.MakeSane();
+    gStyle->SetColorModelPS(this_opt_.UseCMYK());
+    gROOT->ForceStyle();
 
     RefreshScaledHistos();
     SetRanges();

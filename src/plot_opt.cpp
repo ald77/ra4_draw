@@ -39,7 +39,8 @@ PlotOpt::PlotOpt():
   n_divisions_(606),
   n_divisions_bottom_(606),
   font_(42),
-  show_background_error_(true){
+  show_background_error_(true),
+  use_cmyk_(true){
 }
 
 PlotOpt::PlotOpt(const string &file_name,
@@ -360,6 +361,15 @@ bool PlotOpt::ShowBackgroundError() const{
   return show_background_error_;
 }
 
+PlotOpt & PlotOpt::UseCMYK(bool use_cmyk){
+  use_cmyk_ = use_cmyk;
+  return *this;
+}
+
+bool PlotOpt::UseCMYK() const{
+  return use_cmyk_;
+}
+
 double PlotOpt::TopToGlobalYNDC(double top_y) const{
   if(bottom_type_ == BottomType::off) return top_y;
   else return 1.-(1.-top_y)*(1. - bottom_margin_ - bottom_height_);
@@ -532,6 +542,8 @@ void PlotOpt::SetProperty(const string &property,
     Font(stoi(value));
   }else if(property == "ShowBackgroundError"){
     ShowBackgroundError(stoi(value));
+  }else if(property == "UseCMYK"){
+    UseCMYK(stoi(value));
   }else{
     DBG("Did not understand property name "<<property);
   }
