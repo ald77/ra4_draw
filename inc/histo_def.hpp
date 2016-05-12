@@ -36,9 +36,12 @@ public:
   std::string Name() const;
   std::string Title() const;
 
-  NamedFunc var_, cut_, weight_;
-  std::string x_title_, units_;
-  std::set<double> cut_vals_;
+  NamedFunc var_;//!< %Variable to be plotted
+  NamedFunc cut_;//!< Cut determining whether histogram is filled
+  NamedFunc weight_;//!< Weight with which to fill histogram
+  std::string x_title_;//!< X-axis title _without_ units
+  std::string units_;//!< Units of HistoDef::var_
+  std::set<double> cut_vals_;//!< Values of HistoDef::var_ for which to plot a vertical line
 
 private:
   std::vector<double> bins_;
