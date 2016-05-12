@@ -1,3 +1,23 @@
+/*! \class FunctionParser
+
+  \brief Converts a string into a NamedFunc
+
+  A FunctionParser is initialized with a string representing a number, variable,
+  function, cut, etc. and converts it to a NamedFunc. It first decomposes the
+  string into components representing single numbers, variables, operators,
+  etc. The components are stored as \link Token Tokens\endlink. The Tokens
+  representing constants and variables in Baby are processed to obtain valid
+  \link NamedFunc NamedFuncs\endlink. Operators are successively applied
+  following standard order of operations to merge the \link Token Tokens\endlink
+  into a single Token instance containing a NamedFunc which can return the value
+  represented by the initial string.
+
+  Parentheses and brackets are parsed recursively and can be arbitrarily nested.
+
+  Currently has support for the basic arithmetic, logical, and comparison
+  operators. Future versions may support ROOT's function syntax,
+  e.g. Sum\$(jets_pt).
+*/
 #include "function_parser.hpp"
 
 #include <cstdlib>
@@ -13,6 +33,11 @@ using VectorType = NamedFunc::VectorType;
 using ScalarFunc = NamedFunc::ScalarFunc;
 using VectorFunc = NamedFunc::VectorFunc;
 
+/*!\brief Standard constructor from string representing a function
+
+  \param[in] function_string String representing a number, variable, function,
+  cut, etc.
+*/
 FunctionParser::FunctionParser(const string &function_string):
   input_string_(function_string),
   tokens_(),
@@ -21,10 +46,18 @@ FunctionParser::FunctionParser(const string &function_string):
   ReplaceAll(input_string_, " ", "");
 }
 
+/*!\brief Get string being parsed
+
+  \return String being parsed
+*/
 const string & FunctionParser::FunctionString() const{
   return input_string_;
 }
 
+/*!\brief Set string to be parsed
+
+  \param[in] function_string String to be parsed \return Reference to *this
+*/
 FunctionParser & FunctionParser::FunctionString(const string &function_string){
   tokenized_ = false;
   solved_ = false;
@@ -33,15 +66,21 @@ FunctionParser & FunctionParser::FunctionString(const string &function_string){
   return *this;
 }
 
+/*!\brief Get list of tokens as is at current stage of parsing
+ */
 const vector<Token> & FunctionParser::Tokens() const{
   return tokens_;
 }
 
+/*!\brief Parses provided string into a single Token
+ */
 Token FunctionParser::ResolveAsToken() const{
   Solve();
   return tokens_.size() ? tokens_.at(0) : Token();
 }
 
+/*!\brief Parses provided string into a single NamedFunc
+ */
 NamedFunc FunctionParser::ResolveAsNamedFunc() const{
   Solve();
   return tokens_.size() ? tokens_.at(0).function_
@@ -51,6 +90,14 @@ NamedFunc FunctionParser::ResolveAsNamedFunc() const{
                 });
 }
 
+/*!\brief Constructs FunctionParser from list of \link Token Tokens\endlink
+
+  Used by FunctionParser to recursively process lists of \link Token
+  Tokens\endlink reprenting contents of parentheses or brackets
+
+  \param[in] tokens List of \link Token Tokens\endlink. Should represent a
+  single valid expression
+*/
 FunctionParser::FunctionParser(const vector<Token> &tokens):
   input_string_(""),
   tokens_(tokens),
@@ -59,6 +106,8 @@ FunctionParser::FunctionParser(const vector<Token> &tokens):
   input_string_ = ConcatenateTokenStrings(0, tokens_.size());
 }
 
+/*!\brief Parses the string into a list of \link Token Tokens\endlink
+ */
 void FunctionParser::Tokenize() const{
   if(tokenized_) return;
   size_t start = 0;
@@ -113,6 +162,8 @@ void FunctionParser::Tokenize() const{
   tokenized_ = true;
 }
 
+/*!\brief Checks that all \link Token Tokens\endlink were understood
+ */
 void FunctionParser::CheckForUnknowns() const{
   for(const auto &token: tokens_){
     if(token.type_ == Token::Type::unknown){
@@ -121,6 +172,9 @@ void FunctionParser::CheckForUnknowns() const{
   }
 }
 
+/*!\brief Generates NamedFunc for each Token representing a constant or Baby
+  variable
+*/
 void FunctionParser::ResolveVariables() const{
   for(auto &token: tokens_){
     if(token.type_ == Token::Type::variable_name){
@@ -138,6 +192,8 @@ void FunctionParser::ResolveVariables() const{
   }
 }
 
+/*!\brief Recursively evaluates contents of parenthesis and brackets
+ */
 void FunctionParser::EvaluateGroupings() const{
   for(size_t i_open = 0; i_open < tokens_.size(); ++i_open){
     size_t i_close = FindClose(i_open);
@@ -150,6 +206,11 @@ void FunctionParser::EvaluateGroupings() const{
   }
 }
 
+/*!\brief Merges parenthesis \link Token Tokens\endlink with the contents
+
+  Searches for patten {open paren}{value}{close paren} and replaces with single
+  Token
+*/
 void FunctionParser::MergeParentheses() const{
   for(size_t i = 0; i+2 < tokens_.size(); ++i){
     Token &open = tokens_.at(i+0);
@@ -172,6 +233,12 @@ void FunctionParser::MergeParentheses() const{
   }
 }
 
+/*!\brief Merges subscript (bracket) \link Token Tokens\endlink with the
+  contents
+
+  Searches for patten {open bracket}{value}{close bracket} and replaces with
+  single Token
+*/
 void FunctionParser::ApplySubscripts() const{
   for(size_t i = 0; i+3 < tokens_.size(); ++i){
     Token &vec = tokens_.at(i);
@@ -198,6 +265,9 @@ void FunctionParser::ApplySubscripts() const{
   }
 }
 
+/*!\brief Determines whether "+" and "-" \link Token Tokens\endlink correspond
+  to unary or binary operators
+*/
 void FunctionParser::DisambiguatePlusMinus() const{
   for(size_t i = 0; i < tokens_.size(); ++i){
     Token prev;
@@ -257,6 +327,10 @@ void FunctionParser::DisambiguatePlusMinus() const{
   }
 }
 
+/*!\brief Merges unary operator \link Token Tokens\endlink with their operands
+
+  Searches for patten {unary operator}{value} and replaces with single Token
+*/
 void FunctionParser::ApplyUnary() const{
   for(size_t i = 0; i+1 < tokens_.size(); ++i){
     Token &op = tokens_.at(i);
@@ -280,6 +354,10 @@ void FunctionParser::ApplyUnary() const{
   }
 }
 
+/*!\brief Merges "*" and "/" \link Token Tokens\endlink with their operands
+
+  Searches for patten {value}{"*" or "/"}{value} and replaces with single Token
+*/
 void FunctionParser::MultiplyAndDivide() const{
   for(size_t i = 0; i+2 < tokens_.size(); ++i){
     Token &a = tokens_.at(i);
@@ -305,6 +383,11 @@ void FunctionParser::MultiplyAndDivide() const{
   }
 }
 
+/*!\brief Merges binary "+" and "-" \link Token Tokens\endlink with their
+  operands
+
+  Searches for patten {value}{"+" or "-"}{value} and replaces with single Token
+*/
 void FunctionParser::AddAndSubtract() const{
   for(size_t i = 0; i+2 < tokens_.size(); ++i){
     Token &a = tokens_.at(i);
@@ -328,6 +411,11 @@ void FunctionParser::AddAndSubtract() const{
   }
 }
 
+/*!\brief Merges "<", "<=", ">", and ">=" \link Token Tokens\endlink with their
+  operands
+
+  Searches for patten {value}{comparison}{value} and replaces with single Token
+*/
 void FunctionParser::LessGreater() const{
   for(size_t i = 0; i+2 < tokens_.size(); ++i){
     Token &a = tokens_.at(i);
@@ -355,6 +443,10 @@ void FunctionParser::LessGreater() const{
   }
 }
 
+/*!\brief Merges "==" and "!=" \link Token Tokens\endlink with their operands
+
+  Searches for patten {value}{comparison}{value} and replaces with single Token
+*/
 void FunctionParser::EqualOrNot() const{
   for(size_t i = 0; i+2 < tokens_.size(); ++i){
     Token &a = tokens_.at(i);
@@ -378,6 +470,10 @@ void FunctionParser::EqualOrNot() const{
   }
 }
 
+/*!\brief Merges "&&" \link Token Tokens\endlink with their operands
+
+  Searches for patten {value}{&&}{value} and replaces with single Token
+*/
 void FunctionParser::And() const{
   for(size_t i = 0; i+2 < tokens_.size(); ++i){
     Token &a = tokens_.at(i);
@@ -399,6 +495,10 @@ void FunctionParser::And() const{
   }
 }
 
+/*!\brief Merges "||" \link Token Tokens\endlink with their operands
+
+  Searches for patten {value}{||}{value} and replaces with single Token
+*/
 void FunctionParser::Or() const{
   for(size_t i = 0; i+2 < tokens_.size(); ++i){
     Token &a = tokens_.at(i);
@@ -420,6 +520,8 @@ void FunctionParser::Or() const{
   }
 }
 
+/*!\brief Check that we have a single Token with a valid NamedFun
+ */
 void FunctionParser::CheckSolved() const{
   if(tokens_.size() == 0){
     DBG("No tokens found for " << (*this) << ".");
@@ -435,6 +537,11 @@ void FunctionParser::CheckSolved() const{
   }
 }
 
+/*!\brief Restores string representation to initially provided string
+
+  Token merging process often generates unnecessary parentheses in string, so
+  just use the original string
+*/
 void FunctionParser::CleanupName() const{
   if(tokens_.size() == 1){
     tokens_.at(0).string_rep_ = input_string_;
@@ -442,6 +549,8 @@ void FunctionParser::CleanupName() const{
   }
 }
 
+/*!\brief Runs full parse from start to finish, caching result
+ */
 void FunctionParser::Solve() const{
   if(solved_) return;
   Tokenize();
@@ -463,6 +572,14 @@ void FunctionParser::Solve() const{
   solved_ = true;
 }
 
+/*!\brief Find position of closing parenthesis/bracket corresponding to given opening partner
+
+  \paren[in] i_open_token Position in current list of \link Token Tokens\endlink
+  of opening parenthesis/bracket
+
+  \return Position in current list of \link Token Tokens\endlink of closing
+  parenthesis/bracket
+*/
 size_t FunctionParser::FindClose(size_t i_open_token) const{
   if(i_open_token > tokens_.size()) return tokens_.size();
 
@@ -498,6 +615,16 @@ size_t FunctionParser::FindClose(size_t i_open_token) const{
   }
 }
 
+/*!\brief Concatenates string representation of \link Token Tokens\endlink in
+  range [i_start, i_end)
+
+  \param[in] i_start Position of starting Token (inclusive)
+
+  \param[in] i_end Position of ending Token (exclusive)
+
+  \return Concatentation of string representations of \link Token Tokens\endlink
+  in range [i_start, i_end)
+*/
 string FunctionParser::ConcatenateTokenStrings(size_t i_start, size_t i_end) const{
   string result = "";
   for(;i_start < i_end; ++i_start){
@@ -506,6 +633,15 @@ string FunctionParser::ConcatenateTokenStrings(size_t i_start, size_t i_end) con
   return result;
 }
 
+/*!\brief Replace \link Token Tokens\endlink in range [i_start, i_end) with
+  replacement
+
+  \param[in] i_start Position of starting Token (inclusive)
+
+  \param[in] i_end Position of ending Token (exclusive)
+
+  \param[in] replacement Token which replaces the range
+*/
 void FunctionParser::CondenseTokens(size_t i_start, size_t i_end, const Token &replacement) const{
   if(i_end < i_start) return;
   size_t num_replaced = i_end-i_start;
@@ -520,6 +656,14 @@ void FunctionParser::CondenseTokens(size_t i_start, size_t i_end, const Token &r
   tokens_ = new_tokens;
 }
 
+/*!\brief Print FunctionParser to output stream
+
+  \param[in,out] stream Output stream to print to
+
+  \param[in] fp FunctionParser to print
+
+  \return Reference to stream
+*/
 ostream & operator << (ostream &stream, const FunctionParser &fp){
   stream << "FunctionParser::" << fp.FunctionString() << "::{";
   const auto &tokens = fp.Tokens();
