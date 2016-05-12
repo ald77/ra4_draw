@@ -574,7 +574,7 @@ void FunctionParser::Solve() const{
 
 /*!\brief Find position of closing parenthesis/bracket corresponding to given opening partner
 
-  \paren[in] i_open_token Position in current list of \link Token Tokens\endlink
+  \param[in] i_open_token Position in current list of \link Token Tokens\endlink
   of opening parenthesis/bracket
 
   \return Position in current list of \link Token Tokens\endlink of closing

@@ -213,7 +213,7 @@ GammaParams operator+(GammaParams gp1, GammaParams gp2){
 
   \param[in] scale Amount by which to scale gp
 
-  \param[in] GammaParams to be scaled
+  \param[in] gp GammaParams to be scaled
 
   \return Scaled copy of gp
 
@@ -225,7 +225,7 @@ GammaParams operator*(double scale, GammaParams gp){
 
 /*!\brief Scale/multiply a GammaParams by a constant on the right
 
-  \param[in] GammaParams to be scaled
+  \param[in] gp GammaParams to be scaled
 
   \param[in] scale Amount by which to scale gp
 
@@ -241,7 +241,7 @@ GammaParams operator*(GammaParams gp, double scale){
 
   \param[in,out] stream Output stream to print to
 
-  \param[in] fp GammaParams to print
+  \param[in] gp GammaParams to print
 
   \return Reference to stream
 */
