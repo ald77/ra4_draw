@@ -34,7 +34,8 @@ public:
   GammaParams & operator*=(double scale);
 
 private:
-  double n_effective_, weight_;
+  double n_effective_;//Effective number of unweighted events
+  double weight_;//Effective weight of sample
 };
 
 GammaParams operator+(GammaParams gp1, GammaParams gp2);

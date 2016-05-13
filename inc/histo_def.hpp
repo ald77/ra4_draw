@@ -44,7 +44,7 @@ public:
   std::set<double> cut_vals_;//!< Values of HistoDef::var_ for which to plot a vertical line
 
 private:
-  std::vector<double> bins_;
+  std::vector<double> bins_;//!<List of bin edges
   static std::vector<double> GetEdges(size_t nbins, double xmin, double xmax);
   void ParseUnits();
 };

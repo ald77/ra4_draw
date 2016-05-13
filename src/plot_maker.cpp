@@ -167,7 +167,7 @@ set<shared_ptr<Process> > PlotMaker::GetProcesses() const{
   return processes;
 }
 
-vector<pair<HistoDef, TH1D * const> > PlotMaker::GetHistos(const shared_ptr<Process> &process){
+std::vector<std::pair<HistoDef, TH1D * const> > PlotMaker::GetHistos(const std::shared_ptr<Process> &process){
   //Gets list of plots that include a particular process
   vector<pair<HistoDef, TH1D * const> > histos;
   for(auto &stack: stacks_){
@@ -179,7 +179,7 @@ vector<pair<HistoDef, TH1D * const> > PlotMaker::GetHistos(const shared_ptr<Proc
   return histos;
 }
 
-vector<pair<HistoDef, const TH1D * const> > PlotMaker::GetHistos(const shared_ptr<Process> &process) const{
+std::vector<std::pair<HistoDef, const TH1D * const> > PlotMaker::GetHistos(const std::shared_ptr<Process> &process) const{
   //Gets list of plots that include a particular process
   vector<pair<HistoDef, const TH1D * const> > histos;
   for(const auto &stack: stacks_){

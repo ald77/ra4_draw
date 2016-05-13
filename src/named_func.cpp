@@ -90,16 +90,16 @@ namespace{
   }
 }
 
-NamedFunc::NamedFunc(const string &name,
-                     const function<ScalarFunc> &function):
+NamedFunc::NamedFunc(const std::string &name,
+                     const std::function<ScalarFunc> &function):
   name_(name),
   scalar_func_(function),
   vector_func_(){
   CleanName();
 }
 
-NamedFunc::NamedFunc(const string &name,
-                     const function<VectorFunc> &function):
+NamedFunc::NamedFunc(const std::string &name,
+                     const std::function<VectorFunc> &function):
   name_(name),
   scalar_func_(),
   vector_func_(function){
@@ -264,14 +264,14 @@ string NamedFunc::PrettyName() const{
   return pretty;
 }
 
-NamedFunc & NamedFunc::Function(const function<ScalarFunc> &f){
+NamedFunc & NamedFunc::Function(const std::function<ScalarFunc> &f){
   if(!static_cast<bool>(f)) return *this;
   scalar_func_ = f;
   vector_func_ = function<VectorFunc>();
   return *this;
 }
 
-NamedFunc & NamedFunc::Function(const function<VectorFunc> &f){
+NamedFunc & NamedFunc::Function(const std::function<VectorFunc> &f){
   if(!static_cast<bool>(f)) return *this;
   scalar_func_ = function<ScalarFunc>();
   vector_func_ = f;

@@ -20,14 +20,15 @@ public:
   FunctionParser & FunctionString(const std::string &function_string);
 
   const std::vector<Token> & Tokens() const;
-  
+
   Token ResolveAsToken() const;
   NamedFunc ResolveAsNamedFunc() const;
 
 private:
-  std::string input_string_;
-  mutable std::vector<Token> tokens_;
-  mutable bool tokenized_, solved_;
+  std::string input_string_;//!<String being parsed
+  mutable std::vector<Token> tokens_;//!<List of tokens generated in parsing process
+  mutable bool tokenized_;//!<String has been parsed into tokens
+  mutable bool solved_;//!<String parsed into tokens, and all tokens succesfully merged
 
   FunctionParser(const std::vector<Token> &tokens);
 
@@ -47,9 +48,9 @@ private:
   void Or() const;
   void CheckSolved() const;
   void CleanupName() const;
-  
+
   void Solve() const;
-  
+
   std::size_t FindClose(std::size_t i_open_token) const;
   std::string ConcatenateTokenStrings(std::size_t i_start, std::size_t i_end) const;
   void CondenseTokens(std::size_t i_start, std::size_t i_end, const Token &replacement) const;

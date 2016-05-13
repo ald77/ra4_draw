@@ -31,11 +31,9 @@ public:
     SingleHist& operator=(SingleHist &&) = default;
     ~SingleHist() = default;
 
-    std::shared_ptr<Process> process_;
-    TH1D raw_hist_;
-    //Probably a better way to do this than using scaled_hist_
-    //as mutable storage for formatted plot
-    mutable TH1D scaled_hist_;
+    std::shared_ptr<Process> process_;//!<Process used to fill histogram
+    TH1D raw_hist_;//!<Histogram storing distribution before stacking and luminosity weighting
+    mutable TH1D scaled_hist_;//!<Kludge. Mutable storage of scaled and stacked histogram
 
     double GetMax(double max_bound = std::numeric_limits<double>::infinity(),
                   bool include_error_bar = false,
@@ -64,15 +62,18 @@ public:
 
   std::set<std::shared_ptr<Process> > GetProcesses() const;
 
-  std::vector<SingleHist> backgrounds_, signals_, datas_;
-  HistoDef definition_;
-  std::vector<PlotOpt> plot_options_;
+  std::vector<SingleHist> backgrounds_;//!<List of background histograms to stack/overlay
+  std::vector<SingleHist> signals_;//!<List of signal histograms to stack/overlay
+  std::vector<SingleHist> datas_;//!<List of data histograms to stack/overlay
+  HistoDef definition_;//!<Specification of content: plotted variable, binning, etc.
+  std::vector<PlotOpt> plot_options_;//!<Styles with which to draw plot
 
 private:
-  mutable PlotOpt this_opt_;
-  mutable double luminosity_;
-  mutable double mc_scale_, mc_scale_error_;
-  static TH1D blank_;
+  mutable PlotOpt this_opt_;//!<Plot style currently being drawn
+  mutable double luminosity_;//!<Luminosity currently being drawn
+  mutable double mc_scale_;//!<data/MC normalization
+  mutable double mc_scale_error_;//!<data/MC normalization uncertainty
+  static TH1D blank_;//<!Blank histogram for creating dummy legend entries
 
   HistoStack() = delete;
 

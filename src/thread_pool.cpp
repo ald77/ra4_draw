@@ -18,7 +18,7 @@ ThreadPool::ThreadPool():
   Resize(num_threads);
 }
 
-ThreadPool::ThreadPool(size_t num_threads):
+ThreadPool::ThreadPool(std::size_t num_threads):
   tasks_(),
   threads_(),
   stop_thread_now_(),
