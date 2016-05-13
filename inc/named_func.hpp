@@ -52,10 +52,9 @@ public:
 
 private:
   NamedFunc() = delete;
-  std::string name_;
-  std::function<ScalarFunc> scalar_func_;
-  std::function<VectorFunc> vector_func_;
-  bool is_vector_;
+  std::string name_;//!<String representation of the function
+  std::function<ScalarFunc> scalar_func_;//<!Scalar function. Cannot be valid at same time as NamedFunc::vector_func_.
+  std::function<VectorFunc> vector_func_;//<!Vector function. Cannot be valid at same time as NamedFunc::scalar_func_.
 
   void CleanName();
 };
