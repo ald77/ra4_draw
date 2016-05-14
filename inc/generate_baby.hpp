@@ -7,15 +7,13 @@
 
 struct SimpleVariable{
   SimpleVariable(const std::string &type, const std::string &name);
-  std::string type_;
-  std::string name_;
+  std::string type_;//!<Type of variable (e.g., int, float, etc.)
+  std::string name_;//!<Name of variable (e.g., ht, met, etc.)
 };
 
 class Variable{
 public:
   Variable(const std::string &name);
-
-  SimpleVariable GetEntry(const std::string &baby_type) const;
 
   const std::string & Name() const;
   std::string & Name();
@@ -40,8 +38,8 @@ public:
 private:
   std::set<std::string> GetTypeSet() const;
 
-  std::string name_;
-  std::map<std::string, std::string> type_map_;
+  std::string name_;//!<Name of variable (e.g., ht, met, etc.)
+  std::map<std::string, std::string> type_map_;//!<Map from Baby type (basic, full, etc.) to variabl type (int, float, etc.)
 };
 
 std::set<Variable> GetVariables(const std::set<std::string> &files);

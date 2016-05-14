@@ -1,6 +1,6 @@
 /*! \class NamedFunc
 
-  \brief Combines a callabale function taking a Baby and returning a scalar or
+  \brief Combines a callable function taking a Baby and returning a scalar or
   vector with its string representation.
 
   NamedFunc contains both a callabale function which takes a Baby as a parameter

@@ -1,3 +1,19 @@
+/*! \class SimpleVariable
+
+  \brief Pairs a type and name of a variable accessible via Baby
+
+  Used only to generate Baby classes, but not in subsequent analysis code.
+*/
+
+/*! \class Variable
+
+  \brief A variable to be accessible in Baby classes.
+
+  Stores information about which concrete classes in which to implement the
+  variable.
+
+  Used only to generate Baby classes, but not in subsequent analysis code.
+*/
 #include "generate_baby.hpp"
 
 #define ERROR(x) throw std::runtime_error(string("Error in file ")+__FILE__+" at line "+to_string(__LINE__)+" (in "+__func__+"): "+x);
@@ -29,28 +45,49 @@ int main(int argc, char *argv[]){
   }
 }
 
+/*!\brief Standard constructor
+
+  \param[in] type Type of variable (e.g., int, float, etc.)
+
+  \param[in] name Name of variable (e.g., ht, met, etc.)
+*/
 SimpleVariable::SimpleVariable(const string &type, const string &name):
   type_(type),
   name_(name){
   }
 
+/*!\brief Standard constructor
+
+  \param[in] name Name of variable (e.g., ht, met, etc.)
+*/
 Variable::Variable(const string &name):
   name_(name),
   type_map_(){
 }
 
-SimpleVariable Variable::GetEntry(const string &baby_type) const{
-  return SimpleVariable(baby_type, Type());
-}
+/*!\brief Get variable name
 
+  \return Variable name
+*/
 const std::string & Variable::Name() const{
   return name_;
 }
 
+/*!\brief Get variable name
+
+  \return Variable name
+*/
 std::string & Variable::Name(){
   return name_;
 }
 
+/*!\brief Get one type for variable across all Baby classes
+
+  \return If type is the same in all derived Baby classes, return that
+  type. Otherwise, returns empty string.
+
+  \see Variable::Type()
+*/
 string Variable::Type() const{
   if(ImplementInBase() || VirtualInBase()){
     for(const auto &var: type_map_){
@@ -60,6 +97,15 @@ string Variable::Type() const{
   return "";
 }
 
+/*!\brief Get type of variable for a derived Baby class
+
+  \param[in] baby_type Name of derived Baby class (e.g., basic, full) for which
+  to get type
+
+  \return Type of variable as used in the derived Baby class
+
+  \see Variable::DecoratedType(const std::string &baby_type) const
+*/
 string Variable::Type(const string &baby_type) const{
   if(HasEntry(baby_type)){
     return type_map_.at(baby_type);
@@ -68,6 +114,13 @@ string Variable::Type(const string &baby_type) const{
   }
 }
 
+/*!\brief Get type with "std::" and "*" if needed
+
+  \return If type is the same in all Baby classes, returns that type with
+  "std::" and "*" added if needed. Otherwise, returns empty string.
+
+  \see Variable::Type()
+*/
 string Variable::DecoratedType() const{
   string type = Type();
   if(type.find("std::") != string::npos){
@@ -76,6 +129,16 @@ string Variable::DecoratedType() const{
   return type;
 }
 
+/*!\brief Get type with "std::" and "*" if needed
+
+  \param[in] baby_type Name of derived Baby class (e.g., basic, full) for which
+  to get type
+
+  \return Type of variable as used in the derived Baby class, with "std::" and
+  "*" if needed
+
+  \see Variable::Type(const std::string &baby_type) const
+*/
 string Variable::DecoratedType(const string &baby_type) const{
   string type = Type(baby_type);
   if(type.find("std::") != string::npos){
@@ -84,22 +147,53 @@ string Variable::DecoratedType(const string &baby_type) const{
   return type;
 }
 
+/*!\brief Check if a derived Baby class has this variable
+
+  \param[in] baby_type Name of derived Baby class (e.g., basic, full) to check
+
+  \return True if and only if the derived Baby type contains this variable
+*/
 bool Variable::HasEntry(const string &baby_type) const{
   return type_map_.find(baby_type) != type_map_.cend();
 }
 
+/*!\brief Set the type of this variable for use in a derived Baby class
+
+  \param[in] baby_type Specifies the derived Baby class (e.g., basic, full) for
+  which to set variable type
+
+  \param[in] type Variable type to set (e.g., int, float)
+*/
 void Variable::SetEntry(const string &baby_type,
                         const string &type){
   type_map_[baby_type] = type;
 }
 
+/*!\brief Check if variable can be implemented directly in Baby
+
+  Implementation in Baby requires that the variable be present in all derived
+  Baby classes with the same type
+
+  \return True if variable accessor can be implemented in Baby
+*/
 bool Variable::ImplementInBase() const{
   set<string> type_set = GetTypeSet();
   return type_set.size()==1 && *(type_set.cbegin()) != "";
 }
 
+/*!\brief Check if variable should have pure virtual method in Baby
+
+  Pure virtual accessor is needed if and only if the variable has exactly one
+  type across all derived Baby classes, but does is only present in a subset of
+  the classes.
+
+  \return True if variable should have virtual accessor in Baby
+*/
 bool Variable::VirtualInBase() const{
   set<string> type_set = GetTypeSet();
+
+  //type_set should contain one real type and an empty type indicating absence
+  //from some Baby classes
   if(type_set.size() != 2) return false;
   auto iter = type_set.cbegin();
   string first_type = *iter;
@@ -109,10 +203,25 @@ bool Variable::VirtualInBase() const{
     || (first_type == "" && second_type != "");
 }
 
+/*!\brief Check if variable needs accessor implemented in a derived Baby class
+
+  \param[in] baby_type Type of derived Baby to check
+
+  \return True if variable is virtual in Baby, and implemented in the specified
+  derived class
+*/
 bool Variable::ImplementIn(const std::string &baby_type) const{
   return VirtualInBase() && Type(baby_type)!="";
 }
 
+/*!\brief Check if variable is completely absent in base Baby
+
+  This occus if the variable has different types in different derived Baby
+  classes
+
+  \return True if variable is only present in derived Baby classes and not in
+  Baby
+*/
 bool Variable::NotInBase() const{
   set<string> type_set = GetTypeSet();
   if(type_set.size() == 2){
@@ -128,14 +237,36 @@ bool Variable::NotInBase() const{
   }
 }
 
+/*!\brief Check if variable needs declaration and definition in a derived class
+
+  \param[in] baby_type Specifies derived Baby class to check
+
+  \return True if variable exists in specified derived class, but does not have
+  virtual function in base Baby
+*/
 bool Variable::EverythingIn(const string &baby_type) const{
   return NotInBase() && Type(baby_type)!="";
 }
 
+/*!\brief Comparison operator allows storing Variable in set
+
+  Sorts alphabetically by name
+
+  \param[in] other Variable to compare to
+
+  \return True if *this is alphabetically before other
+*/
 bool Variable::operator<(const Variable &other) const{
   return name_ < other.name_;
 }
 
+/*!\brief Get all types (int, float, etc.) used across derived Baby classes
+
+  May include an empty string if variable is absent from some derived Baby
+  classes
+
+  \return List of types used in all derived Baby classes
+*/
 set<string> Variable::GetTypeSet() const{
   set<string> types;
   for(const auto &type: type_map_){
@@ -144,6 +275,13 @@ set<string> Variable::GetTypeSet() const{
   return types;
 }
 
+/*!/brief Reads files to get variable names and associated types
+
+  \param[in] files Set of files to be read. Typically everything in
+  txt/variables
+
+  \return All variables with associated types used for each derived Baby class
+*/
 set<Variable> GetVariables(const set<string> &files){
   vector<Variable> vars;
   for(const auto &file: files){
@@ -176,6 +314,14 @@ set<Variable> GetVariables(const set<string> &files){
   return {vars.cbegin(), vars.cend()};
 }
 
+/*!\brief Check if line in variable list file is a comment (blank)
+
+  Not very robust. Currently, a line is a "comment" if is is less than 3
+  characters long or contains neither letters nor underscores. Should add
+  support for "#" starting a comment line and more robust checking.
+
+  \return True if line meets above definition of a comment
+*/
 bool IsComment(const string &line){
   if(line.size() <= 2) return true;
   for(const auto &letter: line){
@@ -189,6 +335,12 @@ bool IsComment(const string &line){
   return true;
 }
 
+/*!\brief Extracts variable type and name from line from variable text files
+
+  \param[in] line The line to be parsed
+
+  \return SimpleVariable with name and type set
+*/
 SimpleVariable GetVariable(string line){
   RemoveExtraSpaces(line);
   auto loc = line.rfind(';');
@@ -202,6 +354,10 @@ SimpleVariable GetVariable(string line){
   }
 }
 
+/*!\brief Removes leading, trailing, and double spaced from a text line
+
+  \param[in,out] line Line of text from which spaces are to be removed
+*/
 void RemoveExtraSpaces(string &line){
   size_t loc = line.find_first_not_of(" ");
   if(loc != string::npos){
@@ -217,6 +373,13 @@ void RemoveExtraSpaces(string &line){
   }
 }
 
+/*!\brief Replaces all lower case letters with upper case equivalent
+
+  \param[in] x String to capitalize
+
+  \return Copy of x with all lower case letters replaced with upper case
+  equivalent
+*/
 string ToUpper(string x){
   for(size_t i = 0; i < x.size(); ++i){
     x.at(i) = toupper(x.at(i));
@@ -224,6 +387,13 @@ string ToUpper(string x){
   return x;
 }
 
+/*!\brief Replaces all upper case letters with lower case equivalent
+
+  \param[in] x String to convert to all lower case
+
+  \return Copy of x with all upper case letters replaced with lower case
+  equivalent
+*/
 string ToLower(string x){
   for(size_t i = 0; i < x.size(); ++i){
     x.at(i) = tolower(x.at(i));
@@ -231,6 +401,12 @@ string ToLower(string x){
   return x;
 }
 
+/*!\brief Writes inc/baby.hpp
+
+  \param[in] vars All variables for all Baby classes, with type information
+
+  \param[in] types Names of derived Baby classes (basic, full, etc.)
+*/
 void WriteBaseHeader(const set<Variable> &vars,
                      const set<string> &types){
   ofstream file("inc/baby.hpp");
@@ -276,25 +452,27 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "protected:\n";
   file << "  virtual void Initialize();\n\n";
 
-  file << "  std::unique_ptr<TChain> chain_;\n";
-  file << "  long entry_;\n\n";
+  file << "  std::unique_ptr<TChain> chain_;//!<Chain to load variables from\n";
+  file << "  long entry_;//!<Current entry\n\n";
 
   file << "private:\n";
   file << "  Baby() = delete;\n";
   file << "  Baby(const Baby &) = delete;\n";
   file << "  Baby& operator=(const Baby &) = delete;\n\n";
 
-  file << "  std::set<std::string> file_names_;\n";
-  file << "  mutable long total_entries_;\n";
-  file << "  mutable bool cached_total_entries_;\n\n";
+  file << "  std::set<std::string> file_names_;//!<Files loaded into TChain\n";
+  file << "  mutable long total_entries_;//!<Cached number of events in TChain\n";
+  file << "  mutable bool cached_total_entries_;//!<Flag if cached event count up to date\n\n";
 
   for(const auto &var: vars){
     if(!var.ImplementInBase()) continue;
     file << "  "
          << var.DecoratedType() << " "
-         << var.Name() << "_;\n";
-    file << "  TBranch *b_" << var.Name() << "_;\n";
-    file << "  mutable bool c_" << var.Name() << "_;\n";
+         << var.Name() << "_;//!<Cached value of " << var.Name() << '\n';
+    file << "  TBranch *b_" << var.Name() << "_;//!<Branch from which "
+         << var.Name() << " is read\n";
+    file << "  mutable bool c_" << var.Name() << "_;//!<Flag if cached "
+         << var.Name() << " up to date\n";
   }
   file << "};\n\n";
 
@@ -307,8 +485,30 @@ void WriteBaseHeader(const set<Variable> &vars,
   file.close();
 }
 
+/*!\brief Writes src/baby.cpp
+
+  \param[in] vars All variables for all Baby classes, with type information
+*/
 void WriteBaseSource(const set<Variable> &vars){
   ofstream file("src/baby.cpp");
+  file << "/*! \\class Baby\n\n";
+
+  file << "  \\brief Abstract base class for access to ntuple variables\n\n";
+
+  file << "  Loads variables on demand and caches for fast repeated use within an event.\n\n";
+
+  file << "  A derived class is used for each known ntuple format. Variables and functions\n";
+  file << "  are kept in this base class whenever possible, and placed in the derived classes\n";
+  file << "  only when necessary. All variables that are identical across derived Baby\n";
+  file << "  classes are implemented fully in this base class. Others are implemented with\n";
+  file << "  dummy virtual accessor functions and internal member variables in the base\n";
+  file << "  class, with derived classes providing a real implementation of the accessor if\n";
+  file << "  the variable is defined in the corresponding ntuple format. If the variable has\n";
+  file << "  inconsistent types across the ntuple formats, then each derived class must\n";
+  file << "  provide all necessary accessors and internal variables; in such a case, access\n";
+  file << "  through this abstract base is not possible.\n";
+  file << "*/\n";
+
   file << "#include \"baby.hpp\"\n\n";
 
   file << "#include <mutex>\n";
@@ -327,6 +527,12 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  using ScalarFunc = NamedFunc::ScalarFunc;\n";
   file << "  using VectorFunc = NamedFunc::VectorFunc;\n\n";
 
+  file << "  /*!\\brief Get dummy NamedFunc in case of substitution failure\n\n";
+
+  file << "    \\param[in] name Name of function/variable\n\n";
+
+  file << "    \\return Dummy NamedFunc that always returns 0\n";
+  file << "  */\n";
   file << "  template<typename T>\n";
   file << "    NamedFunc GetFunction(T,\n";
   file << "                          const string &name){\n";
@@ -334,6 +540,14 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "    return NamedFunc(name, [](const Baby &){return 0.;}, false);\n";
   file << "  }\n\n";
 
+  file << "  /*!\\brief Get NamedFunc for a function returning a scalar\n\n";
+
+  file << "    \\param[in] baby_func Member function pointer to variable accessor\n\n";
+
+  file << "    \\param[in] name Name of function/variable\n\n";
+
+  file << "    \\return NamedFunc that returns appropriate scalar\n";
+  file << "  */\n";
   file << "  template<typename T>\n";
   file << "    NamedFunc GetFunction(T const &(Baby::*baby_func)() const,\n";
   file << "                          const string &name){\n";
@@ -343,6 +557,14 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "                     });\n";
   file << "  }\n\n";
 
+  file << "  /*!\\brief Get NamedFunc for a function returning a vector\n\n";
+
+  file << "    \\param[in] baby_func Member function pointer to variable accessor\n\n";
+
+  file << "    \\param[in] name Name of function/variable\n\n";
+
+  file << "    \\return NamedFunc that returns appropriate vectorr\n";
+  file << "  */\n";
   file << "  template<typename T>\n";
   file << "    NamedFunc GetFunction(vector<T>* const &(Baby::*baby_func)() const,\n";
   file << "                          const string &name){\n";
@@ -369,6 +591,10 @@ void WriteBaseSource(const set<Variable> &vars){
   }
   file << "}\n\n";
 
+  file << "/*!\\brief Standard constructor\n\n";
+
+  file << "  \\param[in] file_names ntuple files to read from\n";
+  file << "*/\n";
   file << "Baby::Baby(const set<string> &file_names):\n";
   file << "  chain_(nullptr),\n";
   file << "  file_names_(file_names),\n";
@@ -402,6 +628,10 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  }\n";
   file << "}\n";
 
+  file << "/*!\\brief Get number of entries in TChain and cache it\n\n";
+
+  file << "  \\return Number of entries in TChain\n";
+  file << "*/\n";
   file << "long Baby::GetEntries() const{\n";
   file << "  if(!cached_total_entries_){\n";
   file << "    cached_total_entries_ = true;\n";
@@ -411,6 +641,10 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  return total_entries_;\n";
   file << "}\n\n";
 
+  file << "/*!\\brief Change current entry\n\n";
+
+  file << "  \\param[in] entry Entry number to load\n";
+  file << "*/\n";
   file << "void Baby::GetEntry(long entry){\n";
   for(const auto &var: vars){
     if(!var.ImplementInBase()) continue;
@@ -420,10 +654,18 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  entry_ = chain_->LoadTree(entry);\n";
   file << "}\n\n";
 
+  file << "/*! \\brief Get underlying TChain for this Baby\n\n";
+
+  file << "  \\return Pointer to underlying TChain\n";
+  file << "*/\n";
   file << "const unique_ptr<TChain> & Baby::GetTree() const{\n";
   file << "  return chain_;\n";
   file << "}\n\n";
 
+  file << "/*! \\brief Get a NamedFunc accessing specified variable\n\n";
+
+  file << "  \\return NamedFunc which returns specified variable from a Baby\n";
+  file << "*/\n";
   file << "NamedFunc Baby::GetFunction(const std::string &var_name){\n";
   if(vars.size() != 0){
     file << "  if(var_name == \"" << vars.cbegin()->Name() << "\"){\n";
@@ -448,6 +690,8 @@ void WriteBaseSource(const set<Variable> &vars){
   }
   file << "}\n\n";
 
+  file << "/*! \\brief Setup all branches\n";
+  file << "*/\n";
   file << "void Baby::Initialize(){\n";
   file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
   file << "  chain_->SetMakeClass(1);\n";
@@ -459,6 +703,10 @@ void WriteBaseSource(const set<Variable> &vars){
 
   for(const auto &var: vars){
     if(!var.ImplementInBase()) continue;
+    file << "/*! \\brief Get " << var.Name() << " for current event and cache it\n\n";
+
+    file << "  \\return " << var.Name() << " for current event\n";
+    file << "*/\n";
     file << var.DecoratedType() << " const & Baby::" << var.Name() << "() const{\n";
     file << "  if(!c_" << var.Name() << "_ && b_" << var.Name() << "_){\n";
     file << "    b_" << var.Name() << "_->GetEntry(entry_);\n";
@@ -471,6 +719,12 @@ void WriteBaseSource(const set<Variable> &vars){
   file.close();
 }
 
+/*!\brief Writes a derived Baby header file
+
+  \param[in] vars All variables for all Baby classes, with type information
+
+  \param[in] type Name of derived Baby class (basic, full, etc.)
+*/
 void WriteSpecializedHeader(const set<Variable> &vars, const string &type){
   ofstream file("inc/baby_"+type+".hpp");
   file << "#ifndef H_BABY_" << ToUpper(type) << "\n";
@@ -510,9 +764,12 @@ void WriteSpecializedHeader(const set<Variable> &vars, const string &type){
 
   for(const auto &var: vars){
     if(var.ImplementIn(type) || var.EverythingIn(type)){
-      file << "  " << var.DecoratedType(type) << " " << var.Name() << "_;\n";
-      file << "  TBranch *b_" << var.Name() << "_;\n";
-      file << "  mutable bool c_" << var.Name() << "_;\n";
+      file << "  " << var.DecoratedType(type) << " "
+           << var.Name() << "_;//!<Cached value of " << var.Name() << '\n';
+      file << "  TBranch *b_" << var.Name() << "_;\n//!<Branch from which "
+           << var.Name() << " is read\n";
+      file << "  mutable bool c_" << var.Name() << "_;//!<Flag if cached "
+           << var.Name() << " up to date\n";
     }
   }
   file << "};\n\n";
@@ -521,14 +778,35 @@ void WriteSpecializedHeader(const set<Variable> &vars, const string &type){
   file.close();
 }
 
+/*!\brief Writes a derived Baby source file
+
+  \param[in] vars All variables for all Baby classes, with type information
+
+  \param[in] type Name of derived Baby class (basic, full, etc.)
+*/
+
 void WriteSpecializedSource(const set<Variable> &vars, const string &type){
   ofstream file("src/baby_"+type+".cpp");
+  file << "/*! \\class Baby_" << type << "\n\n";
+
+  file << "  \\brief Derived class to access variables in " << type << " format ntuples\n\n";
+
+  file << "  For variables not shared by all ntuple formats, the abstract base class Baby\n";
+  file << "  cannot implement functions to get them, and derived classes must do the work.\n";
+  file << "  This class implements getter functions for variables in the " << type << " format\n";
+  file << "  ntuples, and dummy getters that throw an error for any variable not in " << type;
+  file << "  format ntuples.\n";
+  file << "*/\n";
   file << "#include \"baby_" << type << ".hpp\"\n\n";
 
   file << "#include \"utilities.hpp\"\n\n";
 
   file << "using namespace std;\n\n";
 
+  file << "/*!\\brief Standard constructor\n\n";
+
+  file << "  \\param[in] file_names ntuple files to read from\n";
+  file << "*/\n";
   file << "Baby_" << type << "::Baby_" << type << "(const set<string> &file_names):\n";
   int implemented_here = 0;
   for(const auto & var: vars){
@@ -559,6 +837,10 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
   file << "  Initialize();\n";
   file << "}\n\n";
 
+  file << "/*!\\brief Change current entry\n\n";
+
+  file << "  \\param[in] entry Entry number to load\n";
+  file << "*/\n";
   file << "void Baby_" << type << "::GetEntry(long entry){\n";
   for(const auto &var: vars){
     if(var.ImplementIn(type) || var.EverythingIn(type)){
@@ -568,6 +850,8 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
   file << "  Baby::GetEntry(entry);\n";
   file << "}\n\n";
 
+  file << "/*! \\brief Setup all branches\n";
+  file << "*/\n";
   file << "void Baby_" << type << "::Initialize(){\n";
   file << "  Baby::Initialize();\n";
   if(vars.size() > 0){
@@ -583,6 +867,10 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
 
   for(const auto &var: vars){
     if(var.ImplementIn(type) || var.EverythingIn(type)){
+      file << "/*!\\brief Get " << var.Name() << " for current event and cache it\n\n";
+
+      file << "  \\return " << var.Name() << " for current event\n";
+      file << "*/\n";
       file << var.DecoratedType(type) << " const & Baby_" << type << "::" << var.Name() << "() const{\n";
       file << "  if(!c_" << var.Name() << "_ && b_" << var.Name() << "_){\n";
       file << "    b_" << var.Name() << "_->GetEntry(entry_);\n";
@@ -591,6 +879,10 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
       file << "  return " << var.Name() << "_;\n";
       file << "}\n\n";
     }else if(var.VirtualInBase()){
+      file << "/*!\\brief Dummy getter for " << var.Name() << ". Throws error\n\n";
+
+      file << "  \\return Never returns. Throws error.\n";
+      file << "*/\n";
       file << var.DecoratedType() << " const & Baby_" << type << "::" << var.Name() << "()  const{\n";
       file << "  ERROR(\"" << var.DecoratedType() << ' ' << var.Name()
            << " not available in babies of type " << type << ".\");\n";
