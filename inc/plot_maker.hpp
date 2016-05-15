@@ -29,10 +29,10 @@ public:
   void Clear();
 
 private:
-  std::vector<HistoStack> stacks_;
+  std::vector<HistoStack> stacks_;//!<Plots to be produced
 
   void FillHistograms();
-  void FillHistogram(const std::shared_ptr<Process> &process);
+  void FillHistogram(const std::shared_ptr<Process> &proc);
   std::set<std::shared_ptr<Process> > GetProcesses() const;
   std::vector<std::pair<HistoDef, const TH1D * const> > GetHistos(const std::shared_ptr<Process> &process) const;
   std::vector<std::pair<HistoDef, TH1D * const> > GetHistos(const std::shared_ptr<Process> &process);

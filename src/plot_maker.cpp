@@ -1,3 +1,14 @@
+/*! \class PlotMaker
+
+  \brief Organizes efficient production of plots with single loop over each
+  process
+
+  \link HistoStack HistoStacks\endlink are added to the PlotMaker using
+  PlotMaker::AddPlot(). Once all desired plots have been added, a call to
+  PlotMaker::MakePlots() determines the full set of \link Process
+  Processes\endlink used by all plots, loops once over each Process to fill all
+  histograms using that Process, and then prints the plots.
+*/
 #include "plot_maker.hpp"
 
 #include "TLegend.h"
@@ -16,6 +27,12 @@ using ScalarFunc = NamedFunc::ScalarFunc;
 using VectorFunc = NamedFunc::VectorFunc;
 
 namespace{
+  /*!\brief Check that at least one entry in list passes
+
+    \param[in] v Entries to be checked for a pass
+
+    \return True if at least one entry is true
+  */
   bool HavePass(const VectorType &v){
     for(const auto&x: v){
       if(x) return true;
@@ -23,6 +40,14 @@ namespace{
     return false;
   }
 
+  /*!\brief Check that at least one entry passes for two cuts in an event
+
+    \param[in] a Pass/fail of first cut for each entry.
+
+    \param[in] b Pass/fail of second cut for each entry.
+
+    \return True if at least one entry is true for both cuts
+  */
   bool HavePass(const VectorType &a,
                 const VectorType &b){
     for(auto it_a = a.cbegin(), it_b = b.cbegin();
@@ -33,6 +58,16 @@ namespace{
     return false;
   }
 
+  /*!\brief Check that at least one entry passes for three cuts in an event
+
+    \param[in] a Pass/fail of first cut for each entry.
+
+    \param[in] b Pass/fail of second cut for each entry.
+
+    \param[in] b Pass/fail of third cut for each entry.
+
+    \return True if at least one entry is true for all three cuts
+  */
   bool HavePass(const VectorType &a,
                 const VectorType &b,
                 const VectorType &c){
@@ -45,19 +80,35 @@ namespace{
   }
 }
 
+/*!\brief Standard constructor
+ */
 PlotMaker::PlotMaker():
   stacks_(){
 }
 
+/*!\brief Add HistoStack to list of plots to be produced at next
+  PlotMaker::MakePlots call
+
+  All arguments passed directly to HistoStack constructor. Adds a plot to the
+  list of plots to be produced. Does NOT fill or draw the histogram.
+
+  \param[in] histo_def Histogram definition (variable, binning, etc.)
+
+  \param[in] processes Processes to include in plot
+
+  \param[in] plot_options List of styles with which to produce plot
+*/
 void PlotMaker::AddPlot(const HistoDef &histo_def,
                         const vector<shared_ptr<Process> > &processes,
                         const vector<PlotOpt> &plot_options){
-  //Adds a plot to the list of plots to be produced. Does NOT fill or draw the histogram.
   stacks_.emplace_back(processes, histo_def, plot_options);
 }
 
+/*!\brief Prints all added plots with given luminosity
+
+  \param[in] luminosity Integrated luminosity with which to draw plots
+*/
 void PlotMaker::MakePlots(double luminosity){
-  //Processes this list of plots provided with AddPlot and writes the results to disk
   FillHistograms();
 
   for(auto &stack: stacks_){
@@ -65,13 +116,15 @@ void PlotMaker::MakePlots(double luminosity){
   }
 }
 
+/*!\brief Empties list of plots to be produced at next PlotMaker::MakePlots call
+ */
 void PlotMaker::Clear(){
-  //Removes current plots from list to be drawn at next MakePlots call
   stacks_.clear();
 }
 
+/*!/brief Loops once over each process, filling all histograms for that process
+ */
 void PlotMaker::FillHistograms(){
-  //Iterates over all processes needed for requested plots and fills the necessary histograms
   set<shared_ptr<Process> > processes = GetProcesses();
   ThreadPool tp(thread::hardware_concurrency());
   for(const auto &proc: processes){
@@ -79,6 +132,10 @@ void PlotMaker::FillHistograms(){
   }
 }
 
+/*!\brief Loop once over one process, filling all associated histograms
+
+  \param[in] proc The process for which to fill histograms
+*/
 void PlotMaker::FillHistogram(const shared_ptr<Process> &proc){
   cout << "Filling histograms for the " << proc->name_ << " process..." << endl;
 
@@ -156,8 +213,11 @@ void PlotMaker::FillHistogram(const shared_ptr<Process> &proc){
   }
 }
 
+/*!\brief Get list of processes needed across all plots
+
+  \return All processes needed for all plots
+*/
 set<shared_ptr<Process> > PlotMaker::GetProcesses() const{
-  //Finds list of all processes needed for requested plots
   set<shared_ptr<Process> > processes;
   for(const auto &stack: stacks_){
     for(const auto &proc: stack.GetProcesses()){
@@ -167,8 +227,13 @@ set<shared_ptr<Process> > PlotMaker::GetProcesses() const{
   return processes;
 }
 
+/*!\brief Get histograms associated with a process
+
+  \param[in] process Process for which to get histograms
+
+  \return List of histograms and definitions
+*/
 std::vector<std::pair<HistoDef, TH1D * const> > PlotMaker::GetHistos(const std::shared_ptr<Process> &process){
-  //Gets list of plots that include a particular process
   vector<pair<HistoDef, TH1D * const> > histos;
   for(auto &stack: stacks_){
     auto procs = stack.GetProcesses();
@@ -179,8 +244,13 @@ std::vector<std::pair<HistoDef, TH1D * const> > PlotMaker::GetHistos(const std::
   return histos;
 }
 
+/*!\brief Get histograms associated with a process
+
+  \param[in] process Process for which to get histograms
+
+  \return List of histograms and definitions
+*/
 std::vector<std::pair<HistoDef, const TH1D * const> > PlotMaker::GetHistos(const std::shared_ptr<Process> &process) const{
-  //Gets list of plots that include a particular process
   vector<pair<HistoDef, const TH1D * const> > histos;
   for(const auto &stack: stacks_){
     auto procs = stack.GetProcesses();
