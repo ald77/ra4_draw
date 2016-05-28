@@ -80,6 +80,6 @@ NamedFunc operator || (NamedFunc f, NamedFunc g);
 
 NamedFunc operator ! (NamedFunc f);
 
-std::ostream & operator<<(std::ostream &stream, NamedFunc function);
+std::ostream & operator<<(std::ostream &stream, const NamedFunc &function);
 
 #endif

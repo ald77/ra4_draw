@@ -64,7 +64,7 @@ namespace{
 
     \param[in] b Pass/fail of second cut for each entry.
 
-    \param[in] b Pass/fail of third cut for each entry.
+    \param[in] c Pass/fail of third cut for each entry.
 
     \return True if at least one entry is true for all three cuts
   */

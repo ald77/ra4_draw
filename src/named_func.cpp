@@ -67,8 +67,8 @@ namespace{
     the result of f
   */
   template<typename Operator>
-    static function<ScalarFunc> ApplyOp(const function<ScalarFunc> &f,
-                                        const Operator &op){
+    function<ScalarFunc> ApplyOp(const function<ScalarFunc> &f,
+                                 const Operator &op){
     if(!static_cast<bool>(f)) return f;
     function<ScalarType(ScalarType)> op_c(op);
     return [f,op_c](const Baby &b){
@@ -86,8 +86,8 @@ namespace{
     each element of the result of f
   */
   template<typename Operator>
-    static function<VectorFunc> ApplyOp(const function<VectorFunc> &f,
-                                        const Operator &op){
+    function<VectorFunc> ApplyOp(const function<VectorFunc> &f,
+                                 const Operator &op){
     if(!static_cast<bool>(f)) return f;
     function<ScalarType(ScalarType)> op_c(op);
     return [f,op_c](const Baby &b){
@@ -122,11 +122,11 @@ namespace{
     (sfa or vfa) and (sfb or vfb)
   */
   template<typename Operator>
-    static pair<function<ScalarFunc>, function<VectorFunc> > ApplyOp(const function<ScalarFunc> &sfa,
-                                                                     const function<VectorFunc> &vfa,
-                                                                     const function<ScalarFunc> &sfb,
-                                                                     const function<VectorFunc> &vfb,
-                                                                     const Operator &op){
+    pair<function<ScalarFunc>, function<VectorFunc> > ApplyOp(const function<ScalarFunc> &sfa,
+                                                              const function<VectorFunc> &vfa,
+                                                              const function<ScalarFunc> &sfb,
+                                                              const function<VectorFunc> &vfb,
+                                                              const Operator &op){
     function<ScalarType(ScalarType,ScalarType)> op_c(op);
     function<ScalarFunc> sfo;
     function<VectorFunc> vfo;
@@ -161,6 +161,138 @@ namespace{
         VectorType vo(va.size() > vb.size() ? vb.size() : va.size());
         for(size_t i = 0; i < vo.size(); ++i){
           vo.at(i) = op_c(va.at(i), vb.at(i));
+        }
+        return vo;
+      };
+    }
+    return make_pair(sfo, vfo);
+  }
+
+  /*!\brief Get a functor applying binary "&&" to operands (sfa or vfa) and (sfb
+    or vfb)
+
+    Replaces generic template with short-circuiting "and" logic. \see ApplyOp().
+
+    \param[in] sfa Scalar function from the same NamedFunc as vfa
+
+    \param[in] vfa Vector function from the same NamedFunc as sfa
+
+    \param[in] sfb Scalar function from the same NamedFunc as vfb
+
+    \param[in] vfb Vector function from the same NamedFunc as sfb
+
+    \return Functor which takes a Baby and returns the result of applying op to
+    (sfa or vfa) and (sfb or vfb)
+  */
+  template<>
+    pair<function<ScalarFunc>, function<VectorFunc> > ApplyOp(const function<ScalarFunc> &sfa,
+                                                              const function<VectorFunc> &vfa,
+                                                              const function<ScalarFunc> &sfb,
+                                                              const function<VectorFunc> &vfb,
+                                                              const logical_and<ScalarType> &/*op*/){
+    function<ScalarFunc> sfo;
+    function<VectorFunc> vfo;
+    if(static_cast<bool>(sfa) && static_cast<bool>(sfb)){
+      sfo = [sfa,sfb](const Baby &b){
+        return sfa(b)&&sfb(b);
+      };
+    }else if(static_cast<bool>(sfa) && static_cast<bool>(vfb)){
+      vfo = [sfa,vfb](const Baby &b){
+        ScalarType sa = sfa(b);
+        if(!sa){
+          return VectorType(vfb(b).size(), false);
+        }else{
+          return vfb(b);
+        }
+      };
+    }else if(static_cast<bool>(vfa) && static_cast<bool>(sfb)){
+      vfo = [vfa,sfb](const Baby &b){
+        VectorType va = vfa(b);
+        VectorType vo(va.size());
+        bool evaluated = false;
+        ScalarType sb = 0.;
+        for(size_t i = 0; i < vo.size(); ++i){
+          if(!evaluated && va.at(i)){
+            evaluated = true;
+            sb = sfb(b);
+          }
+          vo.at(i) = va.at(i)&&sb;
+        }
+        return vo;
+      };
+    }else if(static_cast<bool>(vfa) && static_cast<bool>(vfb)){
+      vfo = [vfa,vfb](const Baby &b){
+        VectorType va = vfa(b);
+        VectorType vb = vfb(b);
+        VectorType vo(va.size() > vb.size() ? vb.size() : va.size());
+        for(size_t i = 0; i < vo.size(); ++i){
+          vo.at(i) = va.at(i)&&vb.at(i);
+        }
+        return vo;
+      };
+    }
+    return make_pair(sfo, vfo);
+  }
+
+  /*!\brief Get a functor applying binary "||" to operands (sfa or vfa) and (sfb
+    or vfb)
+
+    Replaces generic template with short-circuiting "or" logic. \see ApplyOp().
+
+    \param[in] sfa Scalar function from the same NamedFunc as vfa
+
+    \param[in] vfa Vector function from the same NamedFunc as sfa
+
+    \param[in] sfb Scalar function from the same NamedFunc as vfb
+
+    \param[in] vfb Vector function from the same NamedFunc as sfb
+
+    \return Functor which takes a Baby and returns the result of applying op to
+    (sfa or vfa) and (sfb or vfb)
+  */
+  template<>
+    pair<function<ScalarFunc>, function<VectorFunc> > ApplyOp(const function<ScalarFunc> &sfa,
+                                                              const function<VectorFunc> &vfa,
+                                                              const function<ScalarFunc> &sfb,
+                                                              const function<VectorFunc> &vfb,
+                                                              const logical_or<ScalarType> &/*op*/){
+    function<ScalarFunc> sfo;
+    function<VectorFunc> vfo;
+    if(static_cast<bool>(sfa) && static_cast<bool>(sfb)){
+      sfo = [sfa,sfb](const Baby &b){
+        return sfa(b)||sfb(b);
+      };
+    }else if(static_cast<bool>(sfa) && static_cast<bool>(vfb)){
+      vfo = [sfa,vfb](const Baby &b){
+        ScalarType sa = sfa(b);
+        if(sa){
+          return VectorType(vfb(b).size(), true);
+        }else{
+          return vfb(b);
+        }
+      };
+    }else if(static_cast<bool>(vfa) && static_cast<bool>(sfb)){
+      vfo = [vfa,sfb](const Baby &b){
+        VectorType va = vfa(b);
+        VectorType vo(va.size());
+        bool evaluated = false;
+        ScalarType sb = 0.;
+        for(size_t i = 0; i < vo.size(); ++i){
+          if(!(evaluated || va.at(i))){
+            evaluated = true;
+            sb = sfb(b);
+          }
+          vo.at(i) = va.at(i)||sb;
+        }
+        return vo;
+      };
+    }else if(static_cast<bool>(vfa) && static_cast<bool>(vfb)){
+      vfo = [vfa,vfb](const Baby &b){
+        VectorType va = vfa(b);
+        VectorType vb = vfb(b);
+        VectorType vo(va.size() > vb.size() ? vb.size() : va.size());
+        for(size_t i = 0; i < vo.size(); ++i){
+          vo.at(i) = va.at(i)||vb.at(i);
         }
         return vo;
       };
@@ -253,12 +385,12 @@ NamedFunc & NamedFunc::Name(const string &name){
 string NamedFunc::PlainName() const{
   string plain = name_;
   ReplaceAll(plain, ".", "p");
-  ReplaceAll(plain, "(", "OP");
-  ReplaceAll(plain, ")", "CP");
-  ReplaceAll(plain, "[", "OB");
-  ReplaceAll(plain, "]", "CB");
-  ReplaceAll(plain, "{", "OC");
-  ReplaceAll(plain, "}", "CC");
+  ReplaceAll(plain, "(", "O");
+  ReplaceAll(plain, ")", "C");
+  ReplaceAll(plain, "[", "O");
+  ReplaceAll(plain, "]", "C");
+  ReplaceAll(plain, "{", "O");
+  ReplaceAll(plain, "}", "C");
   ReplaceAll(plain, "+", "PLS");
   ReplaceAll(plain, "-", "MNS");
   ReplaceAll(plain, "*", "TMS");
@@ -267,16 +399,16 @@ string NamedFunc::PlainName() const{
   ReplaceAll(plain, "!", "NOT");
   ReplaceAll(plain, "&&", "AND");
   ReplaceAll(plain, "||", "OR");
-  ReplaceAll(plain, "==", "EQL");
+  ReplaceAll(plain, "==", "EQ");
   ReplaceAll(plain, "<=", "GEQ");
   ReplaceAll(plain, ">=", "LEQ");
-  ReplaceAll(plain, ">", "GTR");
-  ReplaceAll(plain, "<", "LES");
-  ReplaceAll(plain, "=", "EQL");
-  ReplaceAll(plain, "&", "BITAND");
-  ReplaceAll(plain, "|", "BITOR");
-  ReplaceAll(plain, "^", "BITXOR");
-  ReplaceAll(plain, "~", "BITNOT");
+  ReplaceAll(plain, ">", "GT");
+  ReplaceAll(plain, "<", "LT");
+  ReplaceAll(plain, "=", "EQ");
+  ReplaceAll(plain, "&", "BAND");
+  ReplaceAll(plain, "|", "BOR");
+  ReplaceAll(plain, "^", "BXOR");
+  ReplaceAll(plain, "~", "BNOT");
   ReplaceAll(plain, "__", "_");
   for(size_t i = 0; i < plain.size(); ++i){
     if(isalnum(plain.at(i)) || plain.at(i) == '.' || plain.at(i) == '_') continue;
