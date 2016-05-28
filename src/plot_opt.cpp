@@ -66,7 +66,7 @@ PlotOpt & PlotOpt::LoadOptions(const string &file_name,
     auto start  = line.find('[');
     auto end = line.find(']');
     if(start==string::npos && end!=string::npos){
-      ERROR("Could not find closing brace in line "+to_string(line_num));
+      ERROR("Could not find opening brace in line "+to_string(line_num));
     }
     if(start!=string::npos && end==string::npos){
       ERROR("Could not find closing brace in line "+to_string(line_num));

@@ -1,0 +1,10 @@
+[default]
+ data       0   0   0
+ t1tttt   255   0   0
+ tt_1l      1 148 218
+ tt_2l    153 220 255
+ wjets      9 186   1
+ single_t 222 186 135
+ ttv      149   0  26
+ other    255 200   0
+ qcd      255 200   0
