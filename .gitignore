@@ -35,7 +35,8 @@
 *.log
 *.pdf
 *.txt
-!txt/*/*txt
+!txt/variables/*.txt
+!txt/colors.txt
 !txt/plot_styles.txt
 *.#*
 
