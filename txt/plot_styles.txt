@@ -16,9 +16,9 @@
   LegendMarkerWidth = 0.12
   LegendPad = 0.028
   LegendDensity = 1.
-  LogMinimum = 0.
+  LogMinimum = 0.03
   NDivisions = 606
   NDivisionsBottom = 606
   Font = 42
   ShowBackgroundError = 1
-  UseCMYK = 1
+  UseCMYK = 0
