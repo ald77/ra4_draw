@@ -27,11 +27,14 @@ shared_ptr<Process> Proc(const string process_name, Process::Type type,
 int main(){
   gErrorIgnoreLevel = 6000;
 
-  //double lumi = 0.22;
+  //double lumi = 0.218;
   double lumi = 0.589;
-
+  
+  // 74x
   string trig_skim_mc = "/net/cms27/cms27r0/babymaker/2016_04_29/mc/merged_1lht500met200/";
   string trig_mc = "/net/cms27/cms27r0/babymaker/2016_04_29/mc/unskimmed/";
+  // 80X (ttbar, qcd, dy[ht=100-600], wjets) + 74X (rest)
+  //trig_skim_mc = "/net/cms2/cms2r0/babymaker/babies/2016_05_31/mc/skim_1lht500met200/";
 
   Palette colors("txt/colors.txt", "default");
 
@@ -62,9 +65,9 @@ int main(){
   t1tttt_c->SetLineStyle(2);
 
   auto data_1l = Proc<Baby_full>("Data", Process::Type::data, kBlack,
-    //{"/net/cms24/cms24r0/jaehyeok/susy_cfa_babies/2016_05_20/data/singlelep/skim_nleps1njets2/*.root"},"pass&&(trig[4]||trig[8])");
-    //{"/net/cms2/cms2r0/babymaker/babies/2016_05_20/data/met/skim_met150/*.root"},"pass&&trig[28]");
-    {"/net/cms2/cms2r0/babymaker/babies/2016_05_31/data/met/*.root"},"pass&&trig[28]");
+    //{"/net/cms24/cms24r0/jaehyeok/susy_cfa_babies/2016_05_20/data/singlelep/skim_nleps1njets2/*.root"},"pass&&(trig[4]||trig[8])"); // 0.218 fb-1
+    //{"/net/cms2/cms2r0/babymaker/babies/2016_05_20/data/met/skim_met150/*.root"},"pass&&trig[28]"); // 0.218 fb-1;
+    {"/net/cms2/cms2r0/babymaker/babies/2016_05_31/data/met/*.root"},"pass&&trig[28]"); // 0.589 fb-1
   vector<shared_ptr<Process> > full_trig_skim_1l = {data_1l, t1tttt_nc, t1tttt_c, tt1l, tt2l, wjets, single_t, ttv, other}; 
   
   // 
@@ -77,9 +80,8 @@ int main(){
     {trig_mc+"*_TTJets*Lept*.root"},
     "ntruleps>=2");
   auto tt_unskim = Proc<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_1l"),
-    {trig_mc+"*_TTJets_TuneCUETP8M1_13TeV*.root"},
-    "ntruleps<=1");
-  auto dy_unskim = Proc<Baby_full>("DY", Process::Type::background, colors("other"),
+    {trig_mc+"*_TTJets_TuneCUETP8M1_13TeV*.root"});
+  auto dy_unskim = Proc<Baby_full>("DY", Process::Type::background, colors("wjets"),
     {trig_mc+"*DYJetsToLL*HT*.root"});
   auto qcd_unskim = Proc<Baby_full>("QCD", Process::Type::background, colors("qcd"),
     {trig_mc+"*_QCD_HT700to1000*.root",trig_mc+"*_QCD_HT1000to1500*.root",
@@ -90,19 +92,18 @@ int main(){
         trig_mc+"*ggZH_HToBB*.root", trig_mc+"*ttHJetTobb*.root",
         trig_mc+"*_TTGJets*.root", trig_mc+"*_TTTT_*.root",
         trig_mc+"*_WH_HToBB*.root", trig_mc+"*_WZTo*.root",
-        //trig_skim_mc+"*_ST_*.root", trig_skim_mc+"*_WJetsToLNu*.root",
+        trig_skim_mc+"*_ST_*.root", trig_skim_mc+"*_WJetsToLNu*.root",
         trig_mc+"*_ZH_HToBB*.root", trig_mc+"_ZZ_*.root"});
 
   auto data_2l = Proc<Baby_full>("Data", Process::Type::data, kBlack,
-    //{"/net/cms24/cms24r0/jaehyeok/susy_cfa_babies/2016_05_20/data/singlelep/skim_nleps1njets2/*.root"},"pass&&(trig[20]||trig[22])");
-    {"/net/cms2/cms2r0/babymaker/babies/2016_05_31/data/singlelep/combined/*.root"},"pass&&(trig[20]||trig[22])");
+    //{"/net/cms24/cms24r0/jaehyeok/susy_cfa_babies/2016_05_20/data/singlelep/skim_nleps1njets2/*.root"},"pass&&(trig[20]||trig[22])"); // 0.218 fb-1
+    {"/net/cms2/cms2r0/babymaker/babies/2016_05_31/data/singlelep/combined/*.root"},"pass&&(trig[20]||trig[22])"); // 0.589 fb-1
   vector<shared_ptr<Process> > full_trig_skim_2l = {data_2l, t1tttt_nc, t1tttt_c, tt1l_unskim, tt2l_unskim, dy_unskim, other_unskim};
   
   auto data_0l = Proc<Baby_full>("Data", Process::Type::data, kBlack,
     //{"/net/cms24/cms24r0/jaehyeok/susy_cfa_babies/2016_05_27/data/jetht/*.root"},"pass&&trig[12]"); // FIXME: trigger
     {"/net/cms2/cms2r0/babymaker/babies/2016_05_31/data/jetht/*.root"},"pass&&trig[12]"); // FIXME: trigger
   vector<shared_ptr<Process> > full_trig_skim_0l = {data_0l, t1tttt_nc, t1tttt_c, qcd_unskim, tt_unskim, other_unskim};
-
 
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
   log_lumi.Title(TitleType::preliminary)
@@ -210,112 +211,43 @@ int main(){
   //
   // fatjets
   //
-  // R=1.2
-  pm.AddPlot(HistoDef(10, 0, 1000., "fjets_pt[0]", "p_{T}^{1.2}(J1) [GeV]",
+  pm.AddPlot(HistoDef(10, 0, 1000., "fjets14_pt[0]", "p_{T}(J1) [GeV]",
                       lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
              full_trig_skim_1l, all_plot_types); 
-  pm.AddPlot(HistoDef(10, 0, 500., "fjets_m[0]", "m_{J1}^{1.2} [GeV]",
+  pm.AddPlot(HistoDef(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]",
                       lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
              full_trig_skim_1l, all_plot_types); 
-  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets_eta[0]", "#eta^{1.2}(J1)",
+  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets14_eta[0]", "#eta(J1)",
                       lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
              full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(7, 0.5, 7.5, "fjets_nconst[0]", "N_{constituents}^{1.2}(J1)",
+  pm.AddPlot(HistoDef(7, 0.5, 7.5, "fjets14_nconst[0]", "N_{constituents}(J1)",
                       lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
              full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(10, 0, 1000., "fjets_pt", "p_{T}^{1.2}(J) [GeV]",
+  pm.AddPlot(HistoDef(10, 0, 1000., "fjets14_pt", "p_{T}(J) [GeV]",
                       lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
              full_trig_skim_1l, all_plot_types); 
-  pm.AddPlot(HistoDef(10, 0, 500., "fjets_m", "m_{J}^{1.2} [GeV]",
+  pm.AddPlot(HistoDef(10, 0, 500., "fjets14_m", "m_{J} [GeV]",
                       lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
              full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets_eta", "#eta^{1.2}(J)",
+  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets14_eta", "#eta(J)",
                       lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
              full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(7, 0.5, 7.5, "fjets_nconst", "N_{constituents}^{1.2}(J)",
+  pm.AddPlot(HistoDef(7, 0.5, 7.5, "fjets14_nconst", "N_{constituents}(J)",
                       lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
              full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(20, 0, 400., "fjets_m[0]", "m_{J1}^{1.2} [GeV]",
-                      lepcut+"&&njets<5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types); 
-  // R=1.4
-  pm.AddPlot(HistoDef(10, 0, 1000., "fjets14_pt[0]", "p_{T}^{1.4}(J1) [GeV]",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types); 
-  pm.AddPlot(HistoDef(10, 0, 500., "fjets14_m[0]", "m_{J1}^{1.4} [GeV]",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types); 
-  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets14_eta[0]", "#eta^{1.4}(J1)",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(7, 0.5, 7.5, "fjets14_nconst[0]", "N_{constituents}^{1.4}(J1)",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(10, 0, 1000., "fjets14_pt", "p_{T}^{1.4}(J) [GeV]",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types); 
-  pm.AddPlot(HistoDef(10, 0, 500., "fjets14_m", "m_{J}^{1.4} [GeV]",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets14_eta", "#eta^{1.4}(J)",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(7, 0.5, 7.5, "fjets14_nconst", "N_{constituents}^{1.4}(J)",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(20, 0, 400., "fjets14_m[0]", "m_{J1}^{1.4} [GeV]",
-                      lepcut+"&&njets<5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types); 
-  // R=1.6
-  pm.AddPlot(HistoDef(10, 0, 1000., "fjets16_pt[0]", "p_{T}^{1.6}(J1) [GeV]",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types); 
-  pm.AddPlot(HistoDef(10, 0, 500., "fjets16_m[0]", "m_{J1}^{1.6} [GeV]",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types); 
-  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets16_eta[0]", "#eta^{1.6}(J1)",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(7, 0.5, 7.5, "fjets16_nconst[0]", "N_{constituents}^{1.6}(J1)",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(10, 0, 1000., "fjets16_pt", "p_{T}^{1.6}(J) [GeV]",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types); 
-  pm.AddPlot(HistoDef(10, 0, 500., "fjets16_m", "m_{J}^{1.6} [GeV]",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets16_eta", "#eta^{1.6}(J)",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(7, 0.5, 7.5, "fjets16_nconst", "N_{constituents}^{1.6}",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(20, 0, 400., "fjets16_m[0]", "m_{J1}^{1.6} [GeV]",
-                      lepcut+"&&njets<5&&nbm>=1", "weight", {999.}),
+ 
+  pm.AddPlot(HistoDef(20, 0, 400., "fjets14_m[0]", "m_{J1} [GeV]",
+                      lepcut+"&&njets<=5&&nbm>=1", "weight", {999.}),
              full_trig_skim_1l, all_plot_types); 
   
   // event-level variables related to fatjet
-  pm.AddPlot(HistoDef(10, 0., 1500., "mj", "M_{J}^{1.2} [GeV]",
+  pm.AddPlot(HistoDef(10, 0., 1500., "mj14", "M_{J} [GeV]",
                       lepcut+"&&njets>=5&&nbm>=1", "weight", {400.}),
              full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(7, 0.5, 7.5, "nfjets", "N_{J}^{1.2} [GeV]",
+  pm.AddPlot(HistoDef(7, 0.5, 7.5, "nfjets14", "N_{J} [GeV]",
                       lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
              full_trig_skim_1l, all_plot_types);
   
-  pm.AddPlot(HistoDef(10, 0., 1500., "mj14", "M_{J}^{1.4} [GeV]",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {400.}),
-             full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(7, 0.5, 7.5, "nfjets14", "N_{J}^{1.4} [GeV]",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types);
-  
-  pm.AddPlot(HistoDef(10, 0., 1500., "mj16", "M_{J}^{1.6} [GeV]",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {400.}),
-             full_trig_skim_1l, all_plot_types);
-  pm.AddPlot(HistoDef(7, 0.5, 7.5, "nfjets16", "N_{J}^{1.6} [GeV]",
-                      lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-             full_trig_skim_1l, all_plot_types);
   }  
 
 
@@ -329,110 +261,38 @@ int main(){
 //                      "(nmus>=2||nels>=2)&&ht>350&&njets>=2", "weight", {400.}),
 //                       full_trig_skim_2l, all_plot_types);
 
-  pm.AddPlot(HistoDef(10, 0., 1000., "mj", "M_{J}^{1.2} [GeV]",
-                      "nels==1&&nmus==1&&ht>300&&met>100&&njets>=2&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "weight", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-  pm.AddPlot(HistoDef(10, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]",
-                      "nels==1&&nmus==1&&ht>300&&met>100&&njets>=2&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "weight", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-  pm.AddPlot(HistoDef(10, 0., 1000., "mj16", "M_{J}^{1.6} [GeV]",
+  pm.AddPlot(HistoDef(10, 0., 1000., "mj14", "M_{J} [GeV]",
                       "nels==1&&nmus==1&&ht>300&&met>100&&njets>=2&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "weight", {400.}),
                        full_trig_skim_2l, all_plot_types);
 
-  pm.AddPlot(HistoDef(10, 0., 1000., "mj", "M_{J}^{1.2} [GeV]",
+  pm.AddPlot(HistoDef(10, 0., 1000., "mj14", "M_{J} [GeV]",
                       "(nmus>=2||nels>=2)&&ht>350&&njets>=2&&njets<=3&&"+mllcut, "weight", {400.}),
                        full_trig_skim_2l, all_plot_types);
-  pm.AddPlot(HistoDef(10, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]",
-                      "(nmus>=2||nels>=2)&&ht>350&&njets>=2&&njets<=3&&"+mllcut, "weight", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-  pm.AddPlot(HistoDef(10, 0., 1000., "mj16", "M_{J}^{1.6} [GeV]",
-                      "(nmus>=2||nels>=2)&&ht>350&&njets>=2&&njets<=3&&"+mllcut, "weight", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-  pm.AddPlot(HistoDef(10, 0., 1000., "mj", "M_{J}^{1.2} [GeV]",
-                      "(nmus>=2||nels>=2)&&ht>350&&njets>=4&&"+mllcut, "weight", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-  pm.AddPlot(HistoDef(10, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]",
-                      "(nmus>=2||nels>=2)&&ht>350&&njets>=4&&"+mllcut, "weight", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-  pm.AddPlot(HistoDef(10, 0., 1000., "mj16", "M_{J}^{1.6} [GeV]",
-                      "(nmus>=2||nels>=2)&&ht>350&&njets>=4&&"+mllcut, "weight", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets16_eta", "#eta_{J}^{1.6} [GeV]",
-                      "(nels>=2)&&ht>350&&njets>=2&&njets<=3&&"+mllcut, "weight", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets16_eta", "#eta_{J}^{1.6} [GeV]",
-                      "(nmus>=2)&&ht>350&&njets>=2&&njets<=3&&"+mllcut, "weight", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets16_eta", "#eta_{J}^{1.6} [GeV]",
-                      "(nmus>=2||nels>=2)&&ht>350&&njets>=2&&njets<=3&&"+mllcut, "weight", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets16_eta", "#eta_{J}^{1.6} [GeV]",
-                      "(nels>=2)&&ht>350&&njets>=4&&"+mllcut, "weight", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets16_eta", "#eta_{J}^{1.6} [GeV]",
-                      "(nmus>=2)&&ht>350&&njets>=4&&"+mllcut, "weight", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-  pm.AddPlot(HistoDef(10, -2.5, 2.5, "fjets16_eta", "#eta_{J}^{1.6} [GeV]",
+  pm.AddPlot(HistoDef(10, 0., 1000., "mj14", "M_{J} [GeV]",
                       "(nmus>=2||nels>=2)&&ht>350&&njets>=4&&"+mllcut, "weight", {400.}),
                        full_trig_skim_2l, all_plot_types);
 
   //
   // 0-lepton events
   //
-  pm.AddPlot(HistoDef(30, 0., 1500., "mj", "M_{J}^{1.2} [GeV]",
+  pm.AddPlot(HistoDef(30, 0., 1500., "mj14", "M_{J} [GeV]",
                       "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5", "weight", {400.}),
                        full_trig_skim_0l, all_plot_types);
-  pm.AddPlot(HistoDef(30, 0., 1500., "mj14", "M_{J}^{1.4} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5", "weight", {400.}),
-                       full_trig_skim_0l, all_plot_types);
-  pm.AddPlot(HistoDef(30, 0., 1500., "mj16", "M_{J}^{1.6} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5", "weight", {400.}),
-                       full_trig_skim_0l, all_plot_types);
-  pm.AddPlot(HistoDef(30, 0., 500., "fjets_m", "M_{J}^{1.2} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5", "weight", {400.}),
-                       full_trig_skim_0l, all_plot_types); 
-  pm.AddPlot(HistoDef(30, 0., 500., "fjets14_m", "M_{J}^{1.4} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5", "weight", {400.}),
-                       full_trig_skim_0l, all_plot_types); 
-  pm.AddPlot(HistoDef(30, 0., 500., "fjets16_m", "M_{J}^{1.6} [GeV]",
+  pm.AddPlot(HistoDef(30, 0., 500., "fjets14_m", "M_{J} [GeV]",
                       "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5", "weight", {400.}),
                        full_trig_skim_0l, all_plot_types); 
   
-  pm.AddPlot(HistoDef(30, 0., 1500., "mj", "M_{J}^{1.2} [GeV]",
+  pm.AddPlot(HistoDef(30, 0., 1500., "mj14", "M_{J} [GeV]",
                       "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8", "weight", {400.}),
                        full_trig_skim_0l, all_plot_types); 
-  pm.AddPlot(HistoDef(30, 0., 1500., "mj14", "M_{J}^{1.4} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8", "weight", {400.}),
-                       full_trig_skim_0l, all_plot_types); 
-  pm.AddPlot(HistoDef(30, 0., 1500., "mj16", "M_{J}^{1.6} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8", "weight", {400.}),
-                       full_trig_skim_0l, all_plot_types); 
-  pm.AddPlot(HistoDef(30, 0., 500., "fjets_m", "M_{J}^{1.2} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8", "weight", {400.}),
-                       full_trig_skim_0l, all_plot_types); 
-  pm.AddPlot(HistoDef(30, 0., 500., "fjets14_m", "M_{J}^{1.4} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8", "weight", {400.}),
-                       full_trig_skim_0l, all_plot_types); 
-  pm.AddPlot(HistoDef(30, 0., 500., "fjets16_m", "M_{J}^{1.6} [GeV]",
+  pm.AddPlot(HistoDef(30, 0., 500., "fjets14_m", "M_{J} [GeV]",
                       "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8", "weight", {400.}),
                        full_trig_skim_0l, all_plot_types); 
 
-  pm.AddPlot(HistoDef(30, 0., 1500., "mj", "M_{J}^{1.2} [GeV]",
+  pm.AddPlot(HistoDef(30, 0., 1500., "mj14", "M_{J} [GeV]",
                       "nleps==0&&met<50&&ht>1000&&njets>=9", "weight", {400.}),
                        full_trig_skim_0l, all_plot_types);
-  pm.AddPlot(HistoDef(30, 0., 1500., "mj14", "M_{J}^{1.4} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=9", "weight", {400.}),
-                       full_trig_skim_0l, all_plot_types);
-  pm.AddPlot(HistoDef(30, 0., 1500., "mj16", "M_{J}^{1.6} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=9", "weight", {400.}),
-                       full_trig_skim_0l, all_plot_types);
-  pm.AddPlot(HistoDef(30, 0., 500., "fjets_m", "M_{J}^{1.2} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=9", "weight", {400.}),
-                       full_trig_skim_0l, all_plot_types); 
-  pm.AddPlot(HistoDef(30, 0., 500., "fjets14_m", "M_{J}^{1.4} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=9", "weight", {400.}),
-                       full_trig_skim_0l, all_plot_types); 
-  pm.AddPlot(HistoDef(30, 0., 500., "fjets16_m", "M_{J}^{1.6} [GeV]",
+  pm.AddPlot(HistoDef(30, 0., 500., "fjets14_m", "M_{J} [GeV]",
                       "nleps==0&&met<50&&ht>1000&&njets>=9", "weight", {400.}),
                        full_trig_skim_0l, all_plot_types); 
 
