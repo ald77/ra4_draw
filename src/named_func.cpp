@@ -384,6 +384,8 @@ NamedFunc & NamedFunc::Name(const string &name){
 */
 string NamedFunc::PlainName() const{
   string plain = name_;
+  ReplaceAll(plain, "((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "SL trig");
+  ReplaceAll(plain, "(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))>80&&(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))<100", "80<m_{ll}<100");
   ReplaceAll(plain, ".", "p");
   ReplaceAll(plain, "(", "O");
   ReplaceAll(plain, ")", "C");
