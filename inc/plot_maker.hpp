@@ -33,7 +33,7 @@ private:
   std::vector<std::unique_ptr<Figure> > figures_;//!<Figures to be produced
 
   void GetYields();
-  void GetYield(const std::shared_ptr<Process> &proc);
+  long GetYield(const std::shared_ptr<Process> &proc);
 
   std::set<std::shared_ptr<Process> > GetProcesses() const;
   std::set<Figure::FigureComponent*> GetComponents(const std::shared_ptr<Process> &process) const;

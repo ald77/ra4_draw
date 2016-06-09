@@ -30,7 +30,7 @@ public:
     FigureComponent() = delete;
   };
 
-  Figure(const std::vector<std::shared_ptr<Process> > &processes);
+  Figure() = default;
   Figure(const Figure &) = default;
   Figure& operator=(const Figure &) = default;
   Figure(Figure &&) = default;
@@ -39,19 +39,9 @@ public:
 
   virtual void Print(double luminosity) = 0;
 
-  std::set<std::shared_ptr<Process> > GetProcesses() const;
+  virtual std::set<std::shared_ptr<Process> > GetProcesses() const = 0;
 
-  FigureComponent * GetComponent(const std::shared_ptr<Process> &process);
-
-protected:
-  std::vector<std::unique_ptr<FigureComponent> > backgrounds_;//!<Background components of the figure
-  std::vector<std::unique_ptr<FigureComponent> > signals_;//!<Signal components of the figure
-  std::vector<std::unique_ptr<FigureComponent> > datas_;//!<Data components of the figure
-
-private:
-  Figure() = delete;
-
-  std::vector<std::unique_ptr<FigureComponent> >& GetComponentList(const std::shared_ptr<Process> &process);
+  virtual FigureComponent * GetComponent(const std::shared_ptr<Process> &process) = 0;
 };
 
 #endif

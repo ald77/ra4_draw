@@ -20,9 +20,9 @@
 #include "histo_def.hpp"
 #include "plot_opt.hpp"
 
-class HistoStack : public Figure{
+class HistoStack final: public Figure{
 public:
-  class SingleHist : public Figure::FigureComponent{
+  class SingleHist final: public Figure::FigureComponent{
   public:
     SingleHist(const HistoStack &stack,
                const std::shared_ptr<Process> &process,
@@ -59,14 +59,20 @@ public:
   HistoStack& operator=(HistoStack &&) = default;
   ~HistoStack() = default;
 
-  void Print(double luminosity);
+  void Print(double luminosity) final;
 
-  FigureComponent * GetComponent(const std::shared_ptr<Process> &process);
+  std::set<std::shared_ptr<Process> > GetProcesses() const final;
+
+  FigureComponent * GetComponent(const std::shared_ptr<Process> &process) final;
 
   HistoDef definition_;//!<Specification of content: plotted variable, binning, etc.
   std::vector<PlotOpt> plot_options_;//!<Styles with which to draw plot
 
 private:
+  std::vector<std::unique_ptr<SingleHist> > backgrounds_;//!<Background components of the figure
+  std::vector<std::unique_ptr<SingleHist> > signals_;//!<Signal components of the figure
+  std::vector<std::unique_ptr<SingleHist> > datas_;//!<Data components of the figure
+
   mutable PlotOpt this_opt_;//!<Plot style currently being drawn
   mutable double luminosity_;//!<Luminosity currently being drawn
   mutable double mc_scale_;//!<data/MC normalization
@@ -113,16 +119,18 @@ private:
 
   std::vector<std::shared_ptr<TLegend> > GetLegends();
   void AddEntries(std::vector<std::shared_ptr<TLegend> > &legends,
-                  const std::vector<std::unique_ptr<FigureComponent> > &hists,
+                  const std::vector<std::unique_ptr<SingleHist> > &hists,
                   const std::string &style,
                   std::size_t n_entries,
                   std::size_t &entries_added) const;
   double GetLegendRatio() const;
 
-  double GetYield(std::vector<std::unique_ptr<FigureComponent> >::const_iterator h) const;
-  double GetMean(std::vector<std::unique_ptr<FigureComponent> >::const_iterator h) const;
+  double GetYield(std::vector<std::unique_ptr<SingleHist> >::const_iterator h) const;
+  double GetMean(std::vector<std::unique_ptr<SingleHist> >::const_iterator h) const;
 
   void GetTitleSize(double &width, double &height, bool in_pixels) const;
+
+  const std::vector<std::unique_ptr<SingleHist> >& GetComponentList(const std::shared_ptr<Process> &process);
 };
 
 #endif

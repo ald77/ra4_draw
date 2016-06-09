@@ -12,6 +12,8 @@
 #include "plot_maker.hpp"
 
 #include <functional>
+#include <mutex>
+#include <chrono>
 
 #include "TLegend.h"
 
@@ -27,6 +29,12 @@ using ScalarType = NamedFunc::ScalarType;
 using VectorType = NamedFunc::VectorType;
 using ScalarFunc = NamedFunc::ScalarFunc;
 using VectorFunc = NamedFunc::VectorFunc;
+
+using Clock = chrono::high_resolution_clock;
+
+namespace{
+  mutex print_mutex;
+}
 
 /*!\brief Standard constructor
  */
@@ -53,22 +61,51 @@ void PlotMaker::Clear(){
 }
 
 void PlotMaker::GetYields(){
+  auto start_time = Clock::now();
+
   set<shared_ptr<Process> > processes = GetProcesses();
-  ThreadPool tp(thread::hardware_concurrency());
+  vector<future<long> > num_entries_future(processes.size());
+  size_t num_threads = min(processes.size(), static_cast<size_t>(thread::hardware_concurrency()));
+  cout << "Processing " << processes.size() << " samples with " << num_threads << " threads." << endl;
+
+  ThreadPool tp(num_threads);
+  size_t i = 0;
   for(const auto &proc: processes){
-    tp.Push(bind(&PlotMaker::GetYield, this, ref(proc)));
+    num_entries_future.at(i) = tp.Push(bind(&PlotMaker::GetYield, this, ref(proc)));
+    ++i;
   }
+  long num_entries = 0;
+  for(auto& entries: num_entries_future){
+    num_entries += entries.get();
+  }
+
+  auto end_time = Clock::now();
+  double num_seconds = chrono::duration<double>(end_time-start_time).count();
+  cout << num_threads << " threads finished "
+       << processes.size() << " samples with "
+       << num_entries << " events in "
+       << num_seconds << " seconds = "
+       << 0.001*num_entries/num_seconds << " kHz."
+       << endl;
 }
 
-void PlotMaker::GetYield(const std::shared_ptr<Process> &process){
-  cout << "Filling histograms for the " << process->name_ << " process..." << endl;
+long PlotMaker::GetYield(const std::shared_ptr<Process> &process){
+  auto start_time = Clock::now();
+  {
+    lock_guard<mutex> lock(print_mutex);
+    cout << "Starting to process " << process->name_ << "." << endl;
+  }
 
   Baby &baby = *(process->baby_);
 
   set<Figure::FigureComponent*> figure_components = GetComponents(process);
 
   long num_entries = baby.GetEntries();
-  Timer timer(num_entries, 1.);
+  {
+    lock_guard<mutex> lock(print_mutex);
+    cout << process->name_ << " has " << num_entries << " entries." << endl;
+  }
+  Timer timer(num_entries, 10.);
   timer.Start();
   for(long entry = 0; entry < num_entries; ++entry){
     timer.Iterate();
@@ -78,6 +115,15 @@ void PlotMaker::GetYield(const std::shared_ptr<Process> &process){
       component->RecordEvent(baby, process->cut_);
     }
   }
+  auto end_time = Clock::now();
+  double num_seconds = chrono::duration<double>(end_time - start_time).count();
+  {
+    lock_guard<mutex> lock(print_mutex);
+    cout << "Finished processing " << process->name_ << ". "
+	 << num_entries << " events in " << num_seconds << " seconds = "
+	 << 0.001*num_entries/num_seconds << " kHz." << endl;
+  }
+  return num_entries;
 }
 
 std::set<std::shared_ptr<Process> > PlotMaker::GetProcesses() const{
