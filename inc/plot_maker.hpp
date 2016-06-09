@@ -20,18 +20,17 @@ public:
   PlotMaker& operator=(PlotMaker &&) = default;
   ~PlotMaker() = default;
 
-  void AddPlot(const HistoDef &histo_def,
-               const std::vector<std::shared_ptr<Process> > & processes,
-               const std::vector<PlotOpt> &plot_options = {PlotOpt()});
+  template<typename FigureType, typename... Args>
+  void Push(Args&&... args){
+    figures_.emplace_back(static_cast<Figure*>(new FigureType(args...)));
+  }
 
   void MakePlots(double luminosity);
 
   void Clear();
 
 private:
-  std::vector<HistoStack> stacks_;//!<Plots to be produced
-
-  std::vector<std::shared_ptr<Figure> > figures_;//!<Figures to be produced
+  std::vector<std::unique_ptr<Figure> > figures_;//!<Figures to be produced
 
   void GetYields();
   void GetYield(const std::shared_ptr<Process> &proc);

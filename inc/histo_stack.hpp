@@ -50,8 +50,8 @@ public:
     SingleHist() = delete;
   };
 
-  HistoStack(const std::vector<std::shared_ptr<Process> > &processes,
-             const HistoDef &definition,
+  HistoStack(const HistoDef &definition,
+             const std::vector<std::shared_ptr<Process> > &processes,
              const std::vector<PlotOpt> &plot_options = {PlotOpt()});
   HistoStack(const HistoStack &) = default;
   HistoStack& operator=(const HistoStack &) = default;

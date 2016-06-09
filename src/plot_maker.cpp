@@ -31,25 +31,7 @@ using VectorFunc = NamedFunc::VectorFunc;
 /*!\brief Standard constructor
  */
 PlotMaker::PlotMaker():
-  stacks_(){
-}
-
-/*!\brief Add HistoStack to list of plots to be produced at next
-  PlotMaker::MakePlots call
-
-  All arguments passed directly to HistoStack constructor. Adds a plot to the
-  list of plots to be produced. Does NOT fill or draw the histogram.
-
-  \param[in] histo_def Histogram definition (variable, binning, etc.)
-
-  \param[in] processes Processes to include in plot
-
-  \param[in] plot_options List of styles with which to produce plot
-*/
-void PlotMaker::AddPlot(const HistoDef &histo_def,
-                        const vector<shared_ptr<Process> > &processes,
-                        const vector<PlotOpt> &plot_options){
-  stacks_.emplace_back(processes, histo_def, plot_options);
+  figures_(){
 }
 
 /*!\brief Prints all added plots with given luminosity
@@ -59,15 +41,15 @@ void PlotMaker::AddPlot(const HistoDef &histo_def,
 void PlotMaker::MakePlots(double luminosity){
   GetYields();
 
-  for(auto &stack: stacks_){
-    stack.Print(luminosity);
+  for(auto &figure: figures_){
+    figure->Print(luminosity);
   }
 }
 
 /*!\brief Empties list of plots to be produced at next PlotMaker::MakePlots call
  */
 void PlotMaker::Clear(){
-  stacks_.clear();
+  figures_.clear();
 }
 
 void PlotMaker::GetYields(){

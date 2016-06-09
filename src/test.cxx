@@ -82,29 +82,29 @@ int main(){
                                     log_lumi_info, lin_lumi_info, log_shapes_info, lin_shapes_info};
 
   PlotMaker pm;
-  pm.AddPlot(HistoDef(7, -0.5, 6.5, "nleps", "Num. Leptons",
-                      "ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {0.5, 1.5}),
-             full_trig_skim, all_plot_types);
-  pm.AddPlot(HistoDef(40, 0, 2000., "ht", "H_{T} [GeV]",
-                      "nleps==1&&met>200&&njets>=6&&nbm>=1", "weight", {500.}),
-             full_trig_skim, all_plot_types);
-  pm.AddPlot(HistoDef(40, 0, 1000., "met", "MET [GeV]",
-                      "nleps==1&&ht>500&&njets>=6&&nbm>=1", "weight", {200., 400.}),
-             full_trig_skim, all_plot_types);
-  pm.AddPlot(HistoDef(16, -0.5, 15.5, "njets", "Num. AK4 Jets",
-                      "nleps==1&&ht>500&&met>200&&nbm>=1", "weight", {5.5, 8.5}),
-             full_trig_skim, all_plot_types);
-  pm.AddPlot(HistoDef(11, -0.5, 10.5, "nbm", "Num. b-Tagged Jets",
-                      "nleps==1&&ht>500&&met>200&&njets>=6", "weight", {0.5, 1.5, 2.5}),
-             full_trig_skim, all_plot_types);
-  pm.AddPlot(HistoDef(24, 0., 1200., "mj", "M_{J} [GeV]",
-                      "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {250., 400.}),
-             full_trig_skim, all_plot_types);
-  pm.AddPlot(HistoDef(12, 0., 420., "mt", "m_{T} [GeV]",
-                      "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {140.}),
-             full_trig_skim, all_plot_types);
-  pm.AddPlot(HistoDef(15, 0., 1500., "mj08", "M_{J}^{0.8} [GeV]",
-                      "nleps==1&&ht>500&&met>200", "weight", {400.}),
-             full_trig_skim, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(7, -0.5, 6.5, "nleps", "Num. Leptons",
+                               "ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {0.5, 1.5}),
+                      full_trig_skim, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(40, 0, 2000., "ht", "H_{T} [GeV]",
+                               "nleps==1&&met>200&&njets>=6&&nbm>=1", "weight", {500.}),
+                      full_trig_skim, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(40, 0, 1000., "met", "MET [GeV]",
+                               "nleps==1&&ht>500&&njets>=6&&nbm>=1", "weight", {200., 400.}),
+                      full_trig_skim, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(16, -0.5, 15.5, "njets", "Num. AK4 Jets",
+                               "nleps==1&&ht>500&&met>200&&nbm>=1", "weight", {5.5, 8.5}),
+                      full_trig_skim, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(11, -0.5, 10.5, "nbm", "Num. b-Tagged Jets",
+                               "nleps==1&&ht>500&&met>200&&njets>=6", "weight", {0.5, 1.5, 2.5}),
+                      full_trig_skim, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(24, 0., 1200., "mj", "M_{J} [GeV]",
+                               "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {250., 400.}),
+                      full_trig_skim, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(12, 0., 420., "mt", "m_{T} [GeV]",
+                               "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {140.}),
+                      full_trig_skim, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj08", "M_{J}^{0.8} [GeV]",
+                               "nleps==1&&ht>500&&met>200", "weight", {400.}),
+                      full_trig_skim, all_plot_types);
   pm.MakePlots(lumi);
 }

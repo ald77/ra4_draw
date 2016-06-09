@@ -65,12 +65,12 @@ int main(){
                                     log_lumi_info, lin_lumi_info, log_shapes_info, lin_shapes_info};
 
   PlotMaker pm;
-  pm.AddPlot(HistoDef(30, 0., 1500., "mj", "M_{J}^{R=1.2} [GeV]",
-                      "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {250., 400.}),
-             full_trig_skim, all_plot_types);
-  pm.AddPlot(HistoDef(30, 0., 1500., "mj14", "M_{J}^{R=1.4} [GeV]",
-                      "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {250., 400.}),
-             full_trig_skim, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(30, 0., 1500., "mj", "M_{J}^{R=1.2} [GeV]",
+                               "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {250., 400.}),
+                      full_trig_skim, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(30, 0., 1500., "mj14", "M_{J}^{R=1.4} [GeV]",
+                               "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {250., 400.}),
+                      full_trig_skim, all_plot_types);
 
   pm.MakePlots(lumi);
 }

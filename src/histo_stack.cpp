@@ -144,7 +144,7 @@ void HistoStack::SingleHist::RecordEvent(const Baby &baby,
   }
 
   bool wgt_is_scalar = stack.definition_.weight_.IsScalar();
-  NamedFunc::ScalarType wgt_scalar;
+  NamedFunc::ScalarType wgt_scalar = 0.;
   NamedFunc::VectorType wgt_vector;
   if(wgt_is_scalar){
     wgt_scalar = stack.definition_.weight_.GetScalar(baby);
@@ -157,7 +157,7 @@ void HistoStack::SingleHist::RecordEvent(const Baby &baby,
   }
 
   bool val_is_scalar = stack.definition_.var_.IsScalar();
-  NamedFunc::ScalarType val_scalar;
+  NamedFunc::ScalarType val_scalar = 0.;
   NamedFunc::VectorType val_vector;
   if(val_is_scalar){
     val_scalar = stack.definition_.var_.GetScalar(baby);
@@ -253,8 +253,8 @@ double HistoStack::SingleHist::GetMin(double min_bound,
 
   \param[in] plot_options Styles with which to draw plot
 */
-HistoStack::HistoStack(const std::vector<std::shared_ptr<Process> > &processes,
-                       const HistoDef &definition,
+HistoStack::HistoStack(const HistoDef &definition,
+                       const std::vector<std::shared_ptr<Process> > &processes,
                        const std::vector<PlotOpt> &plot_options):
   Figure(processes),
   definition_(definition),
