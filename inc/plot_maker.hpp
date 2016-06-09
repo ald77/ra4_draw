@@ -31,11 +31,13 @@ public:
 private:
   std::vector<HistoStack> stacks_;//!<Plots to be produced
 
-  void FillHistograms();
-  void FillHistogram(const std::shared_ptr<Process> &proc);
+  std::vector<std::shared_ptr<Figure> > figures_;//!<Figures to be produced
+
+  void GetYields();
+  void GetYield(const std::shared_ptr<Process> &proc);
+
   std::set<std::shared_ptr<Process> > GetProcesses() const;
-  std::vector<std::pair<HistoDef, const TH1D * const> > GetHistos(const std::shared_ptr<Process> &process) const;
-  std::vector<std::pair<HistoDef, TH1D * const> > GetHistos(const std::shared_ptr<Process> &process);
+  std::set<Figure::FigureComponent*> GetComponents(const std::shared_ptr<Process> &process) const;
 };
 
 #endif

@@ -15,15 +15,17 @@
 #include "TLine.h"
 #include "TGraphAsymmErrors.h"
 
+#include "figure.hpp"
 #include "process.hpp"
 #include "histo_def.hpp"
 #include "plot_opt.hpp"
 
-class HistoStack{
+class HistoStack : public Figure{
 public:
-  class SingleHist{
+  class SingleHist : public Figure::FigureComponent{
   public:
-    SingleHist(const std::shared_ptr<Process> &process,
+    SingleHist(const HistoStack &stack,
+               const std::shared_ptr<Process> &process,
                const TH1D &hist);
     SingleHist(const SingleHist &) = default;
     SingleHist& operator=(const SingleHist &) = default;
@@ -31,9 +33,11 @@ public:
     SingleHist& operator=(SingleHist &&) = default;
     ~SingleHist() = default;
 
-    std::shared_ptr<Process> process_;//!<Process used to fill histogram
     TH1D raw_hist_;//!<Histogram storing distribution before stacking and luminosity weighting
     mutable TH1D scaled_hist_;//!<Kludge. Mutable storage of scaled and stacked histogram
+
+    virtual void RecordEvent(const Baby &baby,
+                             const NamedFunc &process_cut);
 
     double GetMax(double max_bound = std::numeric_limits<double>::infinity(),
                   bool include_error_bar = false,
@@ -55,16 +59,10 @@ public:
   HistoStack& operator=(HistoStack &&) = default;
   ~HistoStack() = default;
 
-  void PrintPlot(double luminosity);
+  void Print(double luminosity);
 
-  const TH1D & RawHisto(const std::shared_ptr<Process> &process) const;
-  TH1D & RawHisto(const std::shared_ptr<Process> &process);
+  FigureComponent * GetComponent(const std::shared_ptr<Process> &process);
 
-  std::set<std::shared_ptr<Process> > GetProcesses() const;
-
-  std::vector<SingleHist> backgrounds_;//!<List of background histograms to stack/overlay
-  std::vector<SingleHist> signals_;//!<List of signal histograms to stack/overlay
-  std::vector<SingleHist> datas_;//!<List of data histograms to stack/overlay
   HistoDef definition_;//!<Specification of content: plotted variable, binning, etc.
   std::vector<PlotOpt> plot_options_;//!<Styles with which to draw plot
 
@@ -115,14 +113,14 @@ private:
 
   std::vector<std::shared_ptr<TLegend> > GetLegends();
   void AddEntries(std::vector<std::shared_ptr<TLegend> > &legends,
-                  const std::vector<HistoStack::SingleHist> &hists,
+                  const std::vector<std::unique_ptr<FigureComponent> > &hists,
                   const std::string &style,
                   std::size_t n_entries,
                   std::size_t &entries_added) const;
   double GetLegendRatio() const;
 
-  double GetYield(std::vector<HistoStack::SingleHist>::const_iterator h) const;
-  double GetMean(std::vector<HistoStack::SingleHist>::const_iterator h) const;
+  double GetYield(std::vector<std::unique_ptr<FigureComponent> >::const_iterator h) const;
+  double GetMean(std::vector<std::unique_ptr<FigureComponent> >::const_iterator h) const;
 
   void GetTitleSize(double &width, double &height, bool in_pixels) const;
 };

@@ -55,10 +55,10 @@ namespace{
     \param[in,out] draw_opt Option string used by TH1D to draw
     histogram. Changed to "hist same" after first histogram is drawn
   */
-  void DrawAll(vector<HistoStack::SingleHist> &hists,
+  void DrawAll(const vector<unique_ptr<Figure::FigureComponent> > &hists,
                string &draw_opt){
     for(auto &hist: hists){
-      hist.scaled_hist_.Draw(draw_opt.c_str());
+      static_cast<HistoStack::SingleHist*>(hist.get())->scaled_hist_.Draw(draw_opt.c_str());
       draw_opt = "hist same";
     }
   }
@@ -108,13 +108,78 @@ TH1D HistoStack::blank_ = TH1D();
 
   \param[in] hist A fully styled, and typically unfilled histogram to start from
 */
-HistoStack::SingleHist::SingleHist(const std::shared_ptr<Process> &process,
+HistoStack::SingleHist::SingleHist(const HistoStack &figure,
+                                   const std::shared_ptr<Process> &process,
                                    const TH1D &hist):
-  process_(process),
+  FigureComponent(figure, process),
   raw_hist_(hist),
   scaled_hist_(){
   raw_hist_.Sumw2();
   scaled_hist_.Sumw2();
+}
+
+void HistoStack::SingleHist::RecordEvent(const Baby &baby,
+                                         const NamedFunc &process_cut){
+  const HistoStack& stack = static_cast<const HistoStack&>(figure_);
+  size_t min_vec_size;
+  bool have_vec = false;
+  
+  NamedFunc full_cut = process_cut && stack.definition_.cut_;
+  bool cut_is_scalar = full_cut.IsScalar();
+  NamedFunc::VectorType cut_vector;
+  if(cut_is_scalar){
+    if(!full_cut.GetScalar(baby)) return;
+  }else{
+    cut_vector = full_cut.GetVector(baby);
+    bool have_pass = false;
+    for(const auto &x: cut_vector){
+      if(x){
+        have_pass = true;
+        break;
+      }
+    }
+    if(!have_pass) return;
+    have_vec = true;
+    min_vec_size = cut_vector.size();
+  }
+
+  bool wgt_is_scalar = stack.definition_.weight_.IsScalar();
+  NamedFunc::ScalarType wgt_scalar;
+  NamedFunc::VectorType wgt_vector;
+  if(wgt_is_scalar){
+    wgt_scalar = stack.definition_.weight_.GetScalar(baby);
+  }else{
+    wgt_vector = stack.definition_.weight_.GetVector(baby);
+    if(!have_vec || wgt_vector.size() < min_vec_size){
+      have_vec = true;
+      min_vec_size = wgt_vector.size();
+    }
+  }
+
+  bool val_is_scalar = stack.definition_.var_.IsScalar();
+  NamedFunc::ScalarType val_scalar;
+  NamedFunc::VectorType val_vector;
+  if(val_is_scalar){
+    val_scalar = stack.definition_.var_.GetScalar(baby);
+  }else{
+    val_vector = stack.definition_.var_.GetVector(baby);
+    if(!have_vec || val_vector.size() < min_vec_size){
+      have_vec = true;
+      min_vec_size = val_vector.size();
+    }
+  }
+
+  if(!have_vec){
+    raw_hist_.Fill(val_scalar, wgt_scalar);
+  }else{
+    for(size_t i = 0; i < min_vec_size; ++i){
+      NamedFunc::ScalarType this_cut = cut_is_scalar ? true : cut_vector.at(i);
+      if(!this_cut) continue;
+      NamedFunc::ScalarType this_wgt = wgt_is_scalar ? wgt_scalar : wgt_vector.at(i);
+      NamedFunc::ScalarType this_val = val_is_scalar ? val_scalar : val_vector.at(i);
+      raw_hist_.Fill(this_val, this_wgt);
+    }
+  }
 }
 
 /*! Get the maximum of the histogram
@@ -191,9 +256,7 @@ double HistoStack::SingleHist::GetMin(double min_bound,
 HistoStack::HistoStack(const std::vector<std::shared_ptr<Process> > &processes,
                        const HistoDef &definition,
                        const std::vector<PlotOpt> &plot_options):
-  backgrounds_(),
-  signals_(),
-  datas_(),
+  Figure(processes),
   definition_(definition),
   plot_options_(plot_options),
   this_opt_(PlotOpt()),
@@ -209,7 +272,7 @@ HistoStack::HistoStack(const std::vector<std::shared_ptr<Process> > &processes,
   empty.SetStats(false);
   empty.Sumw2(true);
   for(const auto &process: processes){
-    SingleHist hist(process, empty);
+    SingleHist hist(*this, process, empty);
     hist.raw_hist_.SetFillColor(process->GetFillColor());
     hist.raw_hist_.SetFillStyle(process->GetFillStyle());
     hist.raw_hist_.SetLineColor(process->GetLineColor());
@@ -221,13 +284,13 @@ HistoStack::HistoStack(const std::vector<std::shared_ptr<Process> > &processes,
 
     switch(process->type_){
     case Process::Type::data:
-      datas_.push_back(hist);
+      datas_.emplace_back(new SingleHist(hist));
       break;
     case Process::Type::background:
-      backgrounds_.push_back(hist);
+      backgrounds_.emplace_back(new SingleHist(hist));
       break;
     case Process::Type::signal:
-      signals_.push_back(hist);
+      signals_.emplace_back(new SingleHist(hist));
       break;
     default:
       break;
@@ -246,7 +309,7 @@ HistoStack::HistoStack(const std::vector<std::shared_ptr<Process> > &processes,
 
   \param[in] luminosity The integrated luminosity with which to draw the plot
 */
-void HistoStack::PrintPlot(double luminosity){
+void HistoStack::Print(double luminosity){
   luminosity_ = luminosity;
   for(const auto &opt: plot_options_){
     this_opt_ = opt;
@@ -331,132 +394,6 @@ void HistoStack::PrintPlot(double luminosity){
   }
 }
 
-/*!\brief Get the component histogram corresponding to a particular Process
-
-  The returned histogram reference is an unscaled and unstacked
-  HistoStack::SingleHist::raw_hist_. HistoStack::SingleHist::scaled_hist_ is
-  discouraged and thus no equivalent getter exists for these.
-
-  \param[in] process The process for which to obtain the histogram
-
-  \return const reference to the (unscaled and unstacked) histogram
-  corresponding to process
-*/
-const TH1D & HistoStack::RawHisto(const std::shared_ptr<Process> &process) const{
-  return Histo(process).raw_hist_;
-}
-
-/*!\brief Get the component histogram corresponding to a particular Process
-
-  The returned histogram reference is an unscaled and unstacked
-  HistoStack::SingleHist::raw_hist_. HistoStack::SingleHist::scaled_hist_ is
-  discouraged and thus no equivalent getter exists for these.
-
-  \param[in] process The process for which to obtain the histogram
-
-  \return Reference to the (unscaled and unstacked) histogram corresponding to
-  process
-*/
-TH1D & HistoStack::RawHisto(const std::shared_ptr<Process> &process){
-  return Histo(process).raw_hist_;
-}
-
-/*!\brief Get all process used in making this plot
-
-  \return All component data, signal, and background processes
-*/
-std::set<std::shared_ptr<Process> > HistoStack::GetProcesses() const{
-  set<shared_ptr<Process> > processes;
-  for(const auto &proc: backgrounds_){
-    processes.insert(proc.process_);
-  }
-  for(const auto &proc: signals_){
-    processes.insert(proc.process_);
-  }
-  for(const auto &proc: datas_){
-    processes.insert(proc.process_);
-  }
-  return processes;
-}
-
-/*!\brief Gets data, signal, or background histogram list containing process
-
-  \param[in] process Process for which we want to find the containing list
-
-  \return const reference to HistoStack::datas_, HistoStack::signals_, or
-  HistoStack::backgrounds_, whichever contains the histogram corresponding to
-  process
-*/
-const std::vector<HistoStack::SingleHist> & HistoStack::GetHistoList(const std::shared_ptr<Process> &process) const{
-  switch(process->type_){
-  case Process::Type::data:
-    return datas_;
-  case Process::Type::background:
-    return backgrounds_;
-  case Process::Type::signal:
-    return signals_;
-  default:
-    ERROR("Did not understand process type "+to_string(static_cast<long>(process->type_))+".");
-    return backgrounds_;
-  }
-}
-
-/*!\brief Gets data, signal, or background histogram list containing process
-
-  \param[in] process Process for which we want to find the containing list
-
-  \return Reference to HistoStack::datas_, HistoStack::signals_, or
-  HistoStack::backgrounds_, whichever contains the histogram corresponding to
-  process
-*/
-std::vector<HistoStack::SingleHist> & HistoStack::GetHistoList(const std::shared_ptr<Process> &process){
-  switch(process->type_){
-  case Process::Type::data:
-    return datas_;
-  case Process::Type::background:
-    return backgrounds_;
-  case Process::Type::signal:
-    return signals_;
-  default:
-    ERROR("Did not understand process type "+to_string(static_cast<long>(process->type_))+".");
-    return backgrounds_;
-  }
-}
-
-/*!\brief Get the HistoStack::SingleHist corresponding to a particular Process
-
-  \param[in] process The process for which to obtain the histogram
-
-  \return const reference to the histogram corresponding to process
-*/
-const HistoStack::SingleHist & HistoStack::Histo(const std::shared_ptr<Process> &process) const{
-  const auto &hist_list = GetHistoList(process);
-  for(const auto &hist: hist_list){
-    if(hist.process_ == process){
-      return hist;
-    }
-  }
-  ERROR("Could not find histogram for process "+process->name_+".");
-  return hist_list.front();
-}
-
-/*!\brief Get the HistoStack::SingleHist corresponding to a particular Process
-
-  \param[in] process The process for which to obtain the histogram
-
-  \return const reference to the histogram corresponding to process
-*/
-HistoStack::SingleHist & HistoStack::Histo(const std::shared_ptr<Process> &process){
-  auto &hist_list = GetHistoList(process);
-  for(auto &hist: hist_list){
-    if(hist.process_ == process){
-      return hist;
-    }
-  }
-  ERROR("Could not find histogram for process "+process->name_+".");
-  return hist_list.front();
-}
-
 /*!\brief Generates stacked and scaled histograms from unstacked and unscaled
    ones
 
@@ -477,13 +414,16 @@ void HistoStack::RefreshScaledHistos(){
  */
 void HistoStack::InitializeHistos() const{
   for(auto &hist: backgrounds_){
-    hist.scaled_hist_ = hist.raw_hist_;
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    h->scaled_hist_ = h->raw_hist_;
   }
   for(auto &hist: signals_){
-    hist.scaled_hist_ = hist.raw_hist_;
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    h->scaled_hist_ = h->raw_hist_;
   }
   for(auto &hist: datas_){
-    hist.scaled_hist_ = hist.raw_hist_;
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    h->scaled_hist_ = h->raw_hist_;
   }
 }
 
@@ -512,13 +452,16 @@ void HistoStack::MergeOverflow() const{
   }
 
   for(auto &hist: backgrounds_){
-    ::MergeOverflow(hist.scaled_hist_, underflow, overflow);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    ::MergeOverflow(h->scaled_hist_, underflow, overflow);
   }
   for(auto &hist: signals_){
-    ::MergeOverflow(hist.scaled_hist_, underflow, overflow);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    ::MergeOverflow(h->scaled_hist_, underflow, overflow);
   }
   for(auto &hist: datas_){
-    ::MergeOverflow(hist.scaled_hist_, underflow, overflow);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    ::MergeOverflow(h->scaled_hist_, underflow, overflow);
   }
 }
 
@@ -526,15 +469,18 @@ void HistoStack::MergeOverflow() const{
  */
 void HistoStack::ScaleHistos() const{
   for(auto &hist: backgrounds_){
-    AdjustDensityForBinWidth(hist.scaled_hist_);
-    hist.scaled_hist_.Scale(luminosity_);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    AdjustDensityForBinWidth(h->scaled_hist_);
+    h->scaled_hist_.Scale(luminosity_);
   }
   for(auto &hist: signals_){
-    AdjustDensityForBinWidth(hist.scaled_hist_);
-    hist.scaled_hist_.Scale(luminosity_);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    AdjustDensityForBinWidth(h->scaled_hist_);
+    h->scaled_hist_.Scale(luminosity_);
   }
   for(auto &hist: datas_){
-    AdjustDensityForBinWidth(hist.scaled_hist_);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    AdjustDensityForBinWidth(h->scaled_hist_);
   }
 }
 
@@ -545,11 +491,14 @@ void HistoStack::StackHistos() const{
      || this_opt_.Stack() == StackType::signal_on_top
      || this_opt_.Stack() == StackType::data_norm){
     for(size_t ibkg = backgrounds_.size() - 2; ibkg < backgrounds_.size(); --ibkg){
-      backgrounds_.at(ibkg).scaled_hist_ = backgrounds_.at(ibkg).scaled_hist_ + backgrounds_.at(ibkg+1).scaled_hist_;
+      SingleHist * bkg = static_cast<SingleHist*>(backgrounds_.at(ibkg).get());
+      SingleHist * next = static_cast<SingleHist*>(backgrounds_.at(ibkg+1).get());
+      bkg->scaled_hist_ = bkg->scaled_hist_ + next->scaled_hist_;
     }
     if(backgrounds_.size() && this_opt_.Stack() == StackType::signal_on_top){
       for(auto &hist: signals_){
-        hist.scaled_hist_ = hist.scaled_hist_ + backgrounds_.front().scaled_hist_;
+        SingleHist* h = static_cast<SingleHist*>(hist.get());
+        h->scaled_hist_ = h->scaled_hist_ + static_cast<SingleHist*>(backgrounds_.front().get())->scaled_hist_;
       }
     }
   }
@@ -565,22 +514,28 @@ void HistoStack::NormalizeHistos() const{
     if(datas_.size() == 0 || backgrounds_.size() == 0) return;
     int nbins = definition_.Nbins();
     double data_error, mc_error;
-    double data_norm = datas_.front().scaled_hist_.IntegralAndError(0, nbins+1, data_error, "width");
-    double mc_norm = backgrounds_.front().scaled_hist_.IntegralAndError(0, nbins+1, mc_error, "width");
+    SingleHist * data = static_cast<SingleHist*>(datas_.front().get());
+    SingleHist * mc = static_cast<SingleHist*>(backgrounds_.front().get());
+    double data_norm = data->scaled_hist_.IntegralAndError(0, nbins+1, data_error, "width");
+    double mc_norm = mc->scaled_hist_.IntegralAndError(0, nbins+1, mc_error, "width");
     mc_scale_ = data_norm/mc_norm;
     mc_scale_error_ = hypot(data_norm*mc_error, mc_norm*data_error)/(mc_norm*mc_norm);
     for(auto &hist: backgrounds_){
-      hist.scaled_hist_.Scale(mc_scale_);
+      SingleHist* h = static_cast<SingleHist*>(hist.get());
+      h->scaled_hist_.Scale(mc_scale_);
     }
   }else if(this_opt_.Stack() == StackType::shapes){
     for(auto &hist: backgrounds_){
-      Normalize(hist.scaled_hist_, 100., true);
+      SingleHist* h = static_cast<SingleHist*>(hist.get());
+      Normalize(h->scaled_hist_, 100., true);
     }
     for(auto &hist: signals_){
-      Normalize(hist.scaled_hist_, 100., true);
+      SingleHist* h = static_cast<SingleHist*>(hist.get());
+      Normalize(h->scaled_hist_, 100., true);
     }
     for(auto &hist: datas_){
-      Normalize(hist.scaled_hist_, 100., true);
+      SingleHist* h = static_cast<SingleHist*>(hist.get());
+      Normalize(h->scaled_hist_, 100., true);
     }
   }
 }
@@ -607,16 +562,19 @@ void HistoStack::SetRanges() const{
   }
 
   for(auto &hist: backgrounds_){
-    hist.scaled_hist_.SetMinimum(bottom);
-    hist.scaled_hist_.SetMaximum(top);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    h->scaled_hist_.SetMinimum(bottom);
+    h->scaled_hist_.SetMaximum(top);
   }
   for(auto &hist: signals_){
-    hist.scaled_hist_.SetMinimum(bottom);
-    hist.scaled_hist_.SetMaximum(top);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    h->scaled_hist_.SetMinimum(bottom);
+    h->scaled_hist_.SetMaximum(top);
   }
   for(auto &hist: datas_){
-    hist.scaled_hist_.SetMinimum(bottom);
-    hist.scaled_hist_.SetMaximum(top);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    h->scaled_hist_.SetMinimum(bottom);
+    h->scaled_hist_.SetMaximum(top);
   }
 }
 
@@ -624,13 +582,16 @@ void HistoStack::SetRanges() const{
  */
 void HistoStack::ApplyStyles() const{
   for(auto &hist: backgrounds_){
-    StyleHisto(hist.scaled_hist_);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    StyleHisto(h->scaled_hist_);
   }
   for(auto &hist: signals_){
-    StyleHisto(hist.scaled_hist_);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    StyleHisto(h->scaled_hist_);
   }
   for(auto &hist: datas_){
-    StyleHisto(hist.scaled_hist_);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    StyleHisto(h->scaled_hist_);
   }
 }
 
@@ -677,7 +638,7 @@ void HistoStack::AdjustFillStyles() const{
   if(this_opt_.BackgroundsStacked()) return;
 
   for(auto &bkg: backgrounds_){
-    TH1D &h = bkg.scaled_hist_;
+    TH1D &h = static_cast<SingleHist*>(bkg.get())->scaled_hist_;
     h.SetFillStyle(0);
     h.SetLineColor(h.GetFillColor());
     h.SetLineWidth(5);
@@ -748,17 +709,20 @@ void HistoStack::FixYAxis(vector<TH1D> &bottom_plots) const{
     offset = 0.6+0.25*digits;
   }
 
-  for(auto &h: backgrounds_){
-    h.scaled_hist_.SetTitleOffset(offset, "y");
+  for(auto &hist: backgrounds_){
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    h->scaled_hist_.SetTitleOffset(offset, "y");
   }
-  for(auto &h: signals_){
-    h.scaled_hist_.SetTitleOffset(offset, "y");
+  for(auto &hist: signals_){
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    h->scaled_hist_.SetTitleOffset(offset, "y");
   }
-  for(auto &h: datas_){
-    h.scaled_hist_.SetTitleOffset(offset, "y");
+  for(auto &hist: datas_){
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    h->scaled_hist_.SetTitleOffset(offset, "y");
   }
-  for(auto &h: bottom_plots){
-    h.SetTitleOffset(offset, "y");
+  for(auto &hist: bottom_plots){
+    hist.SetTitleOffset(offset, "y");
   }
 }
 
@@ -833,7 +797,7 @@ TGraphAsymmErrors HistoStack::GetBackgroundError() const{
     TH1D h("", "", definition_.Nbins(), &definition_.Bins().at(0));
     g = TGraphAsymmErrors(&h);
   }else{
-    g = TGraphAsymmErrors(&(backgrounds_.front().scaled_hist_));
+    g = TGraphAsymmErrors(&(static_cast<SingleHist*>(backgrounds_.front().get())->scaled_hist_));
   }
   g.SetFillStyle(3003);
   g.SetFillColor(kBlack);
@@ -881,7 +845,7 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
     return vector<TH1D>();
   }
 
-  TH1D denom = backgrounds_.front().scaled_hist_;
+  TH1D denom = static_cast<SingleHist*>(backgrounds_.front().get())->scaled_hist_;
   for(int bin = 0; bin <= denom.GetNbinsX()+1; ++bin){
     denom.SetBinError(bin, 0.);
   }
@@ -889,9 +853,9 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
   vector<TH1D> out(datas_.size()+1);
 
   for(size_t i = 0; i < datas_.size(); ++i){
-    out.at(i) = TH1D(datas_.at(i).scaled_hist_);
+    out.at(i) = TH1D(static_cast<SingleHist*>(datas_.at(i).get())->scaled_hist_);
   }
-  out.back() = TH1D(backgrounds_.front().scaled_hist_);
+  out.back() = TH1D(static_cast<SingleHist*>(backgrounds_.front().get())->scaled_hist_);
   out.back().SetFillStyle(3003);
   out.back().SetFillColor(kBlack);
   out.back().SetLineWidth(0);
@@ -976,13 +940,16 @@ TLine HistoStack::GetBottomHorizontal() const{
 void HistoStack::StripTopPlotLabels() const{
   if(this_opt_.Bottom() == BottomType::off) return;
   for(auto &hist: backgrounds_){
-    StripXLabels(hist.scaled_hist_);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    StripXLabels(h->scaled_hist_);
   }
   for(auto &hist: signals_){
-    StripXLabels(hist.scaled_hist_);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    StripXLabels(h->scaled_hist_);
   }
   for(auto &hist: datas_){
-    StripXLabels(hist.scaled_hist_);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    StripXLabels(h->scaled_hist_);
   }
 }
 
@@ -998,19 +965,22 @@ void HistoStack::StripTopPlotLabels() const{
 double HistoStack::GetMaxDraw(double max_bound) const{
   double the_max = -numeric_limits<double>::infinity();
   for(const auto &hist: backgrounds_){
-    double this_max = hist.GetMax(max_bound, false);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    double this_max = h->GetMax(max_bound, false);
     if(this_max > the_max && this_max < max_bound){
       the_max = this_max;
     }
   }
   for(const auto &hist: signals_){
-    double this_max = hist.GetMax(max_bound, false);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    double this_max = h->GetMax(max_bound, false);
     if(this_max > the_max && this_max < max_bound){
       the_max = this_max;
     }
   }
   for(const auto &hist: datas_){
-    double this_max = hist.GetMax(max_bound, true);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    double this_max = h->GetMax(max_bound, true);
     if(this_max > the_max && this_max < max_bound){
       the_max = this_max;
     }
@@ -1029,19 +999,22 @@ double HistoStack::GetMaxDraw(double max_bound) const{
 double HistoStack::GetMinDraw(double min_bound) const{
   double the_min = numeric_limits<double>::infinity();
   for(const auto &hist: backgrounds_){
-    double this_min = hist.GetMin(min_bound, false);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    double this_min = h->GetMin(min_bound, false);
     if(this_min < the_min && this_min > min_bound){
       the_min = this_min;
     }
   }
   for(const auto &hist: signals_){
-    double this_min = hist.GetMin(min_bound, false);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    double this_min = h->GetMin(min_bound, false);
     if(this_min < the_min && this_min > min_bound){
       the_min = this_min;
     }
   }
   for(const auto &hist: datas_){
-    double this_min = hist.GetMin(min_bound, true);
+    SingleHist* h = static_cast<SingleHist*>(hist.get());
+    double this_min = h->GetMin(min_bound, true);
     if(this_min < the_min && this_min > min_bound){
       the_min = this_min;
     }
@@ -1116,14 +1089,14 @@ vector<shared_ptr<TLegend> > HistoStack::GetLegends(){
   \param[in,out] entries_added Entries already in legend
 */
 void HistoStack::AddEntries(vector<shared_ptr<TLegend> > &legends,
-                            const vector<HistoStack::SingleHist> &hists,
+                            const vector<unique_ptr<FigureComponent> > &hists,
                             const string &style,
                             size_t n_entries,
                             size_t &entries_added) const{
   for(auto h = hists.cbegin(); h != hists.cend(); ++h){
     size_t legend_index = GetLegendIndex(entries_added, n_entries, legends.size());
     TLegend &legend = *legends.at(legend_index);
-    string label = h->process_->name_.c_str();
+    string label = (*h)->process_->name_.c_str();
     if(this_opt_.Title() == TitleType::info){
       double value;
       switch(this_opt_.Stack()){
@@ -1163,7 +1136,7 @@ void HistoStack::AddEntries(vector<shared_ptr<TLegend> > &legends,
       latex.GetBoundingBox(width, height);
     }
 
-    legend.AddEntry(&h->scaled_hist_, label.c_str(), style.c_str());
+    legend.AddEntry(&(static_cast<SingleHist*>(h->get())->scaled_hist_), label.c_str(), style.c_str());
     ++entries_added;
   }
 }
@@ -1194,14 +1167,14 @@ double HistoStack::GetLegendRatio() const{
   HistoStack::signals_, HistoStack::backgrounds_ for which total yield will be
   found
 */
-double HistoStack::GetYield(vector<HistoStack::SingleHist>::const_iterator h) const{
-  TH1D hist = h->scaled_hist_;
+double HistoStack::GetYield(std::vector<std::unique_ptr<FigureComponent> >::const_iterator h) const{
+  TH1D hist = static_cast<SingleHist*>(h->get())->scaled_hist_;
 
   //Subtract underlying histogram
-  if(h->process_->type_ == Process::Type::background
+  if((*h)->process_->type_ == Process::Type::background
      && h != (--backgrounds_.cend())
      && this_opt_.BackgroundsStacked()){
-    hist = hist - (++h)->scaled_hist_;
+    hist = hist - static_cast<SingleHist*>((++h)->get())->scaled_hist_;
   }
 
   //Want yield, not area, so divide out average bin width
@@ -1221,14 +1194,14 @@ double HistoStack::GetYield(vector<HistoStack::SingleHist>::const_iterator h) co
   \param[in] h Iterator to histogram in one of HistoStack::datas_,
   HistoStack::signals_, HistoStack::backgrounds_ for which mean will be found
 */
-double HistoStack::GetMean(vector<HistoStack::SingleHist>::const_iterator h) const{
-  TH1D hist = h->scaled_hist_;
+double HistoStack::GetMean(std::vector<std::unique_ptr<FigureComponent> >::const_iterator h) const{
+  TH1D hist = static_cast<SingleHist*>(h->get())->scaled_hist_;
 
   //Subtract underlying histogram
-  if(h->process_->type_ == Process::Type::background
+  if((*h)->process_->type_ == Process::Type::background
      && h != (--backgrounds_.cend())
      && this_opt_.BackgroundsStacked()){
-    hist = hist - (++h)->scaled_hist_;
+    hist = hist - static_cast<SingleHist*>((++h)->get())->scaled_hist_;
   }
 
   return hist.GetMean();
