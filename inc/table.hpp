@@ -34,8 +34,6 @@ public:
   Table(const std::string &name,
 	const std::vector<TableRow> &rows,
 	const std::vector<std::shared_ptr<Process> > &processes);
-  Table(const Table &) = default;
-  Table& operator=(const Table &) = default;
   Table(Table &&) = default;
   Table& operator=(Table &&) = default;
   ~Table() = default;
@@ -53,6 +51,8 @@ private:
   std::vector<std::unique_ptr<TableColumn> > signals_;//!<Signal components of the figure
   std::vector<std::unique_ptr<TableColumn> > datas_;//!<Data components of the figure
 
+  Table(const Table &) = delete;
+  Table& operator=(const Table &) = delete;
   Table() = delete;
 
   const std::vector<std::unique_ptr<TableColumn> >& GetComponentList(const std::shared_ptr<Process> &process);

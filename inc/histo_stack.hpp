@@ -53,8 +53,6 @@ public:
   HistoStack(const HistoDef &definition,
              const std::vector<std::shared_ptr<Process> > &processes,
              const std::vector<PlotOpt> &plot_options = {PlotOpt()});
-  HistoStack(const HistoStack &) = default;
-  HistoStack& operator=(const HistoStack &) = default;
   HistoStack(HistoStack &&) = default;
   HistoStack& operator=(HistoStack &&) = default;
   ~HistoStack() = default;
@@ -79,6 +77,8 @@ private:
   mutable double mc_scale_error_;//!<data/MC normalization uncertainty
   static TH1D blank_;//<!Blank histogram for creating dummy legend entries
 
+  HistoStack(const HistoStack &) = delete;
+  HistoStack& operator=(const HistoStack &) = delete;
   HistoStack() = delete;
 
   const std::vector<SingleHist> & GetHistoList(const std::shared_ptr<Process> &process) const;

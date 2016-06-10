@@ -12,6 +12,8 @@
 #include "plot_maker.hpp"
 #include "plot_opt.hpp"
 #include "palette.hpp"
+#include "table.hpp"
+#include "histo_stack.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -106,5 +108,21 @@ int main(){
   pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj08", "M_{J}^{0.8} [GeV]",
                                "nleps==1&&ht>500&&met>200", "weight", {400.}),
                       full_trig_skim, all_plot_types);
+  vector<TableRow> rows = {
+    TableRow("Baseline"),
+    TableRow("No Selection", "1"),
+    TableRow("$1\\ell$, $H_{T}>500$, $\\slashed{E}_{T}>200$", "nleps==1&&ht>500&&met>200"),
+    TableRow("$N_{\\text{jets}}\\geq6$", "nleps==1&&ht>500&&met>200&&njets>=6"),
+    TableRow("$N_{b}\\geq1$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1"),
+    TableRow("$M_{J}>250$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1&&mj14>250", 0, 1),
+    TableRow("ABCD Signal Region"),
+    TableRow("$m_{T}>140$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1&&mj14>250&&mt>140"),
+    TableRow("$M_{J}>400$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1&&mj14>400&&mt>140"),
+    TableRow("Binning"),
+    TableRow("$\\slashed{E}_{T}>500$", "nleps==1&&ht>500&&met>500&&njets>=6&&nbm>=1&&mj14>400&&mt>140"),
+    TableRow("$N_{\\text{jets}}\\geq9$", "nleps==1&&ht>500&&met>500&&njets>=9&&nbm>=1&&mj14>400&&mt>140"),
+    TableRow("$N_{b}\\geq3$", "nleps==1&&ht>500&&met>500&&njets>=9&&nbm>=3&&mj14>400&&mt>140"),
+  };
+  pm.Push<Table>("cutflow", rows, full_trig_skim);
   pm.MakePlots(lumi);
 }

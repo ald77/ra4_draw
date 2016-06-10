@@ -67,6 +67,32 @@ void Table::TableColumn::RecordEvent(const Baby &baby,
   }
 }
 
+Table::Table(const string &name,
+             const vector<TableRow> &rows,
+             const vector<shared_ptr<Process> > &processes):
+  Figure(),
+  name_(name),
+  rows_(rows),
+  backgrounds_(),
+  signals_(),
+  datas_(){
+  for(const auto &process: processes){
+    switch(process->type_){
+    case Process::Type::data:
+      datas_.emplace_back(new TableColumn(*this, process));
+      break;
+    case Process::Type::background:
+      backgrounds_.emplace_back(new TableColumn(*this, process));
+      break;
+    case Process::Type::signal:
+      signals_.emplace_back(new TableColumn(*this, process));
+      break;
+    default:
+      break;
+    }
+  }
+}
+
 void Table::Print(double luminosity){
   std::ofstream file("tables/"+name_+".tex");
   PrintHeader(file);
@@ -101,6 +127,19 @@ Figure::FigureComponent * Table::GetComponent(const shared_ptr<Process> &process
   return nullptr;
 }
 
+const vector<unique_ptr<Table::TableColumn> >& Table::GetComponentList(const shared_ptr<Process> &process){
+  switch(process->type_){
+  case Process::Type::data:
+    return datas_;
+  case Process::Type::background:
+    return backgrounds_;
+  case Process::Type::signal:
+    return signals_;
+  default:
+    ERROR("Did not understand process type "+to_string(static_cast<long>(process->type_))+".");
+    return backgrounds_;
+  }
+}
 void Table::PrintHeader(ofstream &file) const{
   file << "  \\documentclass[10pt,oneside]{report}\n";
   file << "  \\usepackage{graphicx,xspace,amssymb,amsmath,colordvi,colortbl, verbatim,multicol}\n";
