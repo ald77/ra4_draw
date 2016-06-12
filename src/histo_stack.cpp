@@ -47,8 +47,21 @@ using namespace std;
 using namespace PlotOptTypes;
 
 namespace{
+  class Counter{
+  public:
+    Counter():
+      count_(0){
+    }
+
+    string operator()(){
+      return to_string(count_++);
+    }
+  private:
+    unsigned long count_;
+  } counter;
+
   /*!\brief Draws all histograms to current canvas, updating draw_opt to contain
-     "same" as need
+    "same" as needed
 
     \param[in] hists List of histograms to draw
 
@@ -126,7 +139,7 @@ void HistoStack::SingleHist::RecordEvent(const Baby &baby){
   const HistoStack& stack = static_cast<const HistoStack&>(figure_);
   size_t min_vec_size;
   bool have_vec = false;
-  
+
   const NamedFunc &cut = proc_and_hist_cut_;
   if(cut.IsScalar()){
     if(!cut.GetScalar(baby)) return;
@@ -410,7 +423,7 @@ Figure::FigureComponent * HistoStack::GetComponent(const shared_ptr<Process> &pr
 }
 
 /*!\brief Generates stacked and scaled histograms from unstacked and unscaled
-   ones
+  ones
 
   Sets bin contents for all required HistoStack::SingleHist::scaled_hist_ to the
   appropriate values using the HistoStack::SingleHist::raw_hist_ containing the
@@ -425,17 +438,20 @@ void HistoStack::RefreshScaledHistos(){
 }
 
 /*!\brief Sets all HistoStack::SingleHist::scaled_hist_ to corresponding
-   HistoStack::SingleHist::raw_hist_
- */
+  HistoStack::SingleHist::raw_hist_
+*/
 void HistoStack::InitializeHistos() const{
   for(auto &hist: backgrounds_){
     hist->scaled_hist_ = hist->raw_hist_;
+    hist->scaled_hist_.SetName(("bkg_"+hist->process_->name_+"_"+counter()).c_str());
   }
   for(auto &hist: signals_){
     hist->scaled_hist_ = hist->raw_hist_;
+    hist->scaled_hist_.SetName(("sig_"+hist->process_->name_+"_"+counter()).c_str());
   }
   for(auto &hist: datas_){
     hist->scaled_hist_ = hist->raw_hist_;
+    hist->scaled_hist_.SetName(("dat_"+hist->process_->name_+"_"+counter()).c_str());
   }
 }
 
@@ -508,8 +524,8 @@ void HistoStack::StackHistos() const{
 }
 
 /*!\brief Normalize histograms to data or 100%*(bin width) if needed for current
-   style
- */
+  style
+*/
 void HistoStack::NormalizeHistos() const{
   mc_scale_ = 1.;
   mc_scale_error_ = 1.;
@@ -651,11 +667,11 @@ void HistoStack::AdjustFillStyles() const{
 void HistoStack::GetPads(unique_ptr<TCanvas> &c,
                          unique_ptr<TPad> &top,
                          unique_ptr<TPad> &bottom) const{
-  c.reset(new TCanvas("", "", this_opt_.CanvasWidth(),
+  c.reset(new TCanvas(("canvas_"+counter()).c_str(), "canvas", this_opt_.CanvasWidth(),
                       this_opt_.CanvasHeight()));
   c->cd();
-  top.reset(new TPad("", "", 0., 0., 1., 1.));
-  bottom.reset(new TPad("", "", 0., 0., 1., 1.));
+  top.reset(new TPad(("top_pad_"+counter()).c_str(), "top_pad", 0., 0., 1., 1.));
+  bottom.reset(new TPad(("bottom_pad_"+counter()).c_str(), "bottom_pad", 0., 0., 1., 1.));
   c->SetMargin(0., 0., 0., 0.);
   c->SetTicks(1,1);
   c->SetFillStyle(4000);
@@ -834,6 +850,7 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
   }
 
   TH1D denom = backgrounds_.front()->scaled_hist_;
+
   for(int bin = 0; bin <= denom.GetNbinsX()+1; ++bin){
     denom.SetBinError(bin, 0.);
   }
@@ -842,13 +859,15 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
 
   for(size_t i = 0; i < datas_.size(); ++i){
     out.at(i) = TH1D(datas_.at(i)->scaled_hist_);
+    out.at(i).SetName(("bot_plot_data_"+datas_.at(i)->process_->name_+"_"+counter()).c_str());
   }
-  out.back() = TH1D(backgrounds_.front()->scaled_hist_);
+  out.back() = backgrounds_.front()->scaled_hist_;
   out.back().SetFillStyle(3003);
   out.back().SetFillColor(kBlack);
   out.back().SetLineWidth(0);
   out.back().SetMarkerStyle(0);
   out.back().SetMarkerSize(0);
+  out.back().SetName(("bot_plot_mc_"+counter()).c_str());
 
   switch(this_opt_.Bottom()){
   case BottomType::ratio:
@@ -939,7 +958,7 @@ void HistoStack::StripTopPlotLabels() const{
 }
 
 /*!\brief Get highest drawn point below max_bound across all component
-   histograms
+  histograms
 
   \param[in] max_bound Only consider points below this value in finding the
   maximum
