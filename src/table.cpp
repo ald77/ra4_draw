@@ -9,6 +9,25 @@
 
 using namespace std;
 
+namespace{
+  std::string ToLatex(std::string x){
+    ReplaceAll(x, "#", "\\");
+    auto pos_1 = x.find("\\");
+    auto pos_2 = x.find("_");
+    auto pos_3 = x.find("^");
+    auto pos_4 = x.find("{");
+    auto pos_5 = x.find("}");
+    if(pos_1 != string::npos
+       || pos_2 != string::npos
+       || pos_3 != string::npos
+       || pos_4 != string::npos
+       || pos_5 != string::npos){
+      x = "$"+x+"$";
+    }
+    return x;
+  }
+}
+
 Table::TableColumn::TableColumn(const Table &table,
 				const shared_ptr<Process> &process):
   FigureComponent(table, process),
@@ -110,7 +129,7 @@ void Table::Print(double luminosity){
   PrintFooter(file);
   file << flush;
   file.close();
-  cout << "Wrote table to " << file_name << endl;
+  cout << "Wrote table to " << file_name << "." << endl;
 }
 
 set<shared_ptr<Process> > Table::GetProcesses() const{
@@ -168,7 +187,7 @@ void Table::PrintHeader(ofstream &file) const{
     }
     file << " | r";
   }else if(backgrounds_.size() == 1){
-    file << "r";
+    file << " | r";
   }
   
   if(datas_.size() > 1){
@@ -178,7 +197,7 @@ void Table::PrintHeader(ofstream &file) const{
     }
     file << " | r";
   }else if(datas_.size() == 1){
-    file << "r";
+    file << " | r";
   }
   
   for(size_t i = 0; i < signals_.size(); ++i){
@@ -191,25 +210,25 @@ void Table::PrintHeader(ofstream &file) const{
 
   if(backgrounds_.size() > 1){
     for(size_t i = 0; i < backgrounds_.size(); ++i){
-      file << " & " << backgrounds_.at(i)->process_->name_;
+      file << " & " << ToLatex(backgrounds_.at(i)->process_->name_);
     }
     file << " & SM Bkg.";
   }else if(backgrounds_.size() == 1){
-    file << " & " << backgrounds_.front()->process_->name_;
+    file << " & " <<ToLatex(backgrounds_.front()->process_->name_);
   }
   
   if(datas_.size() > 1){ 
-    file << " | ";
+    file << " & ";
     for(size_t i = 0; i < datas_.size(); ++i){
-      file << " & " << datas_.at(i)->process_->name_;
+      file << " & " << ToLatex(datas_.at(i)->process_->name_);
     }
     file << " & Data Tot.";
   }else if(datas_.size() == 1){
-    file << " & " << datas_.front()->process_->name_;
+    file << " & " << ToLatex(datas_.front()->process_->name_);
   }
   
   for(size_t i = 0; i < signals_.size(); ++i){
-    file << " & " << signals_.at(i)->process_->name_ << " & Z_{\\text{Bi}}";
+    file << " & " << ToLatex(signals_.at(i)->process_->name_) << " & $Z_{\\text{Bi}}$";
   }
 
   file << "\\\\\n";
@@ -272,25 +291,25 @@ void Table::PrintFooter(ofstream &file) const{
 
   if(backgrounds_.size() > 1){
     for(size_t i = 0; i < backgrounds_.size(); ++i){
-      file << " & " << backgrounds_.at(i)->process_->name_;
+      file << " & " << ToLatex(backgrounds_.at(i)->process_->name_);
     }
     file << " & SM Bkg.";
   }else if(backgrounds_.size() == 1){
-    file << " & " << backgrounds_.front()->process_->name_;
+  file << " & " << ToLatex(backgrounds_.front()->process_->name_);
   }
   
   if(datas_.size() > 1){ 
-    file << " | ";
+    file << " & ";
     for(size_t i = 0; i < datas_.size(); ++i){
-      file << " & " << datas_.at(i)->process_->name_;
+      file << " & " << ToLatex(datas_.at(i)->process_->name_);
     }
     file << " & Data Tot.";
   }else if(datas_.size() == 1){
-    file << " & " << datas_.front()->process_->name_;
+     file << " & " << ToLatex(datas_.front()->process_->name_);
   }
   
   for(size_t i = 0; i < signals_.size(); ++i){
-    file << " & " << signals_.at(i)->process_->name_ << " & $Z_{\\text{Bi}}$";
+    file << " & " << ToLatex(signals_.at(i)->process_->name_) << " & $Z_{\\text{Bi}}$";
   }
 
   file << "\\\\\n";
@@ -303,7 +322,7 @@ void Table::PrintFooter(ofstream &file) const{
 size_t Table::NumColumns() const{
   return 1
     + (backgrounds_.size() <= 1 ? backgrounds_.size() : backgrounds_.size()+1)
-    + (signals_.size() <= 1 ? signals_.size() : signals_.size()+1)
+    + (datas_.size() <= 1 ? datas_.size() : datas_.size()+1)
     + 2*signals_.size();
 }
 
