@@ -39,6 +39,7 @@ namespace{
 /*!\brief Standard constructor
  */
 PlotMaker::PlotMaker():
+  multithreaded_(true),
   figures_(){
 }
 
@@ -64,19 +65,27 @@ void PlotMaker::GetYields(){
   auto start_time = Clock::now();
 
   set<shared_ptr<Process> > processes = GetProcesses();
-  vector<future<long> > num_entries_future(processes.size());
-  size_t num_threads = min(processes.size(), static_cast<size_t>(thread::hardware_concurrency()));
+  size_t num_threads = multithreaded_ ? min(processes.size(), static_cast<size_t>(thread::hardware_concurrency())) : 1;
   cout << "Processing " << processes.size() << " samples with " << num_threads << " threads." << endl;
 
-  ThreadPool tp(num_threads);
-  size_t i = 0;
-  for(const auto &proc: processes){
-    num_entries_future.at(i) = tp.Push(bind(&PlotMaker::GetYield, this, ref(proc)));
-    ++i;
-  }
   long num_entries = 0;
-  for(auto& entries: num_entries_future){
-    num_entries += entries.get();
+
+  if(multithreaded_ && num_threads>1){
+    vector<future<long> > num_entries_future(processes.size());
+
+    ThreadPool tp(num_threads);
+    size_t i = 0;
+    for(const auto &proc: processes){
+      num_entries_future.at(i) = tp.Push(bind(&PlotMaker::GetYield, this, ref(proc)));
+      ++i;
+    }
+    for(auto& entries: num_entries_future){
+      num_entries += entries.get();
+    }
+  }else{
+    for(const auto &proc: processes){
+      num_entries += GetYield(ref(proc));
+    }
   }
 
   auto end_time = Clock::now();
@@ -98,23 +107,31 @@ long PlotMaker::GetYield(const std::shared_ptr<Process> &process){
 
   Baby &baby = *(process->baby_);
 
-  set<Figure::FigureComponent*> figure_components = GetComponents(process);
-
   long num_entries = baby.GetEntries();
   {
     lock_guard<mutex> lock(print_mutex);
     cout << process->name_ << " has " << num_entries << " entries." << endl;
   }
+
+  set<Figure::FigureComponent*> figure_components = GetComponents(process);
+
   Timer timer(num_entries, 10.);
   timer.Start();
   for(long entry = 0; entry < num_entries; ++entry){
     timer.Iterate();
     baby.GetEntry(entry);
 
+    if(process->cut_.IsScalar()){
+      if(!process->cut_.GetScalar(baby)) continue;
+    }else{
+      if(!HavePass(process->cut_.GetVector(baby))) continue;
+    }
+
     for(auto &component: figure_components){
-      component->RecordEvent(baby, process->cut_);
+      component->RecordEvent(baby);
     }
   }
+
   auto end_time = Clock::now();
   double num_seconds = chrono::duration<double>(end_time - start_time).count();
   {

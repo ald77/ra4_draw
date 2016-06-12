@@ -1,6 +1,7 @@
 #include "table.hpp"
 
 #include <fstream>
+#include <iomanip>
 
 #include "RooStats/NumberCountingUtils.h"
 
@@ -12,43 +13,48 @@ Table::TableColumn::TableColumn(const Table &table,
 				const shared_ptr<Process> &process):
   FigureComponent(table, process),
   sumw_(table.rows_.size(), 0.),
-  sumw2_(table.rows_.size(), 0.){
+  sumw2_(table.rows_.size(), 0.),
+  proc_and_table_cut_(table.rows_.size(), process->cut_),
+  cut_vector_(),
+  wgt_vector_(),
+  val_vector_(){
+  for(size_t irow = 0; irow < table.rows_.size(); ++irow){
+    proc_and_table_cut_.at(irow) = table.rows_.at(irow).cut_ && process->cut_;
+  }
 }
 
-void Table::TableColumn::RecordEvent(const Baby &baby,
-				     const NamedFunc &process_cut){
+void Table::TableColumn::RecordEvent(const Baby &baby){
   const Table& table = static_cast<const Table&>(figure_);
+
+  bool have_vector;
+  size_t min_vec_size;
   for(size_t irow = 0; irow < table.rows_.size(); ++irow){
+    have_vector = false;
+    min_vec_size = 0;
+
     const TableRow& row = table.rows_.at(irow);
     if(!row.is_data_row_) continue;
-    NamedFunc cut = process_cut && row.cut_;
+    const NamedFunc &cut = proc_and_table_cut_.at(irow);
     const NamedFunc &wgt = row.weight_;
 
-    bool have_vector = false;
-    size_t min_vec_size = 0;
-
-    bool cut_is_scalar = cut.IsScalar();
-    NamedFunc::VectorType cut_vector;
-    if(cut_is_scalar){
+    if(cut.IsScalar()){
       if(!cut.GetScalar(baby)) return;
     }else{
-      cut_vector = cut.GetVector(baby);
-      if(!have_vector || cut_vector.size() < min_vec_size){
+      cut_vector_ = cut.GetVector(baby);
+      if(!have_vector || cut_vector_.size() < min_vec_size){
 	have_vector = true;
-	min_vec_size = cut_vector.size();
+	min_vec_size = cut_vector_.size();
       }
     }
 
-    bool wgt_is_scalar = wgt.IsScalar();
     NamedFunc::ScalarType wgt_scalar = 0.;
-    NamedFunc::VectorType wgt_vector;
-    if(wgt_is_scalar){
+    if(wgt.IsScalar()){
       wgt_scalar = wgt.GetScalar(baby);
     }else{
-      wgt_vector = wgt.GetVector(baby);
-      if(!have_vector || wgt_vector.size() < min_vec_size){
+      wgt_vector_ = wgt.GetVector(baby);
+      if(!have_vector || wgt_vector_.size() < min_vec_size){
 	have_vector = true;
-	min_vec_size = wgt_vector.size();
+	min_vec_size = wgt_vector_.size();
       }
     }
 
@@ -57,9 +63,9 @@ void Table::TableColumn::RecordEvent(const Baby &baby,
       sumw2_.at(irow) += wgt_scalar*wgt_scalar;
     }else{
       for(size_t iobject = 0; iobject < min_vec_size; ++iobject){
-	NamedFunc::ScalarType this_cut = cut_is_scalar ? true : cut_vector.at(iobject);
+	NamedFunc::ScalarType this_cut = cut.IsScalar() ? true : cut_vector_.at(iobject);
 	if(!this_cut) continue;
-	NamedFunc::ScalarType this_wgt = wgt_is_scalar ? wgt_scalar : wgt_vector.at(iobject);
+	NamedFunc::ScalarType this_wgt = wgt.IsScalar() ? wgt_scalar : wgt_vector_.at(iobject);
 	sumw_.at(irow) += this_wgt;
 	sumw2_.at(irow) += this_wgt*this_wgt;
       }
@@ -94,12 +100,17 @@ Table::Table(const string &name,
 }
 
 void Table::Print(double luminosity){
-  std::ofstream file("tables/"+name_+".tex");
+  string file_name = "tables/"+name_+"_lumi_"+ToString(luminosity)+".tex";
+  std::ofstream file(file_name);
+  file << fixed << setprecision(1);
   PrintHeader(file);
   for(size_t i = 0; i < rows_.size(); ++i){
     PrintRow(file, i, luminosity);
   }
   PrintFooter(file);
+  file << flush;
+  file.close();
+  cout << "Wrote table to " << file_name << endl;
 }
 
 set<shared_ptr<Process> > Table::GetProcesses() const{
@@ -141,20 +152,14 @@ const vector<unique_ptr<Table::TableColumn> >& Table::GetComponentList(const sha
   }
 }
 void Table::PrintHeader(ofstream &file) const{
-  file << "  \\documentclass[10pt,oneside]{report}\n";
-  file << "  \\usepackage{graphicx,xspace,amssymb,amsmath,colordvi,colortbl, verbatim,multicol}\n";
-  file << "  \\usepackage{multirow, rotating}\n\n";
+  file << "\\documentclass[10pt,oneside]{report}\n";
+  file << "\\usepackage{graphicx,xspace,amssymb,amsmath,colordvi,colortbl,verbatim,multicol}\n";
+  file << "\\usepackage{multirow, rotating}\n\n";
 
-  file << "  \\linespread{1.3}\n";
-  file << "  \\addtolength{\\oddsidemargin}{-1.8in}\n";
-  file << "  \\addtolength{\\textheight}{1.4in}\n";
-  file << "  \\thispagestyle{empty}\n\n";
-
-  file << "  \\begin{document}\n\n";
-
-  file << "  \\begin{sidewaystable}[tbp!]\n";
-  file << "    \\centering\n";
-  file << "    \\begin{tabular}{ l";
+  file << "\\begin{document}\n";
+  file << "\\begin{sidewaystable}[tbp!]\n";
+  file << "  \\centering\n";
+  file << "  \\begin{tabular}{ l";
   
   if(backgrounds_.size() > 1){
     file << " | ";
@@ -213,21 +218,22 @@ void Table::PrintHeader(ofstream &file) const{
 void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
   const TableRow& row = rows_.at(irow);
   if(row.lines_before_ > 0){
+    file << "    ";
     for(size_t i = 0; i < row.lines_before_; ++i){
       file << "\\hline";
     }
     file << "\n";
   }
-  file << row.label_;
 
   if(row.is_data_row_){
+    file << "    " << row.label_;
     if(backgrounds_.size() > 1){
       for(size_t i = 0; i < backgrounds_.size(); ++i){
         file << " & " << luminosity*backgrounds_.at(i)->sumw_.at(irow);
       }
-      file << " & " << luminosity*GetYield(backgrounds_, irow) << "\\pm" << luminosity*GetError(backgrounds_, irow);
+      file << " & " << luminosity*GetYield(backgrounds_, irow) << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
     }else if(backgrounds_.size() == 1){
-      file << " & " << luminosity*GetYield(backgrounds_, irow) << "\\pm" << luminosity*GetError(backgrounds_, irow);
+      file << " & " << luminosity*GetYield(backgrounds_, irow) << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
     }
 
     if(datas_.size() > 1){
@@ -246,12 +252,13 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
                                                           hypot(GetError(backgrounds_, irow)/GetYield(backgrounds_, irow), 0.3));
     }
   }else{
-    file << "\\multicolumn{1}{c}{" << row.label_ << "}";
+    file << "    \\multicolumn{" << NumColumns() << "}{c}{" << row.label_ << "}";
   }
 
   file << "\\\\\n";
 
   if(row.lines_after_ > 0){
+    file << "    ";
     for(size_t i = 0; i < row.lines_after_; ++i){
       file << "\\hline";
     }
@@ -260,6 +267,7 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
 }
 
 void Table::PrintFooter(ofstream &file) const{
+  file << "    \\hline\n";
   file << "    Cut";
 
   if(backgrounds_.size() > 1){
@@ -282,11 +290,12 @@ void Table::PrintFooter(ofstream &file) const{
   }
   
   for(size_t i = 0; i < signals_.size(); ++i){
-    file << " & " << signals_.at(i)->process_->name_ << " & Z_{\\text{Bi}}";
+    file << " & " << signals_.at(i)->process_->name_ << " & $Z_{\\text{Bi}}$";
   }
 
   file << "\\\\\n";
-
+  file << "    \\hline\\hline\n";
+  file << "  \\end{tabular}\n";
   file << "\\end{sidewaystable}\n";
   file << "\\end{document}\n";
 }

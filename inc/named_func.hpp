@@ -82,4 +82,7 @@ NamedFunc operator ! (NamedFunc f);
 
 std::ostream & operator<<(std::ostream &stream, const NamedFunc &function);
 
+bool HavePass(const NamedFunc::VectorType &v);
+bool HavePass(const std::vector<NamedFunc::VectorType> &vv);
+
 #endif

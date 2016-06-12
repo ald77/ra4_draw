@@ -1,7 +1,12 @@
+#include "test.hpp"
+
 #include <iostream>
 #include <string>
 #include <vector>
 #include <memory>
+
+#include <unistd.h>
+#include <getopt.h>
 
 #include "TError.h"
 #include "TColor.h"
@@ -18,6 +23,10 @@
 using namespace std;
 using namespace PlotOptTypes;
 
+namespace{
+  bool single_thread = false;
+}
+
 template<typename T>
 shared_ptr<Process> Proc(const string process_name, Process::Type type,
                          int color, const set<string> &files, const string &cut = "1"){
@@ -26,8 +35,9 @@ shared_ptr<Process> Proc(const string process_name, Process::Type type,
                               cut);
 }
 
-int main(){
+int main(int argc, char *argv[]){
   gErrorIgnoreLevel = 6000;
+  GetOptions(argc, argv);
 
   double lumi = 2.3;
 
@@ -124,5 +134,39 @@ int main(){
     TableRow("$N_{b}\\geq3$", "nleps==1&&ht>500&&met>500&&njets>=9&&nbm>=3&&mj14>400&&mt>140"),
   };
   pm.Push<Table>("cutflow", rows, full_trig_skim);
+
+  if(single_thread) pm.multithreaded_ = false;
   pm.MakePlots(lumi);
+}
+
+void GetOptions(int argc, char *argv[]){
+  while(true){
+    static struct option long_options[] = {
+      {"single_thread", no_argument, 0, 's'},
+      {0, 0, 0, 0}
+    };
+
+    char opt = -1;
+    int option_index;
+    opt = getopt_long(argc, argv, "s", long_options, &option_index);
+    
+    if( opt == -1) break;
+    
+    string optname;
+    switch(opt){
+    case 's':
+      single_thread = true;
+      break;
+    case '0':
+      optname = long_options[option_index].name;
+      if(false){
+      }else{
+        printf("Bad option! Found option name %s\n", optname.c_str());
+      }
+      break;
+    default:
+      printf("Bad option! getopt_long returned character code 0%o\n", opt);
+      break;
+    }
+  }
 }

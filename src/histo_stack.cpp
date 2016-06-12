@@ -113,59 +113,51 @@ HistoStack::SingleHist::SingleHist(const HistoStack &figure,
                                    const TH1D &hist):
   FigureComponent(figure, process),
   raw_hist_(hist),
-  scaled_hist_(){
+  scaled_hist_(),
+  proc_and_hist_cut_(figure.definition_.cut_ && process->cut_),
+  cut_vector_(),
+  wgt_vector_(),
+  val_vector_(){
   raw_hist_.Sumw2();
   scaled_hist_.Sumw2();
 }
 
-void HistoStack::SingleHist::RecordEvent(const Baby &baby,
-                                         const NamedFunc &process_cut){
+void HistoStack::SingleHist::RecordEvent(const Baby &baby){
   const HistoStack& stack = static_cast<const HistoStack&>(figure_);
   size_t min_vec_size;
   bool have_vec = false;
   
-  NamedFunc full_cut = process_cut && stack.definition_.cut_;
-  bool cut_is_scalar = full_cut.IsScalar();
-  NamedFunc::VectorType cut_vector;
-  if(cut_is_scalar){
-    if(!full_cut.GetScalar(baby)) return;
+  const NamedFunc &cut = proc_and_hist_cut_;
+  if(cut.IsScalar()){
+    if(!cut.GetScalar(baby)) return;
   }else{
-    cut_vector = full_cut.GetVector(baby);
-    bool have_pass = false;
-    for(const auto &x: cut_vector){
-      if(x){
-        have_pass = true;
-        break;
-      }
-    }
-    if(!have_pass) return;
+    cut_vector_ = cut.GetVector(baby);
+    if(!HavePass(cut_vector_)) return;
     have_vec = true;
-    min_vec_size = cut_vector.size();
+    min_vec_size = cut_vector_.size();
   }
 
-  bool wgt_is_scalar = stack.definition_.weight_.IsScalar();
+  const NamedFunc &wgt = stack.definition_.weight_;
   NamedFunc::ScalarType wgt_scalar = 0.;
-  NamedFunc::VectorType wgt_vector;
-  if(wgt_is_scalar){
-    wgt_scalar = stack.definition_.weight_.GetScalar(baby);
+  if(wgt.IsScalar()){
+    wgt_scalar = wgt.GetScalar(baby);
   }else{
-    wgt_vector = stack.definition_.weight_.GetVector(baby);
-    if(!have_vec || wgt_vector.size() < min_vec_size){
+    wgt_vector_ = wgt.GetVector(baby);
+    if(!have_vec || wgt_vector_.size() < min_vec_size){
       have_vec = true;
-      min_vec_size = wgt_vector.size();
+      min_vec_size = wgt_vector_.size();
     }
   }
 
-  bool val_is_scalar = stack.definition_.var_.IsScalar();
+  const NamedFunc &val = stack.definition_.var_;
   NamedFunc::ScalarType val_scalar = 0.;
-  NamedFunc::VectorType val_vector;
-  if(val_is_scalar){
-    val_scalar = stack.definition_.var_.GetScalar(baby);
+  if(val.IsScalar()){
+    val_scalar = val.GetScalar(baby);
   }else{
-    val_vector = stack.definition_.var_.GetVector(baby);
-    if(!have_vec || val_vector.size() < min_vec_size){
+    val_vector_ = val.GetVector(baby);
+    if(!have_vec || val_vector_.size() < min_vec_size){
       have_vec = true;
-      min_vec_size = val_vector.size();
+      min_vec_size = val_vector_.size();
     }
   }
 
@@ -173,11 +165,9 @@ void HistoStack::SingleHist::RecordEvent(const Baby &baby,
     raw_hist_.Fill(val_scalar, wgt_scalar);
   }else{
     for(size_t i = 0; i < min_vec_size; ++i){
-      NamedFunc::ScalarType this_cut = cut_is_scalar ? true : cut_vector.at(i);
-      if(!this_cut) continue;
-      NamedFunc::ScalarType this_wgt = wgt_is_scalar ? wgt_scalar : wgt_vector.at(i);
-      NamedFunc::ScalarType this_val = val_is_scalar ? val_scalar : val_vector.at(i);
-      raw_hist_.Fill(this_val, this_wgt);
+      if(cut.IsVector() && !cut_vector_.at(i)) continue;
+      raw_hist_.Fill(val.IsScalar() ? val_scalar : val_vector_.at(i),
+                     wgt.IsScalar() ? wgt_scalar : wgt_vector_.at(i));
     }
   }
 }

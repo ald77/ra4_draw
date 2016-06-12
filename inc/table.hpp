@@ -22,13 +22,15 @@ public:
     TableColumn& operator=(TableColumn &&) = default;
     ~TableColumn() = default;
 
-    void RecordEvent(const Baby &baby,
-                     const NamedFunc &process_cut) final;
+    void RecordEvent(const Baby &baby) final;
 
     std::vector<double> sumw_, sumw2_;
 
   private:
     TableColumn() = delete;
+
+    std::vector<NamedFunc> proc_and_table_cut_;
+    NamedFunc::VectorType cut_vector_, wgt_vector_, val_vector_;
   };
 
   Table(const std::string &name,

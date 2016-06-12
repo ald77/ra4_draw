@@ -947,3 +947,23 @@ ostream & operator<<(ostream &stream, const NamedFunc &function){
   stream << function.Name();
   return stream;
 }
+
+bool HavePass(const NamedFunc::VectorType &v){
+  for(const auto &x: v){
+    if(x) return true;
+  }
+  return false;
+}
+
+bool HavePass(const std::vector<NamedFunc::VectorType> &vv){
+  if(vv.size()==0) return false;
+  bool this_pass;
+  for(size_t ix = 0; ix < vv.at(0).size(); ++ix){
+    this_pass = true;
+    for(size_t iv = 0; this_pass && iv < vv.size(); ++iv){
+      if(ix>=vv.at(iv).size() || !vv.at(iv).at(ix)) this_pass = false;
+    }
+    if(this_pass) return true;
+  }
+  return false;
+}

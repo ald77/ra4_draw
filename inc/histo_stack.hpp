@@ -36,8 +36,7 @@ public:
     TH1D raw_hist_;//!<Histogram storing distribution before stacking and luminosity weighting
     mutable TH1D scaled_hist_;//!<Kludge. Mutable storage of scaled and stacked histogram
 
-    virtual void RecordEvent(const Baby &baby,
-                             const NamedFunc &process_cut);
+    void RecordEvent(const Baby &baby) final;
 
     double GetMax(double max_bound = std::numeric_limits<double>::infinity(),
                   bool include_error_bar = false,
@@ -48,6 +47,9 @@ public:
 
   private:
     SingleHist() = delete;
+
+    NamedFunc proc_and_hist_cut_;
+    NamedFunc::VectorType cut_vector_, wgt_vector_, val_vector_;
   };
 
   HistoStack(const HistoDef &definition,

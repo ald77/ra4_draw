@@ -20,8 +20,7 @@ public:
     FigureComponent& operator=(FigureComponent &&) = default;
     virtual ~FigureComponent() = default;
 
-    virtual void RecordEvent(const Baby &baby,
-                             const NamedFunc &process_cut) = 0;
+    virtual void RecordEvent(const Baby &baby) = 0;
 
     const Figure& figure_;//!<Reference to figure containing this component
     std::shared_ptr<Process> process_;//!<Process associated to this part of the figure
