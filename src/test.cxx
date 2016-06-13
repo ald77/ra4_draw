@@ -156,7 +156,7 @@ void GetOptions(int argc, char *argv[]){
     case 's':
       single_thread = true;
       break;
-    case '0':
+    case 0:
       optname = long_options[option_index].name;
       if(false){
       }else{
