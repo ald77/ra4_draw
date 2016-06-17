@@ -350,10 +350,10 @@ void HistoStack::Print(double luminosity){
     if(this_opt_.Bottom() != BottomType::off){
       bottom->cd();
 
-      string draw_opt = "ep";
+      string draw_opt = "e0";
       for(auto &h: bot_plots){
         h.Draw(draw_opt.c_str());
-        draw_opt = "ep same";
+        draw_opt = "e0 same";
       }
       bottom_background.Draw("2 same");
 
