@@ -55,6 +55,10 @@ void PlotMaker::MakePlots(double luminosity){
   }
 }
 
+const std::vector<std::unique_ptr<Figure> > & PlotMaker::Figures() const{
+  return figures_;
+}
+
 /*!\brief Empties list of plots to be produced at next PlotMaker::MakePlots call
  */
 void PlotMaker::Clear(){

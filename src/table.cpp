@@ -132,6 +132,48 @@ void Table::Print(double luminosity){
   cout << "Wrote table to " << file_name << "." << endl;
 }
 
+vector<GammaParams> Table::Yield(const std::shared_ptr<Process> &process) const{
+  const auto &component_list = GetComponentList(process);
+  const TableColumn *col = nullptr;
+  for(const auto &component: component_list){
+    if(component->process_ == process){
+      col = static_cast<const TableColumn *>(component.get());
+    }
+  }
+  if(col == nullptr) return vector<GammaParams>();
+  vector<GammaParams> yields(rows_.size());
+  for(size_t i = 0; i < yields.size(); ++i){
+    yields.at(i).SetYieldAndUncertainty(col->sumw_.at(i), sqrt(col->sumw2_.at(i)));
+  }
+  return yields;
+}
+
+vector<GammaParams> Table::BackgroundYield() const{
+  vector<GammaParams> yields(rows_.size());  
+  auto procs = GetProcesses();
+  for(const auto &proc: procs){
+    if(proc->type_ != Process::Type::background) continue;
+    vector<GammaParams> proc_yields = Yield(proc);
+    for(size_t i = 0; i < proc_yields.size(); ++i){
+      yields.at(i) += proc_yields.at(i);
+    }
+  }
+  return yields;
+}
+
+vector<GammaParams> Table::DataYield() const{
+  vector<GammaParams> yields(rows_.size());  
+  auto procs = GetProcesses();
+  for(const auto &proc: procs){
+    if(proc->type_ != Process::Type::data) continue;
+    vector<GammaParams> proc_yields = Yield(proc);
+    for(size_t i = 0; i < proc_yields.size(); ++i){
+      yields.at(i) += proc_yields.at(i);
+    }
+  }
+  return yields;
+}
+
 set<shared_ptr<Process> > Table::GetProcesses() const{
   set<shared_ptr<Process> > processes;
   for(const auto &proc: backgrounds_){
@@ -157,7 +199,7 @@ Figure::FigureComponent * Table::GetComponent(const shared_ptr<Process> &process
   return nullptr;
 }
 
-const vector<unique_ptr<Table::TableColumn> >& Table::GetComponentList(const shared_ptr<Process> &process){
+const vector<unique_ptr<Table::TableColumn> >& Table::GetComponentList(const shared_ptr<Process> &process) const{
   switch(process->type_){
   case Process::Type::data:
     return datas_;
