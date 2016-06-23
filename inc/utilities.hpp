@@ -10,6 +10,7 @@
 #include <mutex>
 
 #include "TH1D.h"
+#include "TRandom3.h"
 
 #define ERROR(x) do{throw std::runtime_error(string("Error in file ")+__FILE__+" at line "+to_string(__LINE__)+" (in "+__func__+"): "+x);}while(false)
 #define DBG(x) do{std::cerr << "In " << __FILE__ << " at line " << __LINE__ << " (in function " << __func__ << "): " << x << std::endl;}while(false)
@@ -54,5 +55,18 @@ std::string ToLongString(const T& x){
   oss << std::setprecision(std::numeric_limits<double>::max_digits10) << x << std::flush;
   return oss.str();
 }
+
+TString RoundNumber(double num, int decimals, double denom=1.);
+TString cuts2tex(TString cuts);
+
+double gsl_ran_gamma (const double a, const double b, TRandom3 &rand);
+double intGaus(double mean, double sigma, double minX, double maxX);
+// yields[Nobs][Nsam] has the entries for each sample for each observable going into kappa
+// weights[Nobs][Nsam] has the average weight of each observable for each sample
+// powers[Nobs] defines kappa = Product_obs{ Sum_sam{yields[sam][obs]*weights[sam][obs]}^powers[obs] }
+double calcKappa(std::vector<std::vector<float> > &entries, std::vector<std::vector<float> > &weights,
+		 std::vector<float> &powers, float &mSigma, float &pSigma, bool do_data=false, 
+		 bool verbose=false, double syst=-1., bool do_plot=false, int nrep=100000);
+
 
 #endif

@@ -57,12 +57,13 @@ void Table::TableColumn::RecordEvent(const Baby &baby){
     const NamedFunc &wgt = row.weight_;
 
     if(cut.IsScalar()){
-      if(!cut.GetScalar(baby)) return;
+      if(!cut.GetScalar(baby)) continue;
+      
     }else{
       cut_vector_ = cut.GetVector(baby);
       if(!have_vector || cut_vector_.size() < min_vec_size){
-	have_vector = true;
-	min_vec_size = cut_vector_.size();
+       have_vector = true;
+       min_vec_size = cut_vector_.size();
       }
     }
 
@@ -72,8 +73,8 @@ void Table::TableColumn::RecordEvent(const Baby &baby){
     }else{
       wgt_vector_ = wgt.GetVector(baby);
       if(!have_vector || wgt_vector_.size() < min_vec_size){
-	have_vector = true;
-	min_vec_size = wgt_vector_.size();
+       have_vector = true;
+       min_vec_size = wgt_vector_.size();
       }
     }
 
@@ -82,11 +83,11 @@ void Table::TableColumn::RecordEvent(const Baby &baby){
       sumw2_.at(irow) += wgt_scalar*wgt_scalar;
     }else{
       for(size_t iobject = 0; iobject < min_vec_size; ++iobject){
-	NamedFunc::ScalarType this_cut = cut.IsScalar() ? true : cut_vector_.at(iobject);
-	if(!this_cut) continue;
-	NamedFunc::ScalarType this_wgt = wgt.IsScalar() ? wgt_scalar : wgt_vector_.at(iobject);
-	sumw_.at(irow) += this_wgt;
-	sumw2_.at(irow) += this_wgt*this_wgt;
+       NamedFunc::ScalarType this_cut = cut.IsScalar() ? true : cut_vector_.at(iobject);
+       if(!this_cut) continue;
+       NamedFunc::ScalarType this_wgt = wgt.IsScalar() ? wgt_scalar : wgt_vector_.at(iobject);
+       sumw_.at(irow) += this_wgt;
+       sumw2_.at(irow) += this_wgt*this_wgt;
       }
     }
   }
