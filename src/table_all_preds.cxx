@@ -241,13 +241,13 @@ int main(int argc, char *argv[]){
   pm.MakePlots(lumi);
 
   Table * yield_table = static_cast<Table*>(pm.Figures().back().get());
-  vector<GammaParams> mcyield = yield_table->BackgroundYield();
+  vector<GammaParams> mcyield = yield_table->BackgroundYield(lumi);
   // for(const auto &yield: mcyield){
   //   cout << yield << endl;
   // }
-  vector<GammaParams> datayield = yield_table->DataYield();
+  vector<GammaParams> datayield = yield_table->DataYield(lumi);
   vector<GammaParams> otheryield;
-  if (do_other) otheryield = yield_table->Yield(other); 
+  if (do_other) otheryield = yield_table->Yield(other, lumi); 
 
 
   vector<float> pow_pred;

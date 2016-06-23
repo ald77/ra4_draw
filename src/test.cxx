@@ -138,7 +138,7 @@ int main(int argc, char *argv[]){
   pm.MakePlots(lumi);
 
   Table * the_table = static_cast<Table*>(pm.Figures().back().get());
-  vector<GammaParams> yields = the_table->BackgroundYield();
+  vector<GammaParams> yields = the_table->BackgroundYield(lumi);
   for(const auto &yield: yields){
     cout << yield << endl;
   }

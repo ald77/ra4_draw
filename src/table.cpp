@@ -133,7 +133,7 @@ void Table::Print(double luminosity){
   cout << "Wrote table to " << file_name << "." << endl;
 }
 
-vector<GammaParams> Table::Yield(const std::shared_ptr<Process> &process) const{
+vector<GammaParams> Table::Yield(const std::shared_ptr<Process> &process, double luminosity) const{
   const auto &component_list = GetComponentList(process);
   const TableColumn *col = nullptr;
   for(const auto &component: component_list){
@@ -144,17 +144,17 @@ vector<GammaParams> Table::Yield(const std::shared_ptr<Process> &process) const{
   if(col == nullptr) return vector<GammaParams>();
   vector<GammaParams> yields(rows_.size());
   for(size_t i = 0; i < yields.size(); ++i){
-    yields.at(i).SetYieldAndUncertainty(col->sumw_.at(i), sqrt(col->sumw2_.at(i)));
+    yields.at(i).SetYieldAndUncertainty(luminosity*col->sumw_.at(i), luminosity*sqrt(col->sumw2_.at(i)));
   }
   return yields;
 }
 
-vector<GammaParams> Table::BackgroundYield() const{
+vector<GammaParams> Table::BackgroundYield(double luminosity) const{
   vector<GammaParams> yields(rows_.size());  
   auto procs = GetProcesses();
   for(const auto &proc: procs){
     if(proc->type_ != Process::Type::background) continue;
-    vector<GammaParams> proc_yields = Yield(proc);
+    vector<GammaParams> proc_yields = Yield(proc, luminosity);
     for(size_t i = 0; i < proc_yields.size(); ++i){
       yields.at(i) += proc_yields.at(i);
     }
@@ -162,12 +162,12 @@ vector<GammaParams> Table::BackgroundYield() const{
   return yields;
 }
 
-vector<GammaParams> Table::DataYield() const{
+vector<GammaParams> Table::DataYield(double luminosity) const{
   vector<GammaParams> yields(rows_.size());  
   auto procs = GetProcesses();
   for(const auto &proc: procs){
     if(proc->type_ != Process::Type::data) continue;
-    vector<GammaParams> proc_yields = Yield(proc);
+    vector<GammaParams> proc_yields = Yield(proc, luminosity);
     for(size_t i = 0; i < proc_yields.size(); ++i){
       yields.at(i) += proc_yields.at(i);
     }

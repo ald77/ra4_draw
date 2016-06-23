@@ -43,9 +43,9 @@ public:
 
   void Print(double luminosity) final;
   
-  std::vector<GammaParams> Yield(const std::shared_ptr<Process> &process) const;
-  std::vector<GammaParams> BackgroundYield() const;
-  std::vector<GammaParams> DataYield() const;
+  std::vector<GammaParams> Yield(const std::shared_ptr<Process> &process, double luminosity) const;
+  std::vector<GammaParams> BackgroundYield(double luminosity) const;
+  std::vector<GammaParams> DataYield(double luminosity) const;
   
   std::set<std::shared_ptr<Process> > GetProcesses() const final;
 
