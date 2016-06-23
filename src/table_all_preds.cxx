@@ -53,8 +53,8 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))  
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_baseline/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_14/data/skim_standard/");
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_21/data/skim_standard/");
   if(method.Contains("met150")){
     foldermc = bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_1lht500met150nj5/";
     folderdata = bfolder+"/cms2r0/babymaker/babies/2016_06_14/data/merged_1lht500met150nj5/";
@@ -63,8 +63,15 @@ int main(int argc, char *argv[]){
   Palette colors("txt/colors.txt", "default");
 
   auto tt = Proc<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root"});
-    // {foldermc+"*_TTJets_Tu*.root"});
+    {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root",
+	foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
+	foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
+	foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
+	foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
+	foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
+	foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
+	foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
+    "stitch");
   auto other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
     {foldermc+"*_WJetsToLNu*",foldermc+"*_ST_*.root",
     foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
@@ -87,35 +94,52 @@ int main(int argc, char *argv[]){
   vector<TString> njbcuts_stdnob = {"njets>=6&&njets<=8", "njets>=9", "njets>=6&&njets<=8", "njets>=9"}; 
   vector<TString> njbcuts_2l = {"njets>=5&&njets<=7", "njets>=8", "njets>=5&&njets<=7", "njets>=8"}; 
   vector<TString> njbcuts_5j = {"nbm==1&&njets==5", "nbm>=2&&njets==5", "nbm==1&&njets==5", "nbm>=2&&njets==5"}; 
-  vector<TString> njbcuts_m1lmet150nb12 = {"nbm==1&&njets>=6&&njets<=8", "nbm>=2&&njets>=6&&njets<=8", 
-               "nbm==1&&njets>=9", "nbm>=2&&njets>=9"}; 
-  vector<TString> njbcuts_std = {"nbm==1&&njets>=6&&njets<=8", "nbm==2&&njets>=6&&njets<=8", "nbm>=3&&njets>=6&&njets<=8", 
-         "nbm==1&&njets>=9", "nbm==2&&njets>=9", "nbm>=3&&njets>=9",
-         "nbm==1&&njets>=6&&njets<=8", "nbm==2&&njets>=6&&njets<=8", "nbm>=3&&njets>=6&&njets<=8", 
-         "nbm= =1&&njets>=9", "nbm==2&&njets>=9", "nbm>=3&&njets>=9"}; 
+  vector<TString> njbcuts_m1lmet150nb12 = {"nbm==1&&njets>=6&&njets<=8", "nbm==1&&njets>=9", 
+					   "nbm>=2&&njets>=6&&njets<=8", "nbm>=2&&njets>=9"}; 
+  vector<TString> njbcuts_std = {"nbm==1&&njets>=6&&njets<=8", "nbm==1&&njets>=9", 
+				 "nbm==2&&njets>=6&&njets<=8", "nbm==2&&njets>=9", 
+				 "nbm>=3&&njets>=6&&njets<=8", "nbm>=3&&njets>=9",
+				 "nbm==1&&njets>=6&&njets<=8", "nbm==1&&njets>=9", 
+				 "nbm==2&&njets>=6&&njets<=8", "nbm==2&&njets>=9", 
+				 "nbm>=3&&njets>=6&&njets<=8", "nbm>=3&&njets>=9"}; 
   vector<TString> njbcuts_nb1 = {"nbm==1&&njets>=6&&njets<=8", "nbm==1&&njets>=9", 
-         "nbm==2&&njets>=6&&njets<=8", "nbm>=3&&njets>=6&&njets<=8", 
-         "nbm==2&&njets>=9", "nbm>=3&&njets>=9"}; 
-  vector<TString> njbcuts_met500 = {"nbm==1&&njets>=6&&njets<=8", "nbm==2&&njets>=6&&njets<=8", "nbm>=3&&njets>=6&&njets<=8", 
-         "nbm==1&&njets>=9", "nbm==2&&njets>=9", "nbm>=3&&njets>=9"}; 
+				 "nbm==2&&njets>=6&&njets<=8", "nbm==2&&njets>=9", 
+				 "nbm>=3&&njets>=6&&njets<=8", "nbm>=3&&njets>=9"}; 
+  vector<TString> njbcuts_met500 = {"nbm==1&&njets>=6&&njets<=8", "nbm==1&&njets>=9", 
+				    "nbm==2&&njets>=6&&njets<=8", "nbm==2&&njets>=9", 
+				    "nbm>=3&&njets>=6&&njets<=8", "nbm>=3&&njets>=9"}; 
   vector<TString> njbcuts_m1lmet150 = {"njets>=6&&njets<=8", "njets>=9"}; 
   vector<TString> njbcuts_m2lmet150 = {"njets>=5&&njets<=7", "njets>=8"}; 
+  vector<TString> njbcuts_2lveto_lonj = {"njets>=5", "njets>=5"}; 
+  vector<TString> njbcuts_2lveto_hinj = {"njets>=8", "njets>=8"}; 
+
 
   size_t ilowmet(2); // njbcuts index up to which metcuts[0] is applied
   vector<TString> metcuts = {"met<=350", "met>350&&met<=500"};
 
   vector<TString> abcdcuts_std = {"mt<=140&&mj14<=400", 
-           "mt<=140&&mj14>400", 
-           "mt>140&&mj14<=400",          
-           "mt>140&&mj14>400"};
+				  "mt<=140&&mj14>400", 
+				  "mt>140&&mj14<=400",          
+				  "mt>140&&mj14>400"};
+  vector<TString> abcdcuts_2lveto_lonj = {"mt<=140&&mj14<=400&&nleps==1&&nveto==0&&nbm>=1&&njets>=6", 
+   					  "mt<=140&&mj14>400&&nleps==1&&nveto==0&&nbm>=1&&njets>=6&&njets<=8", 
+   					  "mj14<=400&&(nleps==2&&nbm<=2&&njets>=5 || nleps==1&&nveto==1&&nbm>=1&&nbm<=2&&mt>140&&njets>=6)",          
+   					  "mj14>400&&(nleps==2&&nbm<=2&&njets>=5&&njets<=7 || nleps==1&&nveto==1&&nbm>=1&&nbm<=2&&mt>140&&njets>=6&&njets<=8)"};
+
+
+  vector<TString> abcdcuts_2lveto_hinj = {"mt<=140&&mj14<=400&&nleps==1&&nveto==0&&nbm>=1&&njets>=6", 
+					  "mt<=140&&mj14>400&&nleps==1&&nveto==0&&nbm>=1&&njets>=9", 
+					  "mj14<=400&&(nleps==2&&nbm<=2&&njets>=5 || nleps==1&&nveto==1&&nbm>=1&&nbm<=2&&mt>140&&njets>=6)",          
+					  "mj14>400&&(nleps==2&&nbm<=2&&njets>=8 || nleps==1&&nveto==1&&nbm>=1&&nbm<=2&&mt>140&&njets>=9)"};
+
   vector<TString> abcdcuts_veto = {"mt<=140&&mj14<=400&&njets>=6&&nbm>=1&&nleps==1&&nveto==0", 
-           "mt<=140&&mj14>400&&nbm>=1&&nleps==1&&nveto==0", 
-           "mt>140&&mj14<=400&&njets>=6&&nbm>=1&&nbm<=2&&nleps==1&&nveto==1",          
-           "mt>140&&mj14>400&&njets>=6&&nbm>=1&&nbm<=2&&nleps==1&&nveto==1"};
+				   "mt<=140&&mj14>400&&nbm>=1&&nleps==1&&nveto==0", 
+				   "mt>140&&mj14<=400&&njets>=6&&nbm>=1&&nbm<=2&&nleps==1&&nveto==1",          
+				   "mt>140&&mj14>400&&njets>=6&&nbm>=1&&nbm<=2&&nleps==1&&nveto==1"};
   vector<TString> abcdcuts_2l = {"mt<=140&&mj14<=400&&njets>=6&&nbm>=1&&nleps==1&&nveto==0", 
-         "mt<=140&&mj14>400&&nbm>=1&&nleps==1&&nveto==0", 
-         "mj14<=400&&nbm<=2&&nleps==2",          
-         "mj14>400&&nbm<=2&&nleps==2"};
+				 "mt<=140&&mj14>400&&nbm>=1&&nleps==1&&nveto==0", 
+				 "mj14<=400&&nbm<=2&&nleps==2",          
+				 "mj14>400&&nbm<=2&&nleps==2"};
 
 
   vector<TString> abcdcuts, njbcuts_himt = njbcuts_stdnob;
@@ -126,8 +150,8 @@ int main(int argc, char *argv[]){
 
   if(full_lumi){
     base_all = "mj14>250&&pass&&stitch&&";
-    lumi = 2.07;
-    lumi_s = "2.07 fb$^{-1}$";
+    lumi = 2.6;
+    lumi_s = "2.6 fb$^{-1}$";
   }
 
   if(method=="m2l") {
@@ -136,6 +160,22 @@ int main(int argc, char *argv[]){
     abcdcuts = abcdcuts_2l;
     region_s = "D";
     method_s = "$2\\ell$";
+  } else if(method=="m2lveto_lonj") {
+    base_s = base_all+"njets>=5";
+    njbcuts = njbcuts_2lveto_lonj;
+    njbcuts_himt = njbcuts_2lveto_lonj;
+    abcdcuts = abcdcuts_2lveto_lonj;
+    region_s = "D";
+    method_s = "$2\\ell\\text{ or }N_{\\rm veto}$";
+    ilowmet = 1;
+  } else if(method=="m2lveto_hinj") {
+    base_s = base_all+"njets>=5";
+    njbcuts = njbcuts_2lveto_hinj;
+    njbcuts_himt = njbcuts_2lveto_hinj;
+    abcdcuts = abcdcuts_2lveto_hinj;
+    region_s = "D";
+    method_s = "$2\\ell\\text{ or }N_{\\rm veto}$";
+    ilowmet = 1;
   } else if(method=="mveto") {
     base_s = base_all+"njets>=6&&nbm>=1&&nleps==1";
     njbcuts_himt = njbcuts_stdnob;
@@ -152,8 +192,6 @@ int main(int argc, char *argv[]){
     base_s = base_all+"njets>=6&&nbm>=1&&nleps==1&&nveto==0";
     njbcuts = njbcuts_m1lmet150nb12;
     njbcuts_himt = njbcuts_m1lmet150nb12;
-    // njbcuts = njbcuts_m1lmet150;
-    // njbcuts_himt = njbcuts_m1lmet150;
     abcdcuts = abcdcuts_std;
     method_s = "$1\\ell$, MET150";
     ilowmet = njbcuts.size();
@@ -213,6 +251,38 @@ int main(int argc, char *argv[]){
     metcuts[0] = "met>500&&nbm==1";
     metcuts[1] = "met>500&&nbm>=2";
     ilowmet = 2;
+  }else if(method=="agg_himet"){
+    base_s = base_all+"met>500&&njets>=6&&nbm>=3";
+    njbcuts = vector<TString>{"nbm>=3&&njets>=6"};
+    njbcuts_himt = njbcuts;
+    abcdcuts = abcdcuts_std;
+    method_s = "Agg. Bin: $1\\ell$, MET500, $N_{j}\\geq6$, $N_{b}\\geq3$";
+    metcuts = vector<TString>{"met>500"};
+    ilowmet = 1;
+  }else if(method=="agg_mixed"){
+    base_s = base_all+"met>350&&njets>=9&&nbm>=2";
+    njbcuts = vector<TString>{"nbm>=2&&njets>=9"};
+    njbcuts_himt = njbcuts;
+    abcdcuts = abcdcuts_std;
+    method_s = "Agg. Bin: $1\\ell$, MET350, $N_{j}\\geq9$, $N_{b}\\geq2$";
+    metcuts = vector<TString>{"met>350"};
+    ilowmet = 1;
+  }else if(method=="agg_himult"){
+    base_s = base_all+"met>200&&njets>=9&&nbm>=3";
+    njbcuts = vector<TString>{"nbm>=3&&njets>=9"};
+    njbcuts_himt = njbcuts;
+    abcdcuts = abcdcuts_std;
+    method_s = "Agg. Bin: $1\\ell$, MET200, $N_{j}\\geq9$, $N_{b}\\geq3$";
+    metcuts = vector<TString>{"met>200"};
+    ilowmet = 1;
+  }else if(method=="agg_1b"){
+    base_s = base_all+"met>500&&njets>=9&&nbm>=1";
+    njbcuts = vector<TString>{"nbm>=1&&njets>=9"};
+    njbcuts_himt = njbcuts;
+    abcdcuts = abcdcuts_std;
+    method_s = "Agg. Bin: $1\\ell$, MET500, $N_{j}\\geq9$, $N_{b}\\geq1$";
+    metcuts = vector<TString>{"met>500"};
+    ilowmet = 1;
   }else {
     cout<<"Method "<<method<<" not available. Exiting"<<endl<<endl; 
     return 0;
@@ -223,10 +293,12 @@ int main(int argc, char *argv[]){
   ////// Finding yields 
   vector<TableRow> bincuts;
   for(size_t ind(0); ind<njbcuts.size(); ind++){
+    //cout<<endl<<"New njb"<<endl;
     for(size_t obs(0); obs < abcdcuts.size(); obs++){
       TString totcut(abcdcuts[obs]+"&&"+metcuts[ind>=ilowmet]);
       if(obs == 1) totcut += ("&&"+njbcuts[ind]);
       if(obs == 3) totcut += ("&&"+njbcuts_himt[ind]);
+      //cout<<base_s+"&&"+totcut<<endl;
       bincuts.push_back(TableRow((base_s+"&&"+totcut).Data(),(base_s+"&&"+totcut).Data()));
     } // Loop over observables going into kappa
   } // Loop over signal bins
@@ -245,7 +317,7 @@ int main(int argc, char *argv[]){
   // for(const auto &yield: mcyield){
   //   cout << yield << endl;
   // }
-  vector<GammaParams> datayield = yield_table->DataYield(lumi);
+  vector<GammaParams> datayield = yield_table->DataYield(1);
   vector<GammaParams> otheryield;
   if (do_other) otheryield = yield_table->Yield(other, lumi); 
 
@@ -293,13 +365,13 @@ int main(int argc, char *argv[]){
         k *= pow(mcyield[index].Yield(), pow_tot[3+obs]);
         entries.push_back(vector<float>());
         weights.push_back(vector<float>());
-        entries.back().push_back(pow(mcyield[index].Yield(),2)/pow(mcyield[index].Weight(),2));
-        weights.back().push_back(pow(mcyield[index].Weight(),2)/mcyield[index].Yield());
+        entries.back().push_back(mcyield[index].NEffective());
+        weights.back().push_back(mcyield[index].Weight());
 
         kn.push_back(vector<float>());
         kw.push_back(vector<float>());
-        kn.back().push_back(pow(mcyield[index].Yield(),2)/pow(mcyield[index].Weight(),2));
-        kw.back().push_back(pow(mcyield[index].Weight(),2)/mcyield[index].Yield());
+        kn.back().push_back(mcyield[index].NEffective());
+        kw.back().push_back(mcyield[index].Weight());
       } else {
         k *= pow(mcyield[index].Yield()+otheryield[index].Yield(), pow_tot[3+obs]);
         float f(otheryield[index].Yield()/(mcyield[index].Yield()+otheryield[index].Yield()));
@@ -336,7 +408,7 @@ int main(int argc, char *argv[]){
 
   ///// Printing table
   TString outname = "txt/table_predictions_lumi0p815_"+method+".tex";
-  if(full_lumi) outname.ReplaceAll("lumi0p815", "lumi2p07");
+  if(full_lumi) outname.ReplaceAll("lumi0p815", "lumi2p6");
   if(unblind) outname.ReplaceAll("lumi", "unblind_lumi");
 
   if(do_other) outname.ReplaceAll("predictions", "other_sys");
