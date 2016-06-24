@@ -55,6 +55,10 @@ void PlotMaker::MakePlots(double luminosity){
   }
 }
 
+const std::vector<std::unique_ptr<Figure> > & PlotMaker::Figures() const{
+  return figures_;
+}
+
 /*!\brief Empties list of plots to be produced at next PlotMaker::MakePlots call
  */
 void PlotMaker::Clear(){
@@ -110,7 +114,7 @@ long PlotMaker::GetYield(const std::shared_ptr<Process> &process){
   long num_entries = baby.GetEntries();
   {
     lock_guard<mutex> lock(print_mutex);
-    cout << process->name_ << " has " << num_entries << " entries." << endl;
+    cout << process->name_ << " has " << num_entries << " entries and cut "<<process->cut_.PlainName() << endl;
   }
 
   set<Figure::FigureComponent*> figure_components = GetComponents(process);
@@ -138,7 +142,7 @@ long PlotMaker::GetYield(const std::shared_ptr<Process> &process){
     lock_guard<mutex> lock(print_mutex);
     cout << "Finished processing " << process->name_ << ". "
 	 << num_entries << " events in " << num_seconds << " seconds = "
-	 << 0.001*num_entries/num_seconds << " kHz." << endl;
+	 << 0.001*num_entries/num_seconds << " kHz. "<< endl;
   }
   return num_entries;
 }

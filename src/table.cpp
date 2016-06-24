@@ -57,12 +57,13 @@ void Table::TableColumn::RecordEvent(const Baby &baby){
     const NamedFunc &wgt = row.weight_;
 
     if(cut.IsScalar()){
-      if(!cut.GetScalar(baby)) return;
+      if(!cut.GetScalar(baby)) continue;
+      
     }else{
       cut_vector_ = cut.GetVector(baby);
       if(!have_vector || cut_vector_.size() < min_vec_size){
-	have_vector = true;
-	min_vec_size = cut_vector_.size();
+       have_vector = true;
+       min_vec_size = cut_vector_.size();
       }
     }
 
@@ -72,8 +73,8 @@ void Table::TableColumn::RecordEvent(const Baby &baby){
     }else{
       wgt_vector_ = wgt.GetVector(baby);
       if(!have_vector || wgt_vector_.size() < min_vec_size){
-	have_vector = true;
-	min_vec_size = wgt_vector_.size();
+       have_vector = true;
+       min_vec_size = wgt_vector_.size();
       }
     }
 
@@ -82,11 +83,11 @@ void Table::TableColumn::RecordEvent(const Baby &baby){
       sumw2_.at(irow) += wgt_scalar*wgt_scalar;
     }else{
       for(size_t iobject = 0; iobject < min_vec_size; ++iobject){
-	NamedFunc::ScalarType this_cut = cut.IsScalar() ? true : cut_vector_.at(iobject);
-	if(!this_cut) continue;
-	NamedFunc::ScalarType this_wgt = wgt.IsScalar() ? wgt_scalar : wgt_vector_.at(iobject);
-	sumw_.at(irow) += this_wgt;
-	sumw2_.at(irow) += this_wgt*this_wgt;
+       NamedFunc::ScalarType this_cut = cut.IsScalar() ? true : cut_vector_.at(iobject);
+       if(!this_cut) continue;
+       NamedFunc::ScalarType this_wgt = wgt.IsScalar() ? wgt_scalar : wgt_vector_.at(iobject);
+       sumw_.at(irow) += this_wgt;
+       sumw2_.at(irow) += this_wgt*this_wgt;
       }
     }
   }
@@ -132,6 +133,48 @@ void Table::Print(double luminosity){
   cout << "Wrote table to " << file_name << "." << endl;
 }
 
+vector<GammaParams> Table::Yield(const std::shared_ptr<Process> &process, double luminosity) const{
+  const auto &component_list = GetComponentList(process);
+  const TableColumn *col = nullptr;
+  for(const auto &component: component_list){
+    if(component->process_ == process){
+      col = static_cast<const TableColumn *>(component.get());
+    }
+  }
+  if(col == nullptr) return vector<GammaParams>();
+  vector<GammaParams> yields(rows_.size());
+  for(size_t i = 0; i < yields.size(); ++i){
+    yields.at(i).SetYieldAndUncertainty(luminosity*col->sumw_.at(i), luminosity*sqrt(col->sumw2_.at(i)));
+  }
+  return yields;
+}
+
+vector<GammaParams> Table::BackgroundYield(double luminosity) const{
+  vector<GammaParams> yields(rows_.size());  
+  auto procs = GetProcesses();
+  for(const auto &proc: procs){
+    if(proc->type_ != Process::Type::background) continue;
+    vector<GammaParams> proc_yields = Yield(proc, luminosity);
+    for(size_t i = 0; i < proc_yields.size(); ++i){
+      yields.at(i) += proc_yields.at(i);
+    }
+  }
+  return yields;
+}
+
+vector<GammaParams> Table::DataYield(double luminosity) const{
+  vector<GammaParams> yields(rows_.size());  
+  auto procs = GetProcesses();
+  for(const auto &proc: procs){
+    if(proc->type_ != Process::Type::data) continue;
+    vector<GammaParams> proc_yields = Yield(proc, luminosity);
+    for(size_t i = 0; i < proc_yields.size(); ++i){
+      yields.at(i) += proc_yields.at(i);
+    }
+  }
+  return yields;
+}
+
 set<shared_ptr<Process> > Table::GetProcesses() const{
   set<shared_ptr<Process> > processes;
   for(const auto &proc: backgrounds_){
@@ -157,7 +200,7 @@ Figure::FigureComponent * Table::GetComponent(const shared_ptr<Process> &process
   return nullptr;
 }
 
-const vector<unique_ptr<Table::TableColumn> >& Table::GetComponentList(const shared_ptr<Process> &process){
+const vector<unique_ptr<Table::TableColumn> >& Table::GetComponentList(const shared_ptr<Process> &process) const{
   switch(process->type_){
   case Process::Type::data:
     return datas_;

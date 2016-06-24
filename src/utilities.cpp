@@ -11,6 +11,10 @@
 
 #include <unistd.h>
 
+#include "TMath.h"
+#include "TCanvas.h"
+#include "TH1D.h"
+
 using namespace std;
 
 mutex Multithreading::root_mutex;
@@ -126,4 +130,209 @@ string FixedDigits(double x, int n_digits){
     out = out.substr(1);
   }
   return out;
+}
+
+TString RoundNumber(double num, int decimals, double denom){
+  if(denom==0) return " - ";
+  double neg = 1; if(num*denom<0) neg = -1;
+  num /= neg*denom; num += 0.5*pow(10.,-decimals);
+  long num_int = static_cast<long>(num);
+  long num_dec = static_cast<long>((1+num-num_int)*pow(10.,decimals));
+  TString s_dec = ""; s_dec += num_dec; s_dec.Remove(0,1);
+  TString result="";
+  if(neg<0) result+="-";
+  result+= num_int;
+  if(decimals>0) {
+    result+="."; result+=s_dec;
+  }
+
+  TString afterdot = result;
+  afterdot.Remove(0,afterdot.First(".")+1);
+  for(int i=0; i<decimals-afterdot.Length(); i++)
+    result += "0";
+  return result;
+}
+
+TString cuts2tex(TString cuts){
+  cuts.ReplaceAll(" ", "");
+  if(cuts.Contains("met>200")){
+    if(cuts.Contains("met<=400")) {
+      cuts.ReplaceAll("met<=400", "");
+      cuts.ReplaceAll("met>200", "200<met<=400");
+    }
+    if(cuts.Contains("met>400")) {
+      cuts.ReplaceAll("met>400", "");
+      cuts.ReplaceAll("met>200", "met>400");
+    }
+  }
+  //cuts.ReplaceAll("1&&", ""); 
+  cuts.ReplaceAll("&&1", "");
+  cuts.ReplaceAll("trig[0]", "\\text{HT350\\_MET100}");  cuts.ReplaceAll("trig[22]", "\\text{Ele27\\_eta2p1}");   
+  cuts.ReplaceAll("trig[4]", "\\text{Mu15\\_VVVL}"); cuts.ReplaceAll("trig[8]", "\\text{Ele15\\_VVVL}"); 
+  cuts.ReplaceAll("trig[14]", "\\text{MET170}");  cuts.ReplaceAll("trig[28]", "\\text{MET90}");  
+  cuts.ReplaceAll("trig[12]", "\\text{HT800}");  
+
+  cuts.ReplaceAll("&&&&", "&&");  cuts.ReplaceAll("&&", ", ");  
+  cuts.ReplaceAll("elelv_m", "m_{ee}"); cuts.ReplaceAll("elel_m", "m_{ee}"); cuts.ReplaceAll("elelv_pt", "p^{ee}_T"); 
+  cuts.ReplaceAll("mumuv_m", "m_{\\mu\\mu}"); cuts.ReplaceAll("mumu_m", "m_{\\mu\\mu}"); 
+  cuts.ReplaceAll("mumuv_pt", "p^{\\mu\\mu}_T"); 
+  cuts.ReplaceAll("ht_ra2", "H_T"); cuts.ReplaceAll("ht_clean", "H_T"); cuts.ReplaceAll("ht", "H_T"); 
+  cuts.ReplaceAll("mj14", "M_J^{1.4}"); cuts.ReplaceAll("mj", "M_J"); cuts.ReplaceAll("met", "\\mathrm{MET}");  
+  cuts.ReplaceAll("njets_ra2", "n_j");  cuts.ReplaceAll("njets_clean", "n_j");  cuts.ReplaceAll("njets", "N_j");  
+  cuts.ReplaceAll("nbm", "N_b");  cuts.ReplaceAll("nleps", "n_{\\ell}"); 
+  cuts.ReplaceAll("nvels", "n_e"); cuts.ReplaceAll("nels", "n_e");  
+  cuts.ReplaceAll("nvmus", "n_\\mu"); cuts.ReplaceAll("nmus", "n_\\mu");  cuts.ReplaceAll("nveto", "N_{\\rm veto}");  
+  cuts.ReplaceAll(">=", "\\geq ");  cuts.ReplaceAll("<=", " \\leq "); cuts.ReplaceAll("==", " = ");
+  cuts.ReplaceAll("pass_jets","\\text{JetID}"); cuts.ReplaceAll("pass_ra2, ","");cuts.ReplaceAll("pass, ","");
+  cuts.ReplaceAll("pass","\\text{all filters}");
+
+  cuts = "$"+cuts+"$";
+  return cuts;
+}
+
+// Code from http://www.hongliangjie.com/2012/12/19/how-to-generate-gamma-random-variables/
+// Parameter b could be theta...
+double gsl_ran_gamma(const double a, const double b, TRandom3 &rand){
+  if (a < 1){
+    double u = rand.Uniform(1);
+    return gsl_ran_gamma(1.0 + a, b, rand) * pow (u, 1.0 / a);
+  }
+
+  double x, v, u;
+  double d = a - 1.0 / 3.0;
+  double c = (1.0 / 3.0) / sqrt (d);
+  
+  while (1) {
+    do {
+      x = rand.Gaus(0, 1.0);
+      v = 1.0 + c * x;
+    }
+    while (v <= 0);
+      
+    v = v * v * v;
+    u = rand.Uniform(1);
+
+    if (u < 1 - 0.0331 * x * x * x * x) 
+      break;
+
+    if (log (u) < 0.5 * x * x + d * (1 - v + log (v)))
+      break;
+  }
+    
+  return b * d * v;
+}
+
+double intGaus(double mean, double sigma, double minX, double maxX){
+  return (TMath::Erf((maxX-mean)/sigma/sqrt(2.))-TMath::Erf((minX-mean)/sigma/sqrt(2.)))/2.;
+}
+
+// yields[Nobs][Nsam] has the entries for each sample for each observable going into kappa
+// weights[Nobs][Nsam] has the average weight of each observable for each sample
+// powers[Nobs] defines kappa = Product_obs{ Sum_sam{yields[sam][obs]*weights[sam][obs]}^powers[obs] }
+double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weights,
+                 vector<float> &powers, float &mSigma, float &pSigma, bool do_data,
+                 bool verbose, double syst, bool do_plot, int nrep){
+  TRandom3 rand(1234);
+  int nbadk(0);
+  vector<float> fKappas;
+  double mean(0.), bignum(1e10);
+  // Doing kappa variations
+  for(int rep(0), irep(0); rep < nrep; rep++) {
+    fKappas.push_back(1.);
+    bool Denom_is0(false);
+    for(unsigned obs(0); obs < powers.size(); obs++) {
+      float observed(0.);
+      for(unsigned sam(0); sam < entries[obs].size(); sam++) {
+        // With a flat prior, the expected average of the Poisson with N observed is Gamma(N+1,1)
+        // Rounding the expected yield for data stats
+        if(do_data) observed += entries[obs][sam]*weights[obs][sam];
+        else observed += gsl_ran_gamma(entries[obs][sam]+1,1,rand)*weights[obs][sam];
+      } // Loop over samples
+      //if(do_data) observed = gsl_ran_gamma(static_cast<int>(0.5+observed)+1,1,rand);
+      if(do_data) observed = gsl_ran_gamma(observed+1,1,rand);
+      if(observed <= 0 && powers[obs] < 0) Denom_is0 = true;
+      else fKappas[irep] *= pow(observed, powers[obs]);
+    } // Loop over number of observables going into kappa
+
+    if(syst>=0){
+      double factor = exp(rand.Gaus(0,log(1+syst)));
+      fKappas[irep] *= factor;
+    }
+    if(Denom_is0 && fKappas[irep]==0) {
+      fKappas.pop_back();
+      nbadk++;
+    }else {
+      if(Denom_is0) fKappas[irep] = bignum;
+      else mean += fKappas[irep];
+      irep++;
+    }
+  } // Loop over fluctuations of kappa (repetitions)
+  int ntot(nrep-nbadk);
+  mean /= static_cast<double>(ntot);
+
+  sort(fKappas.begin(), fKappas.end());
+  double gSigma = intGaus(0,1,0,1);
+  int iMedian((nrep-nbadk+1)/2-1);
+  int imSigma(iMedian-static_cast<int>(gSigma*ntot)), ipSigma(iMedian+static_cast<int>(gSigma*ntot));
+  float median(fKappas[iMedian]);
+  mSigma = median-fKappas[imSigma]; pSigma = fKappas[ipSigma]-median;
+
+  // Finding standard value
+  float stdval(1.);
+  bool infStd(false);
+  for(unsigned obs(0); obs < powers.size(); obs++) {
+    float stdyield(0.);
+    if(verbose) cout<<obs<<": ";
+    for(unsigned sam(0); sam < entries[obs].size(); sam++) {
+      if(verbose) cout<<"Yield"<<sam<<" "<<entries[obs][sam]*weights[obs][sam]
+                      <<", N"<<sam<<" "<<entries[obs][sam]
+                      <<", avW"<<sam<<" "<<weights[obs][sam]<<". ";
+      stdyield += entries[obs][sam]*weights[obs][sam];
+    }
+    if(verbose) cout<<"  ==> Total yield "<<stdyield<<endl;
+    if(stdyield <= 0 && powers[obs] < 0) infStd = true;
+    else stdval *= pow(stdyield, powers[obs]);
+  } // Loop over number of observables going into kappa
+  if(infStd) stdval = median;
+  else {
+    int istd(0);
+    for(int rep(0); rep < ntot; rep++) 
+      if(fKappas[rep]>stdval) {istd = rep; break;}
+    imSigma = istd-static_cast<int>(gSigma*ntot);
+    ipSigma = istd+static_cast<int>(gSigma*ntot);
+    if(imSigma<0){ // Adjusting the length of the interval in case imSigma has less than 1sigma
+      ipSigma += (-imSigma);
+      imSigma = 0;
+    }
+    if(ipSigma>=ntot){ // Adjusting the length of the interval in case ipSigma has less than 1sigma
+      imSigma -= (ipSigma-ntot+1);
+      ipSigma = ntot-1;
+    }
+    mSigma = stdval-fKappas[imSigma]; pSigma = fKappas[ipSigma]-stdval;
+  }
+
+  TCanvas can;
+  int nbins(100);
+  double minH(stdval-3*mSigma), maxH(stdval+3*pSigma);
+  if(minH < fKappas[0]) minH = fKappas[0];
+  if(maxH > fKappas[ntot-1]) maxH = fKappas[ntot-1];
+  TH1D histo("h","",nbins, minH, maxH);
+  for(int rep(0); rep < ntot; rep++) 
+    histo.Fill(fKappas[rep]);   
+  //histo.SetBinContent(1, histo.GetBinContent(1)+nbadk);
+  //histo.SetBinContent(nbins, histo.GetBinContent(nbins)+histo.GetBinContent(nbins+1));
+  histo.Scale(1/histo.Integral());
+  histo.SetMaximum(histo.GetMaximum()*1.2);
+  histo.SetLineWidth(3);
+  histo.Draw();
+  histo.SetXTitle("Expected value");
+  histo.SetYTitle("Probability");
+  histo.Draw();
+  if(do_plot) can.SaveAs("test.eps");
+
+  double mode(histo.GetBinLowEdge(histo.GetMaximumBin()));
+  if(verbose) cout<<"Std kappa = "<<stdval<<"+"<<pSigma<<"-"<<mSigma<<".   Mean = "<<mean
+                  <<". Mode = "<<mode<<". Median = "<<median<<endl;
+
+  return stdval;
 }

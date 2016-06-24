@@ -27,6 +27,7 @@ public:
 
   void MakePlots(double luminosity);
 
+  const std::vector<std::unique_ptr<Figure> > & Figures() const;
   void Clear();
 
   bool multithreaded_;

@@ -624,7 +624,8 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
   file << "  chain_ = unique_ptr<TChain>(new TChain(\"tree\"));\n";
   file << "  for(const auto &file: file_names){\n";
-  file << "    chain_->Add((file+\"/tree\").c_str());\n";
+  file << "    chain_->Add((file).c_str());\n";
+  //file << "    chain_->Add((file+\"/tree\").c_str());\n";
   file << "  }\n";
   file << "}\n";
 
