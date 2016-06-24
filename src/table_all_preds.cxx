@@ -9,6 +9,7 @@
 #include <getopt.h>
 
 #include "TError.h" // Controls error level reporting
+#include "RooStats/NumberCountingUtils.h"
 
 #include "utilities.hpp"
 #include "baby.hpp"
@@ -39,6 +40,16 @@ shared_ptr<Process> Proc(const string process_name, Process::Type type,
 }
 
 void GetOptions(int argc, char *argv[]);
+TString Zbi(double Nobs, double Nbkg, double Ebkg){
+  double Nsig = Nobs-Nbkg;
+  double zbi = RooStats::NumberCountingUtils::BinomialExpZ(Nsig, Nbkg, Ebkg/Nbkg);
+  if(Nbkg==0) zbi = RooStats::NumberCountingUtils::BinomialWithTauExpZ(Nsig, Nbkg, 1/Ebkg);
+  if(zbi<0) zbi=0;
+  TString zbi_s = "$"+RoundNumber(zbi,1)+"\\sigma$";
+  if(Nsig<=0) zbi_s = "$-\\sigma$";
+  //cout<<"Zbi for Nobs "<<Nobs<<", Nbkg "<<Nbkg<<", Ebkg "<<Ebkg<<" is "<<zbi_s<<endl;
+  return zbi_s;
+}
 
 int main(int argc, char *argv[]){ 
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
@@ -59,6 +70,10 @@ int main(int argc, char *argv[]){
     foldermc = bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_1lht500met150nj5/";
     folderdata = bfolder+"/cms2r0/babymaker/babies/2016_06_14/data/merged_1lht500met150nj5/";
   }
+  if(method.Contains("2015")){
+    foldermc = bfolder+"/cms2r0/babymaker/babies/2016_04_29/mc/merged_1lht500met200/";
+    folderdata = bfolder+"/cms2r0/babymaker/babies/2016_04_29/data/merged_1lht500met200/";
+  }
 
   Palette colors("txt/colors.txt", "default");
 
@@ -74,15 +89,17 @@ int main(int argc, char *argv[]){
     "stitch");
   auto other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
     {foldermc+"*_WJetsToLNu*",foldermc+"*_ST_*.root",
-    foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
-    foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
-    foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
-    foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
-    foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
-    foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"});
+	foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
+	foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
+	foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
+	foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
+	foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
+	foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"});
 
+  string trigs = "(trig[4]||trig[8]||trig[13]||trig[33])";
+  if(method.Contains("2015")) trigs = "(trig[4]||trig[8]||trig[28]||trig[14])";
   auto data = Proc<Baby_full>("Data", Process::Type::data, kBlack,
-    {folderdata+"*.root"},"(trig[4]||trig[8]||trig[13]||trig[33])");
+    {folderdata+"*.root"},trigs);
 
   vector<shared_ptr<Process> > all_procs = {data, tt};
   if (do_other) all_procs.push_back(other);
@@ -108,8 +125,9 @@ int main(int argc, char *argv[]){
   vector<TString> njbcuts_met500 = {"nbm==1&&njets>=6&&njets<=8", "nbm==1&&njets>=9", 
 				    "nbm==2&&njets>=6&&njets<=8", "nbm==2&&njets>=9", 
 				    "nbm>=3&&njets>=6&&njets<=8", "nbm>=3&&njets>=9"}; 
-  vector<TString> njbcuts_m1lmet150 = {"njets>=6&&njets<=8", "njets>=9"}; 
-  vector<TString> njbcuts_m2lmet150 = {"njets>=5&&njets<=7", "njets>=8"}; 
+
+  vector<TString> njbcuts_m1lnob = {"njets>=6&&njets<=8", "njets>=9"}; 
+  vector<TString> njbcuts_m2lnob = {"njets>=5&&njets<=7", "njets>=8"}; 
   vector<TString> njbcuts_2lveto_lonj = {"njets>=5", "njets>=5"}; 
   vector<TString> njbcuts_2lveto_hinj = {"njets>=8", "njets>=8"}; 
 
@@ -121,6 +139,21 @@ int main(int argc, char *argv[]){
 				  "mt<=140&&mj14>400", 
 				  "mt>140&&mj14<=400",          
 				  "mt>140&&mj14>400"};
+  vector<TString> abcdcuts_2lveto = {"mt<=140&&mj14<=400&&nleps==1&&nveto==0&&nbm>=1&&njets>=6", 
+				     "mt<=140&&mj14>400&&nleps==1&&nveto==0&&nbm>=1&&njets>=6", 
+				     "mj14<=400&&(nleps==2&&nbm<=2&&njets>=5 || nleps==1&&nveto==1&&nbm>=1&&nbm<=2&&mt>140&&njets>=6)",          
+				     "mj14> 400&&(nleps==2&&nbm<=2&&njets>=5 || nleps==1&&nveto==1&&nbm>=1&&nbm<=2&&mt>140&&njets>=6)"};
+
+  vector<TString> abcdcuts_2lveto_el = {"mt<=140&&mj14<=400&&nels==1&&nveto==0&&nbm>=1&&njets>=6", 
+					"mt<=140&&mj14>400&&nels==1&&nveto==0&&nbm>=1&&njets>=6", 
+					"mj14<=400&&(nels==2&&nbm<=2&&njets>=5 || nels==1&&nveto==1&&nbm>=1&&nbm<=2&&mt>140&&njets>=6)",          
+					"mj14> 400&&(nels==2&&nbm<=2&&njets>=5 || nels==1&&nveto==1&&nbm>=1&&nbm<=2&&mt>140&&njets>=6)"};
+
+  vector<TString> abcdcuts_2lveto_mu = {"mt<=140&&mj14<=400&&nmus==1&&nveto==0&&nbm>=1&&njets>=6", 
+					"mt<=140&&mj14>400&&nmus==1&&nveto==0&&nbm>=1&&njets>=6", 
+					"mj14<=400&&(nmus==2&&nbm<=2&&njets>=5 || nmus==1&&nveto==1&&nbm>=1&&nbm<=2&&mt>140&&njets>=6)",          
+					"mj14> 400&&(nmus==2&&nbm<=2&&njets>=5 || nmus==1&&nveto==1&&nbm>=1&&nbm<=2&&mt>140&&njets>=6)"};
+
   vector<TString> abcdcuts_2lveto_lonj = {"mt<=140&&mj14<=400&&nleps==1&&nveto==0&&nbm>=1&&njets>=6", 
    					  "mt<=140&&mj14>400&&nleps==1&&nveto==0&&nbm>=1&&njets>=6&&njets<=8", 
    					  "mj14<=400&&(nleps==2&&nbm<=2&&njets>=5 || nleps==1&&nveto==1&&nbm>=1&&nbm<=2&&mt>140&&njets>=6)",          
@@ -150,23 +183,52 @@ int main(int argc, char *argv[]){
 
   if(full_lumi){
     base_all = "mj14>250&&pass&&stitch&&";
-    lumi = 2.6;
-    lumi_s = "2.6 fb$^{-1}$";
+    if(method.Contains("2015")){
+      lumi = 2.3;
+      lumi_s = "2.3 fb$^{-1}$";
+    } else {
+      lumi = 2.6;
+      lumi_s = "2.6 fb$^{-1}$";
+    }
   }
 
-  if(method=="m2l") {
+  if(method=="m2l" || method=="m2l_2015") {
     base_s = base_all+"njets>=5";
     njbcuts_himt = njbcuts_2l;
     abcdcuts = abcdcuts_2l;
     region_s = "D";
-    method_s = "$2\\ell$";
+    method_s = "D3 and D4 have $2\\ell$";
+  } else if(method=="m2lveto" || method=="m2lveto_2015") {
+    base_s = base_all+"njets>=5&&nleps>=1";
+    njbcuts = njbcuts_2lveto_lonj;
+    njbcuts_himt = njbcuts_2lveto_lonj;
+    abcdcuts = abcdcuts_2lveto;
+    region_s = "D";
+    method_s = "D3 and D4 have $\\ell\\ell+\\ell t_{\\rm veto}$";
+    ilowmet = 1;
+  } else if(method=="m2lveto_el" || method=="m2lveto_el_2015") {
+    base_s = base_all+"njets>=5&&nels>=1";
+    njbcuts = njbcuts_2lveto_lonj;
+    njbcuts_himt = njbcuts_2lveto_lonj;
+    abcdcuts = abcdcuts_2lveto_el;
+    region_s = "D";
+    method_s = "D3 and D4 have $ee+e t_{\\rm veto}$";
+    ilowmet = 1;
+  } else if(method=="m2lveto_mu" || method=="m2lveto_mu_2015") {
+    base_s = base_all+"njets>=5&&nmus>=1";
+    njbcuts = njbcuts_2lveto_lonj;
+    njbcuts_himt = njbcuts_2lveto_lonj;
+    abcdcuts = abcdcuts_2lveto_mu;
+    region_s = "D";
+    method_s = "D3 and D4 have $\\mu\\mu+\\mu t_{\\rm veto}$";
+    ilowmet = 1;
   } else if(method=="m2lveto_lonj") {
     base_s = base_all+"njets>=5";
     njbcuts = njbcuts_2lveto_lonj;
     njbcuts_himt = njbcuts_2lveto_lonj;
     abcdcuts = abcdcuts_2lveto_lonj;
     region_s = "D";
-    method_s = "$2\\ell\\text{ or }N_{\\rm veto}$";
+    method_s = "D3 and D4 have $\\ell\\ell+\\ell t_{\\rm veto}$ - low $N_{\\rm jets}$";
     ilowmet = 1;
   } else if(method=="m2lveto_hinj") {
     base_s = base_all+"njets>=5";
@@ -174,14 +236,14 @@ int main(int argc, char *argv[]){
     njbcuts_himt = njbcuts_2lveto_hinj;
     abcdcuts = abcdcuts_2lveto_hinj;
     region_s = "D";
-    method_s = "$2\\ell\\text{ or }N_{\\rm veto}$";
+    method_s = "D3 and D4 have $\\ell\\ell+\\ell t_{\\rm veto}$ - high $N_{\\rm jets}$";
     ilowmet = 1;
-  } else if(method=="mveto") {
+  } else if(method=="mveto" || method=="mveto_2015") {
     base_s = base_all+"njets>=6&&nbm>=1&&nleps==1";
     njbcuts_himt = njbcuts_stdnob;
     abcdcuts = abcdcuts_veto;
     region_s = "D";
-    method_s = "$N_{\\rm veto}=1$";
+    method_s = "D3 and D4 have $\\ell t_{\\rm veto}$";
   } else if(method=="m5j") {
     base_s = base_all+"njets==5&&nbm>=1&&nleps==1&&nveto==0";
     njbcuts = njbcuts_5j;
@@ -193,43 +255,51 @@ int main(int argc, char *argv[]){
     njbcuts = njbcuts_m1lmet150nb12;
     njbcuts_himt = njbcuts_m1lmet150nb12;
     abcdcuts = abcdcuts_std;
-    method_s = "$1\\ell$, MET150";
+    method_s = "$1\\ell, 150<E_{\\rm T}^{\\rm miss}<200$";
     ilowmet = njbcuts.size();
-  } else if(method=="mvetomet150") {
+  } else if(method=="mvetomet150" || method=="mvetomet150_2015") {
     base_s = base_all+"njets>=6&&nbm>=1&&nleps==1";
-    njbcuts = njbcuts_m1lmet150;
-    njbcuts_himt = njbcuts_m1lmet150;
+    njbcuts = njbcuts_m1lnob;
+    njbcuts_himt = njbcuts_m1lnob;
     abcdcuts = abcdcuts_veto;
     region_s = "D";
-    method_s = "$N_{\\rm veto}=1$, MET150";
-  } else if(method=="m2lmet150") {
+    method_s = "$150<E_{\\rm T}^{\\rm miss}<200$, D3 and D4 have $\\ell t_{\\rm veto}$";
+  } else if(method=="m2lvetomet150" || method=="m2lvetomet150_2015") {
     base_s = base_all+"njets>=5";
-    njbcuts = njbcuts_m1lmet150;
-    njbcuts_himt = njbcuts_m2lmet150;
+    njbcuts = njbcuts_2lveto_lonj;
+    njbcuts_himt = njbcuts_2lveto_lonj;
+    abcdcuts = abcdcuts_2lveto;
+    region_s = "D";
+    method_s = "$150<E_{\\rm T}^{\\rm miss}<200$, D3 and D4 have $\\ell\\ell+\\ell t_{\\rm veto}$";
+    ilowmet = 1;
+  } else if(method=="m2lmet150" || method=="m2lmet150_2015") {
+    base_s = base_all+"njets>=5";
+    njbcuts = njbcuts_m1lnob;
+    njbcuts_himt = njbcuts_m2lnob;
     abcdcuts = abcdcuts_2l;
     region_s = "D";
-    method_s = "$2\\ell$, MET150";
-  } else if(method=="met500") {
-    base_s = base_all+"njets>=6&&nbm>=1&&met>500&&nleps==1&&nveto==0";
-    njbcuts = njbcuts_met500;
-    njbcuts_himt = njbcuts_met500;
-    abcdcuts = abcdcuts_std;
-    method_s = "$1\\ell$, MET500";
-    metcuts[0] = "met>500";
-    ilowmet = njbcuts.size();
+    method_s = "$150<E_{\\rm T}^{\\rm miss}<200$, D3 and D4 have $\\ell\\ell+\\ell t_{\\rm veto}$";
   } else if(method=="met200") {
     base_s = base_all+"njets>=6&&nbm>=1&&met>200&&nleps==1&&nveto==0";
     njbcuts = njbcuts_std;
     njbcuts_himt = njbcuts_std;
     abcdcuts = abcdcuts_std;
-    method_s = "$1\\ell$, MET200";
+    method_s = "Signal bins - $1\\ell$, $200<E_{\\rm T}^{\\rm miss}\\leq500$";
     ilowmet = 6;
+  } else if(method=="met500") {
+    base_s = base_all+"njets>=6&&nbm>=1&&met>500&&nleps==1&&nveto==0";
+    njbcuts = njbcuts_met500;
+    njbcuts_himt = njbcuts_met500;
+    abcdcuts = abcdcuts_std;
+    method_s = "Signal bins - $1\\ell$, $E_{\\rm T}^{\\rm miss}>500$";
+    metcuts[0] = "met>500";
+    ilowmet = njbcuts.size();
   } else if(method=="met200nb1") {
     base_s = base_all+"njets>=6&&nbm>=1&&met>200&&nleps==1&&nveto==0";
     njbcuts = njbcuts_nb1;
     njbcuts_himt = njbcuts_nb1;
     abcdcuts = abcdcuts_std;
-    method_s = "$1\\ell, N_{b}=1$, MET200";
+    method_s = "Signal bins - $1\\ell$, separated N_{b}=1$, $200<E_{\\rm T}^{\\rm miss}\\leq350$";
     metcuts[0] = "met>200&&met<=350&&nbm==1";
     metcuts[1] = "met>200&&met<=350&&nbm>=2";
     ilowmet = 2;
@@ -238,7 +308,7 @@ int main(int argc, char *argv[]){
     njbcuts = njbcuts_nb1;
     njbcuts_himt = njbcuts_nb1;
     abcdcuts = abcdcuts_std;
-    method_s = "$1\\ell, N_{b}=1$, MET350";
+    method_s = "Signal bins - $1\\ell$, separated N_{b}=1$, $350<E_{\\rm T}^{\\rm miss}\\leq500$";
     metcuts[0] = "met>350&&met<=500&&nbm==1";
     metcuts[1] = "met>350&&met<=500&&nbm>=2";
     ilowmet = 2;
@@ -247,12 +317,12 @@ int main(int argc, char *argv[]){
     njbcuts = njbcuts_nb1;
     njbcuts_himt = njbcuts_nb1;
     abcdcuts = abcdcuts_std;
-    method_s = "$1\\ell, N_{b}=1$, MET500";
+    method_s = "Signal bins - $1\\ell$, separated N_{b}=1$, $E_{\\rm T}^{\\rm miss}>500$";
     metcuts[0] = "met>500&&nbm==1";
     metcuts[1] = "met>500&&nbm>=2";
     ilowmet = 2;
   }else if(method=="agg_himet"){
-    base_s = base_all+"met>500&&njets>=6&&nbm>=3";
+    base_s = base_all+"met>500&&njets>=6&&nbm>=1";
     njbcuts = vector<TString>{"nbm>=3&&njets>=6"};
     njbcuts_himt = njbcuts;
     abcdcuts = abcdcuts_std;
@@ -260,7 +330,7 @@ int main(int argc, char *argv[]){
     metcuts = vector<TString>{"met>500"};
     ilowmet = 1;
   }else if(method=="agg_mixed"){
-    base_s = base_all+"met>350&&njets>=9&&nbm>=2";
+    base_s = base_all+"met>350&&njets>=6&&nbm>=1";
     njbcuts = vector<TString>{"nbm>=2&&njets>=9"};
     njbcuts_himt = njbcuts;
     abcdcuts = abcdcuts_std;
@@ -268,7 +338,7 @@ int main(int argc, char *argv[]){
     metcuts = vector<TString>{"met>350"};
     ilowmet = 1;
   }else if(method=="agg_himult"){
-    base_s = base_all+"met>200&&njets>=9&&nbm>=3";
+    base_s = base_all+"met>200&&njets>=6&&nbm>=1";
     njbcuts = vector<TString>{"nbm>=3&&njets>=9"};
     njbcuts_himt = njbcuts;
     abcdcuts = abcdcuts_std;
@@ -276,7 +346,7 @@ int main(int argc, char *argv[]){
     metcuts = vector<TString>{"met>200"};
     ilowmet = 1;
   }else if(method=="agg_1b"){
-    base_s = base_all+"met>500&&njets>=9&&nbm>=1";
+    base_s = base_all+"met>500&&njets>=6&&nbm>=1";
     njbcuts = vector<TString>{"nbm>=1&&njets>=9"};
     njbcuts_himt = njbcuts;
     abcdcuts = abcdcuts_std;
@@ -287,6 +357,7 @@ int main(int argc, char *argv[]){
     cout<<"Method "<<method<<" not available. Exiting"<<endl<<endl; 
     return 0;
   }
+  if(method.Contains("2015")) method_s = "2015 data: "+method_s;
 
   if(really_unblind) unblind = true;
 
@@ -303,10 +374,6 @@ int main(int argc, char *argv[]){
     } // Loop over observables going into kappa
   } // Loop over signal bins
     
-  // for(const auto &tbr: bincuts){
-  //   cout << tbr.cut_ << "\t"<<tbr.weight_ << endl;
-  // }
-
   PlotMaker pm;
   pm.Push<Table>("preds",  bincuts, all_procs);
   if(single_thread) pm.multithreaded_ = false;
@@ -314,9 +381,6 @@ int main(int argc, char *argv[]){
 
   Table * yield_table = static_cast<Table*>(pm.Figures().back().get());
   vector<GammaParams> mcyield = yield_table->BackgroundYield(lumi);
-  // for(const auto &yield: mcyield){
-  //   cout << yield << endl;
-  // }
   vector<GammaParams> datayield = yield_table->DataYield(1);
   vector<GammaParams> otheryield;
   if (do_other) otheryield = yield_table->Yield(other, lumi); 
@@ -399,7 +463,7 @@ int main(int argc, char *argv[]){
       kdown = (kdown-k)/k*100;
       kappas.push_back(vector<float>({k, kup, kdown}));
       cout<<"k = "<<RoundNumber(k,2)<<", up "<<setw(5)<<RoundNumber(kup,1)<<"%, down "<<setw(5)
-    <<RoundNumber(kdown,1)<<"%, other fractions ";
+	  <<RoundNumber(kdown,1)<<"%, other fractions ";
       for(size_t oth(0); oth<fractions[ind].size(); oth++) cout <<setw(4)<<RoundNumber(fractions[ind][oth],1)<<"% ";
       cout<<" => cuts "<<bincuts[4*ind+3].label_<<endl;
     }
@@ -408,82 +472,114 @@ int main(int argc, char *argv[]){
 
   ///// Printing table
   TString outname = "txt/table_predictions_lumi0p815_"+method+".tex";
-  if(full_lumi) outname.ReplaceAll("lumi0p815", "lumi2p6");
+  if(full_lumi) {
+    if(method.Contains("2015")) outname.ReplaceAll("lumi0p815", "lumi2p3");
+    else outname.ReplaceAll("lumi0p815", "lumi2p6");
+  }
   if(unblind) outname.ReplaceAll("lumi", "unblind_lumi");
 
   if(do_other) outname.ReplaceAll("predictions", "other_sys");
   ofstream out(outname);
 
+  size_t Ncol = 7;
+  size_t index;
   out << fixed << setprecision(digits);
   out << "\\documentclass{article}\n";
   out << "\\usepackage{amsmath,graphicx,rotating,geometry}\n";
   out << "\\renewcommand{\\arraystretch}{1.3}\n";
   out << "\\thispagestyle{empty}\n";
-  out << "\\begin{document}\n";
+  out << "\\begin{document}\n\n";
   out << "\\begin{table}\n";
   out << "\\centering\n";
-  out << "\\resizebox{\\textwidth}{!}{\n";
+  //out << "\\resizebox{\\textwidth}{!}{\n";
   if(!do_other){
-    out << "\n\\begin{tabular}[tbp!]{ l rrrr}\\hline\\hline\n";
-    out << lumi_s<<": "<<method_s<<" & $\\kappa$ & MC  & Pred. & Obs. \\\\ \\hline\\hline\n";
-    if(method.Contains("met150")) out << " \\multicolumn{5}{c}{$150<\\text{MET}\\leq 200$}  \\\\ \\hline\n";
-    else if(method.Contains("met500")) out << " \\multicolumn{5}{c}{$\\text{MET}> 500$}  \\\\ \\hline\n";
-    else if(method.Contains("met200nb1")) out << " \\multicolumn{5}{c}{$200<\\text{MET}\\leq 350, N_{b}=1$}  \\\\ \\hline\n";
-    else if(method.Contains("met350nb1")) out << " \\multicolumn{5}{c}{$350<\\text{MET}\\leq 500, N_{b}=1$}  \\\\ \\hline\n";
-    else if(method.Contains("met200nb1")) out << " \\multicolumn{5}{c}{$\\text{MET}> 500, N_{b}=1$}  \\\\ \\hline\n";
-    else out << " \\multicolumn{5}{c}{$200<\\text{MET}\\leq 350$}  \\\\ \\hline\n";
+    out << "\\begin{tabular}[tbp!]{ l ";
+    for(size_t ind=0; ind<Ncol-1; ind++) out<<"c";
+    out<<"}\\hline\\hline\n";
+    out<<" \\multicolumn{"<<Ncol<<"}{c}{"<<method_s<<"} \\\\ \\hline"<<endl;
+    out<<"$\\cal{L}=$"<<lumi_s<<" & $\\kappa$ & MC  & Pred. & Obs. & MC/Obs & $Z_{\\rm bi}$ \\\\ \\hline\\hline\n";
+    if(method.Contains("met150")) out << " \\multicolumn{"<<Ncol<<"}{c}{$150<\\text{MET}\\leq 200$}  \\\\ \\hline\n";
+    else if(method.Contains("met500")) out << " \\multicolumn{"<<Ncol<<"}{c}{$\\text{MET}> 500$}  \\\\ \\hline\n";
+    else if(method.Contains("met200nb1")) out << " \\multicolumn{"<<Ncol<<"}{c}{$200<\\text{MET}\\leq 350, N_{b}=1$}  \\\\ \\hline\n";
+    else if(method.Contains("met350nb1")) out << " \\multicolumn{"<<Ncol<<"}{c}{$350<\\text{MET}\\leq 500, N_{b}=1$}  \\\\ \\hline\n";
+    else if(method.Contains("met200nb1")) out << " \\multicolumn{"<<Ncol<<"}{c}{$\\text{MET}> 500, N_{b}=1$}  \\\\ \\hline\n";
+    else out << " \\multicolumn{"<<Ncol<<"}{c}{$200<\\text{MET}\\leq 350$}  \\\\ \\hline\n";
 
+    ///////////////////////////////// Doing R1 ////////////////////////////
+    index = 0;
     if(method.Contains("nb1")) out << "R1: $N_b=1,\\text{all }N_j$";
     else  out << "R1: all $N_b,N_j$";
-    out<<" & -- & "<<mcyield[0].Yield() <<" & -- & "
-  << setprecision(0) <<datayield[0].Yield()<<setprecision(digits)<<" \\\\"<<endl;
+    out<<" &  & "<<mcyield[index].Yield() <<" &  & "
+       << setprecision(0) <<datayield[index].Yield()<<setprecision(digits)
+       <<" & "<<RoundNumber(mcyield[index].Yield(), digits, datayield[index].Yield())<<" &   \\\\"<<endl;
+    ///////////////////////////////// Doing R2 ////////////////////////////
     for(size_t ind(0); ind<ilowmet; ind++){
-      size_t index(nabcd*ind+1);
-      out<<"R2: "<<cuts2tex(njbcuts[ind])<<" & -- & "<<mcyield[index].Yield() <<" & --  & "
-   << setprecision(0) <<datayield[index].Yield()<<setprecision(digits)<<" \\\\"<<endl;
+      index = nabcd*ind+1;
+      out<<"R2: "<<cuts2tex(njbcuts[ind])<<" &  & "<<mcyield[index].Yield() <<" &   & "
+	 << setprecision(0) <<datayield[index].Yield()<<setprecision(digits)
+	 <<" & "<<RoundNumber(mcyield[index].Yield(), digits, datayield[index].Yield())
+	 <<" &   \\\\"<<endl;
     }
+    //////////////////////////////// Doing R3/D3 ////////////////////////////
+    index = 2;
     if(method.Contains("nb1")) out << region_s<<"3: $N_b=1,\\text{all }N_j$";
     else out << region_s<<"3: all $N_b,N_j$";
-    out << " & -- & "<<mcyield[2].Yield() <<" & -- & "
-  << setprecision(0) << datayield[2].Yield() << setprecision(digits)<<" \\\\"<<endl;
+    out << " &  & "<<mcyield[index].Yield() <<" &  & "
+	<< setprecision(0) << datayield[index].Yield() << setprecision(digits)
+	<<" & "<<RoundNumber(mcyield[index].Yield(), digits, datayield[index].Yield())<<" &   \\\\"<<endl;
     out << "\\hline"<<endl;
+    ///////////////////////////////// Doing R4/D4 ////////////////////////////
     for(size_t ind(0); ind<ilowmet; ind++){
-      size_t index(nabcd*ind+3);
-      out<<region_s<<"4: "<<cuts2tex(njbcuts[ind])<<" & $"<<preds[ind][6] 
-   << "^{+" << preds[ind][7] <<"}_{-" << preds[ind][8] 
-   <<"}$ & "<<mcyield[index].Yield() <<" & $"<<preds[ind][0] << "^{+" << preds[ind][1] 
-   <<"}_{-" << preds[ind][2] <<"}$ & ";
-      if(unblind) out << setprecision(0) <<datayield[index].Yield()<<setprecision(digits)<<" \\\\"<<endl;
-      else out << blind_s<<" \\\\"<<endl;
+      index = nabcd*ind+3;
+      out<<region_s<<"4: "<<cuts2tex(njbcuts_himt[ind])<<" & $"<<preds[ind][6] 
+	 << "^{+" << preds[ind][7] <<"}_{-" << preds[ind][8] 
+	 <<"}$ & "<<mcyield[index].Yield() <<" & $"<<preds[ind][0] << "^{+" << preds[ind][1] 
+	 <<"}_{-" << preds[ind][2] <<"}$ & ";
+      if(unblind) out << setprecision(0) <<datayield[index].Yield()<<setprecision(digits)
+		      <<" & "<<RoundNumber(mcyield[index].Yield(), digits, datayield[index].Yield())
+		      <<" & "<< Zbi(datayield[index].Yield(), preds[ind][0], preds[ind][1])<<" \\\\"<<endl;
+      else out << blind_s<<" & "<< blind_s<<" \\\\"<<endl;
     }
     if(ilowmet<njbcuts.size()){
       out<<"\\hline\\hline\n ";
-      if(method.Contains("met200nb1")) out << " \\multicolumn{5}{c}{$200<\\text{MET}\\leq 350, N_{b}\\geq2$}  \\\\ \\hline\n";
-      else if(method.Contains("met350nb1")) out << " \\multicolumn{5}{c}{$350<\\text{MET}\\leq 500, N_{b}\\geq2$}  \\\\ \\hline\n";
-      else if(method.Contains("met500nb1")) out << " \\multicolumn{5}{c}{$\\text{MET}> 500, N_{b}\\geq2$}  \\\\ \\hline\n";
-      else out << " \\multicolumn{5}{c}{$350<\\text{MET}\\leq 500$}  \\\\ \\hline\n";
+      if(method.Contains("met200nb1"))out<<" \\multicolumn{"<<Ncol<<"}{c}{$200<\\text{MET}\\leq 350, N_{b}\\geq2$} \\\\ \\hline\n";
+      else if(method.Contains("met350nb1")) out << " \\multicolumn{"<<Ncol<<"}{c}{$350<\\text{MET}\\leq 500, N_{b}\\geq2$}  \\\\ \\hline\n";
+      else if(method.Contains("met500nb1")) out << " \\multicolumn{"<<Ncol<<"}{c}{$\\text{MET}> 500, N_{b}\\geq2$} \\\\ \\hline\n";
+      else out << " \\multicolumn{"<<Ncol<<"}{c}{$350<\\text{MET}\\leq 500$}  \\\\ \\hline\n";
+      ///////////////////////////////// Doing R1 ////////////////////////////
+      index = nabcd*ilowmet;
       if(method.Contains("nb1")) out << "R1: $N_b=1,\\text{all }N_j$";
       else  out << "R1: all $N_b,N_j$";
-      out << " & -- & "<<mcyield[nabcd*ilowmet].Yield() <<" & -- & "
-    << setprecision(0) <<datayield[nabcd*ilowmet].Yield()<<setprecision(digits)<<" \\\\"<<endl;
+      out << " &  & "<<mcyield[index].Yield() <<" &  & "
+	  << setprecision(0) <<datayield[index].Yield()<<setprecision(digits)
+	  <<" & "<<RoundNumber(mcyield[index].Yield(), digits, datayield[index].Yield())<<" &  \\\\"<<endl;
+      ///////////////////////////////// Doing R2 ////////////////////////////
       for(size_t ind(ilowmet); ind<njbcuts.size(); ind++){
-  size_t index(nabcd*ind+1);
-  out<<"R2: "<<cuts2tex(njbcuts[ind])<<" & -- & "<<mcyield[index].Yield() <<" & -- & "
-     << setprecision(0) <<datayield[index].Yield()<<setprecision(digits)<<" \\\\"<<endl;
+	index = nabcd*ind+1;
+	out<<"R2: "<<cuts2tex(njbcuts[ind])<<" &  & "<<mcyield[index].Yield() <<" &  & "
+	   << setprecision(0) <<datayield[index].Yield()<<setprecision(digits)
+	   <<" & "<<RoundNumber(mcyield[index].Yield(), digits, datayield[index].Yield())<<" &  \\\\"<<endl;
       }
+      
+      //////////////////////////////// Doing R3/D3 ////////////////////////////
+      index = nabcd*ilowmet+2;
       if(method.Contains("nb1")) out << region_s<<"3: $N_b=1,\\text{all }N_j$";
       else out << region_s<<"3: all $N_b,N_j$";
-      out << " & -- & "<<mcyield[nabcd*ilowmet+2].Yield() <<" & -- & "
-    << setprecision(0) <<datayield[nabcd*ilowmet+2].Yield()<<setprecision(digits)<<" \\\\"<<endl;
+      out << " &  & "<<mcyield[index].Yield() <<" &  & "
+	  << setprecision(0) <<datayield[index].Yield()<<setprecision(digits)
+	  <<" & "<<RoundNumber(mcyield[index].Yield(), digits, datayield[index].Yield())<<" &  \\\\"<<endl;
       out << "\\hline"<<endl;
+      ///////////////////////////////// Doing R4/D4 ////////////////////////////
       for(size_t ind(ilowmet); ind<njbcuts.size(); ind++){
-  size_t index(nabcd*ind+3);
-  out<<region_s<<"4: "<<cuts2tex(njbcuts[ind])<<" & $"<<preds[ind][6] 
-     << "^{+" << preds[ind][7] <<"}_{-" << preds[ind][8] 
-     <<"}$ & "<<mcyield[index].Yield() <<" & $"<<preds[ind][0] << "^{+" << preds[ind][1] 
-     <<"}_{-" << preds[ind][2] <<"}$ & ";
-  if(unblind) out<< setprecision(0) <<datayield[index].Yield() <<setprecision(digits)<<" \\\\"<<endl;
-  else out<< blind_s<<" \\\\"<<endl;
+	index = nabcd*ind+3;
+	out<<region_s<<"4: "<<cuts2tex(njbcuts_himt[ind])<<" & $"<<preds[ind][6] 
+	   << "^{+" << preds[ind][7] <<"}_{-" << preds[ind][8] 
+	   <<"}$ & "<<mcyield[index].Yield() <<" & $"<<preds[ind][0] << "^{+" << preds[ind][1] 
+	   <<"}_{-" << preds[ind][2] <<"}$ & ";
+	if(unblind) out<< setprecision(0) <<datayield[index].Yield() <<setprecision(digits)
+		       <<" & "<<RoundNumber(mcyield[index].Yield(), digits, datayield[index].Yield())
+		       <<" & "<< Zbi(datayield[index].Yield(), preds[ind][0], preds[ind][1])<<" \\\\"<<endl;
+	else out<< blind_s<<" & "<< blind_s<<" \\\\"<<endl;
       }
     }
   } else {
@@ -491,7 +587,7 @@ int main(int argc, char *argv[]){
     for(size_t obs(0); obs < abcdcuts.size(); obs++) out<<"r";
     out << "}\\hline\\hline\n";
     out << " &  & non-$t\\bar{t}\\times"<<RoundNumber(1+syst,1)<<"$ & non-$t\\bar{t}\\times"
-  <<RoundNumber(exp(-log(1+syst)),1)<<"$ & \\multicolumn{4}{c}{Fraction of non-$t\\bar{t}$ bkg.} \\\\ \n";
+	<<RoundNumber(exp(-log(1+syst)),1)<<"$ & \\multicolumn{4}{c}{Fraction of non-$t\\bar{t}$ bkg.} \\\\ \n";
     out << "Bin & $\\kappa$ & $\\Delta\\kappa$ [\\%] & $\\Delta\\kappa$ [\\%]";
     for(size_t obs(0); obs < abcdcuts.size(); obs++) out<<" & $f_{\\text{R"<<obs+1<<"}}$ [\\%]";
     out << " \\\\ \\hline\\hline\n";
@@ -503,9 +599,9 @@ int main(int argc, char *argv[]){
     }
   } // if(!do_other)
 
-  out<< "\\hline\\hline\n\\end{tabular}"<<endl<<endl;
-  out << "}\n";
-  out << "\\end{table}\n";
+  out<< "\\hline\\hline\n\\end{tabular}"<<endl;
+  //out << "}\n";
+  out << "\\end{table}\n\n";
   out << "\\end{document}\n";
   out.close();
   TString pdfname(outname); 
