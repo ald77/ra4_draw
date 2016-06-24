@@ -27,14 +27,13 @@ shared_ptr<Process> Proc(const string process_name, Process::Type type,
 int main(){
   gErrorIgnoreLevel = 6000;
 
-  double lumi = 2.07;
+  double lumi = 2.6;
   
   // 80X (ttbar, qcd, dy[ht=100-600], wjets) + 74X (rest)
-  string trig_mc        = "/net/cms2/cms2r0/babymaker/babies/2016_05_31/mc/unskimmed/";
-  //string trig_skim1l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_05_31/mc/skim_1lht500met200/";
-  string trig_skim1l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_06_09/mc/skim_1lht500met200/";
-  string trig_skim0l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_05_31/mc/skim_qcd/";      // needs to be updated for 2.1 fb-1
-  string trig_skim2l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_05_31/mc/skim_dy_ht300/"; // needs to be updated for 2.1 fb-1
+  string trig_mc        = "/net/cms2/cms2r0/babymaker/babies/2016_06_14/mc/unskimmed/";
+  string trig_skim1l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/";
+  string trig_skim0l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_06_14/mc/merged_qcd/";     
+  string trig_skim2l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_06_14/mc/merged_dy_ht300/"; 
 
   Palette colors("txt/colors.txt", "default");
 
@@ -63,9 +62,7 @@ int main(){
   t1tttt_c->SetLineStyle(2);
 
   auto data_1l = Proc<Baby_full>("Data", Process::Type::data, kBlack,
-    //{"/net/cms2/cms2r0/babymaker/babies/2016_06_05/data/met/skim_met150/*.root"},"pass&&trig[28]");
-    //{"/net/cms2/cms2r0/babymaker/babies/2016_06_14/data/MET/merged_1lh500met200/*.root"},"pass&&trig[28]");
-    {"/net/cms2/cms2r0/babymaker/babies/2016_06_14/data/skim_standard/*.root"},"pass&&(trig[4]||trig[8]||trig[13]||trig[33])");
+    {"/net/cms2/cms2r0/babymaker/babies/2016_06_21/data/skim_standard/*.root"},"pass&&(trig[4]||trig[8]||trig[13]||trig[33])");
     vector<shared_ptr<Process> > full_trig_skim_1l = {data_1l, /*t1tttt_nc, t1tttt_c,*/ tt1l, tt2l, wjets, single_t, ttv, other}; 
   
   // 
@@ -87,7 +84,7 @@ int main(){
      trig_skim0l_mc+"*_DYJetsToLL*HT*.root"});
 
   auto data_0l = Proc<Baby_full>("Data", Process::Type::data, kBlack,
-    {"/net/cms2/cms2r0/babymaker/babies/2016_06_05/data/jetht/skim_qcd/*.root"},"pass&&trig[12]");
+    {"/net/cms2/cms2r0/babymaker/babies/2016_06_21/data/skim_ht900/*.root"},"pass&&trig[12]");
   vector<shared_ptr<Process> > full_trig_skim_0l = {data_0l, /*t1tttt_nc, t1tttt_c,*/ qcd_0l, tt_0l, other_0l};
 
   //
@@ -113,7 +110,7 @@ int main(){
      trig_skim2l_mc+"*_QCD_HT1500to2000*.root",trig_skim2l_mc+"*_QCD_HT2000toInf*.root"});
 
   auto data_2l = Proc<Baby_full>("Data", Process::Type::data, kBlack,
-    {"/net/cms2/cms2r0/babymaker/babies/2016_06_05/data/singlelep/combined/*.root"},"pass&&(trig[20]||trig[22])");
+    {"/net/cms2/cms2r0/babymaker/babies/2016_06_21/data/skim_nm1nj2/*.root"},"pass&&(trig[20]||trig[22])");
   vector<shared_ptr<Process> > full_trig_skim_2l = {data_2l, /*t1tttt_nc, t1tttt_c,*/ tt1l_2l, tt2l_2l, dy_2l, other_2l};
 
   //
@@ -135,7 +132,7 @@ int main(){
 
 
   string lowmtcut = "ht>500&&met>200&&mt<140";
-  string lowmjcut = "ht>500&&met>200&&mj<400";
+  string lowmjcut = "ht>500&&met>200&&mj14<400";
   PlotMaker pm;  
 
   for(int ilep=0; ilep<3; ilep++) 
@@ -150,55 +147,59 @@ int main(){
           string nvetocut;
           if(inveto==0)  nvetocut="nveto==0"; 
           if(inveto==1)  nvetocut="1"; 
-          
+          if(inveto==1)  continue;
+
           for(int injets=0; injets<2; injets++)  
           { 
               string njetscut;
               if(injets==0)  njetscut="njets>=5"; 
               if(injets==1)  njetscut="njets>=6"; 
+              if(injets==0)  continue;
               
               for(int inb=0; inb<2; inb++)  
               { 
                   string nbcut;
                   if(inb==0)  nbcut="nbm>=1"; 
                   if(inb==1)  nbcut="nbm>=2"; 
+                  if(inb==1)  continue;
 
                   //
                   // event-level variables except ones related to fatjet
                   // 
                   pm.Push<HistoStack>(HistoDef(15, 500, 2000., "ht", "H_{T} [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {500.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {500.}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(10, 200, 700., "met", "E_{T}^{miss} [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {200., 350., 500.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {200., 350., 500.}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(10, 200, 700., "met", "E_{T}^{miss} [GeV]",
-                              lepcut+"&&"+lowmjcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {200., 350., 500.}),
-                          full_trig_skim_1l, all_plot_types);
+                              lepcut+"&&"+lowmjcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {200., 350., 500.}),
+                          full_trig_skim_1l, all_plot_types); 
                   pm.Push<HistoStack>(HistoDef(16, -0.5, 15.5, "njets", "N_{jets}",
-                              lepcut+"&&"+lowmtcut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {5.5, 8.5}),
+                              lepcut+"&&"+lowmtcut+"&&"+nbcut+"&&"+nvetocut, "weight", {5.5, 8.5}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(7, -0.5, 6.5, "nbm", "N_{b}",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nvetocut, "weight/eff_trig", {0.5, 1.5, 2.5}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nvetocut, "weight", {0.5, 1.5, 2.5}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(14, 0., 280., "mt", "m_{T} [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {140.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {140.}),
                           full_trig_skim_1l, all_plot_types); 
                   pm.Push<HistoStack>(HistoDef(14, 0., 280., "mt", "m_{T} [GeV]",
-                              lepcut+"&&"+lowmjcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {140.}),
+                              lepcut+"&&"+lowmjcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {140.}),
                           full_trig_skim_1l, all_plot_types); 
                   pm.Push<HistoStack>(HistoDef(14, 0., 280., "mt", "m_{T} [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&nbm==0"+"&&"+nvetocut, "weight/eff_trig", {140.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&nbm==0"+"&&"+nvetocut, "weight", {140.}),
                           full_trig_skim_1l, all_plot_types);
+
 
                   if(ilep==0) 
                   {
                       // only barrel or endcap electron 
                       pm.Push<HistoStack>(HistoDef(10, 200, 700., "met", "E_{T}^{miss} [GeV]",
-                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(leps_eta[0]<1.479&&leps_eta[0]>-1.479)", "weight/eff_trig", {200., 350., 500.}),
+                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(leps_eta[0]<1.479&&leps_eta[0]>-1.479)", "weight", {200., 350., 500.}),
                               full_trig_skim_1l, all_plot_types);
                       pm.Push<HistoStack>(HistoDef(10, 200, 700., "met", "E_{T}^{miss} [GeV]",
-                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(leps_eta[0]>1.479||leps_eta[0]<-1.479)", "weight/eff_trig", {200., 350., 500.}),
+                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(leps_eta[0]>1.479||leps_eta[0]<-1.479)", "weight", {200., 350., 500.}),
                               full_trig_skim_1l, all_plot_types);
                   }
 
@@ -208,28 +209,28 @@ int main(){
                   if(ilep==0) // electron 
                   {
                       pm.Push<HistoStack>(HistoDef(10, 0, 200., "leps_pt[0]", "p_{T}(electron) [GeV]",
-                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                               full_trig_skim_1l, all_plot_types);
                       pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "leps_eta[0]", "#eta(electron) [GeV]",
-                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                               full_trig_skim_1l, all_plot_types);
                   } 
                   else if(ilep==1)  // muon
                   { 
                       pm.Push<HistoStack>(HistoDef(10, 0, 200., "leps_pt[0]", "p_{T}(muon) [GeV]",
-                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                               full_trig_skim_1l, all_plot_types);
                       pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "leps_eta[0]", "#eta(muon) [GeV]",
-                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                               full_trig_skim_1l, all_plot_types);
                   } 
                   else if(ilep==2)  // electron or muon
                   { 
                       pm.Push<HistoStack>(HistoDef(10, 0, 200., "leps_pt[0]", "p_{T}(lepton) [GeV]",
-                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                               full_trig_skim_1l, all_plot_types);
                       pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "leps_eta[0]", "#eta(lepton) [GeV]",
-                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                                  lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                               full_trig_skim_1l, all_plot_types);
                   } 
 
@@ -237,123 +238,134 @@ int main(){
                   // jets
                   //
                   pm.Push<HistoStack>(HistoDef(10, 30, 630., "jets_pt[0]", "p_{T}(leading jet) [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep[0])", "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep[0])", "weight", {999.}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "jets_eta[0]", "#eta(leading jet) [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep[0])", "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep[0])", "weight", {999.}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(10, 0, 200., "jets_m[0]", "mass(leading jet) [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep[0])", "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep[0])", "weight", {999.}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(10, 30, 630., "jets_pt", "p_{T}(jet) [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep)", "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep)", "weight", {999.}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "jets_eta", "#eta(jet) [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep)", "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep)", "weight", {999.}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(10, 0, 200., "jets_m", "m(jet) [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep)", "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep)", "weight", {999.}),
                           full_trig_skim_1l, all_plot_types);
 
                   //
                   // fatjets
                   //
                   pm.Push<HistoStack>(HistoDef(10, 0, 1000., "fjets14_pt[0]", "p_{T}(J1) [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                           full_trig_skim_1l, all_plot_types); 
                   pm.Push<HistoStack>(HistoDef(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                           full_trig_skim_1l, all_plot_types); 
                   pm.Push<HistoStack>(HistoDef(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&leps_pt[0]>160", "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&leps_pt[0]>160", "weight", {999.}),
                           full_trig_skim_1l, all_plot_types); 
                   pm.Push<HistoStack>(HistoDef(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&leps_pt[0]<=160", "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&leps_pt[0]<=160", "weight", {999.}),
                           full_trig_skim_1l, all_plot_types); 
                   pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "fjets14_eta[0]", "#eta(J1)",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(7, 0.5, 7.5, "fjets14_nconst[0]", "N_{constituents}(J1)",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(10, 0, 1000., "fjets14_pt", "p_{T}(J) [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                           full_trig_skim_1l, all_plot_types); 
                   pm.Push<HistoStack>(HistoDef(10, 0, 500., "fjets14_m", "m_{J} [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "fjets14_eta", "#eta(J)",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(7, 0.5, 7.5, "fjets14_nconst", "N_{constituents}(J)",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                           full_trig_skim_1l, all_plot_types);
 
                   pm.Push<HistoStack>(HistoDef(20, 0, 400., "fjets14_m[0]", "m_{J1} [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&njets<=5&&nbm>=1", "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&njets<=5&&nbm>=1", "weight", {999.}),
                           full_trig_skim_1l, all_plot_types); 
 
                   // event-level variables related to fatjet
                   pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj14", "M_{J} [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {400.}),
+  //
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {400.}),
                           full_trig_skim_1l, all_plot_types);
                   pm.Push<HistoStack>(HistoDef(7, 0.5, 7.5, "nfjets14", "N_{J} [GeV]",
-                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight/eff_trig", {999.}),
+                              lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
                           full_trig_skim_1l, all_plot_types);
 
               } //for(int inb=0; inb<2; inb++)  
           } //for(int injets=0; injets<2; injets++)  
-      } //for(int inveto=0; inveto<2; inveto++)  
+     } //for(int inveto=0; inveto<2; inveto++)  
   }  
 
-/*
-  //
-  // di-lepton events
-  //
-  string mll="(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))";
-  string mllcut="(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))>80&&(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))<100";
-
-//  pm.Push<HistoStack>(HistoDef(10, 50., 140., mll, "m_{ll} [GeV]",
-//                      "(nmus>=2||nels>=2)&&ht>350&&njets>=2", "weight/eff_trig", {400.}),
-//                       full_trig_skim_2l, all_plot_types);
-
-  pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj14", "M_{J} [GeV]",
-                      "nels==1&&nmus==1&&ht>300&&met>100&&njets>=2&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "weight/eff_trig", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-
-  pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj14", "M_{J} [GeV]",
-                      "(nmus>=2||nels>=2)&&ht>350&&njets>=2&&njets<=3&&"+mllcut, "weight/eff_trig", {400.}),
-                       full_trig_skim_2l, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj14", "M_{J} [GeV]",
-                      "(nmus>=2||nels>=2)&&ht>350&&njets>=4&&"+mllcut, "weight/eff_trig", {400.}),
-                       full_trig_skim_2l, all_plot_types);
 
   //
   // 0-lepton events
   //
   pm.Push<HistoStack>(HistoDef(30, 0., 1500., "mj14", "M_{J} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5", "weight/eff_trig", {400.}),
+                      "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5", "weight", {400.}),
                        full_trig_skim_0l, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(30, 0., 500., "fjets14_m", "M_{J} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5", "weight/eff_trig", {400.}),
+  pm.Push<HistoStack>(HistoDef(30, 0., 500., "fjets14_m", "m_{J} [GeV] [GeV]",
+                      "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5", "weight", {400.}),
                        full_trig_skim_0l, all_plot_types); 
   
   pm.Push<HistoStack>(HistoDef(30, 0., 1500., "mj14", "M_{J} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8", "weight/eff_trig", {400.}),
+                      "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8", "weight", {400.}),
                        full_trig_skim_0l, all_plot_types); 
-  pm.Push<HistoStack>(HistoDef(30, 0., 500., "fjets14_m", "M_{J} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8", "weight/eff_trig", {400.}),
+  pm.Push<HistoStack>(HistoDef(30, 0., 500., "fjets14_m", "m_{J} [GeV]",
+                      "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8", "weight", {400.}),
                        full_trig_skim_0l, all_plot_types); 
 
   pm.Push<HistoStack>(HistoDef(30, 0., 1500., "mj14", "M_{J} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=9", "weight/eff_trig", {400.}),
+                      "nleps==0&&met<50&&ht>1000&&njets>=9", "weight", {400.}),
                        full_trig_skim_0l, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(30, 0., 500., "fjets14_m", "M_{J} [GeV]",
-                      "nleps==0&&met<50&&ht>1000&&njets>=9", "weight/eff_trig", {400.}),
+  pm.Push<HistoStack>(HistoDef(30, 0., 500., "fjets14_m", "m_{J} [GeV]",
+                      "nleps==0&&met<50&&ht>1000&&njets>=9", "weight", {400.}),
                        full_trig_skim_0l, all_plot_types); 
-*/
+
+
   //
+  // di-lepton events
   //
-  //
+  string mll="(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))";
+  string mllcut="(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))>80&&(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))<100";
+  // ttbar
+  pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj14", "M_{J} [GeV]",
+                      "nels==1&&nmus==1&&ht>300&&met>100&&njets>=2&&njets<=3&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "weight", {400.}),
+                       full_trig_skim_2l, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(15, 0., 500., "fjets14_m", "m_{J} [GeV]",
+                      "nels==1&&nmus==1&&ht>300&&met>100&&njets>=2&&njets<=3&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "weight", {400.}),
+                       full_trig_skim_2l, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj14", "M_{J} [GeV]",
+                      "nels==1&&nmus==1&&ht>300&&met>100&&njets>=4&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "weight", {400.}),
+                       full_trig_skim_2l, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(15, 0., 500., "fjets14_m", "m_{J} [GeV]",
+                      "nels==1&&nmus==1&&ht>300&&met>100&&njets>=4&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "weight", {400.}),
+                       full_trig_skim_2l, all_plot_types);
+  // DY
+  pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj14", "M_{J} [GeV]",
+                      "(nmus>=2||nels>=2)&&ht>350&&njets>=2&&njets<=3&&"+mllcut, "weight", {400.}),
+                       full_trig_skim_2l, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(15, 0., 500., "fjets14_m", "m_{J} [GeV]",
+                      "(nmus>=2||nels>=2)&&ht>350&&njets>=2&&njets<=3&&"+mllcut, "weight", {400.}),
+                       full_trig_skim_2l, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj14", "M_{J} [GeV]",
+                      "(nmus>=2||nels>=2)&&ht>350&&njets>=4&&"+mllcut, "weight", {400.}),
+                       full_trig_skim_2l, all_plot_types);
+  pm.Push<HistoStack>(HistoDef(15, 0., 500., "fjets14_m", "m_{J} [GeV]",
+                      "(nmus>=2||nels>=2)&&ht>350&&njets>=4&&"+mllcut, "weight", {400.}),
+                       full_trig_skim_2l, all_plot_types);
+  
   pm.MakePlots(lumi); 
+
 }
