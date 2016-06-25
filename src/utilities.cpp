@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdint>
+#include <cmath>
 
 #include <sstream>
 #include <string>
@@ -133,9 +134,10 @@ string FixedDigits(double x, int n_digits){
 }
 
 TString RoundNumber(double num, int decimals, double denom){
-  if(denom==0) return " - ";
+  if(denom==0 || !isfinite(num) || !isfinite(denom)) return " - ";
   double neg = 1; if(num*denom<0) neg = -1;
   num /= neg*denom; num += 0.5*pow(10.,-decimals);
+  if(abs(num) > 1e16) return "-";
   long num_int = static_cast<long>(num);
   long num_dec = static_cast<long>((1+num-num_int)*pow(10.,decimals));
   TString s_dec = ""; s_dec += num_dec; s_dec.Remove(0,1);
@@ -150,6 +152,7 @@ TString RoundNumber(double num, int decimals, double denom){
   afterdot.Remove(0,afterdot.First(".")+1);
   for(int i=0; i<decimals-afterdot.Length(); i++)
     result += "0";
+  if(result.Length()>15) cout<<"num "<<num<<", denom "<<denom<<"  ---->  "<<result<<endl;
   return result;
 }
 
