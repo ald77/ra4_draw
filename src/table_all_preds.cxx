@@ -46,7 +46,7 @@ TString Zbi(double Nobs, double Nbkg, double Ebkg){
   if(Nbkg==0) zbi = RooStats::NumberCountingUtils::BinomialWithTauExpZ(Nsig, Nbkg, 1/Ebkg);
   if(zbi<0) zbi=0;
   TString zbi_s = "$"+RoundNumber(zbi,1)+"\\sigma$";
-  if(Nsig<=0) zbi_s = "$-\\sigma$";
+  if(Nsig<=0) zbi_s = "-";
   //cout<<"Zbi for Nobs "<<Nobs<<", Nbkg "<<Nbkg<<", Ebkg "<<Ebkg<<" is "<<zbi_s<<endl;
   return zbi_s;
 }
@@ -68,7 +68,8 @@ int main(int argc, char *argv[]){
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_21/data/skim_standard/");
   if(method.Contains("met150")){
     foldermc = bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_1lht500met150nj5/";
-    folderdata = bfolder+"/cms2r0/babymaker/babies/2016_06_14/data/merged_1lht500met150nj5/";
+    folderdata = bfolder+"/cms2r0/babymaker/babies/2016_06_21/data/skim_1lmet150/";
+    //folderdata = bfolder+"/cms2r0/babymaker/babies/2016_06_14/data/merged_1lht500met150nj5/";
   }
   if(method.Contains("2015")){
     foldermc = bfolder+"/cms2r0/babymaker/babies/2016_04_29/mc/merged_1lht500met200/";
@@ -79,14 +80,17 @@ int main(int argc, char *argv[]){
 
   auto tt = Proc<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root",
-	foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
-	foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
-	foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
-	foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
-	foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
-	foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
-	foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
+  	foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
+  	foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
+  	foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
+  	foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
+  	foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
+  	foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
+  	foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
     "stitch");
+  // auto tt = Proc<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_1l"),
+  //   {foldermc+"*T1tttt_mGluino-1500_mLSP-100_*.root"},
+  //   "stitch");
   auto other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
     {foldermc+"*_WJetsToLNu*",foldermc+"*_ST_*.root",
 	foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
@@ -130,6 +134,9 @@ int main(int argc, char *argv[]){
   vector<TString> njbcuts_m2lnob = {"njets>=5&&njets<=7", "njets>=8"}; 
   vector<TString> njbcuts_2lveto_lonj = {"njets>=5", "njets>=5"}; 
   vector<TString> njbcuts_2lveto_hinj = {"njets>=8", "njets>=8"}; 
+  vector<TString> njbcuts_all = {"njets>=6"}; 
+  vector<TString> njbcuts_2l_lonj = {"njets>=5"}; 
+  vector<TString> njbcuts_2l_hinj = {"njets>=8"}; 
 
 
   size_t ilowmet(2); // njbcuts index up to which metcuts[0] is applied
@@ -178,19 +185,20 @@ int main(int argc, char *argv[]){
   vector<TString> abcdcuts, njbcuts_himt = njbcuts_stdnob;
   vector<TString> njbcuts = njbcuts_stdnob;
   TString region_s = "R", method_s, base_all = "mj14>250&&pass&&nonblind&&stitch&&";
-  TString lumi_s = "815 pb$^{-1}$";
+  TString lumi_s = "815$ pb$^{-1}$";
   bool unblind = false;
 
   if(full_lumi){
     base_all = "mj14>250&&pass&&stitch&&";
     if(method.Contains("2015")){
       lumi = 2.3;
-      lumi_s = "2.3 fb$^{-1}$";
+      lumi_s = "2.3$ fb$^{-1}$";
     } else {
       lumi = 2.6;
-      lumi_s = "2.6 fb$^{-1}$";
+      lumi_s = "2.6$ fb$^{-1}$";
     }
   }
+
 
   if(method=="m2l" || method=="m2l_2015") {
     base_s = base_all+"njets>=5";
@@ -199,13 +207,21 @@ int main(int argc, char *argv[]){
     region_s = "D";
     method_s = "D3 and D4 have $2\\ell$";
   } else if(method=="m2lveto" || method=="m2lveto_2015") {
-    base_s = base_all+"njets>=5&&nleps>=1";
+    base_s = base_all+"njets>=5";
     njbcuts = njbcuts_2lveto_lonj;
     njbcuts_himt = njbcuts_2lveto_lonj;
     abcdcuts = abcdcuts_2lveto;
     region_s = "D";
     method_s = "D3 and D4 have $\\ell\\ell+\\ell t_{\\rm veto}$";
     ilowmet = 1;
+  } else if(method=="m2lvetomet150" || method=="m2lvetomet150_2015") {
+    base_s = base_all+"njets>=5";
+    njbcuts = njbcuts_2lveto_lonj;
+    njbcuts_himt = njbcuts_2lveto_lonj;
+    abcdcuts = abcdcuts_2lveto;
+    region_s = "D";
+    method_s = "$150<E_{\\rm T}^{\\rm miss}<200$, D3 and D4 have $\\ell\\ell+\\ell t_{\\rm veto}$";
+    ilowmet = njbcuts.size();
   } else if(method=="m2lveto_el" || method=="m2lveto_el_2015") {
     base_s = base_all+"njets>=5&&nels>=1";
     njbcuts = njbcuts_2lveto_lonj;
@@ -238,6 +254,22 @@ int main(int argc, char *argv[]){
     region_s = "D";
     method_s = "D3 and D4 have $\\ell\\ell+\\ell t_{\\rm veto}$ - high $N_{\\rm jets}$";
     ilowmet = 1;
+  } else if(method=="m2lvetomet150_lonj") {
+    base_s = base_all+"njets>=5";
+    njbcuts = njbcuts_2l_lonj;
+    njbcuts_himt = njbcuts_2l_lonj;
+    abcdcuts = abcdcuts_2lveto_lonj;
+    region_s = "D";
+    method_s = "D3 and D4 have $\\ell\\ell+\\ell t_{\\rm veto}$ - low $N_{\\rm jets}$";
+    ilowmet = njbcuts.size();
+  } else if(method=="m2lvetomet150_hinj") {
+    base_s = base_all+"njets>=5";
+    njbcuts = njbcuts_2l_hinj;
+    njbcuts_himt = njbcuts_2l_hinj;
+    abcdcuts = abcdcuts_2lveto_hinj;
+    region_s = "D";
+    method_s = "D3 and D4 have $\\ell\\ell+\\ell t_{\\rm veto}$ - high $N_{\\rm jets}$";
+    ilowmet = njbcuts.size();
   } else if(method=="mveto" || method=="mveto_2015") {
     base_s = base_all+"njets>=6&&nbm>=1&&nleps==1";
     njbcuts_himt = njbcuts_stdnob;
@@ -264,14 +296,6 @@ int main(int argc, char *argv[]){
     abcdcuts = abcdcuts_veto;
     region_s = "D";
     method_s = "$150<E_{\\rm T}^{\\rm miss}<200$, D3 and D4 have $\\ell t_{\\rm veto}$";
-  } else if(method=="m2lvetomet150" || method=="m2lvetomet150_2015") {
-    base_s = base_all+"njets>=5";
-    njbcuts = njbcuts_2lveto_lonj;
-    njbcuts_himt = njbcuts_2lveto_lonj;
-    abcdcuts = abcdcuts_2lveto;
-    region_s = "D";
-    method_s = "$150<E_{\\rm T}^{\\rm miss}<200$, D3 and D4 have $\\ell\\ell+\\ell t_{\\rm veto}$";
-    ilowmet = 1;
   } else if(method=="m2lmet150" || method=="m2lmet150_2015") {
     base_s = base_all+"njets>=5";
     njbcuts = njbcuts_m1lnob;
@@ -279,6 +303,14 @@ int main(int argc, char *argv[]){
     abcdcuts = abcdcuts_2l;
     region_s = "D";
     method_s = "$150<E_{\\rm T}^{\\rm miss}<200$, D3 and D4 have $\\ell\\ell+\\ell t_{\\rm veto}$";
+  } else if(method=="mall") {
+    base_s = base_all+"njets>=6&&nbm>=1&&met>200&&nleps==1&&nveto==0";
+    njbcuts = njbcuts_all;
+    njbcuts_himt = njbcuts_all;
+    abcdcuts = abcdcuts_std;
+    method_s = "All signal bins - $1\\ell$, $E_{\\rm T}^{\\rm miss}>200$";
+    metcuts[0] = "met>200";
+    ilowmet = njbcuts.size();
   } else if(method=="met200") {
     base_s = base_all+"njets>=6&&nbm>=1&&met>200&&nleps==1&&nveto==0";
     njbcuts = njbcuts_std;
@@ -364,12 +396,12 @@ int main(int argc, char *argv[]){
   ////// Finding yields 
   vector<TableRow> bincuts;
   for(size_t ind(0); ind<njbcuts.size(); ind++){
-    //cout<<endl<<"New njb"<<endl;
+    cout<<endl<<"New njb"<<endl;
     for(size_t obs(0); obs < abcdcuts.size(); obs++){
       TString totcut(abcdcuts[obs]+"&&"+metcuts[ind>=ilowmet]);
       if(obs == 1) totcut += ("&&"+njbcuts[ind]);
       if(obs == 3) totcut += ("&&"+njbcuts_himt[ind]);
-      //cout<<base_s+"&&"+totcut<<endl;
+      cout<<base_s+"&&"+totcut<<endl;
       bincuts.push_back(TableRow((base_s+"&&"+totcut).Data(),(base_s+"&&"+totcut).Data()));
     } // Loop over observables going into kappa
   } // Loop over signal bins
@@ -497,7 +529,7 @@ int main(int argc, char *argv[]){
     for(size_t ind=0; ind<Ncol-1; ind++) out<<"c";
     out<<"}\\hline\\hline\n";
     out<<" \\multicolumn{"<<Ncol<<"}{c}{"<<method_s<<"} \\\\ \\hline"<<endl;
-    out<<"$\\cal{L}=$"<<lumi_s<<" & $\\kappa$ & MC  & Pred. & Obs. & MC/Obs & $Z_{\\rm bi}$ \\\\ \\hline\\hline\n";
+    out<<"${\\cal L}="<<lumi_s<<" & $\\kappa$ & MC  & Pred. & Obs. & MC/Obs & $Z_{\\rm bi}$ \\\\ \\hline\\hline\n";
     if(method.Contains("met150")) out << " \\multicolumn{"<<Ncol<<"}{c}{$150<\\text{MET}\\leq 200$}  \\\\ \\hline\n";
     else if(method.Contains("met500")) out << " \\multicolumn{"<<Ncol<<"}{c}{$\\text{MET}> 500$}  \\\\ \\hline\n";
     else if(method.Contains("met200nb1")) out << " \\multicolumn{"<<Ncol<<"}{c}{$200<\\text{MET}\\leq 350, N_{b}=1$}  \\\\ \\hline\n";
