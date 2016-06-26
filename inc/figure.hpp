@@ -41,6 +41,7 @@ public:
   virtual std::set<std::shared_ptr<Process> > GetProcesses() const = 0;
 
   virtual FigureComponent * GetComponent(const std::shared_ptr<Process> &process) = 0;
+  bool print_figure_;
 };
 
 #endif

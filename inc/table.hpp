@@ -36,7 +36,8 @@ public:
 
   Table(const std::string &name,
 	const std::vector<TableRow> &rows,
-	const std::vector<std::shared_ptr<Process> > &processes);
+	const std::vector<std::shared_ptr<Process> > &processes,
+	bool print_table=true);
   Table(Table &&) = default;
   Table& operator=(Table &&) = default;
   ~Table() = default;
@@ -50,7 +51,7 @@ public:
   std::set<std::shared_ptr<Process> > GetProcesses() const final;
 
   FigureComponent * GetComponent(const std::shared_ptr<Process> &process) final;
-
+  
   std::string name_;
   std::vector<TableRow> rows_;
 private:

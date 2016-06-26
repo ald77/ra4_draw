@@ -23,6 +23,9 @@
 using namespace std;
 
 namespace{
+  bool split_bkg = false;
+  bool only_dilepton = false;
+  bool do_leptons = false;
   bool do_signal = true;
   bool full_lumi = false;
   bool unblind = false;
@@ -32,8 +35,8 @@ namespace{
 }
 
 
-void printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
-                vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds);
+TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
+		   vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds);
 void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds);
 void printDebug(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
@@ -68,7 +71,7 @@ int main(int argc, char *argv[]){
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/");
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_21/data/skim_standard/");
   if(skim.Contains("met150")){
-    foldermc = bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_1lht500met150nj5/";
+    foldermc = bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_met150/";
     folderdata = bfolder+"/cms2r0/babymaker/babies/2016_06_21/data/skim_1lmet150/";
   }
   if(skim.Contains("2015")){
@@ -86,34 +89,54 @@ int main(int argc, char *argv[]){
   } else lumi = 2.6;
   if(skim.Contains("2015")) lumi = 2.3;
 
-  auto tt = Proc<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
+  auto proc_bkg = Proc<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root",
-    foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
-    foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
-    foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
-    foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
-    foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
-    foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
-    foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
+    	foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
+    	foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
+    	foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
+    	foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
+    	foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
+    	foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
+    	foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
     //{foldermc+"*_ZZ_*.root"},
     baseline+" && stitch");
 
-  auto t1c = Proc<Baby_full>("T1tttt(C)", Process::Type::signal, colors("t1tttt"),
+  auto proc_t1c = Proc<Baby_full>("T1tttt(C)", Process::Type::signal, colors("t1tttt"),
     {foldermc+"*mGluino-1200_mLSP-800_*root"},
     baseline+" && stitch");
-  auto t1nc = Proc<Baby_full>("T1tttt(NC)", Process::Type::signal, colors("t1tttt"),
+  auto proc_t1nc = Proc<Baby_full>("T1tttt(NC)", Process::Type::signal, colors("t1tttt"),
     {foldermc+"*mGluino-1500_mLSP-100_*root"},
+    baseline+" && stitch");
+  auto proc_tt1l = Proc<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
+    {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root"},
+    baseline+" && stitch && ntruleps==1");
+  auto proc_tt2l = Proc<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
+    {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root"},
+    baseline+" && stitch && ntruleps==2");
+  auto proc_other = Proc<Baby_full>("Other", Process::Type::background, colors("tt_1l"),
+    {foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
+	foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
+	foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
+	foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
+	foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
+	foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
+	foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
     baseline+" && stitch");
 
   string trigs = "(trig[4]||trig[8]||trig[13]||trig[33])";
   if(skim.Contains("2015")) trigs = "(trig[4]||trig[8]||trig[28]||trig[14])";
-  auto data = Proc<Baby_full>("Data", Process::Type::data, kBlack,
+  auto proc_data = Proc<Baby_full>("Data", Process::Type::data, kBlack,
     {folderdata+"*.root"},baseline+" && "+trigs);
 
-  vector<shared_ptr<Process> > all_procs = {data, tt};
+  vector<shared_ptr<Process> > all_procs = {proc_data, proc_bkg};
   if (do_signal){
-    all_procs.push_back(t1nc);
-    all_procs.push_back(t1c);
+    all_procs.push_back(proc_t1nc);
+    all_procs.push_back(proc_t1c);
+  }
+  if (split_bkg){
+    all_procs.push_back(proc_tt1l);
+    all_procs.push_back(proc_tt2l);
+    all_procs.push_back(proc_other);
   }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,7 +149,6 @@ int main(int argc, char *argv[]){
   TString c_midmet  = "met>350 && met<=500";
   TString c_higmet  = "met>500";
 
-
   ////// Nb cuts
   TString c_lownb = "nbm==1";
   TString c_midnb = "nbm==2";
@@ -136,10 +158,6 @@ int main(int argc, char *argv[]){
   TString c_lownj = "njets>=6 && njets<=8";
   TString c_hignj = "njets>=9";
   TString c_nj5   = "njets==5";
-
-  // vector<TString> nj_lohi({c_lownj, c_hignj});
-  // vector<TString> nbnj_lohi({c_lownb+"&&"+c_lownj, c_lownb+"&&"+c_hignj, c_hignb+"&&"+c_lownj, c_hignb+"&&"+c_hignj});
-  // vector<TString> nj_5({c_nj5});
 
   ////// ABCD cuts
   vector<TString> abcdcuts_std = {"mt<=140 && mj14<=400  &&  nj_all_1l", 
@@ -172,27 +190,40 @@ int main(int argc, char *argv[]){
   PlotMaker pm;
 
   ///// Running over these methods
-  //vector<TString> methods = {"m2lonly", "signal"};
-  vector<TString> methods = {"m2lveto", "m2lonly", "mvetoonly", "signal"};
+  vector<TString> methods_std = {"m2lveto", "m2lonly", "mvetoonly", "signal", "m5j", 
+				 "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
+  vector<TString> methods_met150 = {"m2lvetomet150", "m2lonlymet150", "mvetoonlymet150", "m1lmet150"};
+  vector<TString> methods = methods_std;
+  if(skim.Contains("met150")) methods = methods_met150;
+  if(do_leptons){
+    for(auto name: methods){
+      name += "_el";
+      methods.push_back(name);
+      name.ReplaceAll("_el", "_mu");
+      methods.push_back(name);
+      if(name.Contains("2l")){ 
+	name.ReplaceAll("_mu", "_emu");
+	methods.push_back(name);
+      }
+    }
+  }
 
   for(size_t iabcd=0; iabcd<methods.size(); iabcd++) {
     TString method = methods[iabcd];
     TString basecuts = "", caption = "";
     
+    //////// General assignments to all methods
     if(method.Contains("2l") || method.Contains("veto")) {
       metcuts = vector<TString>{c_lowmet, c_midmet};
       bincuts = vector<TString>{c_lownj, c_hignj}; // 2l nj cuts automatically lowered in abcd_method
-      caption = "D3 and D4 have ";
+      caption = "Dilepton validation regions. D3 and D4 have ";
     } else {
+      if(only_dilepton) continue;
       abcdcuts = abcdcuts_std;
       basecuts = "nleps==1 && nveto==0 && nbm>=1";
-      metcuts = vector<TString>{c_lowmet, c_midmet, c_higmet};
-      bincuts = vector<TString>{c_lownb+" && "+c_lownj, c_lownb+" && "+c_hignj, 
-                                c_midnb+" && "+c_lownj, c_midnb+" && "+c_hignj, 
-                                c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj}; 
-      caption = "Signal search regions";
     }
 
+    //////// Dilepton methods
     if(method.Contains("2lonly")) {
       abcdcuts = abcdcuts_2l;
       caption += "two reconstructed leptons";
@@ -206,15 +237,66 @@ int main(int argc, char *argv[]){
       caption += "one lepton and one track";
     }
 
+    //////// Single lepton methods, all use the standard ABCD plane and nleps==1&&nveto==0&&nbm>=1
+    if(method.Contains("signal")) {
+      metcuts = vector<TString>{c_lowmet, c_midmet, c_higmet};
+      bincuts = vector<TString>{c_lownb+" && "+c_lownj, c_lownb+" && "+c_hignj, 
+                                c_midnb+" && "+c_lownj, c_midnb+" && "+c_hignj, 
+                                c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj}; 
+      caption = "Signal search regions";
+    }
+    if(method.Contains("m5j")) {
+      metcuts = vector<TString>{c_lowmet, c_midmet};
+      bincuts = vector<TString>{c_lownb+" && "+c_nj5, c_lownb+" && "+c_nj5, c_hignb+" && "+c_nj5}; 
+      caption = "Validation regions with $1\\ell, \\njets=5$";
+    }
+    ////// Aggregate regions (single lepton). The nbm, njets integration in R1/R3 is done in abcd_method
+    if(method.Contains("agg_himet")) {
+      metcuts = vector<TString>{"met>500"};
+      bincuts = vector<TString>{"nbm>=3&&njets>=6"}; 
+      caption = "High-\\met aggregate region with $1\\ell$, $\\met>500\\text{ GeV}$, $\\njets\\geq6$, $\\nb\\geq3$";
+    }
+    if(method.Contains("agg_mixed")) {
+      metcuts = vector<TString>{"met>350"};
+      bincuts = vector<TString>{"nbm>=2&&njets>=9"}; 
+      caption = "Mixed aggregate region with $1\\ell$, $\\met>350\\text{ GeV}$, $\\njets\\geq9$, $\\nb\\geq2$";
+    }
+    if(method.Contains("agg_himult")) {
+      metcuts = vector<TString>{"met>200"};
+      bincuts = vector<TString>{"nbm>=3&&njets>=9"}; 
+      caption = "High-multiplicity aggregate region with $1\\ell$, $\\met>200\\text{ GeV}$, $\\njets\\geq9$, $\\nb\\geq3$";
+    }
+    if(method.Contains("agg_1b")) {
+      metcuts = vector<TString>{"met>500"};
+      bincuts = vector<TString>{"nbm>=1&&njets>=6"}; 
+      caption = "Single b-tag aggregate region with $1\\ell$, $\\met>500\\text{ GeV}$, $\\njets\\geq6$, $\\nb\\geq1$";
+    }
+
+    //////// MET150 methods
+    if(method.Contains("met150")) {
+      metcuts = vector<TString>{c_vlowmet};
+    }
+    if(method.Contains("m1lmet150")) {
+      bincuts = vector<TString>{c_lownb+" && "+c_lownj, c_lownb+" && "+c_hignj, 
+                                c_midnb+" && "+c_lownj, c_midnb+" && "+c_hignj}; 
+      caption = "Single lepton very low \\met validation region";
+    }
+
+
+    //////// Pushing all cuts to then find the yields
     abcds.push_back(abcd_method(method, metcuts, bincuts, abcdcuts, caption, basecuts));
-    //abcds.back().printCuts();
+    if(method.Contains("_el") || method.Contains("_mu") || method.Contains("_emu")) abcds.back().setLeptons();
+    if(method.Contains("_el"))  abcds.back().caption += ". Only electrons";
+    if(method.Contains("_mu"))  abcds.back().caption += ". Only muons";
+    if(method.Contains("_emu")) abcds.back().caption += ". Only $e/\\mu$ pairs in D3 and D4";
+    //if(method.Contains("agg_")) abcds.back().int_nbnj = false; // Only changes caption since there is only 1 bin
 
     vector<TableRow> table_cuts;
     for(size_t icut=0; icut < abcds.back().allcuts.size(); icut++)
       table_cuts.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data()));
 
     TString tname = "preds"; tname += iabcd;
-    pm.Push<Table>(tname.Data(),  table_cuts, all_procs);   
+    pm.Push<Table>(tname.Data(),  table_cuts, all_procs, false);   
   } // Loop over ABCD methods
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -227,16 +309,22 @@ int main(int argc, char *argv[]){
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////// Calculating preds/kappas and printing table //////////////////////////////////////
-
+  vector<TString> tablenames;
   for(size_t imethod=0; imethod<abcds.size(); imethod++) {
     Table * yield_table = static_cast<Table*>(pm.Figures()[imethod].get());
     // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
+    // if split_bkg [2/4] Other, [3/5] tt1l, [4/6] tt2l
     vector<vector<GammaParams> > allyields;
     allyields.push_back(yield_table->DataYield(1));
-    allyields.push_back(yield_table->BackgroundYield(lumi));
+    allyields.push_back(yield_table->Yield(proc_bkg, lumi));
     if(do_signal){
-      allyields.push_back(yield_table->Yield(t1nc, lumi));
-      allyields.push_back(yield_table->Yield(t1c, lumi));
+      allyields.push_back(yield_table->Yield(proc_t1nc, lumi));
+      allyields.push_back(yield_table->Yield(proc_t1c, lumi));
+    }
+    if(split_bkg){
+      allyields.push_back(yield_table->Yield(proc_other, lumi));
+      allyields.push_back(yield_table->Yield(proc_tt1l, lumi));
+      allyields.push_back(yield_table->Yield(proc_tt2l, lumi));
     }
 
     //// Calculating kappa and Total bkg prediction
@@ -244,17 +332,30 @@ int main(int argc, char *argv[]){
     findPreds(abcds[imethod], allyields, kappas, preds);
 
     //// Makes table MC/Data yields, kappas, preds, Zbi
-    printTable(abcds[imethod], allyields, kappas, preds);
+    TString fullname = printTable(abcds[imethod], allyields, kappas, preds);
+    tablenames.push_back(fullname);
+
 
     //// Print MC/Data yields, cuts applied, kappas, preds
     if(debug) printDebug(abcds[imethod], allyields, kappas, preds);
 
   } // Loop over ABCD methods
 
+  //// Printing names of ouput files
+  cout<<endl<<"===== Tables to be moved to the AN/PAS/paper:"<<endl;
+  for(size_t ind=0; ind<tablenames.size(); ind++){
+    TString name=tablenames[ind]; name.ReplaceAll("fulltable","table");
+    cout<<" mv "<<name<<"  ${figs_folder}"<<endl;
+  }
+  cout<<endl<<"===== Tables that can be compiled"<<endl;
+  for(size_t ind=0; ind<tablenames.size(); ind++)
+    cout<<" pdflatex "<<tablenames[ind]<<"  > /dev/null"<<endl;
+  cout<<endl;
 
   time(&endtime); 
   cout<<endl<<"Finding "<<abcds.size()<<" tables took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
 } // main
+  
 ////////////////////////////////////////// End of main //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -263,42 +364,40 @@ int main(int argc, char *argv[]){
 
 //// Prints table with results
 // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
-void printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
-                vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds){
+// if split_bkg: [2/4] Other, [3/5] tt1l, [4/6] tt2l
+TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
+		   vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds){
   //// Table general parameters
   int digits = 2;
   TString ump = " & ";
   bool do_zbi = true;
+  if(!unblind) do_zbi = false;
   size_t Ncol = 6;
   if(do_zbi) Ncol++;
   if(do_signal) Ncol += 2;
+  if(split_bkg) Ncol += 3;
   TString blind_s = "$\\spadesuit$";
   
   //// Setting output file name
   int digits_lumi = 1;
   if(!full_lumi && !skim.Contains("2015")) digits_lumi = 3;
   TString lumi_s = RoundNumber(lumi, digits_lumi); 
-  TString outname = "txt/table_predictions_lumi"+lumi_s; outname.ReplaceAll(".","p");
+  TString outname = "tables/table_pred_lumi"+lumi_s; outname.ReplaceAll(".","p");
   if(skim.Contains("2015")) outname += "_2015";
   if(unblind) outname += "_unblind";
   else outname += "_blind";
   outname += "_"+abcd.method+".tex";
-
-  //// Printing header
-  ifstream header("txt/header.tex");
   ofstream out(outname);
-  out<<header.rdbuf();
 
   //// Printing main table preamble
-  out << "\\begin{table}\n\\centering\n";
-  out << "\\caption{" << abcd.caption <<".}\n\\label{tab:"<<abcd.method<<"}\n";
-  out << "\\resizebox{\\textwidth}{!}{\n";
+  if(abcd.method.Contains("signal") && Ncol>7) out << "\\resizebox{\\textwidth}{!}{\n";
   out << "\\begin{tabular}[tbp!]{ l ";
   for(size_t ind=0; ind<Ncol-1; ind++) out<<"c";
   out<<"}\\hline\\hline\n";
   out<<"${\\cal L}="<<lumi_s<<"$ fb$^{-1}$ & $\\kappa$ ";
   if(do_signal) out << " & T1tttt(NC) & T1tttt(C) ";
-  out<<"& MC  & Pred. & Obs. & Obs./MC "<<(do_zbi?"& $Z_{\\rm Bi}$":"")<<" \\\\ \\hline\\hline\n";
+  if(split_bkg) out << " & Other & $t\\bar{t}(1\\ell)$ & $t\\bar{t}(2\\ell)$ ";
+  out<<"& MC bkg. & Pred. & Obs. & Obs./MC "<<(do_zbi?"& $Z_{\\rm Bi}$":"")<<" \\\\ \\hline\\hline\n";
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////// Printing results////////////////////////////////////////////////
@@ -309,6 +408,7 @@ void printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
         size_t index = abcd.indexBin(iplane, ibin, iabcd);
         if(abcd.int_nbnj && iabcd%2==0 && ibin>0) continue;
 	if(iabcd==3 && ibin==0) out << "\\hline" << endl; 
+	//// Printing bin name
         out << (iabcd<=1?"R":abcd.rd_letter) << iabcd+1 << ": ";
 	if(iabcd%2==0 && abcd.int_nbnj)
 	  out << "All "<<(abcd.bincuts[iplane][ibin].Contains("nbm")?"\\nb, ":"")<<"\\njets" ;
@@ -320,18 +420,42 @@ void printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
 	  } else out<<cutsToTex(abcd.bincuts[iplane][ibin]);
 	}
 	out<<ump;
+	//// Printing kappa
         if(iabcd==3) out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits) 
 			 << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits) 
                          << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits) <<"}$ ";
+	//// Printing signal yields
 	if(do_signal) 
 	  out<<ump<<RoundNumber(allyields[2][index].Yield(), digits)<< ump <<RoundNumber(allyields[3][index].Yield(), digits);
+	//// Printing Other, tt1l, tt2l
+	if(split_bkg){
+	  size_t offset = (do_signal?2:0);
+	  out << ump <<RoundNumber(allyields[offset+2][index].Yield(), digits)
+	      << ump <<RoundNumber(allyields[offset+3][index].Yield(), digits)
+	      << ump <<RoundNumber(allyields[offset+4][index].Yield(), digits);
+	}
+	//// Printing MC Bkg yields
 	out << ump << RoundNumber(allyields[1][index].Yield(), digits)<< ump;
+	//// Printing background predictions
 	if(iabcd==3) out << "$"    << RoundNumber(preds[iplane][ibin][0], digits) 
 			 << "^{+"  << RoundNumber(preds[iplane][ibin][1], digits) 
                          << "}_{-" << RoundNumber(preds[iplane][ibin][2], digits) <<"}$ ";
-	if(!unblind && iabcd==3) out << ump << blind_s;
-	else out << ump << RoundNumber(allyields[0][index].Yield(), 0);
-	out << ump << RoundNumber(allyields[0][index].Yield(), 0, allyields[1][index].Yield());
+	//// Printing observed events in data and Obs/MC ratio
+	if(!unblind && iabcd==3) out << ump << blind_s<< ump << blind_s;
+	else {
+	  out << ump << RoundNumber(allyields[0][index].Yield(), 0);
+	  TString ratio_s = "-";
+	  double Nobs = allyields[0][index].Yield(), Nmc = allyields[1][index].Yield();
+	  double Eobs = sqrt(Nobs), Emc = allyields[1][index].Uncertainty();
+	  if(Nobs==0) Eobs=1;
+	  if(Emc>0){
+	    double ratio = Nobs/Nmc;
+	    double Eratio = sqrt(pow(Eobs/Nmc,2) + pow(Nobs*Emc/Nmc/Nmc,2));
+	    ratio_s = "$"+RoundNumber(ratio, 2)+"\\pm"+RoundNumber(Eratio,2)+"$";
+	  }
+	  out << ump << ratio_s;
+	}
+	//// Printing Zbi significance
 	if(do_zbi && iabcd==3) out << ump << Zbi(allyields[0][index].Yield(), preds[iplane][ibin][0], preds[iplane][ibin][1]);
         out << "\\\\ \n";
       } // Loop over bin cuts
@@ -342,11 +466,27 @@ void printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
 
   //// Printing footer and closing file
   out<< "\\end{tabular}"<<endl;
-  out << "}\n";
-  out << "\\end{table}\n\n";
-  out << "\\end{document}\n";
+  if(abcd.method.Contains("signal") && Ncol>7) out << "}\n"; // For resizebox
   out.close();
-  cout<<endl<<" pdflatex "<<outname<<endl;
+
+  //// Copying header and table to the compilable file
+  TString fullname = outname; fullname.ReplaceAll("table_","fulltable_");
+  ofstream full(fullname);
+  ifstream header("txt/header.tex");
+  full<<header.rdbuf();
+  header.close();
+  if(!abcd.method.Contains("signal")) full << "\\usepackage[landscape]{geometry}\n\n";
+  full << "\\begin{document}\n\n";
+  full << "\\begin{table}\n\\centering\n";
+  full << "\\caption{" << abcd.caption <<".}\\vspace{0.1in}\n\\label{tab:"<<abcd.method<<"}\n";
+  ifstream outtab(outname);
+  full << outtab.rdbuf();
+  outtab.close();
+  full << "\\end{table}\n\n";
+  full << "\\end{document}\n";
+  full.close();
+
+  return fullname;
 } // printTable
 
 //// Converting ROOT cuts to TeX
@@ -473,22 +613,34 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"skim", required_argument, 0, 's'},
+      {"split_bkg", no_argument, 0, 'b'},
       {"no_signal", no_argument, 0, 'n'},
+      {"do_leptons", no_argument, 0, 'l'},
       {"unblind", no_argument, 0, 'u'},
       {"full_lumi", no_argument, 0, 'f'},
       {"debug", no_argument, 0, 'd'},
+      {"only_dilepton", no_argument, 0, '2'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "s:ufdn", long_options, &option_index);
+    opt = getopt_long(argc, argv, "s:ufdbnl2", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
     switch(opt){
     case 's':
       skim = optarg;
+      break;
+    case 'b':
+      split_bkg = true;
+      break;
+    case '2':
+      only_dilepton = true;
+      break;
+    case 'l':
+      do_leptons = true;
       break;
     case 'n':
       do_signal = false;

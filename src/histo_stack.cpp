@@ -299,6 +299,7 @@ HistoStack::HistoStack(const HistoDef &definition,
       break;
     }
   }
+  print_figure_ = true;
 
   blank_.SetFillStyle(0);
   blank_.SetFillColor(kWhite);

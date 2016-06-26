@@ -95,7 +95,8 @@ void Table::TableColumn::RecordEvent(const Baby &baby){
 
 Table::Table(const string &name,
              const vector<TableRow> &rows,
-             const vector<shared_ptr<Process> > &processes):
+             const vector<shared_ptr<Process> > &processes,
+	     bool print_table):
   Figure(),
   name_(name),
   rows_(rows),
@@ -117,6 +118,7 @@ Table::Table(const string &name,
       break;
     }
   }
+  print_figure_ = print_table;
 }
 
 void Table::Print(double luminosity){

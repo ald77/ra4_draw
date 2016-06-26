@@ -51,7 +51,7 @@ void PlotMaker::MakePlots(double luminosity){
   GetYields();
 
   for(auto &figure: figures_){
-    figure->Print(luminosity);
+    if(figure->print_figure_) figure->Print(luminosity);
   }
 }
 

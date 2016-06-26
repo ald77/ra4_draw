@@ -39,7 +39,9 @@ abcd_method::abcd_method(TString imethod, vector<TString> iplanecuts, vector<TSt
 	totcut += planecuts[iplane] +"  &&  "+ abcdcuts[iabcd];
 
 	// Setting up the nbm/njets cuts
-	if(int_nbnj){
+	if(method.Contains("agg_")){
+	  totcut.ReplaceAll("nj_all_1l", "nbm>=1&&njets>=6");
+	}else if(int_nbnj && bincuts[iplane].size()>1){
 	  totcut.ReplaceAll("nj_all_1l", c_allnbnj);
 	  totcut.ReplaceAll("nj_all_2l", lowerNjets(c_allnbnj));
 	} else {
@@ -67,6 +69,31 @@ size_t abcd_method::indexBin(size_t indplane, size_t indbin, size_t indabcd){
   
   return index + Nabcd*indbin + indabcd;
 }
+
+//// Changes all cuts to use only electrons, muons, or emu
+void abcd_method::setLeptons(){
+  for(size_t iplane=0; iplane < planecuts.size(); iplane++) {
+    if(method.Contains("_el"))  planecuts[iplane].ReplaceAll("nleps", "nels");
+    if(method.Contains("_mu"))  planecuts[iplane].ReplaceAll("nleps", "nmus");
+    if(method.Contains("_emu")) planecuts[iplane].ReplaceAll("nleps==2", "(nels==1&&nmus==1)");
+    for(size_t ibin=0; ibin < bincuts[iplane].size(); ibin++){
+      if(method.Contains("_el"))  bincuts[iplane][ibin].ReplaceAll("nleps", "nels");
+      if(method.Contains("_mu"))  bincuts[iplane][ibin].ReplaceAll("nleps", "nmus");
+      if(method.Contains("_emu")) bincuts[iplane][ibin].ReplaceAll("nleps==2", "(nels==1&&nmus==1)");
+    } // Loop over bin cuts
+  } // Loop over plane cuts
+  for(size_t iabcd=0; iabcd < abcdcuts.size(); iabcd++){
+    if(method.Contains("_el"))  abcdcuts[iabcd].ReplaceAll("nleps", "nels");
+    if(method.Contains("_mu"))  abcdcuts[iabcd].ReplaceAll("nleps", "nmus");
+    if(method.Contains("_emu")) abcdcuts[iabcd].ReplaceAll("nleps==2", "(nels==1&&nmus==1)");
+  } // Loop over ABCD cuts
+  for(size_t ind=0; ind < allcuts.size(); ind++){
+    if(method.Contains("_el"))  allcuts[ind].ReplaceAll("nleps", "nels");
+    if(method.Contains("_mu"))  allcuts[ind].ReplaceAll("nleps", "nmus");
+    if(method.Contains("_emu")) allcuts[ind].ReplaceAll("nleps==2", "(nels==1&&nmus==1)");
+  } // Loop over all cuts
+}
+
 
 //// Prints the cut for all the ABCD planes
 void abcd_method::printCuts(){

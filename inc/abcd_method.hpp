@@ -18,6 +18,7 @@ public:
   TString caption, basecuts, rd_letter; 
 
   size_t indexBin(size_t iplane, size_t ibin, size_t iabcd);
+  void setLeptons();
   void printCuts();
   TString lowerNjets(TString &cut);
   

@@ -12,7 +12,7 @@ full_lumi = True
 methods = ["agg_himet", "agg_mixed", "agg_himult", "agg_1b"]
 
 ## 815 ipb tests
-methods = ['m2lveto', 'm2lveto_el', 'm2lveto_mu', 'm2lveto_lonj', 'm2lveto_hinj', 'm2l', 'mveto', 'm2lmet150', 
+methods = ['m2lveto', 'm2lveto_el', 'm2lveto_mu', 'm2lveto_lonj', 'm2lveto_hinj', 'm2l', 'mveto', 'm2lvetomet150', 'm2lmet150', 
            'met200', 'met500', 'm5j', 'm1lmet150']
 
 ## Dilepton tests
@@ -21,6 +21,8 @@ methods = ['m2lveto', 'm2lveto_2015', 'm2lveto_lonj', 'm2lveto_hinj', 'm2l', 'mv
            'm2lveto_el', 'm2lveto_mu', 'm2lveto_el_2015', 'm2lveto_mu_2015', 
            'm2l_2015', 'mveto_2015', 'm2lmet150_2015', 'm2lvetomet150_2015', 
            'mvetomet150_2015', 'm2lmet150_2015']
+
+methods = ['m2lvetomet150_lonj', 'm2lvetomet150_hinj']
 
 
 os.system("./compile.sh")
