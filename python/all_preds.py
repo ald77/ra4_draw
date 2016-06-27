@@ -5,53 +5,34 @@ import os, sys, subprocess
 import glob
 import string
 
-do_unblind = True
-full_lumi = True
-
-## Aggregate bins
-methods = ["agg_himet", "agg_mixed", "agg_himult", "agg_1b"]
-
-## 815 ipb tests
-methods = ['m2lveto', 'm2lveto_el', 'm2lveto_mu', 'm2lveto_lonj', 'm2lveto_hinj', 'm2l', 'mveto', 'm2lvetomet150', 'm2lmet150', 
-           'met200', 'met500', 'm5j', 'm1lmet150']
-
-## Dilepton tests
-methods = ['m2lveto', 'm2lveto_2015', 'm2lveto_lonj', 'm2lveto_hinj', 'm2l', 'mveto', 
-           'm2lmet150', 'm2lvetomet150', 'mvetomet150', 'm2lmet150',
-           'm2lveto_el', 'm2lveto_mu', 'm2lveto_el_2015', 'm2lveto_mu_2015', 
-           'm2l_2015', 'mveto_2015', 'm2lmet150_2015', 'm2lvetomet150_2015', 
-           'mvetomet150_2015', 'm2lmet150_2015']
-
-methods = ['m2lvetomet150_lonj', 'm2lvetomet150_hinj']
-
-
 os.system("./compile.sh")
 
-options = ""
-if full_lumi:  options = options + " -f"
-if do_unblind: options = options + " -u"
+##  -m   Method to run on (if you just want one)
+##  -d   Debug: prints yields and cuts used
+##  -n   Does not print signal columns
 
-goodtex = []
-missing_files = []
-for method in methods:
-    cmd = "./run/table_all_preds.exe "+options+" -m "+method
-    print "\n\n"+cmd+"\n"
-    os.system(cmd)
+##  -b   Prints Other, tt1l, tt2l contributions
+##  -l   Does tables for e/mu/emu as well
+##  -u   Unblinds R4/D4
+##  -f   Uses all data (does not apply nonblind)
+##  -2   Makes tables only for dilepton tests
+##  -s   Which skim to use: standard, met150, 2015 data
 
-    tag = "lumi"
-    if full_lumi:
-        if "2015" in method: tag = tag+"2p3"
-        else: tag = tag+"2p6"
-    else: tag = tag+"0p815"
-    if do_unblind: tag = "unblind_"+tag
 
-    texfile = "txt/table_predictions_"+tag+"_"+method+".tex"
-    if os.path.isfile(texfile):  
-        os.system("pdflatex "+texfile+" > /dev/null")
-        goodtex.append(texfile)
-    else: missing_files.append([texfile, cmd])
+## 815 ipb
+os.system("./run/table_preds.exe -u -l -b")
+os.system("./run/table_preds.exe -u -l -b -s met150")
+## Full lumi
+os.system("./run/table_preds.exe -u -l -b -f -2")
+os.system("./run/table_preds.exe -u -l -b -f -2 -s met150")
+os.system("./run/table_preds.exe -u -l -b -f -2 -s 2015 ")
 
-for mfile in missing_files:
-    print "Could not find "+mfile[0]+". Command is  "+mfile[1]
+## Making pdfs and organizing them
+os.system("./python/tex_all.py")
+folders = ["lumi0p815", "lumi2p6", "2015"]
+for folder in folders:
+    os.sytem("mkdir out/"+folder)
+    os.system("mv out/*"+folder+"*pdf out/"+folder)
+
 
 sys.exit(0)
