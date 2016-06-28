@@ -349,6 +349,16 @@ NamedFunc::NamedFunc(const char *function):
   NamedFunc(string(function)){
 }
 
+/*!\brief Constructor using FunctionParser to produce a real function from a
+  string
+
+  \param[in] function C++/"TTree::Draw"-like expression containing constants,
+  Baby variables, operators, parenthesis, brackets, etc.
+*/
+NamedFunc::NamedFunc(const TString &function):
+  NamedFunc(static_cast<const char *>(function)){
+}
+
 /*!\brief Constructor for NamedFunc returning a constant
 
   \param[in] x The constant to be returned

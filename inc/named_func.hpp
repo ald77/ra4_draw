@@ -6,6 +6,8 @@
 #include <ostream>
 #include <vector>
 
+#include "TString.h"
+
 #include "baby.hpp"
 
 class NamedFunc{
@@ -21,6 +23,7 @@ public:
             const std::function<VectorFunc> &function);
   NamedFunc(const std::string &function);
   NamedFunc(const char *function);
+  NamedFunc(const TString &function);
   NamedFunc(ScalarType x);
   NamedFunc(const NamedFunc &) = default;
   NamedFunc & operator=(const NamedFunc &) = default;
