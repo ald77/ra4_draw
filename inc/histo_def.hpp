@@ -23,6 +23,22 @@ public:
            const NamedFunc &cut = 1.,
            const NamedFunc &weight = "weight",
            const std::set<double> &cut_vals = {});
+  HistoDef(const std::string &tag,
+	   const std::vector<double> &bins,
+           const NamedFunc &var,
+           const std::string &x_title = "",
+           const NamedFunc &cut = 1.,
+           const NamedFunc &weight = "weight",
+           const std::set<double> &cut_vals = {});
+  HistoDef(const std::string &tag,
+	   size_t nbins,
+           double xmin,
+           double xmax,
+           const NamedFunc &var,
+           const std::string &x_title = "",
+           const NamedFunc &cut = 1.,
+           const NamedFunc &weight = "weight",
+           const std::set<double> &cut_vals = {});
   HistoDef(const HistoDef &) = default;
   HistoDef& operator=(const HistoDef &) = default;
   HistoDef(HistoDef &&) = default;
@@ -36,6 +52,7 @@ public:
   std::string Name() const;
   std::string Title() const;
 
+  std::string tag_;//!< Unique identifier for disambiguating plots
   NamedFunc var_;//!< %Variable to be plotted
   NamedFunc cut_;//!< Cut determining whether histogram is filled
   NamedFunc weight_;//!< Weight with which to fill histogram

@@ -39,6 +39,7 @@ HistoDef::HistoDef(const vector<double> &bins,
                    const NamedFunc &cut,
                    const NamedFunc &weight,
                    const set<double> &cut_vals):
+  tag_(""),
   var_(var),
   cut_(cut),
   weight_(weight),
@@ -78,6 +79,85 @@ HistoDef::HistoDef(size_t nbins,
                    const NamedFunc &cut,
                    const NamedFunc &weight,
                    const set<double> &cut_vals):
+  tag_(""),
+  var_(var),
+  cut_(cut),
+  weight_(weight),
+  x_title_(x_title),
+  units_(""),
+  cut_vals_(cut_vals),
+  bins_(GetEdges(nbins, xmin, xmax)){
+  ParseUnits();
+}
+
+/*!\brief Constructor with tag and using list of bin edges
+
+  \param[in] tag Tag for uniquely identifying plot
+
+  \param[in] bins List of Nbins+1 bin edges, including low edge of lowest bin
+  and high edge of highest bin
+
+  \param[in] var %Variable with which to fill histogram
+
+  \param[in] x_title X-axis title with format "variable plotted [units]"
+
+  \param[in] cut Cut determining whether histogram is filled
+
+  \param[in] weight Weight with which histogram is filled
+
+  \param[in] cut_vals Values for which to plot a vertical line
+*/
+HistoDef::HistoDef(const std::string &tag,
+		   const vector<double> &bins,
+                   const NamedFunc &var,
+                   const string &x_title,
+                   const NamedFunc &cut,
+                   const NamedFunc &weight,
+                   const set<double> &cut_vals):
+  tag_(tag),
+  var_(var),
+  cut_(cut),
+  weight_(weight),
+  x_title_(x_title),
+  units_(""),
+  cut_vals_(cut_vals),
+  bins_(bins){
+  sort(bins_.begin(), bins_.end());
+  ParseUnits();
+  }
+
+/*!\brief Constructor with tag and using number of bins and low and high edges of x-axis
+
+  Constructs a histogram with nbins bins linearly spaced from xmin to xmax
+
+  \param[in] tag Tag for uniquely identifying plot
+
+  \param[in] nbins Number of bins
+
+  \param[in] xmin Low edge of x-axis
+
+  \param[in] xmax High edge of x-axis
+
+  \param[in] var %Variable with which to fill histogram
+
+  \param[in] x_title X-axis title with format "variable plotted [units]"
+
+  \param[in] cut Cut determining whether histogram is filled
+
+  \param[in] weight Weight with which histogram is filled
+
+  \param[in] cut_vals Values for which to plot a vertical line
+*/
+HistoDef::HistoDef(const std::string &tag,
+		   size_t nbins,
+                   double xmin,
+                   double xmax,
+                   const NamedFunc &var,
+                   const string &x_title,
+                   const NamedFunc &cut,
+                   const NamedFunc &weight,
+                   const set<double> &cut_vals):
+  tag_(tag),
   var_(var),
   cut_(cut),
   weight_(weight),
@@ -123,7 +203,11 @@ const vector<double> & HistoDef::Bins() const{
   \return Output name specifying variable, cut, and weight
 */
 string HistoDef::Name() const{
-  return var_.PlainName() + "_CUT_" + cut_.PlainName() + "_WGT_" + weight_.PlainName();
+  if(tag_ == ""){
+    return var_.PlainName() + "_CUT_" + cut_.PlainName() + "_WGT_" + weight_.PlainName();
+  }else{
+    return tag_+"_VAR_"+var_.PlainName() + "_CUT_" + cut_.PlainName() + "_WGT_" + weight_.PlainName();
+  }
 }
 
 /*!\brief Get title of plot containing cut and weight

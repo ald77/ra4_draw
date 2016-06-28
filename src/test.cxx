@@ -115,8 +115,8 @@ int main(int argc, char *argv[]){
   pm.Push<HistoStack>(HistoDef(12, 0., 420., "mt", "m_{T} [GeV]",
                                "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {140.}),
                       full_trig_skim, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj08", "M_{J}^{0.8} [GeV]",
-                               "nleps==1&&ht>500&&met>200", "weight", {400.}),
+  pm.Push<HistoStack>(HistoDef("sometag", 15, 0., 1500., "mj08", "M_{J}^{0.8} [GeV]",
+			       "nleps==1&&ht>500&&met>200", "weight", {400.}),
                       full_trig_skim, all_plot_types);
   pm.Push<Table>("cutflow", vector<TableRow>{
       TableRow("Baseline"),

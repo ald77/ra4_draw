@@ -106,7 +106,7 @@ long PlotMaker::GetYield(const std::shared_ptr<Process> &process){
   auto start_time = Clock::now();
   {
     lock_guard<mutex> lock(print_mutex);
-    cout << "Starting to process " << process->name_ << "." << endl;
+    cout << "Starting to process " << process->name_ << " with cut " << process->cut_ << "." << endl;
   }
 
   Baby &baby = *(process->baby_);
@@ -114,7 +114,7 @@ long PlotMaker::GetYield(const std::shared_ptr<Process> &process){
   long num_entries = baby.GetEntries();
   {
     lock_guard<mutex> lock(print_mutex);
-    cout << process->name_ << " has " << num_entries << " entries and cut "<<process->cut_.PlainName() << endl;
+    cout << process->name_ << " has " << num_entries << " entries." << endl;
   }
 
   set<Figure::FigureComponent*> figure_components = GetComponents(process);
