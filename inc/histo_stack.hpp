@@ -110,7 +110,7 @@ private:
 
   std::vector<std::shared_ptr<TLatex> > GetTitleTexts() const;
   TGraphAsymmErrors GetBackgroundError() const;
-  std::vector<TLine> GetCutLines(double y_min, double y_max) const;
+  std::vector<TLine> GetCutLines(double y_min, double y_max, bool adjust_bottom) const;
   std::vector<TH1D> GetBottomPlots(double &the_min, double &the_max) const;
   TLine GetBottomHorizontal() const;
 

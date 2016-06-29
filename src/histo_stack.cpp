@@ -341,8 +341,8 @@ void HistoStack::Print(double luminosity){
 
     StripTopPlotLabels();
     TLine horizontal = GetBottomHorizontal();
-    vector<TLine> cut_vals = GetCutLines(GetMinDraw(), GetMaxDraw());
-    vector<TLine> bot_cuts = GetCutLines(bot_min, bot_max);
+    vector<TLine> cut_vals = GetCutLines(GetMinDraw(), GetMaxDraw(), true);
+    vector<TLine> bot_cuts = GetCutLines(bot_min, bot_max, false);
 
     unique_ptr<TCanvas> full;
     unique_ptr<TPad> top, bottom;
@@ -823,15 +823,16 @@ TGraphAsymmErrors HistoStack::GetBackgroundError() const{
   \return Lines at x-coordinate of cut value and y-coordinates running from
   bottom of plot to bottom of legend
 */
-vector<TLine> HistoStack::GetCutLines(double y_min, double y_max) const{
-  double bottom;
-  switch(this_opt_.YAxis()){
-  default:
-    DBG("Bad YAxis type " << static_cast<int>(this_opt_.YAxis()));
-  case YAxisType::linear: bottom = y_min >= 0. ? 0. : y_min; break;
-  case YAxisType::log:    bottom = y_min > this_opt_.LogMinimum() ? y_min : this_opt_.LogMinimum(); break;
+vector<TLine> HistoStack::GetCutLines(double y_min, double y_max, bool adjust_bottom) const{
+  double bottom = y_min;
+  if(adjust_bottom){
+    switch(this_opt_.YAxis()){
+    default:
+      DBG("Bad YAxis type " << static_cast<int>(this_opt_.YAxis()));
+    case YAxisType::linear: bottom = y_min >= 0. ? 0. : y_min; break;
+    case YAxisType::log:    bottom = y_min > this_opt_.LogMinimum() ? y_min : this_opt_.LogMinimum(); break;
+    }
   }
-
   vector<TLine> out(definition_.cut_vals_.size());
   for(double cut: definition_.cut_vals_){
     out.emplace_back(cut, bottom, cut, y_max);
