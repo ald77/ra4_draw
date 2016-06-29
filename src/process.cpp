@@ -8,7 +8,7 @@ Process::Process(const string &name,
                  unique_ptr<Baby> baby,
                  const NamedFunc &cut):
   TAttFill(color, type == Type::background ? 1001 : 0),
-  TAttLine(type == Type::signal ? color : 1,
+  TAttLine(type == Type::background ? 1 : color,
            1,
            type == Type::background ? 1 :
            type == Type::signal ? 5

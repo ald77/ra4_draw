@@ -69,10 +69,22 @@ namespace{
     histogram. Changed to "hist same" after first histogram is drawn
   */
   void DrawAll(const vector<unique_ptr<HistoStack::SingleHist> > &hists,
-               string &draw_opt){
-    for(auto &hist: hists){
-      hist->scaled_hist_.Draw(draw_opt.c_str());
-      draw_opt = "hist same";
+               string &draw_opt, bool reversed = false){
+    if(!reversed){
+      for(auto &hist: hists){
+	hist->scaled_hist_.Draw(draw_opt.c_str());
+	if(!Contains(draw_opt, "same")){
+	  draw_opt = draw_opt + " same";
+	}
+      }
+    }else{
+      for(auto h = hists.crbegin(); h != hists.crend(); ++h){
+	auto &hist = *h;
+	hist->scaled_hist_.Draw(draw_opt.c_str());
+	if(!Contains(draw_opt, "same")){
+	  draw_opt = draw_opt + " same";
+	}
+      }
     }
   }
 
@@ -374,9 +386,9 @@ void HistoStack::Print(double luminosity){
     string draw_opt = "hist";
     DrawAll(backgrounds_, draw_opt);
     if(this_opt_.ShowBackgroundError() && backgrounds_.size()) bkg_error.Draw("2 same");
-    DrawAll(signals_, draw_opt);
+    DrawAll(signals_, draw_opt, true);
     ReplaceAll(draw_opt, "hist", "ep");
-    DrawAll(datas_, draw_opt);
+    DrawAll(datas_, draw_opt, true);
     for(auto &cut: cut_vals) cut.Draw();
 
     vector<shared_ptr<TLegend> > legends = GetLegends();
@@ -543,6 +555,12 @@ void HistoStack::NormalizeHistos() const{
     mc_scale_error_ = hypot(data_norm*mc_error, mc_norm*data_error)/(mc_norm*mc_norm);
     for(auto &hist: backgrounds_){
       hist->scaled_hist_.Scale(mc_scale_);
+    }
+    for(auto h = datas_.begin(); h != datas_.end(); ++h){
+      auto &hist = *h;
+      double dumb;
+      double this_integral = hist->scaled_hist_.IntegralAndError(0, nbins+1, dumb, "width");
+      hist->scaled_hist_.Scale(this_integral == 0. ? 1. : data_norm/this_integral);
     }
   }else if(this_opt_.Stack() == StackType::shapes){
     for(auto &hist: backgrounds_){
