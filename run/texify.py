@@ -60,8 +60,8 @@ def Texify(input_dirs, output_dir):
                 os.rename(tmp_log, out_log)
                 print("Failed to compile "+in_tex)
 
-    os.chdir(orig_dir)
-    shutil.rmtree(tmp_dir)
+            os.chdir(orig_dir)
+        shutil.rmtree(tmp_dir)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Compiles all .tex documents in a set of directories",
