@@ -412,8 +412,8 @@ string NamedFunc::PlainName() const{
   ReplaceAll(plain, "&&", "AND");
   ReplaceAll(plain, "||", "OR");
   ReplaceAll(plain, "==", "EQ");
-  ReplaceAll(plain, "<=", "GEQ");
-  ReplaceAll(plain, ">=", "LEQ");
+  ReplaceAll(plain, "<=", "LEQ");
+  ReplaceAll(plain, ">=", "GEQ");
   ReplaceAll(plain, ">", "GT");
   ReplaceAll(plain, "<", "LT");
   ReplaceAll(plain, "=", "EQ");

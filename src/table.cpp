@@ -132,7 +132,7 @@ void Table::Print(double luminosity){
   PrintFooter(file);
   file << flush;
   file.close();
-  cout << "Wrote table to " << file_name << "." << endl;
+  cout << "Wrote table to " << file_name << endl;
 }
 
 vector<GammaParams> Table::Yield(const std::shared_ptr<Process> &process, double luminosity) const{

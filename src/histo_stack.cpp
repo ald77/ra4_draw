@@ -326,7 +326,8 @@ void HistoStack::Print(double luminosity){
     ApplyStyles();
     AdjustFillStyles();
 
-    vector<TH1D> bot_plots = GetBottomPlots();
+    double bot_min, bot_max;
+    vector<TH1D> bot_plots = GetBottomPlots(bot_min, bot_max);
     //I don't know why I can't make this in GetBottomPlots...
     TGraphAsymmErrors bottom_background;
     if(this_opt_.Bottom() != BottomType::off){
@@ -340,7 +341,8 @@ void HistoStack::Print(double luminosity){
 
     StripTopPlotLabels();
     TLine horizontal = GetBottomHorizontal();
-    vector<TLine> cut_vals = GetCutLines();
+    vector<TLine> cut_vals = GetCutLines(GetMinDraw(), GetMaxDraw());
+    vector<TLine> bot_cuts = GetCutLines(bot_min, bot_max);
 
     unique_ptr<TCanvas> full;
     unique_ptr<TPad> top, bottom;
@@ -362,6 +364,7 @@ void HistoStack::Print(double luminosity){
 
       bottom->RedrawAxis();
       bottom->RedrawAxis("g");
+      for(auto &cut: bot_cuts) cut.Draw();
     }
 
     top->cd();
@@ -393,7 +396,7 @@ void HistoStack::Print(double luminosity){
     for(const auto &ext: this_opt_.FileExtensions()){
       string full_name = base_name+"_OPT_"+this_opt_.TypeString()+'.'+ext;
       full->Print(full_name.c_str());
-      cout << "Wrote plot to " << full_name << "." << endl;
+      cout << "Wrote plot to " << full_name << endl;
     }
   }
 }
@@ -813,24 +816,25 @@ TGraphAsymmErrors HistoStack::GetBackgroundError() const{
 
 /*!\brief Get vertical lines at cut values
 
+  \param[in] y_min Lower bound of y-axis
+
+  \param[in] y_max Upper bound of y-axis
+
   \return Lines at x-coordinate of cut value and y-coordinates running from
   bottom of plot to bottom of legend
 */
-vector<TLine> HistoStack::GetCutLines() const{
-  double the_max = GetMaxDraw();
-  double the_min = GetMinDraw();
-
+vector<TLine> HistoStack::GetCutLines(double y_min, double y_max) const{
   double bottom;
   switch(this_opt_.YAxis()){
   default:
     DBG("Bad YAxis type " << static_cast<int>(this_opt_.YAxis()));
-  case YAxisType::linear: bottom = the_min >= 0. ? 0. : the_min; break;
-  case YAxisType::log:    bottom = the_min > this_opt_.LogMinimum() ? the_min : this_opt_.LogMinimum(); break;
+  case YAxisType::linear: bottom = y_min >= 0. ? 0. : y_min; break;
+  case YAxisType::log:    bottom = y_min > this_opt_.LogMinimum() ? y_min : this_opt_.LogMinimum(); break;
   }
 
   vector<TLine> out(definition_.cut_vals_.size());
   for(double cut: definition_.cut_vals_){
-    out.emplace_back(cut, bottom, cut, the_max);
+    out.emplace_back(cut, bottom, cut, y_max);
     out.back().SetNDC(false);
     out.back().SetLineStyle(2);
     out.back().SetLineColor(kBlack);
@@ -842,10 +846,14 @@ vector<TLine> HistoStack::GetCutLines() const{
 
 /*!\brief Get ratio or other plots drawn on the lower pad
 
+  \param [out] the_min Y-axis minimum across plots for lower pad
+
+  \param [out] the_max Y-axis maximum across plots for lower pad
+
   \return Set of plots to be drawn on lower pad. These may be ratio plots or
   something else depending on the current plot style
 */
-std::vector<TH1D> HistoStack::GetBottomPlots() const{
+std::vector<TH1D> HistoStack::GetBottomPlots(double &the_min, double &the_max) const{
   if(backgrounds_.size() == 0 || this_opt_.Bottom() == BottomType::off){
     return vector<TH1D>();
   }
@@ -887,8 +895,8 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
     break;
   }
 
-  double the_min = numeric_limits<double>::infinity();
-  double the_max = -numeric_limits<double>::infinity();
+  the_min = numeric_limits<double>::infinity();
+  the_max = -numeric_limits<double>::infinity();
   for(auto &h: out){
     h.SetNdivisions(this_opt_.NDivisionsBottom(), "y");
     for(int bin = 1; bin <= h.GetNbinsX(); ++bin){
@@ -900,10 +908,12 @@ std::vector<TH1D> HistoStack::GetBottomPlots() const{
   }
 
   if(this_opt_.Bottom() == BottomType::ratio){
+    the_min = 0.1;
+    the_max = 1.9;
     for(auto &h: out){
       h.GetYaxis()->SetTitle("Data/MC");
-      h.SetMinimum(0.1);
-      h.SetMaximum(1.9);
+      h.SetMinimum(the_min);
+      h.SetMaximum(the_max);
     }
   }else if(this_opt_.Bottom() == BottomType::diff){
     for(auto &h: out){
