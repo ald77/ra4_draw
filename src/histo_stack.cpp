@@ -825,7 +825,7 @@ TGraphAsymmErrors HistoStack::GetBackgroundError() const{
   }else{
     g = TGraphAsymmErrors(&(backgrounds_.front()->scaled_hist_));
   }
-  g.SetFillStyle(3003);
+  g.SetFillStyle(3002);
   g.SetFillColor(kBlack);
   g.SetLineWidth(0);
   g.SetMarkerSize(0);
@@ -890,7 +890,7 @@ std::vector<TH1D> HistoStack::GetBottomPlots(double &the_min, double &the_max) c
     out.at(i).SetName(("bot_plot_data_"+datas_.at(i)->process_->name_+"_"+counter()).c_str());
   }
   out.back() = backgrounds_.front()->scaled_hist_;
-  out.back().SetFillStyle(3003);
+  out.back().SetFillStyle(3002);
   out.back().SetFillColor(kBlack);
   out.back().SetLineWidth(0);
   out.back().SetMarkerStyle(0);
@@ -966,7 +966,7 @@ TLine HistoStack::GetBottomHorizontal() const{
 
   TLine line(left, y, right, y);
   line.SetNDC(false);
-  line.SetLineStyle(3);
+  line.SetLineStyle(2);
   line.SetLineColor(kBlack);
   line.SetLineWidth(2);
   return line;
