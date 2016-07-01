@@ -6,10 +6,9 @@
 #include <memory>
 #include <utility>
 
-#include "histo_def.hpp"
 #include "process.hpp"
-#include "histo_stack.hpp"
 #include "plot_opt.hpp"
+#include "figure.hpp"
 
 class PlotMaker{
 public:

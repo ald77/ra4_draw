@@ -13,6 +13,7 @@
 #include "plot_opt.hpp"
 #include "palette.hpp"
 #include "utilities.hpp"
+#include "histo_stack.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;

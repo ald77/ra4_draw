@@ -8,6 +8,8 @@
 #include "plot_maker.hpp"
 #include "plot_opt.hpp"
 #include "palette.hpp"
+#include "histo_stack.hpp"
+#include "event_scan.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -106,6 +108,14 @@ int main(){
     pm.Push<HistoStack>(HistoDef(tag, 20, 0., 6, min_dr_lj, "Min. #Delta R(l,jet)", cut), procs, plot_types);
     pm.Push<HistoStack>(HistoDef(tag, 20, 0., 6, max_dr_lj, "Max. #Delta R(l,jet)", cut), procs, plot_types);
   }
+
+  pm.Push<EventScan>("dilep_angle", dilep_mm || dilep_em, vector<NamedFunc>{
+      "run", "lumiblock", "event", "nmus", "nels", "nveto",
+	dphi_ll, dr_ll, min_dphi_lmet, max_dphi_lmet, min_dphi_lj,
+	max_dphi_lj, min_dr_lj, max_dr_lj, min_dphi_metj, max_dphi_metj,
+	"mj14", "mt", "njets", "nbm", "met", "met_phi", "leps_pt",
+	"leps_phi", "leps_eta", "leps_id", "jets_pt", "jets_phi", "jets_eta"
+	}, procs, 10);
 
   //pm.multithreaded_ = false;
   pm.MakePlots(lumi);
