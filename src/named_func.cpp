@@ -694,6 +694,18 @@ NamedFunc & NamedFunc::operator %= (const NamedFunc &func){
   return *this;
 }
 
+/*!\brief Apply indexing operator and return result as a NamedFunc
+ */
+NamedFunc NamedFunc::operator [] (const NamedFunc &func){
+  if(IsScalar()) ERROR("Cannot apply indexing operator to scalar NamedFunc "+Name());
+  if(func.IsVector()) ERROR("Cannot use vector "+func.Name()+" as index");
+  const auto &vec = VectorFunction();
+  const auto &index = func.ScalarFunction();
+  return NamedFunc("("+Name()+")["+func.Name()+"]", [vec, index](const Baby &b){
+      return vec(b).at(index(b));
+    });
+}
+
 /*!\brief Strip spaces from name
  */
 void NamedFunc::CleanName(){

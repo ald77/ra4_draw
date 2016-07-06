@@ -53,6 +53,8 @@ public:
   NamedFunc & operator /= (const NamedFunc &func);
   NamedFunc & operator %= (const NamedFunc &func);
 
+  NamedFunc operator [] (const NamedFunc &func);
+
 private:
   NamedFunc() = delete;
   std::string name_;//!<String representation of the function
