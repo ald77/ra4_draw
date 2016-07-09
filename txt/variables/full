@@ -7,6 +7,29 @@ bool json2p6
 ## stitch is used to stitch an MC sample with its corresponding HT-bin sample
 bool stitch
 
+
+####################   Mismeasurement   ###################
+std::vector<int> mm_njets
+std::vector<int> mm_nleps
+std::vector<int> mm_nmus 
+std::vector<int> mm_nels 
+std::vector<int> mm_nbm  
+std::vector<float> mm_jet_pt
+std::vector<float> mm_jet_eta
+std::vector<float> mm_jet_phi
+std::vector<float> mm_jet_m
+std::vector<float> mm_lep_pt
+std::vector<float> mm_mu_pt
+std::vector<float> mm_el_pt
+std::vector<float> mm_mu_miniso
+std::vector<float> mm_el_miniso
+std::vector<float> mm_mt
+std::vector<float> mm_ht
+std::vector<float> mm_met
+std::vector<float> mm_met_phi
+std::vector<float> mm_mj14_lep
+std::vector<float> mm_mj14_nolep
+ 
 ####################   Global   ###################
 int npv
 int ntrupv
