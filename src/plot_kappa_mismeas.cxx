@@ -13,6 +13,12 @@
 #include <getopt.h>
 
 #include "TError.h" // Controls error level reporting
+#include "TCanvas.h"
+#include "TH1D.h"
+#include "TStyle.h"
+#include "TLine.h"
+#include "TLatex.h"
+#include "TGraphAsymmErrors.h"
 #include "RooStats/NumberCountingUtils.h"
 
 #include "utilities.hpp"
@@ -37,8 +43,79 @@ namespace{
   TString skim = "standard";
   TString only_method = "";
   float lumi;
-  int Nscen = 10;
+  int Nscen = 27;
 }
+
+
+TString cutsToLabel(TString cut);
+void plotKappa(abcd_method &abcd, vector<vector<vector<vector<float> > > > &allkappas);
+
+//// Plots kappa if allkappas is size 1 or 2, and ratio of kappa/kappa_nominal if larger
+//// Will move
+void plotKappa(abcd_method &abcd, vector<vector<vector<vector<float> > > > &allkappas){
+  gStyle->SetOptStat(0);              // No Stats box
+  gStyle->SetPadTickX(1);             // Ticks at the right
+  gStyle->SetPadTickY(1);             // Ticks at the top
+
+  int Nkap = 0;
+  int ind= allkappas.size()-1;
+  vector<double>  vx, vy, vexl, vexh, veyl, veyh;
+  vector<vector<vector<float> > > kappas = allkappas[ind];
+  for(size_t iplane=0; iplane < kappas.size(); iplane++) {
+    for(size_t ibin=0; ibin < kappas[iplane].size(); ibin++){
+      Nkap++;
+      double kap = kappas[iplane][ibin][0];
+      if(allkappas.size()<=2){
+	vy.push_back(kap);
+	veyl.push_back(kappas[iplane][ibin][1]);
+	veyh.push_back(kappas[iplane][ibin][2]);
+      } else {
+	vy.push_back(kap/allkappas[ind%2][iplane][ibin][0]);
+	veyl.push_back(0);
+	veyh.push_back(0);      
+      }
+      vx.push_back(Nkap);
+      vexl.push_back(0);
+      vexh.push_back(0);      
+    } // Loop over bin cuts
+  } // Loop over plane cuts
+
+
+  TCanvas can("can","",1000,600);
+  TLine line; line.SetLineWidth(2); line.SetLineStyle(2);
+  TLatex label; label.SetTextSize(0.05); label.SetTextFont(132); label.SetTextAlign(23);
+
+  TGraphAsymmErrors graph(vx.size(), &(vx[0]), &(vy[0]), &(vexl[0]), &(vexh[0]), &(veyl[0]), &(veyh[0]));
+  graph.SetMarkerStyle(20); graph.SetMarkerSize(1.65); 
+  graph.SetMarkerColor(4); graph.SetLineColor(4); graph.SetLineWidth(2);
+  int nbins = Nkap;
+  float minx = 0.5, maxx = Nkap+0.5, miny = 0, maxy = 2.7;
+  TH1D histo("histo", abcd.method, nbins, minx, maxx);
+  histo.SetMinimum(miny);
+  histo.SetMaximum(maxy);
+  histo.Draw();
+  graph.Draw("p same");
+  if(allkappas.size()<=2) histo.SetYTitle("#kappa");
+  else histo.SetYTitle("#kappa^{scenario}/#kappa^{nominal}");
+  Nkap = 0;
+  for(size_t iplane=0; iplane < kappas.size(); iplane++) {
+    for(size_t ibin=0; ibin < kappas[iplane].size(); ibin++){
+      Nkap++;
+      histo.GetXaxis()->SetBinLabel(Nkap, cutsToLabel(abcd.bincuts[iplane][ibin]));
+    } // Loop over bin cuts
+    line.DrawLine(Nkap+0.5, miny, Nkap+0.5, maxy);
+    label.DrawLatex((2*Nkap-kappas[iplane].size()+1.)/2., maxy-0.1, cutsToLabel(abcd.planecuts[iplane]));
+  } // Loop over plane cuts
+
+  line.SetLineStyle(3); line.SetLineWidth(1);
+  line.DrawLine(minx, 1, maxx, 1);
+  
+  TString fname="plots/kappa_"+abcd.method+".pdf";
+  can.SaveAs(fname);
+  cout<<endl<<" open "<<fname<<endl;
+}
+
+
 
 void changeMMCut(TString &cut, vector<TString> &mm_cuts, TString method, TString index_s);
 
@@ -75,7 +152,7 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))  
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/mismeasured/2016_06_14/mc/skim_1lh1500met200/");
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/mismeasured/2016_06_14/mc/merged_mm_std_nj5mj250/");
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
   folderdata = foldermc;
   if(skim.Contains("met150")){
@@ -100,16 +177,17 @@ int main(int argc, char *argv[]){
   } else lumi = 2.6;
   if(skim.Contains("mj12")) ReplaceAll(baseline, "mj14","mj");
 
+  lumi = 100; // to easily see digits
   auto proc_bkg = Proc<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root",
-    	foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
-    	foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
-    	foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
-    	foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
-    	foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
-    	foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
-    	foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
-    // {foldermc+"*_ZZ_*.root"},
+    // {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root",
+    // 	foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
+    // 	foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
+    // 	foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
+    // 	foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
+    // 	foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
+    // 	foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
+    // 	foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
+     {foldermc+"*TTJets_T*.root"},
     baseline+" && stitch");
 
   auto proc_t1c = Proc<Baby_full>("T1tttt(C)", Process::Type::signal, colors("t1tttt"),
@@ -118,12 +196,23 @@ int main(int argc, char *argv[]){
   auto proc_t1nc = Proc<Baby_full>("T1tttt(NC)", Process::Type::signal, colors("t1tttt"),
     {foldermc+"*mGluino-1500_mLSP-100_*root"},
     baseline+" && stitch");
+
+
   auto proc_tt1l = Proc<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root"},
+    {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets_HT*.root"},
     baseline+" && stitch && ntruleps==1");
   auto proc_tt2l = Proc<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
-    {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root"},
+    {foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"},
     baseline+" && stitch && ntruleps==2");
+
+  // auto proc_tt1l = Proc<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
+  //   {foldermc+"*_TTJets*SingleLept*.root"},
+  //   baseline+" && ntruleps==1");
+  // auto proc_tt2l = Proc<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
+  //   {foldermc+"*_TTJets*DiLept*.root"},
+  //   baseline+" && ntruleps==2");
+
+
   auto proc_other = Proc<Baby_full>("Other", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
 	foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
@@ -134,13 +223,13 @@ int main(int argc, char *argv[]){
 	foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
     baseline+" && stitch");
 
-  //string trigs = "(trig[4]||trig[8]||trig[13]||trig[33]) && json2p6 && pass_ra2_badmu";
   string trigs = "(trig[4]||trig[8]||trig[13]||trig[33])";
   if(skim.Contains("2015")) trigs = "(trig[4]||trig[8]||trig[28]||trig[14])";
   auto proc_data = Proc<Baby_full>("Data", Process::Type::data, kBlack,
     {folderdata+"*.root"},baseline+" && "+trigs);
 
-  vector<shared_ptr<Process> > all_procs = {proc_bkg};
+  vector<shared_ptr<Process> > all_procs = {proc_tt1l, proc_tt2l, proc_other};
+  //vector<shared_ptr<Process> > all_procs = {proc_bkg};
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining basic cuts //////////////////////////////////////////
@@ -217,6 +306,7 @@ int main(int argc, char *argv[]){
   methods.clear();
   for(auto name2: methods_ori){
     for(int iscen=0; iscen < Nscen; iscen++){
+      if(iscen!=0 && iscen!=26) continue; // To just do the most extreme ones
       TString name = name2;
       name += "_mm"; name += iscen;
       name += "_lep";
@@ -357,6 +447,7 @@ int main(int argc, char *argv[]){
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////// Calculating preds/kappas and printing table //////////////////////////////////////
   vector<TString> tablenames;
+  vector<vector<vector<vector<float> > > > allkappas;
   for(size_t imethod=0; imethod<abcds.size(); imethod++) {
     Table * yield_table = static_cast<Table*>(pm.Figures()[imethod].get());
     // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
@@ -377,6 +468,9 @@ int main(int argc, char *argv[]){
     //// Calculating kappa and Total bkg prediction
     vector<vector<vector<float> > > kappas, preds;
     findPreds(abcds[imethod], allyields, kappas, preds);
+
+    allkappas.push_back(kappas);
+    plotKappa(abcds[imethod], allkappas);
 
     // //// Makes table MC/Data yields, kappas, preds, Zbi
     // TString fullname = printTable(abcds[imethod], allyields, kappas, preds);
@@ -409,6 +503,7 @@ int main(int argc, char *argv[]){
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+//// Changes standard cuts to mismeasure cuts for a given scenario
 void changeMMCut(TString &cut, vector<TString> &mm_cuts, TString method, TString index_s){
   for(auto &mm_cut : mm_cuts) {
     cut.ReplaceAll(mm_cut, "mm_"+mm_cut+"["+index_s+"]");
@@ -571,6 +666,34 @@ TString cutsToTex(TString cut){
   cut.ReplaceAll("&&",", ");
 
   cut = "$"+cut+"$";
+  return cut;
+}
+
+
+//// Converting ROOT cuts to ROOT labels
+TString cutsToLabel(TString cut){
+  cut.ReplaceAll("mm_","");
+  int ind;
+  do{
+    ind = cut.First('[');
+    cut.Remove(ind, cut.First(']')-ind+1);
+  }while(ind>=0);
+  cut.ReplaceAll(" ","");
+  cut.ReplaceAll("met>150&&met<=200", "150<met<=200");
+  cut.ReplaceAll("met>200&&met<=350", "200<met<=350");
+  cut.ReplaceAll("met>350&&met<=500", "350<met<=500");
+  cut.ReplaceAll("njets>=5&&njets<=7", "5<=njets<=7");
+  cut.ReplaceAll("njets>=6&&njets<=8", "6<=njets<=8");
+  cut.ReplaceAll("nbm>=1&&nbm<=2", "1<=nbm<=2");
+
+  cut.ReplaceAll("met","E_{T}^{miss}");
+  cut.ReplaceAll("njets","N_{jets}");
+  cut.ReplaceAll("nbm","N_{b}");
+  cut.ReplaceAll("==","=");
+  cut.ReplaceAll(">=","#geq");
+  cut.ReplaceAll("<=","#leq");
+  cut.ReplaceAll("&&",", ");
+
   return cut;
 }
 

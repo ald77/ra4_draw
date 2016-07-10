@@ -19,6 +19,7 @@ public:
 
   size_t indexBin(size_t iplane, size_t ibin, size_t iabcd);
   void setLeptons();
+  void setMj12();
   void printCuts();
   TString lowerNjets(TString &cut);
   

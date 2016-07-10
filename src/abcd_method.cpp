@@ -70,6 +70,14 @@ size_t abcd_method::indexBin(size_t indplane, size_t indbin, size_t indabcd){
   return index + Nabcd*indbin + indabcd;
 }
 
+//// Changes all cuts to use mj12
+void abcd_method::setMj12(){
+  for(size_t iabcd=0; iabcd < abcdcuts.size(); iabcd++) abcdcuts[iabcd].ReplaceAll("mj14", "mj");
+  for(size_t ind=0; ind < allcuts.size(); ind++) allcuts[ind].ReplaceAll("mj14", "mj");
+  basecuts.ReplaceAll("mj14", "mj");
+}
+
+
 //// Changes all cuts to use only electrons, muons, or emu
 void abcd_method::setLeptons(){
   for(size_t iplane=0; iplane < planecuts.size(); iplane++) {
@@ -92,6 +100,9 @@ void abcd_method::setLeptons(){
     if(method.Contains("_mu"))  allcuts[ind].ReplaceAll("nleps", "nmus");
     if(method.Contains("_emu")) allcuts[ind].ReplaceAll("nleps==2", "(nels==1&&nmus==1)");
   } // Loop over all cuts
+  if(method.Contains("_el"))  basecuts.ReplaceAll("nleps", "nels");
+  if(method.Contains("_mu"))  basecuts.ReplaceAll("nleps", "nmus");
+  if(method.Contains("_emu")) basecuts.ReplaceAll("nleps==2", "(nels==1&&nmus==1)");
 }
 
 
