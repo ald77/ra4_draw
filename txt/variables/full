@@ -29,6 +29,7 @@ std::vector<float> mm_met
 std::vector<float> mm_met_phi
 std::vector<float> mm_mj14_lep
 std::vector<float> mm_mj14_nolep
+std::vector<bool> mm
  
 ####################   Global   ###################
 int npv
