@@ -43,7 +43,7 @@ namespace{
   TString skim = "standard";
   TString only_method = "";
   float lumi;
-  int Nscen = 27;
+  int Nscen = 11;
 }
 
 
@@ -53,11 +53,25 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<vector<float> > > > &allk
 //// Plots kappa if allkappas is size 1 or 2, and ratio of kappa/kappa_nominal if larger
 //// Will move
 void plotKappa(abcd_method &abcd, vector<vector<vector<vector<float> > > > &allkappas){
+  float fontSize = 0.05;
   gStyle->SetOptStat(0);              // No Stats box
   gStyle->SetPadTickX(1);             // Ticks at the right
   gStyle->SetPadTickY(1);             // Ticks at the top
+  gStyle->SetTextSize(fontSize);            // Set global text size
+  gStyle->SetTitleFontSize(fontSize);      // Set top title size
+  gStyle->SetTitleSize(fontSize,"xyz");     // Set the 2 axes title size
+  gStyle->SetLabelSize(fontSize,"xyz");     // Set the 2 axes label size
+  float PadRightMargin  = 0.05;
+  float PadTopMargin    = 0.09;
+  float PadBottomMargin = 0.16;
+  float PadLeftMargin   = 0.12;
+  gStyle->SetPadRightMargin (PadRightMargin);    
+  gStyle->SetPadBottomMargin(PadBottomMargin); 
+  gStyle->SetPadTopMargin(PadTopMargin); 
+  gStyle->SetPadLeftMargin  (PadLeftMargin); 
 
-  int Nkap = 0;
+  int Nkap = 0, color=4;
+  if(allkappas.size()>2) color = 2;
   int ind= allkappas.size()-1;
   vector<double>  vx, vy, vexl, vexh, veyl, veyh;
   vector<vector<vector<float> > > kappas = allkappas[ind];
@@ -81,13 +95,13 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<vector<float> > > > &allk
   } // Loop over plane cuts
 
 
-  TCanvas can("can","",1000,600);
+  TCanvas can("can","",1100,600);
   TLine line; line.SetLineWidth(2); line.SetLineStyle(2);
   TLatex label; label.SetTextSize(0.05); label.SetTextFont(132); label.SetTextAlign(23);
 
   TGraphAsymmErrors graph(vx.size(), &(vx[0]), &(vy[0]), &(vexl[0]), &(vexh[0]), &(veyl[0]), &(veyh[0]));
   graph.SetMarkerStyle(20); graph.SetMarkerSize(1.65); 
-  graph.SetMarkerColor(4); graph.SetLineColor(4); graph.SetLineWidth(2);
+  graph.SetMarkerColor(color); graph.SetLineColor(color); graph.SetLineWidth(2);
   int nbins = Nkap;
   float minx = 0.5, maxx = Nkap+0.5, miny = 0, maxy = 2.7;
   TH1D histo("histo", abcd.method, nbins, minx, maxx);
@@ -306,7 +320,7 @@ int main(int argc, char *argv[]){
   methods.clear();
   for(auto name2: methods_ori){
     for(int iscen=0; iscen < Nscen; iscen++){
-      if(iscen!=0 && iscen!=26) continue; // To just do the most extreme ones
+      //if(iscen!=0 && iscen!=3) continue; // To just do the most extreme ones
       TString name = name2;
       name += "_mm"; name += iscen;
       name += "_lep";
@@ -317,6 +331,8 @@ int main(int argc, char *argv[]){
   } // Loop over methods
 
 
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////// Looping over ABCD methods //////////////////////////////////////////
   for(size_t iabcd=0; iabcd<methods.size(); iabcd++) {
     TString method = methods[iabcd];
     TString basecuts = "1", caption = "";
