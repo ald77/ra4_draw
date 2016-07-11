@@ -120,7 +120,6 @@ long PlotMaker::GetYield(const std::shared_ptr<Process> &process){
   set<Figure::FigureComponent*> figure_components = GetComponents(process);
 
   Timer timer(num_entries, 10.);
-  timer.Start();
   for(long entry = 0; entry < num_entries; ++entry){
     timer.Iterate();
     baby.GetEntry(entry);

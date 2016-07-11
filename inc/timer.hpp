@@ -1,31 +1,49 @@
 #ifndef H_TIMER
 #define H_TIMER
 
-#include <ctime>
+#include <chrono>
+#include <ostream>
+#include <mutex>
 
 class Timer{
 public:
-  explicit Timer(unsigned long num_its = 0, double auto_print = 0.);
+  using Clock = std::chrono::high_resolution_clock;
+  using TimeType = Clock::time_point;
+  
+  explicit Timer(std::size_t num_iterations = 0, double auto_print = -1.);
+  explicit Timer(std::size_t num_iterations, std::chrono::duration<double> auto_print);
   Timer(const Timer &) = default;
   Timer & operator=(const Timer &) = default;
   Timer(Timer &&) = default;
   Timer & operator=(Timer &&) = default;
   ~Timer() = default;
 
-  void SetAutoPrint(double auto_print);
-  void SetNumIterations(unsigned long num_its);
-
-  void Start();
   void Iterate();
+  
+  void Restart();
+  void Restart(std::size_t num_iterations);
 
-  double GetRemainingTime() const;
-  void PrintRemainingTime() const;
+  std::chrono::duration<double> ElapsedTime() const;
+  std::chrono::duration<double> RemainingTime() const;
+  
+  friend std::ostream & operator<<(std::ostream &stream, const Timer &timer);
+
+  std::size_t Iteration() const;
+  Timer & Iteration(size_t iteration);
+
+  std::size_t NumIterations() const;
+  Timer & NumIterations(std::size_t num_iterations);
+
+  std::chrono::duration<double> AutoPrintTime() const;
+  Timer & AutoPrintTime(double auto_print);
+  Timer & AutoPrintTime(std::chrono::duration<double> auto_print);
 
 private:
-  time_t start_time_;
-  mutable time_t last_print_;
-  unsigned long num_its_, cur_its_;
-  double auto_print_;
+  TimeType start_time_;
+  mutable TimeType last_print_;
+  std::size_t iteration_, num_iterations_;
+  std::chrono::duration<double> auto_print_;
+  static std::mutex mutex_;
 };
 
 #endif

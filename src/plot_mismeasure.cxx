@@ -144,7 +144,6 @@ int main(){
     long num_entries = b->GetEntries();
     cout << num_entries << " entries found." << endl;
     Timer timer(num_entries, 1.);
-    timer.Start();
     for(long event = 0; event < num_entries; ++event){
       timer.Iterate();
       b->GetEntry(event);
