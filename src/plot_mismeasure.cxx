@@ -43,6 +43,18 @@ void Print(TH1D &h, bool no_stats = false){
   c.Print((string("plots/")+h.GetName()+".pdf").c_str());
 }
 
+void MakePositive(TH1D &h){
+  for(int i=0; i < h.GetNbinsX(); ++i){
+    double y = h.GetBinContent(i);
+    if(y >= 0.) continue;
+    double e = h.GetBinError(i);
+    e=hypot(e,y);
+    y=0.;
+    h.SetBinContent(i, y);
+    h.SetBinError(i, e);
+  }
+}
+
 void Print(TH2D &h, bool no_stats = false){
   Format(h, no_stats);
   h.SetTitle(("#rho="+to_string(h.GetCorrelationFactor())).c_str());
@@ -52,13 +64,17 @@ void Print(TH2D &h, bool no_stats = false){
 }
 
 void Print(TH1D &pass, TH1D &total){
+  MakePositive(pass);
+  MakePositive(total);
+  Print(pass);
+  Print(total);
   TCanvas c;
   TGraphAsymmErrors g(&pass, &total);
   g.SetTitle((string(";")+pass.GetXaxis()->GetTitle()+";Fraction Mismeasured").c_str());
   g.SetMinimum(0.);
   g.SetMaximum(1.);
   g.Draw("ap0");
-  c.Print((string("plots/")+pass.GetName()+".pdf").c_str());
+  c.Print((string("plots/")+g.GetName()+".pdf").c_str());
 }
 
 int main(){
@@ -69,9 +85,7 @@ int main(){
   int igood = 0;
   int ibad = 2;
 
-  string folder_mc = "/net/cms2/cms2r0/babymaker/babies/mismeasured/2016_06_14/mc/merged_mm_std_nj5mj250/";
-  //folder_mc = "/net/cms2/cms2r0/babymaker/babies/mismeasured/2016_06_14/mc/skim_1lh1500met200/";
-  folder_mc="/net/cms26/cms26r0/babymaker/babies/mismeasured_v2/2016_06_14/mc/mm_std_nj5mj250/";
+  string folder_mc="/net/cms26/cms26r0/babymaker/babies/mismeasured_v2/2016_06_14/mc/merged_mm_std_nj5mj250/";
   auto baby_nontt = make_shared<Baby_full>(set<string>{
       folder_mc+"*_DYJetsToLL*.root",
 	folder_mc+"*_QCD_HT*.root",
@@ -113,30 +127,30 @@ int main(){
   TH2D h_2l_mm_mj_nolep_mj_nolep("h_2l_mm_mj_nolep_mj_nolep", ";Correct M_{J} (no lep) [GeV];Mismeasured M_{J} (no lep) [GeV]", 100, 0., 1000., 100, 0., 1000.);
   TH2D h_2l_mm_mj_lep_mj_lep("h_2l_mm_mj_lep_mj_lep", ";Correct M_{J} (with lep) [GeV];Mismeasured M_{J} (with lep) [GeV]", 100, 0., 1000., 100, 0., 1000.);
 
-  TH1D h_num_1l_mt("h_num_1l_mt", ";m_{T} [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_den_1l_mt("h_den_1l_mt", ";m_{T} [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_num_1l_mj_lep("h_num_1l_mj_lep", ";M_{J} (with lep) [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_den_1l_mj_lep("h_den_1l_mj_lep", ";M_{J} (with lep) [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_num_1l_mj_nolep("h_num_1l_mj_nolep", ";M_{J} (no lep) [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_den_1l_mj_nolep("h_den_1l_mj_nolep", ";M_{J} (no lep) [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_num_1l_met("h_num_1l_met", ";MET [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_den_1l_met("h_den_1l_met", ";MET [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_num_1l_njets("h_num_1l_njets", ";N_{jets};Fraction Mismeasured", 7, 4.5, 11.5);
-  TH1D h_den_1l_njets("h_den_1l_njets", ";N_{jets};Fraction Mismeasured", 7, 4.5, 11.5);
-  TH1D h_num_1l_nbm("h_num_1l_nbm", ";N_{b};Fraction Mismeasured", 5, -0.5, 4.5);
-  TH1D h_den_1l_nbm("h_den_1l_nbm", ";N_{b};Fraction Mismeasured", 5, -0.5, 4.5);
-  TH1D h_num_2l_mt("h_num_2l_mt", ";m_{T} [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_den_2l_mt("h_den_2l_mt", ";m_{T} [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_num_2l_mj_lep("h_num_2l_mj_lep", ";M_{J} (with lep) [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_den_2l_mj_lep("h_den_2l_mj_lep", ";M_{J} (with lep) [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_num_2l_mj_nolep("h_num_2l_mj_nolep", ";M_{J} (no lep) [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_den_2l_mj_nolep("h_den_2l_mj_nolep", ";M_{J} (no lep) [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_num_2l_met("h_num_2l_met", ";MET [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_den_2l_met("h_den_2l_met", ";MET [GeV];Fraction Mismeasured", 20, 0., 1000.);
-  TH1D h_num_2l_njets("h_num_2l_njets", ";N_{jets};Fraction Mismeasured", 7, 4.5, 11.5);
-  TH1D h_den_2l_njets("h_den_2l_njets", ";N_{jets};Fraction Mismeasured", 7, 4.5, 11.5);
-  TH1D h_num_2l_nbm("h_num_2l_nbm", ";N_{b};Fraction Mismeasured", 5, -0.5, 4.5);
-  TH1D h_den_2l_nbm("h_den_2l_nbm", ";N_{b};Fraction Mismeasured", 5, -0.5, 4.5);
+  TH1D h_num_1l_mt("h_num_1l_mt", "Numerator;m_{T} [GeV];Entries", 20, 0., 1000.);
+  TH1D h_den_1l_mt("h_den_1l_mt", "Denominator;m_{T} [GeV];Entries", 20, 0., 1000.);
+  TH1D h_num_1l_mj_lep("h_num_1l_mj_lep", "Numerator;M_{J} (with lep) [GeV];Entries", 20, 0., 1000.);
+  TH1D h_den_1l_mj_lep("h_den_1l_mj_lep", "Denominator;M_{J} (with lep) [GeV];Entries", 20, 0., 1000.);
+  TH1D h_num_1l_mj_nolep("h_num_1l_mj_nolep", "Numerator;M_{J} (no lep) [GeV];Entries", 20, 0., 1000.);
+  TH1D h_den_1l_mj_nolep("h_den_1l_mj_nolep", "Denominator;M_{J} (no lep) [GeV];Entries", 20, 0., 1000.);
+  TH1D h_num_1l_met("h_num_1l_met", "Numerator;MET [GeV];Entries", 20, 0., 1000.);
+  TH1D h_den_1l_met("h_den_1l_met", "Denominator;MET [GeV];Entries", 20, 0., 1000.);
+  TH1D h_num_1l_njets("h_num_1l_njets", "Numerator;N_{jets};Entries", 7, 4.5, 11.5);
+  TH1D h_den_1l_njets("h_den_1l_njets", "Denominator;N_{jets};Entries", 7, 4.5, 11.5);
+  TH1D h_num_1l_nbm("h_num_1l_nbm", "Numerator;N_{b};Entries", 5, -0.5, 4.5);
+  TH1D h_den_1l_nbm("h_den_1l_nbm", "Denominator;N_{b};Entries", 5, -0.5, 4.5);
+  TH1D h_num_2l_mt("h_num_2l_mt", "Numerator;m_{T} [GeV];Entries", 20, 0., 1000.);
+  TH1D h_den_2l_mt("h_den_2l_mt", "Denominator;m_{T} [GeV];Entries", 20, 0., 1000.);
+  TH1D h_num_2l_mj_lep("h_num_2l_mj_lep", "Numerator;M_{J} (with lep) [GeV];Entries", 20, 0., 1000.);
+  TH1D h_den_2l_mj_lep("h_den_2l_mj_lep", "Denominator;M_{J} (with lep) [GeV];Entries", 20, 0., 1000.);
+  TH1D h_num_2l_mj_nolep("h_num_2l_mj_nolep", "Numerator;M_{J} (no lep) [GeV];Entries", 20, 0., 1000.);
+  TH1D h_den_2l_mj_nolep("h_den_2l_mj_nolep", "Denominator;M_{J} (no lep) [GeV];Entries", 20, 0., 1000.);
+  TH1D h_num_2l_met("h_num_2l_met", "Numerator;MET [GeV];Entries", 20, 0., 1000.);
+  TH1D h_den_2l_met("h_den_2l_met", "Denominator;MET [GeV];Entries", 20, 0., 1000.);
+  TH1D h_num_2l_njets("h_num_2l_njets", "Numerator;N_{jets};Entries", 7, 4.5, 11.5);
+  TH1D h_den_2l_njets("h_den_2l_njets", "Denominator;N_{jets};Entries", 7, 4.5, 11.5);
+  TH1D h_num_2l_nbm("h_num_2l_nbm", "Numerator;N_{b};Entries", 5, -0.5, 4.5);
+  TH1D h_den_2l_nbm("h_den_2l_nbm", "Denominator;N_{b};Entries", 5, -0.5, 4.5);
 
   size_t ibaby = 0;
   for(auto &b: {baby_nontt, baby_tt}){
