@@ -72,18 +72,18 @@ namespace{
                string &draw_opt, bool reversed = false){
     if(!reversed){
       for(auto &hist: hists){
-	hist->scaled_hist_.Draw(draw_opt.c_str());
-	if(!Contains(draw_opt, "same")){
-	  draw_opt = draw_opt + " same";
-	}
+        hist->scaled_hist_.Draw(draw_opt.c_str());
+        if(!Contains(draw_opt, "same")){
+          draw_opt = draw_opt + " same";
+        }
       }
     }else{
       for(auto h = hists.crbegin(); h != hists.crend(); ++h){
-	auto &hist = *h;
-	hist->scaled_hist_.Draw(draw_opt.c_str());
-	if(!Contains(draw_opt, "same")){
-	  draw_opt = draw_opt + " same";
-	}
+        auto &hist = *h;
+        hist->scaled_hist_.Draw(draw_opt.c_str());
+        if(!Contains(draw_opt, "same")){
+          draw_opt = draw_opt + " same";
+        }
       }
     }
   }
@@ -766,24 +766,26 @@ vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts() const{
   double bottom = 1.-this_opt_.TopMargin();
   double top = 1.;
   if(this_opt_.Title() == TitleType::info){
-    out.push_back(make_shared<TLatex>(0.5*(left+right), 0.5*(bottom+top),
-                                      definition_.Title().c_str()));
-    out.back()->SetNDC();
-    out.back()->SetTextAlign(22);
-    out.back()->SetTextFont(this_opt_.Font());
+    if(definition_.Title() != ""){
+      out.push_back(make_shared<TLatex>(0.5*(left+right), 0.5*(bottom+top),
+                                        definition_.Title().c_str()));
+      out.back()->SetNDC();
+      out.back()->SetTextAlign(22);
+      out.back()->SetTextFont(this_opt_.Font());
 
-    //Adjust title to fit in available space
-    double max_width, max_height;
-    GetTitleSize(max_width, max_height, true);
-    UInt_t width, height;
-    out.back()->GetBoundingBox(width, height);
-    while(width > max_width || height > max_height){
-      out.back()->SetTextSize(0.8*out.back()->GetTextSize());
+      //Adjust title to fit in available space
+      double max_width, max_height;
+      GetTitleSize(max_width, max_height, true);
+      UInt_t width, height;
       out.back()->GetBoundingBox(width, height);
-    }
-    while(width < 0.5*max_width && height < 0.5*max_height){
-      out.back()->SetTextSize(1.25*out.back()->GetTextSize());
-      out.back()->GetBoundingBox(width, height);
+      while(width > max_width || height > max_height){
+        out.back()->SetTextSize(0.8*out.back()->GetTextSize());
+        out.back()->GetBoundingBox(width, height);
+      }
+      while(width < 0.5*max_width && height < 0.5*max_height){
+        out.back()->SetTextSize(1.25*out.back()->GetTextSize());
+        out.back()->GetBoundingBox(width, height);
+      }
     }
   }else{
     string extra;
