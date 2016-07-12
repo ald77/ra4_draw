@@ -432,6 +432,8 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "  long GetEntries() const;\n";
   file << "  virtual void GetEntry(long entry);\n\n";
 
+  file << "  const std::set<std::string> & FileNames() const;\n\n";
+
   for(const auto &var: vars){
     if(var.ImplementInBase()){
       file << "  "
@@ -653,6 +655,10 @@ void WriteBaseSource(const set<Variable> &vars){
   }
   file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
   file << "  entry_ = chain_->LoadTree(entry);\n";
+  file << "}\n\n";
+
+  file << "const std::set<std::string> & Baby::FileNames() const{\n";
+  file << "  return file_names_;\n";
   file << "}\n\n";
 
   file << "/*! \\brief Get underlying TChain for this Baby\n\n";
