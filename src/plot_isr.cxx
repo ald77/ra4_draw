@@ -1,6 +1,7 @@
 #include "plot_dilep_angles.hpp"
 
 #include <cmath>
+#include <algorithm>
 
 #include "TError.h"
 #include "TVector2.h"
@@ -43,6 +44,7 @@ NamedFunc::VectorType isrJetsPt(const Baby &b);
 NamedFunc::VectorType isrJetsPt20(const Baby &b);
 NamedFunc::ScalarType isrSystemPt(const Baby &b);
 
+NamedFunc::ScalarType nisrMatch(const Baby &b);
 NamedFunc::ScalarType nJetsReweightingTTJets(const Baby &b);
 
 
@@ -64,7 +66,7 @@ int main(){
   auto single_t = Proc<Baby_full>("Single t", Process::Type::background, colors("single_t"),
     {folder_mc+"*_ST_*.root"});
   auto dyjets = Proc<Baby_full>("DY+jets", Process::Type::background, colors("wjets"),
-    {folder_mc+"*DYJetsToLL_M-50_*.root"},"stitch");
+    {folder_mc+"*DYJetsToLL_M-50_Tu*.root"});
 
   auto ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
     {folder_mc+"*_TTWJets*.root", folder_mc+"*_TTZTo*.root", folder_mc+"*_TTGJets*.root"});
@@ -144,12 +146,12 @@ int main(){
     addSlices(pm, isr_syspt_slices, isr_syspt, nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline, iweight, procs, {lin_lumi});
     addSlices(pm, nisrjet_slices, nisrjets, isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline, iweight, procs, {log_lumi});
 
-    pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[1-1], "Leading ISR jet p_{T} [GeV]", baseline && nisrjets>0., iweight), procs, plot_types);
+    pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[0.], "Leading ISR jet p_{T} [GeV]", baseline && nisrjets>0., iweight), procs, plot_types);
     pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[1], "2^{nd} ISR jet p_{T} [GeV]", baseline && nisrjets>1, iweight), procs, plot_types);
     pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[2], "3^{rd} ISR jet p_{T} [GeV]", baseline && nisrjets>2, iweight), procs, plot_types);
     pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[3], "4^{th} ISR jet p_{T} [GeV]", baseline && nisrjets>3, iweight), procs, plot_types);
 
-    pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[1-1], "Leading ISR jet p_{T} [GeV]", baseline && nisrjets20>0., iweight), procs, plot_types);
+    pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[0.], "Leading ISR jet p_{T} [GeV]", baseline && nisrjets20>0., iweight), procs, plot_types);
     pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[1], "2^{nd} ISR jet p_{T} [GeV]", baseline && nisrjets20>1, iweight), procs, plot_types);
     pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[2], "3^{rd} ISR jet p_{T} [GeV]", baseline && nisrjets20>2, iweight), procs, plot_types);
     pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[3], "4^{th} ISR jet p_{T} [GeV]", baseline && nisrjets20>3, iweight), procs, plot_types);
@@ -159,6 +161,7 @@ int main(){
 
     pm.Push<HistoStack>(HistoDef(isrtype,20,0.,500., "met", "MET [GeV]", baseline, iweight), procs, plot_types);
     pm.Push<HistoStack>(HistoDef(isrtype,15,0.,1500., "ht", "H_{T} [GeV]", baseline, iweight), procs, plot_types);
+    pm.Push<HistoStack>(HistoDef(isrtype,15,0.,1500., "mj14", "M_{J} [GeV]", baseline, iweight), procs, plot_types);
   }
 
   // MC study
@@ -246,7 +249,7 @@ bool isGoodJet(const Baby &b, size_t ijet){
 NamedFunc::VectorType isrJetsPt(const Baby &b){
   vector<double> isr_jetspt;
   for (size_t ijet(0); ijet<b.jets_pt()->size(); ijet++){
-    if (!isGoodJet(b, ijet) && b.jets_pt()->at(ijet)>30.) continue;
+    if (!isGoodJet(b, ijet) || b.jets_pt()->at(ijet)<30.) continue;
     if (isrtype=="ttisr" && b.jets_csv()->at(ijet)>CSVMedium) continue;
     isr_jetspt.push_back(b.jets_pt()->at(ijet));
   }
@@ -257,7 +260,7 @@ NamedFunc::VectorType isrJetsPt(const Baby &b){
 NamedFunc::VectorType isrJetsPt20(const Baby &b){
   vector<double> isr_jetspt;
   for (size_t ijet(0); ijet<b.jets_pt()->size(); ijet++){
-    if (!isGoodJet(b, ijet) && b.jets_pt()->at(ijet)>20.) continue;
+    if (!isGoodJet(b, ijet) || b.jets_pt()->at(ijet)<20.) continue;
     if (isrtype=="ttisr" && b.jets_csv()->at(ijet)>CSVMedium) continue;
     isr_jetspt.push_back(b.jets_pt()->at(ijet));
   }
@@ -270,16 +273,39 @@ NamedFunc::ScalarType isrSystemPt(const Baby &b){
     else return b.jetsys_pt();
 }
 
+NamedFunc::ScalarType nisrMatch(const Baby &b){
+  int Nisr=0;
+  for (size_t ijet(0); ijet<b.jets_pt()->size(); ijet++){
+    if(!isGoodJet(b, ijet) || b.jets_pt()->at(ijet)<30) continue;
+    bool matched=false;
+    for (size_t imc(0); imc<b.mc_pt()->size(); imc++){
+      if(b.mc_status()->at(imc)!=23 || abs(b.mc_id()->at(imc))>5) continue;
+      if(!(abs(b.mc_mom()->at(imc))==6 || abs(b.mc_mom()->at(imc))==23 || 
+     abs(b.mc_mom()->at(imc))==24 || abs(b.mc_mom()->at(imc))==15)) continue; // In our ntuples where all taus come from W
+        float dR = deltaR(b.jets_eta()->at(ijet), b.jets_phi()->at(ijet), b.mc_eta()->at(imc), b.mc_phi()->at(imc));
+      if(dR<0.4){
+        matched = true;
+        break;
+      }
+    } // Loop over MC particles
+    if(!matched) Nisr++;
+  } // Loop over jets
+
+  return Nisr;
+}
+
 NamedFunc::ScalarType nJetsReweightingTTJets(const Baby &b){
   if (b.ntrupv()<0) return 1.;
 
-  int njets(floor(b.njets()+0.5));
+  int nisrjets(floor(b.njets()+0.5));
   double wgt = b.weight()/b.eff_trig()/b.w_toppt();
-  if (njets==2) return 1.08*wgt; //  +- 0.01
-  else if (njets==3) return 0.97*wgt; //  +- 0.02
-  else if (njets==4) return 0.89*wgt; //  +- 0.05
-  else if (njets==5) return 0.80*wgt; //  +- 0.09
-  else if (njets==6) return 0.75*wgt; //  +- 0.21
-  else if (njets>=7) return 0.68*wgt; //  +- 0.21
+  if (nisrjets==0) return 1.10*wgt; //  +- 0.01
+  else if (nisrjets==1) return 0.969*wgt; //  +- 0.02
+  else if (nisrjets==2) return 0.870*wgt; //  +- 0.05
+  else if (nisrjets==3) return 0.772*wgt; //  +- 0.09
+  else if (nisrjets==4) return 0.712*wgt; //  +- 0.21
+  else if (nisrjets>=5) return 0.635*wgt; //  +- 0.21
   else return wgt;
 }
+
+

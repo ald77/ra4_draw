@@ -39,6 +39,7 @@
 !txt/colors.txt
 !txt/plot_styles.txt
 *.#*
+sftp-config.json
 
 # LaTeX
 *.tex

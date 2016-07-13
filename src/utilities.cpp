@@ -14,6 +14,7 @@
 
 #include "TMath.h"
 #include "TCanvas.h"
+#include "TVector2.h"
 #include "TH1D.h"
 
 using namespace std;
@@ -227,6 +228,10 @@ double gsl_ran_gamma(const double a, const double b, TRandom3 &rand){
 
 double intGaus(double mean, double sigma, double minX, double maxX){
   return (TMath::Erf((maxX-mean)/sigma/sqrt(2.))-TMath::Erf((minX-mean)/sigma/sqrt(2.)))/2.;
+}
+
+float deltaR(float eta1, float phi1, float eta2, float phi2){
+  return hypot(TVector2::Phi_mpi_pi(phi2-phi1), eta2-eta1);
 }
 
 // yields[Nobs][Nsam] has the entries for each sample for each observable going into kappa
