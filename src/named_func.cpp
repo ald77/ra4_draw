@@ -527,6 +527,9 @@ string NamedFunc::PrettyName() const{
   ReplaceAll(pretty, "el_tks_chg_miniso", "Track charged miniso");
   ReplaceAll(pretty, "mu_tks_chg_miniso", "Track charged miniso");
   ReplaceAll(pretty, "had_tks_chg_miniso", "Track charged miniso");
+  ReplaceAll(pretty, "jetsys_nob_pt", "ISR p_{T}");
+  ReplaceAll(pretty, "(", "");
+  ReplaceAll(pretty, ")", "");
   return pretty;
 }
 
