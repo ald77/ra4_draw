@@ -95,6 +95,42 @@ int main(){
   if (isrtype=="zisr") procs = {data, dyjets, tt2l, tt1l, single_t, ttv, other};
   else procs = {data, tt2l, tt1l, dyjets, single_t, ttv, other};
 
+  //// Processes for 1l ttbar closure
+  string bfolder("");
+  if(Contains(hostname, "cms") || Contains(hostname, "compute-"))  
+    bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
+  string baseline_1l("nleps==1 && ht>500 && met>200 && nbm>=2 && pass");
+
+  auto proc_data = Proc<Baby_full>("Data", Process::Type::data, kBlack, 
+    {folderdata+"/*.root"}, 
+    baseline_1l+" && (trig[4]||trig[8]||trig[13]||trig[33])");
+
+  auto proc_tt1l = Proc<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
+    {foldermc+"*_TTJets*SingleLept*.root"},
+    baseline_1l+" && ntruleps==1");
+  auto proc_tt2l = Proc<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
+    {foldermc+"*_TTJets*DiLept*.root"},
+    baseline_1l+" && ntruleps==2");
+  auto proc_wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
+    {foldermc+"*_WJetsToLNu*.root"},
+    baseline_1l+" && stitch");
+  auto proc_singlet = Proc<Baby_full>("Single t", Process::Type::background, colors("single_t"),
+    {foldermc+"*_ST_*.root"});
+  auto proc_ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
+    {foldermc+"*_TTWJets*.root", foldermc+"*_TTZTo*.root"});
+  auto proc_other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
+    {foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
+	foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
+	foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
+	foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
+	foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
+    baseline_1l+" && stitch");
+
+  vector<shared_ptr<Process> > procs_1l = {proc_data, proc_tt1l, proc_tt2l, proc_wjets, proc_singlet, proc_ttv, proc_other};
+
+
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
   log_lumi.Title(TitleType::info)
     .Bottom(BottomType::ratio)
@@ -162,6 +198,9 @@ int main(){
     pm.Push<HistoStack>(HistoDef(isrtype,20,0.,500., "met", "MET [GeV]", baseline, iweight), procs, plot_types);
     pm.Push<HistoStack>(HistoDef(isrtype,15,0.,1500., "ht", "H_{T} [GeV]", baseline, iweight), procs, plot_types);
     pm.Push<HistoStack>(HistoDef(isrtype,15,0.,1500., "mj14", "M_{J} [GeV]", baseline, iweight), procs, plot_types);
+
+    //// 1l ttbar closure
+    pm.Push<HistoStack>(HistoDef(13, -0.5, 12.5, "njets", "Number of jets", baseline_1l, iweight),  procs_1l, plot_types);
   }
 
   // MC study
