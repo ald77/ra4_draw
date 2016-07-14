@@ -83,7 +83,6 @@ int main(int argc, char *argv[]){
     .Stack(StackType::data_norm);
   PlotOpt lin_lumi = log_lumi().YAxis(YAxisType::linear);
   PlotOpt log_shapes = log_lumi().Stack(StackType::shapes)
-    .Bottom(BottomType::off)
     .ShowBackgroundError(false);
   PlotOpt lin_shapes = log_shapes().YAxis(YAxisType::linear);
   PlotOpt log_lumi_info = log_lumi().Title(TitleType::info);

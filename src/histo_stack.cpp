@@ -875,29 +875,66 @@ vector<TLine> HistoStack::GetCutLines(double y_min, double y_max, bool adjust_bo
   something else depending on the current plot style
 */
 std::vector<TH1D> HistoStack::GetBottomPlots(double &the_min, double &the_max) const{
-  if(backgrounds_.size() == 0 || this_opt_.Bottom() == BottomType::off){
-    return vector<TH1D>();
-  }
+  if(this_opt_.Bottom() == BottomType::off) return vector<TH1D>();
 
-  TH1D denom = backgrounds_.front()->scaled_hist_;
+  TH1D denom;
+  vector<TH1D> out;
+  if(backgrounds_.size() != 0){
+    denom = backgrounds_.front()->scaled_hist_;
+  }else if(datas_.size() != 0){
+    denom = datas_.front()->scaled_hist_;
+  }else if(signals_.size() != 0){
+    denom = signals_.front()->scaled_hist_;
+  }else{
+    ERROR("No histograms available to make bottom plot");
+  }
+  bool stacked;
+  switch(this_opt_.Stack()){
+  case StackType::signal_overlay:
+  case StackType::signal_on_top:
+  case StackType::data_norm:
+    stacked = true; break;
+  case StackType::lumi_shapes:
+  case StackType::shapes:
+    stacked = false; break;
+  default:
+    ERROR("Bad stack type: "+to_string(static_cast<int>(this_opt_.Stack())));
+    break;
+  }
+  if(stacked && backgrounds_.size()){
+    out.push_back(backgrounds_.front()->scaled_hist_);
+    out.back().SetName(("bot_plot_bkg_"+backgrounds_.front()->process_->name_+"_"+counter()).c_str());
+  }else{
+    for(const auto &h: backgrounds_){
+      out.push_back(h->scaled_hist_);
+      out.back().SetName(("bot_plot_bkg_"+h->process_->name_+"_"+counter()).c_str());
+    }
+  }
+  for(const auto &h: datas_){
+    out.push_back(h->scaled_hist_);
+    out.back().SetName(("bot_plot_data_"+h->process_->name_+"_"+counter()).c_str());
+  }
+  if(!stacked){
+    for(const auto &h: signals_){
+      out.push_back(h->scaled_hist_);
+      out.back().SetName(("bot_plot_sig_"+h->process_->name_+"_"+counter()).c_str());
+    }
+  }
+  if(!out.size()) return vector<TH1D>();
+  TH1D band = out.front();
+  for(size_t i = 0; (i+1) < out.size(); ++i){
+    out.at(i) = out.at(i+1);
+  }
+  out.back() = band;
+  out.back().SetFillStyle(3002);
+  out.back().SetLineWidth(0);
+  out.back().SetMarkerStyle(0);
+  out.back().SetMarkerSize(0);
+  out.back().SetName(("bot_plot_band_"+counter()).c_str());
 
   for(int bin = 0; bin <= denom.GetNbinsX()+1; ++bin){
     denom.SetBinError(bin, 0.);
   }
-
-  vector<TH1D> out(datas_.size()+1);
-
-  for(size_t i = 0; i < datas_.size(); ++i){
-    out.at(i) = TH1D(datas_.at(i)->scaled_hist_);
-    out.at(i).SetName(("bot_plot_data_"+datas_.at(i)->process_->name_+"_"+counter()).c_str());
-  }
-  out.back() = backgrounds_.front()->scaled_hist_;
-  out.back().SetFillStyle(3002);
-  out.back().SetFillColor(kBlack);
-  out.back().SetLineWidth(0);
-  out.back().SetMarkerStyle(0);
-  out.back().SetMarkerSize(0);
-  out.back().SetName(("bot_plot_mc_"+counter()).c_str());
 
   switch(this_opt_.Bottom()){
   case BottomType::ratio:

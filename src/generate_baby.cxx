@@ -419,7 +419,7 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "#include <string>\n\n";
 
   file << "#include \"TChain.h\"\n\n";
-  file << "#include \"TSTring.h\"\n\n";
+  file << "#include \"TString.h\"\n\n";
 
   file << "class NamedFunc;\n\n";
 
@@ -435,7 +435,7 @@ void WriteBaseHeader(const set<Variable> &vars,
 
   file << "  const std::set<std::string> & FileNames() const;\n\n";
   file << "  int SampleType() const;\n";
-  file << "  int SetSampleType(TString filename);\n\n";
+  file << "  int SetSampleType(const TString &filename);\n\n";
 
   for(const auto &var: vars){
     if(var.ImplementInBase()){
@@ -634,7 +634,7 @@ void WriteBaseSource(const set<Variable> &vars){
   //file << "    chain_->Add((file+\"/tree\").c_str());\n";
   file << "  }\n";
   file << "  TString filename=\"\";\n";
-  file << "  if(file_names_.size()) filename = *file_names_.begin();\n";
+  file << "  if(file_names_.size()) filename = *file_names_.cbegin();\n";
   file << "  sample_type_ = SetSampleType(filename);\n";
   file << "}\n";
 
@@ -673,7 +673,7 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  return sample_type_;\n";
   file << "}\n\n";
 
-  file << "int Baby::SetSampleType(TString filename){\n";
+  file << "int Baby::SetSampleType(const TString &filename){\n";
   file << "  int st = 0;\n";
   file << "  if(filename.Contains(\"SMS\"))     st = 10;\n";
   file << "  if(filename.Contains(\"_TTJets\")) st = 20;\n";
