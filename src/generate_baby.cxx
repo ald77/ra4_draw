@@ -419,6 +419,7 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "#include <string>\n\n";
 
   file << "#include \"TChain.h\"\n\n";
+  file << "#include \"TSTring.h\"\n\n";
 
   file << "class NamedFunc;\n\n";
 
@@ -433,6 +434,8 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "  virtual void GetEntry(long entry);\n\n";
 
   file << "  const std::set<std::string> & FileNames() const;\n\n";
+  file << "  int SampleType() const;\n";
+  file << "  int SetSampleType(TString filename);\n\n";
 
   for(const auto &var: vars){
     if(var.ImplementInBase()){
@@ -463,6 +466,7 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "  Baby& operator=(const Baby &) = delete;\n\n";
 
   file << "  std::set<std::string> file_names_;//!<Files loaded into TChain\n";
+  file << "  int sample_type_;//!< Integer indicating what kind of sample the first file has\n";
   file << "  mutable long total_entries_;//!<Cached number of events in TChain\n";
   file << "  mutable bool cached_total_entries_;//!<Flag if cached event count up to date\n\n";
 
@@ -629,6 +633,9 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "    chain_->Add((file).c_str());\n";
   //file << "    chain_->Add((file+\"/tree\").c_str());\n";
   file << "  }\n";
+  file << "  TString filename=\"\";\n";
+  file << "  if(file_names_.size()) filename = *file_names_.begin();\n";
+  file << "  sample_type_ = SetSampleType(filename);\n";
   file << "}\n";
 
   file << "/*!\\brief Get number of entries in TChain and cache it\n\n";
@@ -659,6 +666,26 @@ void WriteBaseSource(const set<Variable> &vars){
 
   file << "const std::set<std::string> & Baby::FileNames() const{\n";
   file << "  return file_names_;\n";
+  file << "}\n\n";
+
+  file << "// Return integer with sample type\n";
+  file << "int Baby::SampleType() const{\n";
+  file << "  return sample_type_;\n";
+  file << "}\n\n";
+
+  file << "int Baby::SetSampleType(TString filename){\n";
+  file << "  int st = 0;\n";
+  file << "  if(filename.Contains(\"SMS\"))     st = 10;\n";
+  file << "  if(filename.Contains(\"_TTJets\")) st = 20;\n";
+  file << "  if(filename.Contains(\"_WJets\"))  st = 30;\n";
+  file << "  if(filename.Contains(\"DYJets\"))  st = 40;\n";
+  file << "  if(filename.Contains(\"_ZJets\"))  st = 41;\n";
+  file << "  if(filename.Contains(\"_ST_\"))    st = 50;\n";
+  file << "  if(filename.Contains(\"_QCD\"))    st = 60;\n";
+  file << "  if(filename.Contains(\"_TTWJets\"))st = 70;\n";
+  file << "  if(filename.Contains(\"_TTZ\"))    st = 71;\n";
+  file << "  if(filename.Contains(\"_TTG\"))    st = 72;\n";
+  file << "  return st;\n";
   file << "}\n\n";
 
   file << "/*! \\brief Get underlying TChain for this Baby\n\n";

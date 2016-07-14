@@ -19,6 +19,7 @@ using namespace PlotOptTypes;
 
 namespace {
   const string isrtype = "ttisr";
+  bool do_tt1l = true;
   double lumi = 4.34;
   bool single_thread = false;
 
@@ -50,86 +51,90 @@ NamedFunc::ScalarType nJetsReweightingTTJets(const Baby &b);
 
 int main(){
   gErrorIgnoreLevel = 6000;
-  bool sb = false;
+
+
+  string bfolder("");
   string hostname = execute("echo $HOSTNAME");
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))  
-    sb = true;
+    bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   Palette colors("txt/colors.txt", "default");
 
-  string folder_mc = "/cms2r0/babymaker/babies/2016_06_14/mc/merged_"+isrtype+"/";
-  if (sb) folder_mc = "/net/cms2"+folder_mc;
+  //// Processes for ISR skims
+  string dir_mc_isr = bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_"+isrtype+"/";
   auto tt1l = Proc<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
-    {folder_mc+"*_TTJets*SingleLept*.root"}, "ntruleps<=1");
+    {dir_mc_isr+"*_TTJets*SingleLept*.root"}, "ntruleps<=1");
   auto tt2l = Proc<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
-    {folder_mc+"*_TTJets*DiLept*.root"}, "ntruleps>=2");
+    {dir_mc_isr+"*_TTJets*DiLept*.root"}, "ntruleps>=2");
   auto single_t = Proc<Baby_full>("Single t", Process::Type::background, colors("single_t"),
-    {folder_mc+"*_ST_*.root"});
-  auto dyjets = Proc<Baby_full>("DY+jets", Process::Type::background, colors("wjets"),
-    {folder_mc+"*DYJetsToLL_M-50_Tu*.root"});
+    {dir_mc_isr+"*_ST_*.root"});
+  auto dyjets = Proc<Baby_full>("DY+jets", Process::Type::background, colors("dy"),
+    {dir_mc_isr+"*DYJetsToLL_M-50_Tu*.root"});
+  auto wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
+    {dir_mc_isr+"*_WJetsToLNu*.root"},
+    "stitch");
 
   auto ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
-    {folder_mc+"*_TTWJets*.root", folder_mc+"*_TTZTo*.root", folder_mc+"*_TTGJets*.root"});
+    {dir_mc_isr+"*_TTWJets*.root", dir_mc_isr+"*_TTZTo*.root", dir_mc_isr+"*_TTGJets*.root"});
   auto other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
-    {{folder_mc+"*_WJetsToLNu*.root"},
-        folder_mc+"*_ZJet*.root", folder_mc+"*_WWTo*.root",
-        folder_mc+"*ggZH_HToBB*.root", folder_mc+"*ttHJetTobb*.root",
-        folder_mc+"*_TTTT_*.root",
-        folder_mc+"*_WH_HToBB*.root", folder_mc+"*_WZTo*.root",
-        folder_mc+"*_ZH_HToBB*.root", folder_mc+"_ZZ_*.root"});
+    {dir_mc_isr+"*_WJetsToLNu*.root",dir_mc_isr+"*QCD_HT*.root",
+        dir_mc_isr+"*_ZJet*.root", dir_mc_isr+"*_WWTo*.root",
+        dir_mc_isr+"*ggZH_HToBB*.root", dir_mc_isr+"*ttHJetTobb*.root",
+        dir_mc_isr+"*_TTTT_*.root",
+        dir_mc_isr+"*_WH_HToBB*.root", dir_mc_isr+"*_WZTo*.root",
+        dir_mc_isr+"*_ZH_HToBB*.root", dir_mc_isr+"_ZZ_*.root"});
 
-  string folder_data = "/cms26r0/babymaker/babies/2016_06_26/data/skim_"+isrtype+"/";
-  if (sb) folder_data = "/net/cms26" + folder_data;
+  auto other_w = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
+    {dir_mc_isr+"*DYJetsToLL_M-50_Tu*.root",dir_mc_isr+"*QCD_HT*.root",
+        dir_mc_isr+"*_ZJet*.root", dir_mc_isr+"*_WWTo*.root",
+        dir_mc_isr+"*ggZH_HToBB*.root", dir_mc_isr+"*ttHJetTobb*.root",
+        dir_mc_isr+"*_TTTT_*.root",
+        dir_mc_isr+"*_WH_HToBB*.root", dir_mc_isr+"*_WZTo*.root",
+        dir_mc_isr+"*_ZH_HToBB*.root", dir_mc_isr+"_ZZ_*.root"});
+
+  string dir_data_isr = bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/skim_"+isrtype+"/";
   string lumi_label = RoundNumber(lumi,1).Data();
   auto data = Proc<Baby_full>("Data "+lumi_label+" fb^{-1}", Process::Type::data, kBlack,
-    {folder_data+"*.root"},
+    {dir_data_isr+"*.root"},
     "pass && (trig[19]||trig[23])");
-
-  auto t1tttt_nc = Proc<Baby_full>("T1tttt(1800,200)", Process::Type::signal, colors("t1tttt"),
-    {folder_mc+"*SMS-T1tttt_mGluino-1800_mLSP-200*.root"});
-  auto t1tttt_c = Proc<Baby_full>("T1tttt(1200,800)", Process::Type::signal, colors("t1tttt"),
-    {folder_mc+"*SMS-T1tttt_mGluino-1200_mLSP-800*.root"});
-  t1tttt_c->SetLineStyle(2);
 
   vector<shared_ptr<Process> > procs;
   if (isrtype=="zisr") procs = {data, dyjets, tt2l, tt1l, single_t, ttv, other};
-  else procs = {data, tt2l, tt1l, dyjets, single_t, ttv, other};
+  else if (isrtype=="ttisr") procs = {data, tt2l, tt1l, dyjets, single_t, ttv, other};
+  else if (isrtype=="wisr") procs = {data, wjets, tt1l, tt2l, single_t, ttv, other_w};
+  else {cout<<isrtype<<" not supported, exiting"<<endl<<endl; return 0;}
+
 
   //// Processes for 1l ttbar closure
-  string bfolder("");
-  if(Contains(hostname, "cms") || Contains(hostname, "compute-"))  
-    bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
-  string baseline_1l("nleps==1 && ht>500 && met>200 && nbm>=2 && pass");
+  string dir_mc_std(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/");
+  string dir_data_std(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
 
-  auto proc_data = Proc<Baby_full>("Data", Process::Type::data, kBlack, 
-    {folderdata+"/*.root"}, 
-    baseline_1l+" && (trig[4]||trig[8]||trig[13]||trig[33])");
+  auto std_data = Proc<Baby_full>("Data", Process::Type::data, kBlack, 
+    {dir_data_std+"/*.root"}, 
+    "(trig[4]||trig[8]||trig[13]||trig[33])");
 
-  auto proc_tt1l = Proc<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets*SingleLept*.root"},
-    baseline_1l+" && ntruleps==1");
-  auto proc_tt2l = Proc<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
-    {foldermc+"*_TTJets*DiLept*.root"},
-    baseline_1l+" && ntruleps==2");
-  auto proc_wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
-    {foldermc+"*_WJetsToLNu*.root"},
-    baseline_1l+" && stitch");
-  auto proc_singlet = Proc<Baby_full>("Single t", Process::Type::background, colors("single_t"),
-    {foldermc+"*_ST_*.root"});
-  auto proc_ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
-    {foldermc+"*_TTWJets*.root", foldermc+"*_TTZTo*.root"});
-  auto proc_other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
-    {foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
-	foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
-	foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
-	foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
-	foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
-    baseline_1l+" && stitch");
+  auto std_tt1l = Proc<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
+    {dir_mc_std+"*_TTJets*SingleLept*.root"},
+    "ntruleps==1");
+  auto std_tt2l = Proc<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
+    {dir_mc_std+"*_TTJets*DiLept*.root"},
+    "ntruleps==2");
+  auto std_wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
+    {dir_mc_std+"*_WJetsToLNu*.root"},
+    "stitch");
+  auto std_singlet = Proc<Baby_full>("Single t", Process::Type::background, colors("single_t"),
+    {dir_mc_std+"*_ST_*.root"});
+  auto std_ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
+    {dir_mc_std+"*_TTWJets*.root", dir_mc_std+"*_TTZTo*.root"});
+  auto std_other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
+    {dir_mc_std+"*DYJetsToLL*.root",dir_mc_std+"*QCD_HT*.root",
+	dir_mc_std+"*_ZJet*.root",dir_mc_std+"*_ttHJetTobb*.root",
+	dir_mc_std+"*_TTGJets*.root",dir_mc_std+"*_TTTT*.root",
+	dir_mc_std+"*_WH_HToBB*.root",dir_mc_std+"*_ZH_HToBB*.root",
+	dir_mc_std+"*_WWTo*.root",dir_mc_std+"*_WZ*.root",dir_mc_std+"*_ZZ_*.root"},
+    "stitch");
 
-  vector<shared_ptr<Process> > procs_1l = {proc_data, proc_tt1l, proc_tt2l, proc_wjets, proc_singlet, proc_ttv, proc_other};
-
+  vector<shared_ptr<Process> > procs_1l = {std_data, std_tt1l, std_tt2l, std_wjets, std_singlet, std_ttv, std_other};
 
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
   log_lumi.Title(TitleType::info)
@@ -151,6 +156,9 @@ int main(){
   NamedFunc nreliso_els("nreliso_els",nRelIsoEls);
   NamedFunc nreliso_mus("nreliso_mus",nRelIsoMus);
   NamedFunc baseline = "nleps==2" && nreliso_els+nreliso_mus>=1;
+  NamedFunc baseline_w = nreliso_els+nreliso_mus==1 && "ht>200&&met>100&&nbl==0";
+  NamedFunc baseline_1l = "nleps==1 && ht>500 && met>200 && nbm>=1 && pass";
+  if(isrtype=="wisr") baseline = baseline_w;
 
   NamedFunc max_reliso_elspt("max_reliso_elspt",maxRelIsoElsPt);
   NamedFunc max_reliso_muspt("max_reliso_muspt",maxRelIsoMusPt);
@@ -166,7 +174,7 @@ int main(){
 
   // definitions for njets in slices of ISR pT
   const vector<double> isr_syspt_slices = {0, 50, 100, 150, 200, 300, 400};
-  const vector<double> nisrjet_bins = {-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5};
+  const vector<double> nisrjet_bins = {-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5};
   // definitions for ISR pT in slices of njets
   vector<double> nisrjet_slices = {0,1,2,3,4,5};
   const vector<double> isr_syspt_bins = {0, 50, 100, 150, 200, 300, 400, 600, 800};
@@ -179,36 +187,36 @@ int main(){
   weight_opts.push_back(NamedFunc("w_njets", nJetsReweightingTTJets));
 
   for (const auto &iweight: weight_opts){
-    addSlices(pm, isr_syspt_slices, isr_syspt, nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline, iweight, procs, {lin_lumi});
-    addSlices(pm, nisrjet_slices, nisrjets, isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline, iweight, procs, {log_lumi});
+    if(do_tt1l) //// 1l ttbar closure
+      pm.Push<HistoStack>(HistoDef("tt1l", 13, -0.5, 12.5, "njets", "Number of jets", baseline_1l, iweight),  procs_1l, plot_types);
+    else {
+      addSlices(pm, isr_syspt_slices, isr_syspt, nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline, iweight, procs, {lin_lumi});
+      addSlices(pm, nisrjet_slices, nisrjets, isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline, iweight, procs, {log_lumi});
 
-    pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[0.], "Leading ISR jet p_{T} [GeV]", baseline && nisrjets>0., iweight), procs, plot_types);
-    pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[1], "2^{nd} ISR jet p_{T} [GeV]", baseline && nisrjets>1, iweight), procs, plot_types);
-    pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[2], "3^{rd} ISR jet p_{T} [GeV]", baseline && nisrjets>2, iweight), procs, plot_types);
-    pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[3], "4^{th} ISR jet p_{T} [GeV]", baseline && nisrjets>3, iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[0.], "Leading ISR jet p_{T} [GeV]", baseline && nisrjets>0., iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[1], "2^{nd} ISR jet p_{T} [GeV]", baseline && nisrjets>1, iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[2], "3^{rd} ISR jet p_{T} [GeV]", baseline && nisrjets>2, iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[3], "4^{th} ISR jet p_{T} [GeV]", baseline && nisrjets>3, iweight), procs, plot_types);
 
-    pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[0.], "Leading ISR jet p_{T} [GeV]", baseline && nisrjets20>0., iweight), procs, plot_types);
-    pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[1], "2^{nd} ISR jet p_{T} [GeV]", baseline && nisrjets20>1, iweight), procs, plot_types);
-    pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[2], "3^{rd} ISR jet p_{T} [GeV]", baseline && nisrjets20>2, iweight), procs, plot_types);
-    pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[3], "4^{th} ISR jet p_{T} [GeV]", baseline && nisrjets20>3, iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[0.], "Leading ISR jet p_{T} [GeV]", baseline && nisrjets20>0., iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[1], "2^{nd} ISR jet p_{T} [GeV]", baseline && nisrjets20>1, iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[2], "3^{rd} ISR jet p_{T} [GeV]", baseline && nisrjets20>2, iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[3], "4^{th} ISR jet p_{T} [GeV]", baseline && nisrjets20>3, iweight), procs, plot_types);
     
-    pm.Push<HistoStack>(HistoDef(isrtype, ptbins, max_reliso_elspt, "Leading electron p_{T} [GeV]", baseline && nreliso_els>0., iweight), procs, plot_types);
-    pm.Push<HistoStack>(HistoDef(isrtype, ptbins, max_reliso_muspt, "Leading muon p_{T} [GeV]", baseline && nreliso_mus>0., iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype, ptbins, max_reliso_elspt, "Leading electron p_{T} [GeV]", baseline && nreliso_els>0., iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype, ptbins, max_reliso_muspt, "Leading muon p_{T} [GeV]", baseline && nreliso_mus>0., iweight), procs, plot_types);
 
-    pm.Push<HistoStack>(HistoDef(isrtype,20,0.,500., "met", "MET [GeV]", baseline, iweight), procs, plot_types);
-    pm.Push<HistoStack>(HistoDef(isrtype,15,0.,1500., "ht", "H_{T} [GeV]", baseline, iweight), procs, plot_types);
-    pm.Push<HistoStack>(HistoDef(isrtype,15,0.,1500., "mj14", "M_{J} [GeV]", baseline, iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype,20,0.,500., "met", "MET [GeV]", baseline, iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype,15,0.,1500., "ht", "H_{T} [GeV]", baseline, iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype,15,0.,1500., "mj14", "M_{J} [GeV]", baseline, iweight), procs, plot_types);
+      if(isrtype=="zisr"){
+	pm.Push<HistoStack>(HistoDef(isrtype,nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline && "ht>200", iweight), procs, plot_types);
+	pm.Push<HistoStack>(HistoDef(isrtype,isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline && "ht>200", iweight), procs, plot_types);
+      }
+    } // if not wjets_tt1l
+  } // Loop over weights
 
-    //// 1l ttbar closure
-    pm.Push<HistoStack>(HistoDef(13, -0.5, 12.5, "njets", "Number of jets", baseline_1l, iweight),  procs_1l, plot_types);
-  }
 
-  // MC study
-  // vector<shared_ptr<Process> > proc_tt = {tt2l};
-  if (isrtype=="ttisr") pm.Push<HistoStack>(HistoDef(isrtype,20,-2.,2., "(jetsys_nob_pt-isr_tru_pt)/isr_tru_pt", "(reco - true)/true ISR p_{T}", baseline), vector<shared_ptr<Process> >({tt2l}), vector<PlotOpt>({lin_shapes}));
-  else pm.Push<HistoStack>(HistoDef(isrtype,20,-2.,2., "(jetsys_pt-isr_tru_pt)/isr_tru_pt", "(reco - true)/true ISR p_{T}", baseline), vector<shared_ptr<Process> >({dyjets}), vector<PlotOpt>({lin_shapes}));
-
-  pm.Push<HistoStack>(HistoDef(isr_syspt_bins, "isr_tru_pt", "true ISR p_{T}", baseline), vector<shared_ptr<Process> >({tt2l,t1tttt_nc,t1tttt_c}), vector<PlotOpt>({lin_shapes}));
 
   if (single_thread) pm.multithreaded_ = false;
   pm.MakePlots(lumi);
@@ -336,7 +344,8 @@ NamedFunc::ScalarType nisrMatch(const Baby &b){
 NamedFunc::ScalarType nJetsReweightingTTJets(const Baby &b){
   if (b.ntrupv()<0) return 1.;
 
-  int nisrjets(floor(b.njets()+0.5));
+  //int nisrjets(floor(b.njets()+0.5));
+  int nisrjets(floor(nisrMatch(b)+0.5));
   double wgt = b.weight()/b.eff_trig()/b.w_toppt();
   if (nisrjets==0) return 1.10*wgt; //  +- 0.01
   else if (nisrjets==1) return 0.969*wgt; //  +- 0.02
