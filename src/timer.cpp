@@ -27,27 +27,34 @@ namespace{
 
 mutex Timer::mutex_{};
 
-Timer::Timer(size_t num_iterations, double auto_print):
+Timer::Timer(size_t num_iterations,
+	     double auto_print,
+	     bool erase_lines):
   start_time_(Clock::now()),
   last_print_(start_time_),
   iteration_(static_cast<size_t>(-1)),
   num_iterations_(num_iterations),
-  auto_print_(auto_print){
+  auto_print_(auto_print),
+  erase_lines_(erase_lines){
 }
 
-Timer::Timer(size_t num_iterations, chrono::duration<double> auto_print):
+Timer::Timer(size_t num_iterations,
+	     chrono::duration<double> auto_print,
+	     bool erase_lines):
   start_time_(Clock::now()),
   last_print_(start_time_),
   iteration_(static_cast<size_t>(-1)),
   num_iterations_(num_iterations),
-  auto_print_(auto_print){
+  auto_print_(auto_print),
+  erase_lines_(erase_lines){
 }
 
 void Timer::Iterate(){
   ++iteration_;
   if(auto_print_.count() >= 0.
      && chrono::duration<double>(Clock::now() - last_print_) >= auto_print_){
-    clog << "\r\33[2K" << *this;
+    if(erase_lines_) clog << "\r\33[2K" << *this;
+    else clog << *this << '\n';
   }
 }
 

@@ -10,8 +10,12 @@ public:
   using Clock = std::chrono::high_resolution_clock;
   using TimeType = Clock::time_point;
   
-  explicit Timer(std::size_t num_iterations = 0, double auto_print = -1.);
-  explicit Timer(std::size_t num_iterations, std::chrono::duration<double> auto_print);
+  explicit Timer(std::size_t num_iterations = 0,
+		 double auto_print = -1.,
+		 bool erase_lines = false);
+  Timer(std::size_t num_iterations,
+	std::chrono::duration<double> auto_print,
+	bool erase_lines = false);
   Timer(const Timer &) = default;
   Timer & operator=(const Timer &) = default;
   Timer(Timer &&) = default;
@@ -43,6 +47,7 @@ private:
   mutable TimeType last_print_;
   std::size_t iteration_, num_iterations_;
   std::chrono::duration<double> auto_print_;
+  bool erase_lines_;
   static std::mutex mutex_;
 };
 
