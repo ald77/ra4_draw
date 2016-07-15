@@ -404,6 +404,32 @@ void HistoStack::Print(double luminosity){
       x->Draw();
     }
 
+    // Printing values to terminal
+    if(this_opt_.PrintVals()){
+      TH1D *hdata = (datas_.size() ? &(datas_[0]->scaled_hist_) : 0);
+      TH1D *hmc = (backgrounds_.size() ? &(backgrounds_[0]->scaled_hist_) : 0);
+      TH1D *hbot = (bot_plots.size() ? &(bot_plots[0]) : 0);
+      if(hdata==0 || hmc==0 || hbot==0) cout<<"Printing values not supported yet without Data, MC, or ratio"<<endl;
+      else {
+	int digits = floor(log10(max(hdata->GetBinContent(hdata->GetMaximumBin()), 
+				     hmc->GetBinContent(hmc->GetMaximumBin())))+1.);
+	//// Digits for error are calculated with the sqrt, and added 2 to print with one decimal
+	int edigits = floor(log10(sqrt(max(hdata->GetMaximum(), hmc->GetMaximum())))+1.)+2;
+	cout<<endl<<"Printing values for "<<definition_.Name()<<". Data/MC = "
+	    <<RoundNumber(hdata->Integral(), 2,hmc->Integral()) <<endl;
+	for(int bin=1; bin<=hdata->GetNbinsX(); bin++){
+	  cout<<"Bin "<<setw(5)<<hdata->GetBinLowEdge(bin)<<","<<setw(5)<<hdata->GetBinLowEdge(bin+1)<<": Data = ";
+	  cout<<setw(digits)<<hdata->GetBinContent(bin)<<" +- "<<setw(edigits)<<RoundNumber(hdata->GetBinError(bin),1);
+	  cout<<", MC = "<<setw(digits+2)<<RoundNumber(hmc->GetBinContent(bin),1)<<" +- "
+	      <<setw(edigits)<<RoundNumber(hmc->GetBinError(bin),1);
+	  if(this_opt_.Bottom() != BottomType::off)
+	    cout<<"   ->    Ratio  = "<<setw(6)<<RoundNumber(hbot->GetBinContent(bin),3)
+		<<" +- "<<setw(5)<<RoundNumber(hbot->GetBinError(bin),3);
+	  cout<<endl;
+	} // Loop over histogram bins
+      }
+    }
+
     string base_name = "plots/"+definition_.Name();
     for(const auto &ext: this_opt_.FileExtensions()){
       string full_name = base_name+"_OPT_"+this_opt_.TypeString()+'.'+ext;

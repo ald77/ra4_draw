@@ -19,7 +19,7 @@ using namespace PlotOptTypes;
 
 namespace {
   const string isrtype = "ttisr";
-  bool do_tt1l = true;
+  bool do_tt1l = false;
   double lumi = 4.34;
   bool single_thread = false;
 
@@ -41,7 +41,8 @@ NamedFunc::ScalarType nRelIsoMus(const Baby &b);
 NamedFunc::ScalarType maxRelIsoMusPt(const Baby &b);
 
 bool isGoodJet(const Baby &b, size_t ijet);
-NamedFunc::VectorType isrJetsPt(const Baby &b);
+NamedFunc::VectorType isrJetsPt(const Baby &b, float ptThresh=30.);
+NamedFunc::VectorType isrJetsPt30(const Baby &b);
 NamedFunc::VectorType isrJetsPt20(const Baby &b);
 NamedFunc::ScalarType isrSystemPt(const Baby &b);
 
@@ -69,21 +70,23 @@ int main(){
   auto single_t = Proc<Baby_full>("Single t", Process::Type::background, colors("single_t"),
     {dir_mc_isr+"*_ST_*.root"});
   auto dyjets = Proc<Baby_full>("DY+jets", Process::Type::background, colors("dy"),
-    {dir_mc_isr+"*DYJetsToLL_M-50_Tu*.root"});
-  auto wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
-    {dir_mc_isr+"*_WJetsToLNu*.root"},
-    "stitch");
-
+    //{dir_mc_isr+"*DYJetsToLL_M-50_Tu*.root"});
+    {dir_mc_isr+"*DYJetsToLL_M-50_*.root"},"stitch"); // Inclusive + HT-binned DY
   auto ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
     {dir_mc_isr+"*_TTWJets*.root", dir_mc_isr+"*_TTZTo*.root", dir_mc_isr+"*_TTGJets*.root"});
   auto other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
-    {dir_mc_isr+"*_WJetsToLNu*.root",dir_mc_isr+"*QCD_HT*.root",
+    {dir_mc_isr+"*_WJetsToLNu*.root",
+	// dir_mc_isr+"*QCD_HT*.root", // Has some ugly high-weight events
         dir_mc_isr+"*_ZJet*.root", dir_mc_isr+"*_WWTo*.root",
         dir_mc_isr+"*ggZH_HToBB*.root", dir_mc_isr+"*ttHJetTobb*.root",
         dir_mc_isr+"*_TTTT_*.root",
         dir_mc_isr+"*_WH_HToBB*.root", dir_mc_isr+"*_WZTo*.root",
         dir_mc_isr+"*_ZH_HToBB*.root", dir_mc_isr+"_ZZ_*.root"});
 
+  //// Only used for W+jets
+  auto wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
+    {dir_mc_isr+"*_WJetsToLNu*.root"},
+    "stitch");
   auto other_w = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
     {dir_mc_isr+"*DYJetsToLL_M-50_Tu*.root",dir_mc_isr+"*QCD_HT*.root",
         dir_mc_isr+"*_ZJet*.root", dir_mc_isr+"*_WWTo*.root",
@@ -147,7 +150,7 @@ int main(){
     .ShowBackgroundError(false);
   PlotOpt lin_shapes = log_shapes().YAxis(YAxisType::linear);
   vector<PlotOpt> plot_types = {log_lumi, lin_lumi};
-
+  vector<PlotOpt> plot_vals = {lin_lumi().PrintVals(true)};
   PlotMaker pm;
 
   // tt_isr skim def:
@@ -162,19 +165,28 @@ int main(){
 
   NamedFunc max_reliso_elspt("max_reliso_elspt",maxRelIsoElsPt);
   NamedFunc max_reliso_muspt("max_reliso_muspt",maxRelIsoMusPt);
-  NamedFunc isr_jetspt("isr_jetspt",isrJetsPt);
+  NamedFunc isr_jetspt("isr_jetspt",isrJetsPt30);
   NamedFunc nisrjets("nisrjets", [&](const Baby &b){
-    return isrJetsPt(b).size();
-  });
+      return isrJetsPt30(b).size();
+    });
   NamedFunc isr_jetspt20("isr_jetspt20",isrJetsPt20);
   NamedFunc nisrjets20("nisrjets20", [&](const Baby &b){
-    return isrJetsPt20(b).size();
-  });
+      return isrJetsPt20(b).size();
+    });
+  NamedFunc nisrjets50("nisrjets50", [&](const Baby &b){
+      return isrJetsPt(b, 50).size();
+    });
+  NamedFunc nisrjets75("nisrjets75", [&](const Baby &b){
+      return isrJetsPt(b, 75).size();
+    });
   NamedFunc isr_syspt("isr_syspt", isrSystemPt);
 
   // definitions for njets in slices of ISR pT
   const vector<double> isr_syspt_slices = {0, 50, 100, 150, 200, 300, 400};
-  const vector<double> nisrjet_bins = {-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5};
+  const vector<double> nisrjet_bins = {-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5};
+  vector<double> nisrjet_bins_vals = {-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5};
+  if(isrtype!="ttisr") nisrjet_bins_vals = nisrjet_bins;
+
   // definitions for ISR pT in slices of njets
   vector<double> nisrjet_slices = {0,1,2,3,4,5};
   const vector<double> isr_syspt_bins = {0, 50, 100, 150, 200, 300, 400, 600, 800};
@@ -183,14 +195,14 @@ int main(){
   vector<double> ptbins_zoom = {20,25,30,35,40,50,75,100,150,200};
 
   vector<NamedFunc> weight_opts;
-  weight_opts.push_back(NamedFunc("default", [](const Baby &b) -> NamedFunc::ScalarType{return b.weight()/b.eff_trig()/b.w_toppt();}));
   weight_opts.push_back(NamedFunc("w_njets", nJetsReweightingTTJets));
+  weight_opts.push_back(NamedFunc("default", [](const Baby &b) -> NamedFunc::ScalarType{return b.weight()/b.eff_trig()/b.w_toppt();}));
 
   for (const auto &iweight: weight_opts){
     if(do_tt1l) //// 1l ttbar closure
-      pm.Push<HistoStack>(HistoDef("tt1l", 13, -0.5, 12.5, "njets", "Number of jets", baseline_1l, iweight),  procs_1l, plot_types);
+      pm.Push<HistoStack>(HistoDef("tt1l", 13, -0.5, 12.5, "njets", "Number of jets", baseline_1l, iweight), procs_1l, plot_types);
     else {
-      addSlices(pm, isr_syspt_slices, isr_syspt, nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline, iweight, procs, {lin_lumi});
+      addSlices(pm, isr_syspt_slices, isr_syspt, nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline, iweight, procs, plot_types);
       addSlices(pm, nisrjet_slices, nisrjets, isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline, iweight, procs, {log_lumi});
 
       pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[0.], "Leading ISR jet p_{T} [GeV]", baseline && nisrjets>0., iweight), procs, plot_types);
@@ -209,6 +221,9 @@ int main(){
       pm.Push<HistoStack>(HistoDef(isrtype,20,0.,500., "met", "MET [GeV]", baseline, iweight), procs, plot_types);
       pm.Push<HistoStack>(HistoDef(isrtype,15,0.,1500., "ht", "H_{T} [GeV]", baseline, iweight), procs, plot_types);
       pm.Push<HistoStack>(HistoDef(isrtype,15,0.,1500., "mj14", "M_{J} [GeV]", baseline, iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype+"_vals",nisrjet_bins_vals, nisrjets, "ISR jet multiplicity", baseline, iweight), procs, plot_vals);
+      pm.Push<HistoStack>(HistoDef(isrtype,nisrjet_bins, nisrjets50, "Number of 50 GeV ISR jets", baseline, iweight), procs, plot_types);
+      pm.Push<HistoStack>(HistoDef(isrtype,nisrjet_bins, nisrjets75, "Number of 75 GeV ISR jets", baseline, iweight), procs, plot_types);
       if(isrtype=="zisr"){
 	pm.Push<HistoStack>(HistoDef(isrtype,nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline && "ht>200", iweight), procs, plot_types);
 	pm.Push<HistoStack>(HistoDef(isrtype,isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline && "ht>200", iweight), procs, plot_types);
@@ -293,7 +308,18 @@ bool isGoodJet(const Baby &b, size_t ijet){
       && !b.jets_islep()->at(ijet);
 }
 
-NamedFunc::VectorType isrJetsPt(const Baby &b){
+NamedFunc::VectorType isrJetsPt(const Baby &b, float ptThresh){
+  vector<double> isr_jetspt;
+  for (size_t ijet(0); ijet<b.jets_pt()->size(); ijet++){
+    if (!isGoodJet(b, ijet) || b.jets_pt()->at(ijet)<ptThresh) continue;
+    if (isrtype=="ttisr" && b.jets_csv()->at(ijet)>CSVMedium) continue;
+    isr_jetspt.push_back(b.jets_pt()->at(ijet));
+  }
+  std::sort(isr_jetspt.begin(), isr_jetspt.end(), std::greater<double>());
+  return isr_jetspt;
+}
+
+NamedFunc::VectorType isrJetsPt30(const Baby &b){
   vector<double> isr_jetspt;
   for (size_t ijet(0); ijet<b.jets_pt()->size(); ijet++){
     if (!isGoodJet(b, ijet) || b.jets_pt()->at(ijet)<30.) continue;
@@ -342,18 +368,28 @@ NamedFunc::ScalarType nisrMatch(const Baby &b){
 }
 
 NamedFunc::ScalarType nJetsReweightingTTJets(const Baby &b){
-  if (b.ntrupv()<0) return 1.;
+  if (b.ntrupv()<0) return 1.; // Do not reweight Data
 
-  //int nisrjets(floor(b.njets()+0.5));
   int nisrjets(floor(nisrMatch(b)+0.5));
   double wgt = b.weight()/b.eff_trig()/b.w_toppt();
-  if (nisrjets==0) return 1.10*wgt; //  +- 0.01
-  else if (nisrjets==1) return 0.969*wgt; //  +- 0.02
-  else if (nisrjets==2) return 0.870*wgt; //  +- 0.05
-  else if (nisrjets==3) return 0.772*wgt; //  +- 0.09
-  else if (nisrjets==4) return 0.712*wgt; //  +- 0.21
-  else if (nisrjets>=5) return 0.635*wgt; //  +- 0.21
-  else return wgt;
+  if(b.SampleType()>=30 && b.SampleType()<60) { //W+jets and Z+jets
+    if      (nisrjets==0) return 0.981*wgt; //  +- 0.001
+    else if (nisrjets==1) return 1.071*wgt; //  +- 0.001
+    else if (nisrjets==2) return 1.169*wgt; //  +- 0.003
+    else if (nisrjets==3) return 1.157*wgt; //  +- 0.007
+    else if (nisrjets==4) return 1.014*wgt; //  +- 0.013
+    else if (nisrjets==5) return 0.920*wgt; //  +- 0.025
+    else if (nisrjets==6) return 0.867*wgt; //  +- 0.048
+    else if (nisrjets>=7) return 0.935*wgt; //  +- 0.088
+    else return wgt;
+  } else {
+    if      (nisrjets==0) return 1.099*wgt; //  +- 0.012
+    else if (nisrjets==1) return 0.969*wgt; //  +- 0.014
+    else if (nisrjets==2) return 0.870*wgt; //  +- 0.020
+    else if (nisrjets==3) return 0.772*wgt; //  +- 0.031
+    else if (nisrjets==4) return 0.712*wgt; //  +- 0.051
+    else if (nisrjets==5) return 0.661*wgt; //  +- 0.088
+    else if (nisrjets>=6) return 0.566*wgt; //  +- 0.133
+    else return wgt;
+  }
 }
-
-

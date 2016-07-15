@@ -40,7 +40,8 @@ PlotOpt::PlotOpt():
   n_divisions_bottom_(606),
   font_(42),
   show_background_error_(true),
-  use_cmyk_(true){
+  use_cmyk_(true),
+  print_vals_(false){
 }
 
 PlotOpt::PlotOpt(const string &file_name,
@@ -370,6 +371,15 @@ bool PlotOpt::UseCMYK() const{
   return use_cmyk_;
 }
 
+PlotOpt & PlotOpt::PrintVals(bool print_vals){
+  print_vals_ = print_vals;
+  return *this;
+}
+
+bool PlotOpt::PrintVals() const{
+  return print_vals_;
+}
+
 double PlotOpt::TopToGlobalYNDC(double top_y) const{
   if(bottom_type_ == BottomType::off) return top_y;
   else return 1.-(1.-top_y)*(1. - bottom_margin_ - bottom_height_);
@@ -539,6 +549,8 @@ void PlotOpt::SetProperty(const string &property,
     ShowBackgroundError(stoi(value));
   }else if(property == "UseCMYK"){
     UseCMYK(stoi(value));
+  }else if(property == "PrintVals"){
+    PrintVals(stoi(value));
   }else{
     DBG("Did not understand property name "<<property);
   }

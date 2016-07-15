@@ -112,6 +112,9 @@ public:
   PlotOpt & UseCMYK(bool use_cmyk);
   bool UseCMYK() const;
 
+  PlotOpt & PrintVals(bool print_vals);
+  bool PrintVals() const;
+
   double TopToGlobalYNDC(double top_y) const;
   double GlobalToTopYNDC(double global_y) const;
   double BottomToGlobalYNDC(double bottom_y) const;
@@ -149,6 +152,7 @@ private:
   int font_;
   bool show_background_error_;
   bool use_cmyk_;
+  bool print_vals_;
 
   void SetProperty(const std::string &property_name,
                    const std::string &value_string);
