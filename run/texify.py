@@ -13,7 +13,7 @@ def Touch(file_path):
 def FullPath(path):
     return os.path.abspath(os.path.expanduser(path))
 
-def Texify(input_dirs, output_dir):
+def Texify(input_dirs, output_dir, tag, keep_logs = False):
     orig_dir = os.getcwd()
 
     in_dirs = frozenset([FullPath(d) for d in input_dirs if os.path.exists(d)])
@@ -29,7 +29,7 @@ def Texify(input_dirs, output_dir):
                 os.makedirs(out_dir)
         tmp_dir = FullPath(tempfile.mkdtemp(prefix="tmp_texify_", dir=out_dir))
 
-        files = [f for f in os.listdir(in_dir) if f.endswith(".tex")]
+        files = [f for f in os.listdir(in_dir) if f.endswith(".tex") and (tag==None or tag in f)]
         for f in files:
             the_pdf = f.replace(".tex",".pdf")
             the_log = f.replace(".tex",".log")
@@ -55,6 +55,8 @@ def Texify(input_dirs, output_dir):
                 subprocess.call(command, stdout=null_file)
                 subprocess.call(command, stdout=null_file)
                 os.rename(tmp_pdf, out_pdf)
+                if keep_logs:
+                    os.rename(tmp_log, out_log)
                 print("Produced "+out_pdf)
             else:
                 os.rename(tmp_log, out_log)
@@ -66,8 +68,14 @@ def Texify(input_dirs, output_dir):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Compiles all .tex documents in a set of directories",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-o", "--output", default=None, metavar="OUTPUT_DIR", help="Directory in which to put resulting .pdf files. Uses input directories if omitted.")
-    parser.add_argument("input", nargs="*", default=["tables"], metavar="INPUT_DIRS", help="List of directories with .tex files to compile")
+    parser.add_argument("-o", "--output", default=None, metavar="OUTPUT_DIR",
+                        help="Directory in which to put resulting .pdf files. Uses input directories if omitted.")
+    parser.add_argument("-t", "--tag", default=None, metavar="TAG",
+                        help = "Only process files containing %(metavar)s in their names")
+    parser.add_argument("-k", "--keep_logs", action='store_true',
+                        help = "Keep log file even in case of successful compilation")
+    parser.add_argument("input", nargs="*", default=["tables"], metavar="INPUT_DIR",
+                        help="List of directories with .tex files to compile")
     args = parser.parse_args()
 
-    Texify(args.input, args.output)
+    Texify(args.input, args.output, args.tag, args.keep_logs)

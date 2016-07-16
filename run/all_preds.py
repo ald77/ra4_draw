@@ -28,10 +28,10 @@ os.system("./run/table_preds.exe -u -l -b -f -2 -s met150")
 os.system("./run/table_preds.exe -u -l -b -f -2 -s 2015 ")
 
 ## Making pdfs and organizing them
-os.system("./python/tex_all.py")
+os.system("./run/texify.py -o out -t full")
 folders = ["lumi0p815", "lumi2p6", "2015"]
 for folder in folders:
-    os.sytem("mkdir out/"+folder)
+    os.system("mkdir out/"+folder)
     os.system("mv out/*"+folder+"*pdf out/"+folder)
 
 
