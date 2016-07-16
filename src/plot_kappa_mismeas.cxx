@@ -167,6 +167,7 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc(bfolder+"/cms2r0/babymaker/babies/mismeasured/2016_06_14/mc/merged_mm_std_nj5mj250/");
+  foldermc = "/net/cms26/cms26r0/babymaker/babies/mismeasured_v2/2016_06_14/mc/merged_mm_std_nj5mj250/";
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
   folderdata = foldermc;
   if(skim.Contains("met150")){
@@ -272,15 +273,15 @@ int main(int argc, char *argv[]){
                                   "mt>140  && mj14<=400  &&  nj_all_1l",          
                                   "mt>140  && mj14>400   &&  nj_1l"};
 
-  vector<TString> abcdcuts_veto = {"mt<=140 && mj14<=400 && nleps==1 && nveto==0 && nbm>=1  &&  nj_all_1l", 
-                                   "mt<=140 && mj14>400  && nleps==1 && nveto==0 && nbm>=1  &&  nj_1l", 
-                                   "mt>140  && mj14<=400 && nleps==1 && nveto==1 && nbm>=1 && nbm<=2  &&  nj_all_1l",          
-                                   "mt>140  && mj14>400  && nleps==1 && nveto==1 && nbm>=1 && nbm<=2  &&  nj_1l"};
+  vector<TString> abcdcuts_veto = {"mt<=140 && mj14<=400 && nleps==1 && nbm>=1  &&  nj_all_1l", 
+                                   "mt<=140 && mj14>400  && nleps==1 && nbm>=1  &&  nj_1l", 
+                                   "mt>140  && mj14<=400 && nleps==1 && nbm>=1 && nbm<=2  &&  nj_all_1l",          
+                                   "mt>140  && mj14>400  && nleps==1 && nbm>=1 && nbm<=2  &&  nj_1l"};
 
-  vector<TString> abcdcuts_2l = {"mt<=140 && mj14<=400 && nleps==1 && nveto==0 && nbm>=1  &&  nj_all_1l", 
-                                 "mt<=140 && mj14>400  && nleps==1 && nveto==0 && nbm>=1  &&  nj_1l", 
-                                 "           mj14<=400 && nleps==2             && nbm<=2  &&  nj_all_2l",          
-                                 "           mj14>400  && nleps==2             && nbm<=2  &&  nj_2l"};
+  vector<TString> abcdcuts_2l = {"mt<=140 && mj14<=400 && nleps==1 && nbm>=1  &&  nj_all_1l", 
+                                 "mt<=140 && mj14>400  && nleps==1 && nbm>=1  &&  nj_1l", 
+                                 "           mj14<=400 && nleps==2 && nbm<=2  &&  nj_all_2l",          
+                                 "           mj14>400  && nleps==2 && nbm<=2  &&  nj_2l"};
 
   vector<TString> abcdcuts_2lveto;
   for(size_t ind=0; ind<2; ind++) abcdcuts_2lveto.push_back(abcdcuts_2l[ind]);
@@ -345,7 +346,7 @@ int main(int argc, char *argv[]){
     } else {
       if(only_dilepton) continue;
       abcdcuts = abcdcuts_std;
-      basecuts = "nleps==1 && nveto==0 && nbm>=1";
+      basecuts = "nleps==1 && nbm>=1";
     }
 
     //////// Dilepton methods
