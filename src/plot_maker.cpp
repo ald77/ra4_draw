@@ -119,7 +119,7 @@ long PlotMaker::GetYield(const std::shared_ptr<Process> &process){
 
   set<Figure::FigureComponent*> figure_components = GetComponents(process);
 
-  Timer timer(num_entries, 10.);
+  Timer timer(process->name_, num_entries, 10.);
   for(long entry = 0; entry < num_entries; ++entry){
     timer.Iterate();
     baby.GetEntry(entry);
@@ -140,8 +140,8 @@ long PlotMaker::GetYield(const std::shared_ptr<Process> &process){
   {
     lock_guard<mutex> lock(print_mutex);
     cout << "Finished processing " << process->name_ << ". "
-	 << num_entries << " events in " << num_seconds << " seconds = "
-	 << 0.001*num_entries/num_seconds << " kHz. "<< endl;
+         << num_entries << " events in " << num_seconds << " seconds = "
+         << 0.001*num_entries/num_seconds << " kHz. "<< endl;
   }
   return num_entries;
 }

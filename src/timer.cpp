@@ -28,26 +28,54 @@ namespace{
 mutex Timer::mutex_{};
 
 Timer::Timer(size_t num_iterations,
-	     double auto_print,
-	     bool erase_lines):
+             double auto_print,
+             bool erase_lines):
+  label_(),
   start_time_(Clock::now()),
   last_print_(start_time_),
   iteration_(static_cast<size_t>(-1)),
   num_iterations_(num_iterations),
   auto_print_(auto_print),
   erase_lines_(erase_lines){
-}
+  }
 
 Timer::Timer(size_t num_iterations,
-	     chrono::duration<double> auto_print,
-	     bool erase_lines):
+             chrono::duration<double> auto_print,
+             bool erase_lines):
+  label_(),
   start_time_(Clock::now()),
   last_print_(start_time_),
   iteration_(static_cast<size_t>(-1)),
   num_iterations_(num_iterations),
   auto_print_(auto_print),
   erase_lines_(erase_lines){
-}
+  }
+
+Timer::Timer(const string &label,
+             size_t num_iterations,
+             double auto_print,
+             bool erase_lines):
+  label_(label),
+  start_time_(Clock::now()),
+  last_print_(start_time_),
+  iteration_(static_cast<size_t>(-1)),
+  num_iterations_(num_iterations),
+  auto_print_(auto_print),
+  erase_lines_(erase_lines){
+  }
+
+Timer::Timer(const string &label,
+             size_t num_iterations,
+             chrono::duration<double> auto_print,
+             bool erase_lines):
+  label_(label),
+  start_time_(Clock::now()),
+  last_print_(start_time_),
+  iteration_(static_cast<size_t>(-1)),
+  num_iterations_(num_iterations),
+  auto_print_(auto_print),
+  erase_lines_(erase_lines){
+  }
 
 void Timer::Iterate(){
   ++iteration_;
@@ -93,6 +121,7 @@ ostream & operator<<(ostream &stream, const Timer &timer){
   if(eta.size() && eta.back() == '\n') eta.pop_back();
   {
     lock_guard<mutex> lock(Timer::mutex_);
+    if(timer.Label() != "") stream << timer.Label() << ": ";
     stream << timer.Iteration() << '/' << timer.NumIterations() << " in ";
     PrintTime(stream, elapsed);
     auto precision = stream.precision();
@@ -144,5 +173,14 @@ Timer & Timer::AutoPrintTime(double auto_print){
 
 Timer & Timer::AutoPrintTime(chrono::duration<double> auto_print){
   auto_print_ = auto_print;
+  return *this;
+}
+
+const std::string & Timer::Label() const{
+  return label_;
+}
+
+Timer & Timer::Label(const std::string &label){
+  label_ = label;
   return *this;
 }
