@@ -24,7 +24,8 @@ public:
     figures_.emplace_back(static_cast<Figure*>(new FigureType(args...)));
   }
 
-  void MakePlots(double luminosity);
+  void MakePlots(double luminosity,
+                 const std::string &subdir = "");
 
   const std::vector<std::unique_ptr<Figure> > & Figures() const;
   void Clear();

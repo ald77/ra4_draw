@@ -3,6 +3,8 @@
 #include <fstream>
 #include <iomanip>
 
+#include <sys/stat.h>
+
 #include "RooStats/NumberCountingUtils.h"
 
 #include "utilities.hpp"
@@ -121,8 +123,12 @@ Table::Table(const string &name,
   print_figure_ = print_table;
 }
 
-void Table::Print(double luminosity){
-  string file_name = "tables/"+name_+"_lumi_"+ToString(luminosity)+".tex";
+void Table::Print(double luminosity,
+                  const string &subdir){
+  if(subdir != "") mkdir(("tables/"+subdir).c_str(), 0777);
+  string file_name = subdir != ""
+    ? "tables/"+subdir+"/"+name_+"_lumi_"+ToString(luminosity)+".tex"
+    : "tables/"+name_+"_lumi_"+ToString(luminosity)+".tex";
   std::ofstream file(file_name);
   file << fixed << setprecision(1);
   PrintHeader(file);

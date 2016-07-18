@@ -42,7 +42,8 @@ public:
   Table& operator=(Table &&) = default;
   ~Table() = default;
 
-  void Print(double luminosity) final;
+  void Print(double luminosity,
+             const std::string &subdir) final;
   
   std::vector<GammaParams> Yield(const std::shared_ptr<Process> &process, double luminosity) const;
   std::vector<GammaParams> BackgroundYield(double luminosity) const;

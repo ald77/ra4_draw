@@ -36,7 +36,8 @@ public:
   Figure& operator=(Figure &&) = default;
   virtual ~Figure() = default;
 
-  virtual void Print(double luminosity) = 0;
+  virtual void Print(double luminosity,
+                     const std::string &subdir) = 0;
 
   virtual std::set<std::shared_ptr<Process> > GetProcesses() const = 0;
 

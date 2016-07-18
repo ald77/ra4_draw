@@ -30,7 +30,7 @@ using VectorType = NamedFunc::VectorType;
 using ScalarFunc = NamedFunc::ScalarFunc;
 using VectorFunc = NamedFunc::VectorFunc;
 
-using Clock = chrono::high_resolution_clock;
+using Clock = chrono::steady_clock;
 
 namespace{
   mutex print_mutex;
@@ -47,11 +47,12 @@ PlotMaker::PlotMaker():
 
   \param[in] luminosity Integrated luminosity with which to draw plots
 */
-void PlotMaker::MakePlots(double luminosity){
+void PlotMaker::MakePlots(double luminosity,
+                          const std::string &subdir){
   GetYields();
 
   for(auto &figure: figures_){
-    if(figure->print_figure_) figure->Print(luminosity);
+    if(figure->print_figure_) figure->Print(luminosity, subdir);
   }
 }
 

@@ -35,6 +35,8 @@
 #include <algorithm>
 #include <sstream>
 
+#include <sys/stat.h>
+
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TGraphAsymmErrors.h"
@@ -325,7 +327,8 @@ HistoStack::HistoStack(const HistoDef &definition,
 
   \param[in] luminosity The integrated luminosity with which to draw the plot
 */
-void HistoStack::Print(double luminosity){
+void HistoStack::Print(double luminosity,
+                       const string &subdir){
   luminosity_ = luminosity;
   for(const auto &opt: plot_options_){
     this_opt_ = opt;
@@ -430,7 +433,10 @@ void HistoStack::Print(double luminosity){
       }
     }
 
-    string base_name = "plots/"+definition_.Name();
+    if(subdir != "") mkdir(("plots/"+subdir).c_str(), 0777);
+    string base_name = subdir != ""
+      ? "plots/"+subdir+"/"+definition_.Name()
+      : "plots/"+definition_.Name();
     for(const auto &ext: this_opt_.FileExtensions()){
       string full_name = base_name+"_OPT_"+this_opt_.TypeString()+'.'+ext;
       full->Print(full_name.c_str());

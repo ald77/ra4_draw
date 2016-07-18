@@ -43,7 +43,8 @@ class EventScan final : public Figure{
  EventScan& operator=(EventScan &&) = default;
  ~EventScan() = default;
 
- void Print(double luminosity) final;
+ void Print(double luminosity,
+            const std::string &subdir) final;
 
  std::set<std::shared_ptr<Process> > GetProcesses() const final;
 

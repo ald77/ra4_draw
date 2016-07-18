@@ -3,6 +3,8 @@
 #include <iostream>
 #include <iomanip>
 
+#include <sys/stat.h>
+
 #include "utilities.hpp"
 
 using namespace std;
@@ -92,7 +94,8 @@ EventScan::EventScan(const string &name,
   }
 }
 
-void EventScan::Print(double /*luminosity*/){
+void EventScan::Print(double /*luminosity*/,
+                      const std::string & /*subdir*/){
   for(const auto &scan: scans_){
     cout
       << "Wrote scan to "

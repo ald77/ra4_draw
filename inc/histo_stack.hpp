@@ -59,7 +59,8 @@ public:
   HistoStack& operator=(HistoStack &&) = default;
   ~HistoStack() = default;
 
-  void Print(double luminosity) final;
+  void Print(double luminosity,
+             const std::string &subdir) final;
 
   std::set<std::shared_ptr<Process> > GetProcesses() const final;
 
