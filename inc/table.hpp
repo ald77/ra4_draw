@@ -55,6 +55,8 @@ public:
   
   std::string name_;
   std::vector<TableRow> rows_;
+  bool print_table_;
+
 private:
   std::vector<std::unique_ptr<TableColumn> > backgrounds_;//!<Background components of the figure
   std::vector<std::unique_ptr<TableColumn> > signals_;//!<Signal components of the figure

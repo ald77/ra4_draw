@@ -102,6 +102,7 @@ Table::Table(const string &name,
   Figure(),
   name_(name),
   rows_(rows),
+  print_table_(print_table),
   backgrounds_(),
   signals_(),
   datas_(){
@@ -120,11 +121,11 @@ Table::Table(const string &name,
       break;
     }
   }
-  print_figure_ = print_table;
 }
 
 void Table::Print(double luminosity,
                   const string &subdir){
+  if(!print_table_) return;
   if(subdir != "") mkdir(("tables/"+subdir).c_str(), 0777);
   string file_name = subdir != ""
     ? "tables/"+subdir+"/"+name_+"_lumi_"+ToString(luminosity)+".tex"
