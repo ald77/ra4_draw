@@ -27,6 +27,7 @@ using namespace PlotOptTypes;
 
 namespace{
   bool single_thread = false;
+  bool verbose = false;
   TString method = "";
 }
 
@@ -54,25 +55,37 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/unskimmed/");
+  string folderb(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/newalg/");
   string baseline = "1";
   Palette colors("txt/colors.txt", "default");
 
-  auto proc_tt2l = Proc<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
-    {foldermc+"*_TTJets*DiLept*.root"}, baseline+" && ntruleps==2");
-  auto proc_t1cc = Proc<Baby_full>("T1tttt(600,1)", Process::Type::signal, kGreen+1,
-    {foldermc+"*SMS-T1tttt_mGluino-600_mLSP-1_*.root"}, baseline+" && ntruleps==0");
-  auto proc_t1low = Proc<Baby_full>("T1tttt(1500,1275)", Process::Type::signal, 4,
-    {foldermc+"*SMS-T1tttt_mGluino-1500_mLSP-1275_*.root"}, baseline+" && ntruleps==0");
-  auto proc_t1nc = Proc<Baby_full>("T1tttt(1500,100)", Process::Type::signal, colors("t1tttt"),
-    {foldermc+"*SMS-T1tttt_mGluino-1500_mLSP-100*.root"}, baseline+" && ntruleps==0");
-  auto proc_t1c = Proc<Baby_full>("T1tttt(1200,800)", Process::Type::signal, colors("t1tttt"),
-    {foldermc+"*SMS-T1tttt_mGluino-1200_mLSP-800*.root"}, baseline+" && ntruleps==0");
+  auto proc_tt = Proc<Baby_full>("t#bar{t} 2l", Process::Type::signal, colors("tt_2l"),
+    {folderb+"*TT*DiLep*.root"}, baseline);//+" && ntruleps==0 && nleps==0");
+  auto proc_t1c = Proc<Baby_full>("T1tttt(1200,800)", Process::Type::signal, kRed,
+    {folderb+"*SMS-T1tttt_mGluino-1200_mLSP-800*.root"}, baseline);//+" && ntruleps==0 && nleps==0");
+  auto proc_t1nc = Proc<Baby_full>("T1tttt(1500,100)", Process::Type::signal, kRed,
+    {folderb+"*SMS-T1tttt_mGluino-1500_mLSP-100*.root"}, baseline);
+  // auto proc_t1nc_3l = Proc<Baby_full>("T1tttt(1500,100) 3l", Process::Type::signal, kGreen+3,
+  //   {folderb+"*SMS-T1tttt_mGluino-1500_mLSP-100*PUSpring16_80*.root"}, baseline+" && ntruleps==4 && nleps==4");
   proc_t1c->SetLineStyle(2);
+ 
+  auto proc_t14qc = Proc<Baby_full>("T1qqqq(1000,800)", Process::Type::signal, kAzure+2 ,
+    {folderb+"*SMS-T1qqqq_mGluino-1000_mLSP-800*.root"}, baseline);
+  auto proc_t14qnc = Proc<Baby_full>("T1qqqq(1400,100)", Process::Type::signal, kAzure+2 ,
+    {folderb+"*SMS-T1qqqq_mGluino-1400_mLSP-100*.root"}, baseline);
+  proc_t14qc->SetLineStyle(2);
 
+  auto proc_t2ttvc = Proc<Baby_full>("T2tt(425,325)", Process::Type::signal, kGreen+2,
+    {folderb+"*SMS-T2tt_mStop-425_mLSP-325*.root"}, baseline);
+  proc_t2ttvc->SetLineStyle(3);
+  auto proc_t2ttc = Proc<Baby_full>("T2tt(500,325)", Process::Type::signal, kGreen+2,
+    {folderb+"*SMS-T2tt_mStop-500_mLSP-325*.root"}, baseline);
+  proc_t2ttc->SetLineStyle(2);
+  auto proc_t2ttnc = Proc<Baby_full>("T2tt(850,100)", Process::Type::signal, kGreen+2,
+    {folderb+"*SMS-T2tt_mStop-850_mLSP-100*.root"}, baseline);
 
-  vector<shared_ptr<Process> > all_procs = {proc_tt2l, proc_t1nc, proc_t1c, proc_t1cc, proc_t1low};
-  //vector<shared_ptr<Process> > all_procs = {proc_t1nc};
-  vector<shared_ptr<Process> > tt_procs = {proc_tt2l};
+  vector<shared_ptr<Process> > tt_procs = {proc_tt};
+  vector<shared_ptr<Process> > proc_isrpt = {proc_t1c, proc_t1nc, proc_t14qnc, proc_t14qc, proc_t2ttnc, proc_t2ttc, proc_t2ttvc,proc_tt}; 
 
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
   log_lumi.Title(TitleType::preliminary)
@@ -93,12 +106,15 @@ int main(int argc, char *argv[]){
 
   minx = 0; maxx = 800; nbins = static_cast<int>((maxx-minx)/25);
   pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "isr_tru_pt", "True ISR p_{T} [GeV]",
-			       "(ntrutaush+ntrutausl)==0", "weight"), all_procs, plot_types);
-
-  minx = -0.5; maxx = 10.5; nbins = static_cast<int>((maxx-minx)/1);
-  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, nisr_match, "Number of ISR jets",
-			       "(ntrutaush+ntrutausl)==0", "weight"), all_procs, plot_types);
-
+			       "(ntrutaush+ntrutausl)==0", "weight"), proc_isrpt, plot_types);
+ 
+  minx = -0.5; maxx = 7.5; nbins = static_cast<int>((maxx-minx)/1);
+  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "nisr", "Number of ISR jets",
+			       "1==1", "1"), proc_isrpt, plot_types);
+ 
+  minx = -2.5; maxx =2.5; nbins = static_cast<int>((maxx-minx)/1);
+  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "nisr-(njets-2)", "true - reco ISR multiplicity",
+             "nbm==2&&nleps==2", "1"), tt_procs, plot_types);
   minx = -2; maxx = 2; nbins = static_cast<int>((maxx-minx)/0.1);
   pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "(jetsys_nob_pt-isr_tru_pt)/isr_tru_pt", "(Reco-True)/True ISR p_{T} [GeV]",
 			       "nbm>=2", "weight"), tt_procs, plot_types);
@@ -107,7 +123,7 @@ int main(int argc, char *argv[]){
   pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "jetsys_nob_pt-isr_tru_pt", "Reco-True ISR p_{T} [GeV]",
 			       "nbm>=2", "weight"), tt_procs, plot_types);
 
-  if(single_thread) pm.multithreaded_ = false;
+  if(single_thread || verbose) pm.multithreaded_ = false;
   pm.MakePlots(lumi);
 
 }
@@ -115,7 +131,7 @@ int main(int argc, char *argv[]){
 void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
-      {"single_thread", no_argument, 0, 's'},
+      {"single_thread", no_argument, 0, 's'}, 
       {0, 0, 0, 0}
     };
 
@@ -123,7 +139,7 @@ void GetOptions(int argc, char *argv[]){
     int option_index;
     opt = getopt_long(argc, argv, "s", long_options, &option_index);
     
-    if( opt == -1) break;
+    if( opt == -1) break; 
     
     string optname;
     switch(opt){
@@ -153,29 +169,30 @@ NamedFunc::ScalarType nisrMatch(const Baby &b){
     for (size_t imc(0); imc<b.mc_pt()->size(); imc++){
       if(b.mc_status()->at(imc)!=23 || abs(b.mc_id()->at(imc))>5) continue;
       if(!(abs(b.mc_mom()->at(imc))==6 || abs(b.mc_mom()->at(imc))==23 || 
-	   abs(b.mc_mom()->at(imc))==24 || abs(b.mc_mom()->at(imc))==15)) continue; // In our ntuples where all taus come from W
+	   abs(b.mc_mom()->at(imc))==24 || abs(b.mc_mom()->at(imc))==15 || abs(b.mc_mom()->at(imc))>1e6)) continue; // In our ntuples where all taus come from W
       float dR = deltaR(b.jets_eta()->at(ijet), b.jets_phi()->at(ijet), b.mc_eta()->at(imc), b.mc_phi()->at(imc));
       if(dR<0.3){
-	  // cout<<"Jet: ("<<b.jets_pt()->at(ijet)<<", "<<b.jets_eta()->at(ijet)<<", "<<b.jets_phi()->at(ijet)<<"), MC: ("
-	  //     <<b.mc_pt()->at(imc)<<", "<<b.mc_eta()->at(imc)<<", "<<b.mc_phi()->at(imc)<<"), ID "<<b.mc_id()->at(imc)<<". dR "<<dR <<endl;
+        if (verbose) cout<<"Jet: ("<<b.jets_pt()->at(ijet)<<", "<<b.jets_eta()->at(ijet)<<", "<<b.jets_phi()->at(ijet)<<"), MC: ("
+	      <<b.mc_pt()->at(imc)<<", "<<b.mc_eta()->at(imc)<<", "<<b.mc_phi()->at(imc)<<"), ID "<<b.mc_id()->at(imc)<<". dR "<<dR <<endl;
 	matched = true;
 	break;
       }
     } // Loop over MC particles
     if(!matched) {
       Nisr++;
-      //cout<<"Jet: ("<<b.jets_pt()->at(ijet)<<", "<<b.jets_eta()->at(ijet)<<", "<<b.jets_phi()->at(ijet)<<" not matched"<<endl;
+      if (verbose) cout<<"Jet: ("<<b.jets_pt()->at(ijet)<<", "<<b.jets_eta()->at(ijet)<<", "<<b.jets_phi()->at(ijet)<<" not matched"<<endl;
     }
   } // Loop over jets
-  // for (size_t imc(0); imc<b.mc_pt()->size(); imc++){
-  //   if(b.mc_status()->at(imc)!=23 || abs(b.mc_id()->at(imc))>5) continue;
-  //   if(!(abs(b.mc_mom()->at(imc))==6 || abs(b.mc_mom()->at(imc))==23 || 
-  // 	 abs(b.mc_mom()->at(imc))==24 || abs(b.mc_mom()->at(imc))==15)) continue; // In our ntuples where all taus come from W
-  //   cout<<" MC: ("
-  // 	<<b.mc_pt()->at(imc)<<", "<<b.mc_eta()->at(imc)<<", "<<b.mc_phi()->at(imc)<<"), ID "<<b.mc_id()->at(imc)<<endl;
-  // }
-  // cout<<" ======== New event: njets "<<b.njets()<<", Nisr "<<Nisr<<endl<<endl;
-
+  if (verbose){
+    for (size_t imc(0); imc<b.mc_pt()->size(); imc++){
+      if(b.mc_status()->at(imc)!=23 || abs(b.mc_id()->at(imc))>5) continue;
+      if(!(abs(b.mc_mom()->at(imc))==6 || abs(b.mc_mom()->at(imc))==23 || 
+    	 abs(b.mc_mom()->at(imc))==24 || abs(b.mc_mom()->at(imc))==15 || abs(b.mc_mom()->at(imc))>1e6)) continue; // In our ntuples where all taus come from W
+      cout<<" MC: ("
+    	<<b.mc_pt()->at(imc)<<", "<<b.mc_eta()->at(imc)<<", "<<b.mc_phi()->at(imc)<<"), ID "<<b.mc_id()->at(imc)<<endl;
+    }
+    cout<<" ======== New event: njets "<<b.njets()<<", Nisr "<<Nisr<<endl<<endl;
+  }
   return Nisr;
 }
 

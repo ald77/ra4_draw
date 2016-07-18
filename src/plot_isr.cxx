@@ -42,8 +42,6 @@ NamedFunc::ScalarType maxRelIsoMusPt(const Baby &b);
 
 bool isGoodJet(const Baby &b, size_t ijet);
 NamedFunc::VectorType isrJetsPt(const Baby &b, float ptThresh=30.);
-NamedFunc::VectorType isrJetsPt30(const Baby &b);
-NamedFunc::VectorType isrJetsPt20(const Baby &b);
 NamedFunc::ScalarType isrSystemPt(const Baby &b);
 
 NamedFunc::ScalarType nisrMatch(const Baby &b);
@@ -165,13 +163,23 @@ int main(){
 
   NamedFunc max_reliso_elspt("max_reliso_elspt",maxRelIsoElsPt);
   NamedFunc max_reliso_muspt("max_reliso_muspt",maxRelIsoMusPt);
-  NamedFunc isr_jetspt("isr_jetspt",isrJetsPt30);
-  NamedFunc nisrjets("nisrjets", [&](const Baby &b){
-      return isrJetsPt30(b).size();
+  NamedFunc isr_jetspt("isr_jetspt",[&](const Baby &b){
+      return isrJetsPt(b, 30.);
     });
-  NamedFunc isr_jetspt20("isr_jetspt20",isrJetsPt20);
+  NamedFunc nisrjets("nisrjets", [&](const Baby &b){
+      return isrJetsPt(b, 30.).size();
+    });
+  NamedFunc isr_ht("isr_ht", [&](const Baby &b){
+      vector<double> jets_pt = isrJetsPt(b, 30.);
+      double ht = 0;
+      for (auto &jpt: jets_pt) ht += jpt;
+      return ht;
+    });
+  NamedFunc isr_jetspt20("isr_jetspt20",[&](const Baby &b){
+      return isrJetsPt(b, 20);
+    });
   NamedFunc nisrjets20("nisrjets20", [&](const Baby &b){
-      return isrJetsPt20(b).size();
+      return isrJetsPt(b, 20).size();
     });
   NamedFunc nisrjets50("nisrjets50", [&](const Baby &b){
       return isrJetsPt(b, 50).size();
@@ -182,7 +190,7 @@ int main(){
   NamedFunc isr_syspt("isr_syspt", isrSystemPt);
 
   // definitions for njets in slices of ISR pT
-  const vector<double> isr_syspt_slices = {0, 50, 100, 150, 200, 300, 400};
+  const vector<double> isr_syspt_slices = {0, 100, 200, 300};
   const vector<double> nisrjet_bins = {-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5};
   vector<double> nisrjet_bins_vals = {-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5};
   if(isrtype!="ttisr") nisrjet_bins_vals = nisrjet_bins;
@@ -190,6 +198,9 @@ int main(){
   // definitions for ISR pT in slices of njets
   vector<double> nisrjet_slices = {0,1,2,3,4,5};
   const vector<double> isr_syspt_bins = {0, 50, 100, 150, 200, 300, 400, 600, 800};
+
+  const vector<double> isr_ht_slices = {0,100, 200, 300, 400, 500, 2000};
+  const vector<double> isr_ht_bins = {0,100, 200, 300};
 
   vector<double> ptbins = {30,40,50,75,100,150,200,300,400,600};
   vector<double> ptbins_zoom = {20,25,30,35,40,50,75,100,150,200};
@@ -204,7 +215,11 @@ int main(){
     else {
       addSlices(pm, isr_syspt_slices, isr_syspt, nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline, iweight, procs, plot_types);
       addSlices(pm, nisrjet_slices, nisrjets, isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline, iweight, procs, {log_lumi});
+      addSlices(pm, isr_ht_slices, isr_ht, isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline, iweight, procs, {log_lumi});
+      addSlices(pm, isr_ht_slices, isr_ht, nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline, iweight, procs, {log_lumi});
+      addSlices(pm, nisrjet_slices, nisrjets, isr_syspt_bins, isr_ht, "ISR H_{T} [GeV]", baseline, iweight, procs, {log_lumi});
 
+      pm.Push<HistoStack>(HistoDef(isrtype, isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline && "ht>300", iweight), procs, vector<PlotOpt>({log_lumi}));
       pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[0.], "Leading ISR jet p_{T} [GeV]", baseline && nisrjets>0., iweight), procs, plot_types);
       pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[1], "2^{nd} ISR jet p_{T} [GeV]", baseline && nisrjets>1, iweight), procs, plot_types);
       pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[2], "3^{rd} ISR jet p_{T} [GeV]", baseline && nisrjets>2, iweight), procs, plot_types);
@@ -225,8 +240,8 @@ int main(){
       pm.Push<HistoStack>(HistoDef(isrtype,nisrjet_bins, nisrjets50, "Number of 50 GeV ISR jets", baseline, iweight), procs, plot_types);
       pm.Push<HistoStack>(HistoDef(isrtype,nisrjet_bins, nisrjets75, "Number of 75 GeV ISR jets", baseline, iweight), procs, plot_types);
       if(isrtype=="zisr"){
-	pm.Push<HistoStack>(HistoDef(isrtype,nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline && "ht>200", iweight), procs, plot_types);
-	pm.Push<HistoStack>(HistoDef(isrtype,isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline && "ht>200", iweight), procs, plot_types);
+        pm.Push<HistoStack>(HistoDef(isrtype,nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline && "ht>200", iweight), procs, plot_types);
+        pm.Push<HistoStack>(HistoDef(isrtype,isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline && "ht>200", iweight), procs, plot_types);
       }
     } // if not wjets_tt1l
   } // Loop over weights
@@ -319,28 +334,6 @@ NamedFunc::VectorType isrJetsPt(const Baby &b, float ptThresh){
   return isr_jetspt;
 }
 
-NamedFunc::VectorType isrJetsPt30(const Baby &b){
-  vector<double> isr_jetspt;
-  for (size_t ijet(0); ijet<b.jets_pt()->size(); ijet++){
-    if (!isGoodJet(b, ijet) || b.jets_pt()->at(ijet)<30.) continue;
-    if (isrtype=="ttisr" && b.jets_csv()->at(ijet)>CSVMedium) continue;
-    isr_jetspt.push_back(b.jets_pt()->at(ijet));
-  }
-  std::sort(isr_jetspt.begin(), isr_jetspt.end(), std::greater<double>());
-  return isr_jetspt;
-}
-
-NamedFunc::VectorType isrJetsPt20(const Baby &b){
-  vector<double> isr_jetspt;
-  for (size_t ijet(0); ijet<b.jets_pt()->size(); ijet++){
-    if (!isGoodJet(b, ijet) || b.jets_pt()->at(ijet)<20.) continue;
-    if (isrtype=="ttisr" && b.jets_csv()->at(ijet)>CSVMedium) continue;
-    isr_jetspt.push_back(b.jets_pt()->at(ijet));
-  }
-  std::sort(isr_jetspt.begin(), isr_jetspt.end(), std::greater<double>());
-  return isr_jetspt;
-}
-
 NamedFunc::ScalarType isrSystemPt(const Baby &b){
     if (isrtype=="ttisr") return b.jetsys_nob_pt();
     else return b.jetsys_pt();
@@ -373,6 +366,7 @@ NamedFunc::ScalarType nJetsReweightingTTJets(const Baby &b){
   int nisrjets(floor(nisrMatch(b)+0.5));
   double wgt = b.weight()/b.eff_trig()/b.w_toppt();
   if(b.SampleType()>=30 && b.SampleType()<60) { //W+jets and Z+jets
+    if (do_tt1l) return wgt;
     if      (nisrjets==0) return 0.981*wgt; //  +- 0.001
     else if (nisrjets==1) return 1.071*wgt; //  +- 0.001
     else if (nisrjets==2) return 1.169*wgt; //  +- 0.003
