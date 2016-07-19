@@ -55,7 +55,7 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/unskimmed/");
-  string folderb(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/newalg/");
+  string folderb(bfolder+"/cms2r0/babymaker/babies/2016_07_18/mc/benchmarks/");
   string baseline = "1";
   Palette colors("txt/colors.txt", "default");
 
@@ -85,7 +85,8 @@ int main(int argc, char *argv[]){
     {folderb+"*SMS-T2tt_mStop-850_mLSP-100*.root"}, baseline);
 
   vector<shared_ptr<Process> > tt_procs = {proc_tt};
-  vector<shared_ptr<Process> > proc_isrpt = {proc_t1c, proc_t1nc, proc_t14qnc, proc_t14qc, proc_t2ttnc, proc_t2ttc, proc_t2ttvc,proc_tt}; 
+  vector<shared_ptr<Process> > proc_isrpt = {proc_t14qc, proc_t14qnc, proc_t1c, proc_t1nc, proc_t2ttvc, proc_t2ttc, proc_t2ttnc, proc_tt}; 
+  vector<shared_ptr<Process> > proc_isrpt_nolep = {proc_t14qc, proc_t14qnc, proc_t1c, proc_t1nc, proc_t2ttvc, proc_t2ttc, proc_t2ttnc}; 
 
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
   log_lumi.Title(TitleType::preliminary)
@@ -111,7 +112,15 @@ int main(int argc, char *argv[]){
   minx = -0.5; maxx = 7.5; nbins = static_cast<int>((maxx-minx)/1);
   pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "nisr", "Number of ISR jets",
 			       "1==1", "1"), proc_isrpt, plot_types);
+
+  minx = -0.5; maxx = 7.5; nbins = static_cast<int>((maxx-minx)/1);
+  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "nisr", "Number of ISR jets",
+             "(ntrutaush+ntrutausl)==0", "1"), proc_isrpt_nolep, plot_types);
  
+   minx = -0.5; maxx = 7.5; nbins = static_cast<int>((maxx-minx)/1);
+  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "nisr", "Number of ISR jets",
+             "ntruleps==0", "1"), proc_isrpt_nolep, plot_types);
+
   minx = -2.5; maxx =2.5; nbins = static_cast<int>((maxx-minx)/1);
   pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "nisr-(njets-2)", "true - reco ISR multiplicity",
              "nbm==2&&nleps==2", "1"), tt_procs, plot_types);
@@ -124,7 +133,7 @@ int main(int argc, char *argv[]){
 			       "nbm>=2", "weight"), tt_procs, plot_types);
 
   if(single_thread || verbose) pm.multithreaded_ = false;
-  pm.MakePlots(lumi);
+  pm.MakePlots(lumi); 
 
 }
 
