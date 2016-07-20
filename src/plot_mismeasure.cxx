@@ -15,6 +15,7 @@
 
 #include "timer.hpp"
 #include "baby_full.hpp"
+#include "utilities.hpp"
 
 using namespace std;
 
@@ -140,27 +141,94 @@ void MakePositive(TH1D &h){
   }
 }
 
-void SetAxisLabels(TAxis &a){
-  a.SetBinLabel(1, "Very Low MJ");
-  a.SetBinLabel(2, "0l, Low MJ");
-  a.SetBinLabel(3, "0l, High MJ");
-  a.SetBinLabel(4, "R1");
-  a.SetBinLabel(5, "R2");
-  a.SetBinLabel(6, "R3");
-  a.SetBinLabel(7, "R4");
-  a.SetBinLabel(8, "D3");
-  a.SetBinLabel(9, "D4");
+void SetAxisLabels(TAxis &a, bool use_total){
+  if(use_total){
+    a.SetBinLabel(1, "Total");
+    a.SetBinLabel(2, "Other");
+    a.SetBinLabel(3, "Very Low MJ");
+    a.SetBinLabel(4, "0l, Low MJ");
+    a.SetBinLabel(5, "0l, High MJ");
+    a.SetBinLabel(6, "R1");
+    a.SetBinLabel(7, "R2");
+    a.SetBinLabel(8, "R3");
+    a.SetBinLabel(9, "R4");
+    a.SetBinLabel(10, "D3");
+    a.SetBinLabel(11, "D4");
+  }else{
+    a.SetBinLabel(1, "Other");
+    a.SetBinLabel(2, "Very Low MJ");
+    a.SetBinLabel(3, "0l, Low MJ");
+    a.SetBinLabel(4, "0l, High MJ");
+    a.SetBinLabel(5, "R1");
+    a.SetBinLabel(6, "R2");
+    a.SetBinLabel(7, "R3");
+    a.SetBinLabel(8, "R4");
+    a.SetBinLabel(9, "D3");
+    a.SetBinLabel(10, "D4");
+  }
 }
 
-void PrintTransfer(TH2D &h, bool region_labels = false){
-  if(region_labels){
-    SetAxisLabels(*h.GetXaxis());
-    SetAxisLabels(*h.GetYaxis());
+TH2D Expand(const TH2D &h){
+  TH2D g("", FullTitle(h).c_str(),
+	 h.GetNbinsX()+1, -2.5, h.GetNbinsX()-1.5,
+	 h.GetNbinsY()+1, -2.5, h.GetNbinsY()-1.5);
+
+  for(int ix = 0; ix <= h.GetNbinsX()+1; ++ix){
+    for(int iy = 0; iy <= h.GetNbinsY()+1; ++iy){
+      g.SetBinContent(ix+1, iy+1, h.GetBinContent(ix, iy));
+      g.SetBinError(ix+1, iy+1, h.GetBinError(ix, iy));
+    }
   }
+
+  for(int ix = g.GetNbinsX(); ix > 1; --ix){
+    double sumw = 0., sumw2 = 0.;
+    for(int iy = g.GetNbinsY(); iy > 1; --iy){
+      sumw += g.GetBinContent(ix, iy);
+      double e = g.GetBinError(ix, iy);
+      sumw2 += e*e;
+    }
+    g.SetBinContent(ix, 1, sumw);
+    g.SetBinError(ix, 1, sqrt(sumw2));
+  }
+
+  for(int iy = g.GetNbinsY(); iy > 0; --iy){
+    double sumw = 0., sumw2 = 0.;
+    for(int ix = g.GetNbinsX(); ix > 1; --ix){
+      sumw += g.GetBinContent(ix, iy);
+      double e = g.GetBinError(ix, iy);
+      sumw2 += e*e;
+    }
+    g.SetBinContent(1, iy, sumw);
+    g.SetBinError(1, iy, sqrt(sumw2));
+  }
+
+  return g;
+}
+
+void PrintTransfer(TH2D &h){
   Format(h, true);
+  SetAxisLabels(*h.GetXaxis(), false);
+  SetAxisLabels(*h.GetYaxis(), false);
+  TH2D g = Expand(h);
+  Format(g, true);
+  SetAxisLabels(*g.GetXaxis(), true);
+  SetAxisLabels(*g.GetYaxis(), true);
+  TH2D gg = g;
+  for(int ix = 1; ix <= gg.GetNbinsX(); ++ix){
+    gg.SetBinContent(ix, 1, 0.);
+    gg.SetBinError(ix, 1, 0.);
+  }
+  for(int iy = 1; iy <= gg.GetNbinsY(); ++iy){
+    gg.SetBinContent(1, iy, 0.);
+    gg.SetBinError(1, iy, 0.);
+  }
+  Format(gg, true);
+  SetAxisLabels(*gg.GetXaxis(), true);
+  SetAxisLabels(*gg.GetYaxis(), true);
+
   TCanvas c;
-  h.Draw("col");
-  h.Draw("text same");
+  gg.Draw("col");
+  g.Draw("text same");
   c.Print((string("plots/")+h.GetName()+".pdf").c_str());
   TH2D rn = RowNorm(h);
   rn.Draw("col");
@@ -259,30 +327,30 @@ int main(){
   TH2D h_1l_dmt_dmjlep_highnj("h_1l_dmt_dmjlep_highnj", ";#Delta M_{J} (with lep) [GeV];#Delta m_{T} [GeV]", 60, -100., 500., 110, -100., 1000.);
   TH2D h_1l_dmt_dmjnolep_highnj("h_1l_dmt_dmjnolep_highnj", ";#Delta M_{J} (no lep) [GeV];#Delta m_{T} [GeV]", 60, -300., 300., 110, -100., 1000.);
 
-  TH2D h_transfer_mm_lep("h_transfer_mm_lep", "Baseline;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_all_lep("h_transfer_all_lep", "Baseline;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_mm_nolep("h_transfer_mm_nolep", "Baseline;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_all_nolep("h_transfer_all_nolep", "Baseline;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_lowmet_mm_lep("h_transfer_lowmet_mm_lep", "Low MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_lowmet_all_lep("h_transfer_lowmet_all_lep", "Low MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_lowmet_mm_nolep("h_transfer_lowmet_mm_nolep", "Low MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_lowmet_all_nolep("h_transfer_lowmet_all_nolep", "Low MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_medmet_mm_lep("h_transfer_medmet_mm_lep", "Med MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_medmet_all_lep("h_transfer_medmet_all_lep", "Med MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_medmet_mm_nolep("h_transfer_medmet_mm_nolep", "Med MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_medmet_all_nolep("h_transfer_medmet_all_nolep", "Med MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_highmet_mm_lep("h_transfer_highmet_mm_lep", "High MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_highmet_all_lep("h_transfer_highmet_all_lep", "High MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_highmet_mm_nolep("h_transfer_highmet_mm_nolep", "High MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_highmet_all_nolep("h_transfer_highmet_all_nolep", "High MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_lownj_mm_lep("h_transfer_lownj_mm_lep", "High MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_lownj_all_lep("h_transfer_lownj_all_lep", "High MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_lownj_mm_nolep("h_transfer_lownj_mm_nolep", "High MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_lownj_all_nolep("h_transfer_lownj_all_nolep", "High MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_highnj_mm_lep("h_transfer_highnj_mm_lep", "High MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_highnj_all_lep("h_transfer_highnj_all_lep", "High MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_highnj_mm_nolep("h_transfer_highnj_mm_nolep", "High MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
-  TH2D h_transfer_highnj_all_nolep("h_transfer_highnj_all_nolep", "High MET;Correct Region;Mismeasured Region", 9, -0.5, 8.5, 9, -0.5, 8.5);
+  TH2D h_transfer_mm_lep("h_transfer_mm_lep", "Baseline;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_all_lep("h_transfer_all_lep", "Baseline;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_mm_nolep("h_transfer_mm_nolep", "Baseline;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_all_nolep("h_transfer_all_nolep", "Baseline;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_lowmet_mm_lep("h_transfer_lowmet_mm_lep", "Low MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_lowmet_all_lep("h_transfer_lowmet_all_lep", "Low MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_lowmet_mm_nolep("h_transfer_lowmet_mm_nolep", "Low MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_lowmet_all_nolep("h_transfer_lowmet_all_nolep", "Low MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_medmet_mm_lep("h_transfer_medmet_mm_lep", "Med MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_medmet_all_lep("h_transfer_medmet_all_lep", "Med MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_medmet_mm_nolep("h_transfer_medmet_mm_nolep", "Med MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_medmet_all_nolep("h_transfer_medmet_all_nolep", "Med MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_highmet_mm_lep("h_transfer_highmet_mm_lep", "High MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_highmet_all_lep("h_transfer_highmet_all_lep", "High MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_highmet_mm_nolep("h_transfer_highmet_mm_nolep", "High MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_highmet_all_nolep("h_transfer_highmet_all_nolep", "High MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_lownj_mm_lep("h_transfer_lownj_mm_lep", "High MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_lownj_all_lep("h_transfer_lownj_all_lep", "High MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_lownj_mm_nolep("h_transfer_lownj_mm_nolep", "High MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_lownj_all_nolep("h_transfer_lownj_all_nolep", "High MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_highnj_mm_lep("h_transfer_highnj_mm_lep", "High MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_highnj_all_lep("h_transfer_highnj_all_lep", "High MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_highnj_mm_nolep("h_transfer_highnj_mm_nolep", "High MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
+  TH2D h_transfer_highnj_all_nolep("h_transfer_highnj_all_nolep", "High MET;Correct Region;Mismeasured Region", 10, -1.5, 8.5, 10, -1.5, 8.5);
 
   TH1D h_num_1l_mt("h_num_1l_mt", "Numerator;m_{T} [GeV];Entries", 20, 0., 1000.);
   TH1D h_den_1l_mt("h_den_1l_mt", "Denominator;m_{T} [GeV];Entries", 20, 0., 1000.);
@@ -515,33 +583,33 @@ int main(){
   Print(h_1l_dmt_dmjlep_highnj);
   Print(h_1l_dmt_dmjnolep_highnj);
 
-  PrintTransfer(h_transfer_mm_lep, true);
-  PrintTransfer(h_transfer_all_lep, true);
-  PrintTransfer(h_transfer_mm_nolep, true);
-  PrintTransfer(h_transfer_all_nolep, true);
+  PrintTransfer(h_transfer_mm_lep);
+  PrintTransfer(h_transfer_all_lep);
+  PrintTransfer(h_transfer_mm_nolep);
+  PrintTransfer(h_transfer_all_nolep);
 
-  PrintTransfer(h_transfer_mm_lep, true);
-  PrintTransfer(h_transfer_all_lep, true);
-  PrintTransfer(h_transfer_mm_nolep, true);
-  PrintTransfer(h_transfer_all_nolep, true);
-  PrintTransfer(h_transfer_lowmet_mm_lep, true);
-  PrintTransfer(h_transfer_lowmet_all_lep, true);
-  PrintTransfer(h_transfer_lowmet_mm_nolep, true);
-  PrintTransfer(h_transfer_lowmet_all_nolep, true);
-  PrintTransfer(h_transfer_medmet_mm_lep, true);
-  PrintTransfer(h_transfer_medmet_all_lep, true);
-  PrintTransfer(h_transfer_medmet_mm_nolep, true);
-  PrintTransfer(h_transfer_medmet_all_nolep, true);
-  PrintTransfer(h_transfer_highmet_mm_lep, true);
-  PrintTransfer(h_transfer_highmet_all_lep, true);
-  PrintTransfer(h_transfer_highmet_mm_nolep, true);
-  PrintTransfer(h_transfer_highmet_all_nolep, true);
-  PrintTransfer(h_transfer_lownj_mm_lep, true);
-  PrintTransfer(h_transfer_lownj_all_lep, true);
-  PrintTransfer(h_transfer_lownj_mm_nolep, true);
-  PrintTransfer(h_transfer_lownj_all_nolep, true);
-  PrintTransfer(h_transfer_highnj_mm_lep, true);
-  PrintTransfer(h_transfer_highnj_all_lep, true);
-  PrintTransfer(h_transfer_highnj_mm_nolep, true);
-  PrintTransfer(h_transfer_highnj_all_nolep, true);
+  PrintTransfer(h_transfer_mm_lep);
+  PrintTransfer(h_transfer_all_lep);
+  PrintTransfer(h_transfer_mm_nolep);
+  PrintTransfer(h_transfer_all_nolep);
+  PrintTransfer(h_transfer_lowmet_mm_lep);
+  PrintTransfer(h_transfer_lowmet_all_lep);
+  PrintTransfer(h_transfer_lowmet_mm_nolep);
+  PrintTransfer(h_transfer_lowmet_all_nolep);
+  PrintTransfer(h_transfer_medmet_mm_lep);
+  PrintTransfer(h_transfer_medmet_all_lep);
+  PrintTransfer(h_transfer_medmet_mm_nolep);
+  PrintTransfer(h_transfer_medmet_all_nolep);
+  PrintTransfer(h_transfer_highmet_mm_lep);
+  PrintTransfer(h_transfer_highmet_all_lep);
+  PrintTransfer(h_transfer_highmet_mm_nolep);
+  PrintTransfer(h_transfer_highmet_all_nolep);
+  PrintTransfer(h_transfer_lownj_mm_lep);
+  PrintTransfer(h_transfer_lownj_all_lep);
+  PrintTransfer(h_transfer_lownj_mm_nolep);
+  PrintTransfer(h_transfer_lownj_all_nolep);
+  PrintTransfer(h_transfer_highnj_mm_lep);
+  PrintTransfer(h_transfer_highnj_all_lep);
+  PrintTransfer(h_transfer_highnj_mm_nolep);
+  PrintTransfer(h_transfer_highnj_all_nolep);
 }

@@ -37,6 +37,8 @@ void MergeOverflow(TH1D &h, bool merge_underflow, bool merge_overflow);
 
 std::string FixedDigits(double x, int n_digits);
 
+std::string FullTitle(const TH1 &h);
+
 template<typename T>
 void Append(T &collection, const typename T::value_type &value){
   collection.insert(collection.end(), value);

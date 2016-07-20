@@ -134,6 +134,12 @@ string FixedDigits(double x, int n_digits){
   return out;
 }
 
+string FullTitle(const TH1 &h){
+  return string(h.GetTitle())
+    +";"+h.GetXaxis()->GetTitle()
+    +";"+h.GetYaxis()->GetTitle();
+}
+
 TString RoundNumber(double num, int decimals, double denom){
   if(denom==0 || !isfinite(num) || !isfinite(denom)) return " - ";
   double neg = 1; if(num*denom<0) neg = -1;
