@@ -678,24 +678,24 @@ void HistoStack::StyleHisto(TH1D &h) const{
   case StackType::signal_on_top:
   case StackType::data_norm:
   case StackType::lumi_shapes:
-    if(definition_.units_ == ""){
+    if(definition_.units_ == "" && bin_width == 1){
       title << "Entries";    
       break;
     }
     else{
       title << "Entries/(" << bin_width;
-      title << " " << definition_.units_;
+      if(definition_.units_ != "") title << " " << definition_.units_;
       title << ")";
       break;
     }
   case StackType::shapes:
-    if(definition_.units_ == ""){
+    if(definition_.units_ == "" && bin_width == 1){
       title << "% entries";
       break;
     }
     else{
       title << "% entries/(" << bin_width;
-      title << " " << definition_.units_;
+      if(definition_.units_ != "") title << " " << definition_.units_;
       title << ")";
       break;
     }
