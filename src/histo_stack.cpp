@@ -667,9 +667,9 @@ void HistoStack::StyleHisto(TH1D &h) const{
   h.SetTitleSize(this_opt_.TitleSize(), "xyz");
   h.SetLabelFont(this_opt_.Font(), "xyz");
   h.SetTitleFont(this_opt_.Font(), "xyz");
-
+  
   double bin_width = (definition_.Bins().back()-definition_.Bins().front())/(definition_.Nbins());
-
+  
   ostringstream title;
   switch(this_opt_.Stack()){
   default:
@@ -678,17 +678,29 @@ void HistoStack::StyleHisto(TH1D &h) const{
   case StackType::signal_on_top:
   case StackType::data_norm:
   case StackType::lumi_shapes:
-    title << "Entries/(" << bin_width;
-    if(definition_.units_ != "") title << " " << definition_.units_;
-    title << ")";
-    break;
+    if(definition_.units_ == ""){
+      title << "Entries";    
+      break;
+    }
+    else{
+      title << "Entries/(" << bin_width;
+      title << " " << definition_.units_;
+      title << ")";
+      break;
+    }
   case StackType::shapes:
-    title << "% entries/(" << bin_width;
-    if(definition_.units_ != "") title << " " << definition_.units_;
-    title << ")";
-    break;
+    if(definition_.units_ == ""){
+      title << "% entries";
+      break;
+    }
+    else{
+      title << "% entries/(" << bin_width;
+      title << " " << definition_.units_;
+      title << ")";
+      break;
+    }
   }
-
+  
   h.GetYaxis()->SetTitle(title.str().c_str());
 }
 
