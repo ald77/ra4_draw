@@ -35,11 +35,12 @@
 *.log
 *.pdf
 *.txt
-!txt/variables/*.txt
+!txt/variables/*
 !txt/colors.txt
 !txt/plot_styles.txt
 *.#*
 sftp-config.json
+.DS_Store
 
 # LaTeX
 *.tex

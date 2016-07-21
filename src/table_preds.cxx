@@ -74,7 +74,8 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_21/data/skim_standard/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
+  //string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_21/data/skim_standard/");
   if(skim.Contains("met150")){
     foldermc = bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_met150/";
     folderdata = bfolder+"/cms2r0/babymaker/babies/2016_06_21/data/skim_1lmet150/";
@@ -82,6 +83,10 @@ int main(int argc, char *argv[]){
   if(skim.Contains("2015")){
     foldermc = bfolder+"/cms2r0/babymaker/babies/2016_04_29/mc/merged_1lht500met200/";
     folderdata = bfolder+"/cms2r0/babymaker/babies/2016_04_29/data/merged_1lht500met200/";
+    if(only_method.Contains("old")) {
+      foldermc = bfolder+"/cms2r0/babymaker/babies/2015_11_28/mc/skim_1lht500met200/";
+      folderdata = bfolder+"/cms2r0/babymaker/babies/2016_02_04/data/singlelep/combined/skim_1lht500met200/";
+    }
   }
 
   Palette colors("txt/colors.txt", "default");
@@ -94,6 +99,7 @@ int main(int argc, char *argv[]){
     baseline += " && nonblind";
     lumi = 0.815;
   } else lumi = 2.6;
+  if(skim.Contains("mj12")) ReplaceAll(baseline, "mj14","mj");
 
   auto proc_bkg = Proc<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root",
@@ -129,21 +135,26 @@ int main(int argc, char *argv[]){
 	foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
     baseline+" && stitch");
 
+  //string trigs = "(trig[4]||trig[8]||trig[13]||trig[33]) && json2p6 && pass_ra2_badmu";
   string trigs = "(trig[4]||trig[8]||trig[13]||trig[33])";
   if(skim.Contains("2015")) trigs = "(trig[4]||trig[8]||trig[28]||trig[14])";
+
+  if(only_method.Contains("old")) trigs = "(trig[4]||trig[8])";
+  if(!skim.Contains("2015")) trigs += " && json2p6";
+
   auto proc_data = Proc<Baby_full>("Data", Process::Type::data, kBlack,
     {folderdata+"*.root"},baseline+" && "+trigs);
 
-  vector<shared_ptr<Process> > all_procs = {proc_data, proc_bkg};
+  vector<shared_ptr<Process> > all_procs = {proc_data, proc_tt1l, proc_tt2l, proc_other};
   if (do_signal){
     all_procs.push_back(proc_t1nc);
     all_procs.push_back(proc_t1c);
   }
-  if (split_bkg){
-    all_procs.push_back(proc_tt1l);
-    all_procs.push_back(proc_tt2l);
-    all_procs.push_back(proc_other);
-  }
+  // if (split_bkg){
+  //   all_procs.push_back(proc_tt1l);
+  //   all_procs.push_back(proc_tt2l);
+  //   all_procs.push_back(proc_other);
+  // }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining basic cuts //////////////////////////////////////////
@@ -161,6 +172,7 @@ int main(int argc, char *argv[]){
   TString c_hignb = "nbm>=3";
 
   ////// Njets cuts
+  TString c_vlownj = "njets>=4 && njets<=5";
   TString c_lownj = "njets>=6 && njets<=8";
   TString c_hignj = "njets>=9";
   TString c_nj5   = "njets==5";
@@ -223,7 +235,7 @@ int main(int argc, char *argv[]){
     if(method.Contains("2l") || method.Contains("veto")) {
       metcuts = vector<TString>{c_lowmet, c_midmet};
       bincuts = vector<TString>{c_lownj, c_hignj}; // 2l nj cuts automatically lowered in abcd_method
-      caption = "Dilepton validation regions. D3 and D4 have ";
+      caption = "Dilepton validation regions (with filters). D3 and D4 have ";
     } else {
       if(only_dilepton) continue;
       abcdcuts = abcdcuts_std;
@@ -243,6 +255,27 @@ int main(int argc, char *argv[]){
       abcdcuts = abcdcuts_veto;
       caption += "one lepton and one track";
     }
+    if(method.Contains("2lcombined")) {
+      metcuts = vector<TString>{"met>200&&met<=500"};
+      bincuts = vector<TString>{"njets>=6"}; // 2l nj cuts automatically lowered in abcd_method
+      abcdcuts = abcdcuts_2l;
+      caption += "two reconstructed leptons";
+    }
+    if(method.Contains("2lold")) {
+      metcuts = vector<TString>{"met>200&&met<=400"};
+      abcdcuts = abcdcuts_2l;
+      abcdcuts[0].ReplaceAll("&& nveto==0 ","");
+      abcdcuts[1].ReplaceAll("&& nveto==0 ","");
+      caption += "two reconstructed leptons";
+    }
+    
+    if(method.Contains("2lvetocombined")) {
+      metcuts = vector<TString>{"met>200&&met<=500"};
+      bincuts = vector<TString>{"njets>=6"}; // 2l nj cuts automatically lowered in abcd_method
+      abcdcuts = abcdcuts_2lveto;
+      caption += "either two reconstructed leptons, or one lepton and one track";
+    }
+    
 
     //////// Single lepton methods, all use the standard ABCD plane and nleps==1&&nveto==0&&nbm>=1
     if(method.Contains("signal")) {
@@ -296,6 +329,10 @@ int main(int argc, char *argv[]){
 
     //////// Pushing all cuts to then find the yields
     abcds.push_back(abcd_method(method, metcuts, bincuts, abcdcuts, caption, basecuts));
+    if(skim.Contains("mj12")) {
+      abcds.back().setMj12();
+      abcds.back().caption += ". Using $M_J^{1.2}$";
+    }
     if(method.Contains("_el") || method.Contains("_mu") || method.Contains("_emu")) abcds.back().setLeptons();
     if(method.Contains("_el"))  abcds.back().caption += ". Only electrons";
     if(method.Contains("_mu"))  abcds.back().caption += ". Only muons";
@@ -327,7 +364,7 @@ int main(int argc, char *argv[]){
     // if split_bkg [2/4] Other, [3/5] tt1l, [4/6] tt2l
     vector<vector<GammaParams> > allyields;
     allyields.push_back(yield_table->DataYield(1));
-    allyields.push_back(yield_table->Yield(proc_bkg, lumi));
+    allyields.push_back(yield_table->BackgroundYield(lumi));
     if(do_signal){
       allyields.push_back(yield_table->Yield(proc_t1nc, lumi));
       allyields.push_back(yield_table->Yield(proc_t1c, lumi));
@@ -395,6 +432,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   TString lumi_s = RoundNumber(lumi, digits_lumi); 
   TString outname = "tables/table_pred_lumi"+lumi_s; outname.ReplaceAll(".","p");
   if(skim.Contains("2015")) outname += "_2015";
+  if(skim.Contains("mj12")) outname += "_mj12";
   if(unblind) outname += "_unblind";
   else outname += "_blind";
   outname += "_"+abcd.method+".tex";
