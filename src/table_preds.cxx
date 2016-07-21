@@ -27,7 +27,8 @@
 using namespace std;
 
 namespace{
-  bool split_bkg = false;
+  bool only_mc = false;
+  bool split_bkg = true;
   bool only_dilepton = false;
   bool do_leptons = false;
   bool do_signal = true;
@@ -120,10 +121,10 @@ int main(int argc, char *argv[]){
     {foldermc+"*mGluino-1500_mLSP-100_*root"},
     baseline+" && stitch");
   auto proc_tt1l = Proc<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root"},
+    {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets_HT*.root"},
     baseline+" && stitch && ntruleps==1");
   auto proc_tt2l = Proc<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
-    {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root"},
+    {foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"},
     baseline+" && stitch && ntruleps==2");
   auto proc_other = Proc<Baby_full>("Other", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
@@ -145,11 +146,12 @@ int main(int argc, char *argv[]){
   auto proc_data = Proc<Baby_full>("Data", Process::Type::data, kBlack,
     {folderdata+"*.root"},baseline+" && "+trigs);
 
-  vector<shared_ptr<Process> > all_procs = {proc_data, proc_tt1l, proc_tt2l, proc_other};
+  vector<shared_ptr<Process> > all_procs = {proc_tt1l, proc_tt2l, proc_other};
   if (do_signal){
     all_procs.push_back(proc_t1nc);
     all_procs.push_back(proc_t1c);
   }
+  if(!only_mc) all_procs.push_back(proc_data);
   // if (split_bkg){
   //   all_procs.push_back(proc_tt1l);
   //   all_procs.push_back(proc_tt2l);
@@ -363,7 +365,8 @@ int main(int argc, char *argv[]){
     // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
     // if split_bkg [2/4] Other, [3/5] tt1l, [4/6] tt2l
     vector<vector<GammaParams> > allyields;
-    allyields.push_back(yield_table->DataYield(1));
+    if(!only_mc) allyields.push_back(yield_table->DataYield(1));
+    else allyields.push_back(yield_table->BackgroundYield(lumi));
     allyields.push_back(yield_table->BackgroundYield(lumi));
     if(do_signal){
       allyields.push_back(yield_table->Yield(proc_t1nc, lumi));
@@ -424,6 +427,10 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if(do_zbi) Ncol++;
   if(do_signal) Ncol += 2;
   if(split_bkg) Ncol += 3;
+  if(only_mc) {
+    if(do_signal) Ncol -= 1;
+    else Ncol -= 3;
+  }
   TString blind_s = "$\\spadesuit$";
   
   //// Setting output file name
@@ -449,7 +456,10 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   out<<"${\\cal L}="<<lumi_s<<"$ fb$^{-1}$ ";
   if(do_signal) out << " & T1tttt(NC) & T1tttt(C) ";
   if(split_bkg) out << " & Other & $t\\bar{t}(1\\ell)$ & $t\\bar{t}(2\\ell)$ ";
-  out<<"& $\\kappa$ & MC bkg. & Pred. & Obs. & Obs./MC "<<(do_zbi?"& $Z_{\\rm Bi}$":"")<<" \\\\ \\hline\\hline\n";
+  out << "& $\\kappa$ & MC bkg. & Pred.";
+  if(!only_mc) out << "& Obs. & Obs./MC "<<(do_zbi?"& $Z_{\\rm Bi}$":"");
+  else if(do_signal) out << "& $Z_{\\rm Bi}$(NC) & $Z_{\\rm Bi}$(C)";
+  out << " \\\\ \\hline\\hline\n";
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////// Printing results////////////////////////////////////////////////
@@ -492,23 +502,30 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
 	if(iabcd==3) out << "$"    << RoundNumber(preds[iplane][ibin][0], digits) 
 			 << "^{+"  << RoundNumber(preds[iplane][ibin][1], digits) 
                          << "}_{-" << RoundNumber(preds[iplane][ibin][2], digits) <<"}$ ";
-	//// Printing observed events in data and Obs/MC ratio
-	if(!unblind && iabcd==3) out << ump << blind_s<< ump << blind_s;
-	else {
-	  out << ump << RoundNumber(allyields[0][index].Yield(), 0);
-	  TString ratio_s = "-";
-	  double Nobs = allyields[0][index].Yield(), Nmc = allyields[1][index].Yield();
-	  double Eobs = sqrt(Nobs), Emc = allyields[1][index].Uncertainty();
-	  if(Nobs==0) Eobs=1;
-	  if(Emc>0){
-	    double ratio = Nobs/Nmc;
-	    double Eratio = sqrt(pow(Eobs/Nmc,2) + pow(Nobs*Emc/Nmc/Nmc,2));
-	    ratio_s = "$"+RoundNumber(ratio, 2)+"\\pm"+RoundNumber(Eratio,2)+"$";
+	if(!only_mc){
+	  //// Printing observed events in data and Obs/MC ratio
+	  if(!unblind && iabcd==3) out << ump << blind_s<< ump << blind_s;
+	  else {
+	    out << ump << RoundNumber(allyields[0][index].Yield(), 0);
+	    TString ratio_s = "-";
+	    double Nobs = allyields[0][index].Yield(), Nmc = allyields[1][index].Yield();
+	    double Eobs = sqrt(Nobs), Emc = allyields[1][index].Uncertainty();
+	    if(Nobs==0) Eobs=1;
+	    if(Emc>0){
+	      double ratio = Nobs/Nmc;
+	      double Eratio = sqrt(pow(Eobs/Nmc,2) + pow(Nobs*Emc/Nmc/Nmc,2));
+	      ratio_s = "$"+RoundNumber(ratio, 2)+"\\pm"+RoundNumber(Eratio,2)+"$";
+	    }
+	    out << ump << ratio_s;
 	  }
-	  out << ump << ratio_s;
+	  //// Printing Zbi significance
+	  if(do_zbi && iabcd==3) out << ump << Zbi(allyields[0][index].Yield(), preds[iplane][ibin][0], preds[iplane][ibin][1]);
+	} else {// if not only_mc
+	  if(iabcd==3 && do_signal) {
+	    out<<ump<<Zbi(allyields[0][index].Yield()+allyields[2][index].Yield(),preds[iplane][ibin][0],preds[iplane][ibin][1]);
+	    out<<ump<<Zbi(allyields[0][index].Yield()+allyields[3][index].Yield(),preds[iplane][ibin][0],preds[iplane][ibin][1]);
+	  }
 	}
-	//// Printing Zbi significance
-	if(do_zbi && iabcd==3) out << ump << Zbi(allyields[0][index].Yield(), preds[iplane][ibin][0], preds[iplane][ibin][1]);
         out << "\\\\ \n";
       } // Loop over bin cuts
     } // Loop over ABCD cuts
@@ -672,6 +689,7 @@ void GetOptions(int argc, char *argv[]){
       {"do_leptons", no_argument, 0, 'l'},    // Does tables for e/mu/emu as well
       {"unblind", no_argument, 0, 'u'},       // Unblinds R4/D4
       {"full_lumi", no_argument, 0, 'f'},     // Uses all data (does not apply nonblind)
+      {"only_mc", no_argument, 0, 'o'},       // Uses MC as data for the predictions
       {"debug", no_argument, 0, 'd'},         // Debug: prints yields and cuts used
       {"only_dilepton", no_argument, 0, '2'}, // Makes tables only for dilepton tests
       {0, 0, 0, 0}
@@ -679,7 +697,7 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "m:s:ufdbnl2", long_options, &option_index);
+    opt = getopt_long(argc, argv, "m:s:ufdbnl2o", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
@@ -691,7 +709,10 @@ void GetOptions(int argc, char *argv[]){
       skim = optarg;
       break;
     case 'b':
-      split_bkg = true;
+      split_bkg = false;
+      break;
+    case 'o':
+      only_mc = true;
       break;
     case '2':
       only_dilepton = true;

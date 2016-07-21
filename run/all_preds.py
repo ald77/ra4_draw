@@ -9,9 +9,10 @@ os.system("./compile.sh")
 
 ##  -m   Method to run on (if you just want one)
 ##  -d   Debug: prints yields and cuts used
-##  -n   Does not print signal columns
+##  -o   Only MC: does not print data and finds preds based on MC yields
 
-##  -b   Prints Other, tt1l, tt2l contributions
+##  -n   Does not print signal columns
+##  -b   Does not print Other, tt1l, tt2l contributions
 ##  -l   Does tables for e/mu/emu as well
 ##  -u   Unblinds R4/D4
 ##  -f   Uses all data (does not apply nonblind)
@@ -20,12 +21,12 @@ os.system("./compile.sh")
 
 
 ## 815 ipb
-os.system("./run/table_preds.exe -u -l -b")
-os.system("./run/table_preds.exe -u -l -b -s met150")
+os.system("./run/table_preds.exe -u -l")
+os.system("./run/table_preds.exe -u -l -s met150")
 ## Full lumi
-os.system("./run/table_preds.exe -u -l -b -f -2")
-os.system("./run/table_preds.exe -u -l -b -f -2 -s met150")
-os.system("./run/table_preds.exe -u -l -b -f -2 -s 2015 ")
+os.system("./run/table_preds.exe -u -l -f -2")
+os.system("./run/table_preds.exe -u -l -f -2 -s met150")
+os.system("./run/table_preds.exe -u -l -f -2 -s 2015 ")
 
 ## Making pdfs and organizing them
 os.system("./run/texify.py -o out -t full")
