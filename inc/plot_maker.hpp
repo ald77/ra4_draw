@@ -28,6 +28,14 @@ public:
                  const std::string &subdir = "");
 
   const std::vector<std::unique_ptr<Figure> > & Figures() const;
+  template<typename FigureType>
+  FigureType * GetLast(){
+    FigureType *out = nullptr;
+    for(auto f = figures_.crbegin(); f != figures_.crend(); ++f){
+      if((out = dynamic_cast<FigureType*>(f->get()))) return out;
+    }
+    return nullptr;
+  }
   void Clear();
 
   bool multithreaded_;

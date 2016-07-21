@@ -19,6 +19,7 @@
 #include "palette.hpp"
 #include "table.hpp"
 #include "histo_stack.hpp"
+#include "event_scan.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -136,8 +137,7 @@ int main(int argc, char *argv[]){
   if(single_thread) pm.multithreaded_ = false;
   pm.MakePlots(lumi);
 
-  Table * the_table = static_cast<Table*>(pm.Figures().back().get());
-  vector<GammaParams> yields = the_table->BackgroundYield(lumi);
+  vector<GammaParams> yields = pm.GetLast<Table>()->BackgroundYield(lumi);
   for(const auto &yield: yields){
     cout << yield << endl;
   }
