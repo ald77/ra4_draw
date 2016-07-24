@@ -13,7 +13,6 @@
 #include "TError.h" // Controls error level reporting
 #include "TCanvas.h"
 #include "TH1D.h"
-#include "TStyle.h"
 #include "TLine.h"
 #include "TLatex.h"
 #include "TLegend.h"
@@ -25,9 +24,11 @@
 #include "process.hpp"
 #include "named_func.hpp"
 #include "plot_maker.hpp"
+#include "plot_opt.hpp"
 #include "palette.hpp"
 #include "table.hpp"
 #include "abcd_method.hpp"
+#include "styles.hpp"
 
 using namespace std;
 
@@ -44,207 +45,9 @@ namespace{
   float lumi;
   int Nscen = 2;
 }
-struct kmarker{
-  TString cut;
-  int color;
-  int style;
-  vector<float> kappa;
-};
+
 
 void plotKappa(abcd_method &abcd, vector<vector<vector<vector<float> > > > &allkappas);
-
-//// Plots kappa if allkappas is size 1 or 2, and ratio of kappa/kappa_nominal if larger
-//// Will move
-void plotKappa(abcd_method &abcd, vector<vector<vector<vector<float> > > > &allkappas){
-
-  bool labdown = true; //// Putting the MET labels at the bottom
-
-  //// Setting plot style
-  float fontSize = 0.054;
-  gStyle->SetNdivisions(708, "xyz");   // 5 primary ticks and 4 secondary ticks
-  gStyle->SetOptStat(0);              // No Stats box
-  gStyle->SetPadTickX(1);             // Ticks at the right
-  gStyle->SetPadTickY(1);             // Ticks at the top
-  gStyle->SetTitleOffset(0.8,"y");     
-  gStyle->SetTextSize(fontSize);            // Set global text size
-  gStyle->SetTitleFontSize(fontSize);      // Set top title size
-  gStyle->SetTitleSize(fontSize*1.4,"xyz");     // Set the 2 axes title size
-  gStyle->SetLabelSize(fontSize,"yz");      // Set the 2 axes label size
-  gStyle->SetLabelSize(fontSize,"x");     // Set the 2 axes label size
-  gStyle->SetLabelSize(fontSize,"x");     // Set the 2 axes label size
-  float PadRightMargin  = 0.05;
-  float PadTopMargin    = 0.09;
-  float PadLeftMargin   = 0.12;
-  float PadBottomMargin = 0.11;
-  if(labdown) PadBottomMargin = 0.15;
-  gStyle->SetPadRightMargin (PadRightMargin);    
-  gStyle->SetPadBottomMargin(PadBottomMargin); 
-  gStyle->SetPadTopMargin(PadTopMargin); 
-  gStyle->SetPadLeftMargin  (PadLeftMargin); 
-
-  //// k_ordered has all the kappas group in sets of nb cuts (typically, in bins of njets)
-  vector<vector<vector<kmarker> > > k_ordered;
-  vector<kmarker> ind_bcuts; // nb cuts actually used in the plot
-  vector<float> zz; // Zero length vector for the kmarker constructor
-  vector<kmarker> bcuts({{"nbm==1",4,20,zz}, {"nbm==2",2,21,zz}, {"nbm>=3",kGreen+3,22,zz}, {"nbm>=2",kMagenta+2,23,zz}});
-
-  int nbins = 0; // Total number of njets bins (used in the base histo)
-  int ind= allkappas.size()-1; // Index of the kappa we'll be plotting, just the last in the vector
-  vector<vector<vector<float> > > kappas = allkappas[ind];
-  for(size_t iplane=0; iplane < kappas.size(); iplane++) {
-    k_ordered.push_back(vector<vector<kmarker> >());
-    for(size_t ibin=0; ibin < kappas[iplane].size(); ibin++){
-      if(allkappas.size()>2){
-	kappas[iplane][ibin][0] /= allkappas[ind%2][iplane][ibin][0];
-	kappas[iplane][ibin][1] = 0.;
-	kappas[iplane][ibin][2] = 0.;
-      }
-      TString bincut = abcd.bincuts[iplane][ibin];
-      bincut.ReplaceAll(" ","");
-      bincut.ReplaceAll("mm_","");
-      int index;
-      do{
-	index = bincut.First('[');
-	bincut.Remove(index, bincut.First(']')-index+1);
-      }while(index>=0);
-      bool found=false;
-      for(size_t ib=0; ib<bcuts.size(); ib++){
-	if(bincut.Contains(bcuts[ib].cut)){
-	  //// Storing the number of different nb cuts in ind_bcuts
-	  bool cutfound=false;
-	  for(size_t indb=0; indb<ind_bcuts.size(); indb++)
-	    if(ind_bcuts[indb].color == bcuts[ib].color) cutfound = true;
-	  if(!cutfound) ind_bcuts.push_back(bcuts[ib]);
-
-	  //// Cleaning the nb cut from the bincut
-	  bincut.ReplaceAll(bcuts[ib].cut+"&&","");
-	  for(size_t ik=0; ik<k_ordered[iplane].size(); ik++){
-	    //// Adding point to a given njets cut
-	    if(bincut==k_ordered[iplane][ik][0].cut){
-	      k_ordered[iplane][ik].push_back({bincut, bcuts[ib].color, bcuts[ib].style, kappas[iplane][ibin]});
-	      found = true;
-	      break;
-	    } // if same njets cut
-	  } // Loop over existing ordered kappas
-	  //// If it doesn't correspond to any njet cut yet, create a new bin
-	  if(!found) {
-	    k_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[ib].color, bcuts[ib].style, kappas[iplane][ibin]}}));
-	    found = true;
-	    nbins++;
-	  }
-	} // if bincut.Contains(bcuts[ib].cut)
-      } // Loop over nb cuts
-
-      //// If it doesn't correspond to any nb cut, create a new bin with default (color in [0], blue)
-      if(!found) {
-	k_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[0].color, bcuts[0].style, kappas[iplane][ibin]}}));
-	nbins++;
-	if(ind_bcuts.size()==0) ind_bcuts.push_back(bcuts[0]);
-      }
-    } // Loop over bin cuts
-  } // Loop over plane cuts
-
-  // //// Printing all values of kappa
-  // for(size_t iplane=0; iplane < k_ordered.size(); iplane++) {
-  //   cout<<endl<<"New plane"<<endl;
-  //   for(size_t ibin=0; ibin < k_ordered[iplane].size(); ibin++){
-  //     cout<<"Points for "<<k_ordered[iplane][ibin][0].cut<<endl;
-  //     for(size_t ib=0; ib<k_ordered[iplane][ibin].size(); ib++){
-  // 	cout<<"kappa = "<<k_ordered[iplane][ibin][ib].kappa[0]<<", color "<<k_ordered[iplane][ibin][ib].color<<endl;
-  //     }
-  //   }
-  // }
-
-
-  //// Plotting kappas
-  TCanvas can("can","",1100,700);
-  TLine line; line.SetLineWidth(2); line.SetLineStyle(2);
-  TLatex label; label.SetTextSize(0.05); label.SetTextFont(132); label.SetTextAlign(23);
-
-  float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = 2.4;
-  if(labdown) maxy = 2.1;
-  TH1D histo("histo", abcd.method, nbins, minx, maxx);
-  histo.SetMinimum(miny);
-  histo.SetMaximum(maxy);
-  histo.GetYaxis()->CenterTitle(true);
-  histo.GetXaxis()->SetLabelOffset(0.008);
-  if(allkappas.size()<=2) histo.SetYTitle("#kappa");
-  else histo.SetYTitle("#kappa^{scenario}/#kappa^{nominal}");
-  histo.Draw();
-
-  //// Filling vx, vy vectors with kappa coordinates. Each nb cut is stored in a TGraphAsymmetricErrors
-  int bin = 0;
-  vector<vector<double> > vx(ind_bcuts.size()), vexh(ind_bcuts.size()), vexl(ind_bcuts.size()); 
-  vector<vector<double> > vy(ind_bcuts.size()), veyh(ind_bcuts.size()), veyl(ind_bcuts.size());
-  for(size_t iplane=0; iplane < k_ordered.size(); iplane++) {
-    for(size_t ibin=0; ibin < k_ordered[iplane].size(); ibin++){
-      bin++;
-      histo.GetXaxis()->SetBinLabel(bin, cutsToLabel(k_ordered[iplane][ibin][0].cut));
-      // xval is the x position of the first marker in the group
-      double xval = bin, nbs = k_ordered[iplane][ibin].size(), minxb = 0.15, binw = 0;
-      // If there is more than one point in the group, it starts minxb to the left of the center of the bin
-      // binw is the distance between points in the njets group
-      if(nbs>1) {
-	xval -= minxb;
-	binw = 2*minxb/(nbs-1);
-      }
-      for(size_t ib=0; ib<k_ordered[iplane][ibin].size(); ib++){
-	//// Finding which TGraph this point goes into by comparing the color of the TGraph and the point
-	for(size_t indb=0; indb<ind_bcuts.size(); indb++){
-	  if(ind_bcuts[indb].color == k_ordered[iplane][ibin][ib].color){
-	    vx[indb].push_back(xval);
-	    xval += binw;
-	    vexl[indb].push_back(0);
-	    vexh[indb].push_back(0);      
-	    vy[indb].push_back(k_ordered[iplane][ibin][ib].kappa[0]);
-	    veyl[indb].push_back(k_ordered[iplane][ibin][ib].kappa[1]);
-	    veyh[indb].push_back(k_ordered[iplane][ibin][ib].kappa[2]);      	    
-	  }
-	} // Loop over nb cuts in ordered TGraphs
-      } // Loop over nb cuts in kappa plot
-    } // Loop over bin cuts
-
-    // Drawing line separating MET planes
-    if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
-    // Drawing MET labels
-    if(!labdown) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, cutsToLabel(abcd.planecuts[iplane]));    
-    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.26, cutsToLabel(abcd.planecuts[iplane]));
-  } // Loop over plane cuts
-
-  //// Drawing legend and TGraphs
-  float legFSize = 0.043;
-  double legX(PadLeftMargin+0.026), legY(0.8), legSingle = 0.05;
-  if(labdown) legY = 1-PadTopMargin-0.05;
-  double legW = 0.22, legH = legSingle*(ind_bcuts.size()+1)/2;
-  if(ind_bcuts.size()>3) legH = legSingle*((ind_bcuts.size()+1)/2);
-  TLegend leg(legX, legY-legH, legX+legW, legY);
-  leg.SetTextSize(legFSize); leg.SetFillColor(0); 
-  leg.SetFillStyle(0); leg.SetBorderSize(0);
-  leg.SetTextFont(42); 
-  leg.SetNColumns(2);
-  TGraphAsymmErrors graph[20]; // There's problems with vectors of TGraphs, so using an array
-  for(size_t indb=0; indb<ind_bcuts.size(); indb++){
-      graph[indb] = TGraphAsymmErrors(vx[indb].size(), &(vx[indb][0]), &(vy[indb][0]), 
-				      &(vexl[indb][0]), &(vexh[indb][0]), &(veyl[indb][0]), &(veyh[indb][0]));
-      graph[indb].SetMarkerStyle(ind_bcuts[indb].style); graph[indb].SetMarkerSize(1.65); 
-      graph[indb].SetMarkerColor(ind_bcuts[indb].color); 
-      graph[indb].SetLineColor(ind_bcuts[indb].color); graph[indb].SetLineWidth(2);
-      graph[indb].Draw("p same");   
-      leg.AddEntry(&graph[indb], cutsToLabel(ind_bcuts[indb].cut), "p");
-  } // Loop over TGraphs
-  if(ind_bcuts.size()>1) leg.Draw();
-
-  line.SetLineStyle(3); line.SetLineWidth(1);
-  line.DrawLine(minx, 1, maxx, 1);
-
-  TString fname="plots/kappa_"+abcd.method+".pdf";
-  can.SaveAs(fname);
-  cout<<endl<<" open "<<fname<<endl;
-
-}
-
-
-
 void changeMMCut(TString &cut, vector<TString> &mm_cuts, TString method, TString index_s);
 
 TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
@@ -357,8 +160,8 @@ int main(int argc, char *argv[]){
   auto proc_data = Proc<Baby_full>("Data", Process::Type::data, kBlack,
     {folderdata+"*.root"},baseline+" && "+trigs);
 
-  vector<shared_ptr<Process> > all_procs = {proc_tt1l, proc_tt2l, proc_other};
-  //vector<shared_ptr<Process> > all_procs = {proc_bkg};
+  //vector<shared_ptr<Process> > all_procs = {proc_tt1l, proc_tt2l, proc_other};
+  vector<shared_ptr<Process> > all_procs = {proc_bkg};
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining basic cuts //////////////////////////////////////////
@@ -896,6 +699,185 @@ void printDebug(abcd_method &abcd, vector<vector<GammaParams> > &allyields, TStr
   } // Loop over plane cuts
 
 } // printDebug
+
+
+//// Plots kappa if allkappas is size 1 or 2, and ratio of kappa/kappa_nominal if larger
+void plotKappa(abcd_method &abcd, vector<vector<vector<vector<float> > > > &allkappas){
+
+  bool label_up = false; //// Putting the MET labels at the bottom
+
+  //// Setting plot style
+  PlotOpt opts("txt/plot_styles.txt", "Kappa");
+  if(label_up) opts.BottomMargin(0.11);
+  setPlotStyle(opts);
+
+
+  struct kmarker{
+    TString cut;
+    int color;
+    int style;
+    vector<float> kappa;
+  };
+  //// k_ordered has all the kappas group in sets of nb cuts (typically, in bins of njets)
+  vector<vector<vector<kmarker> > > k_ordered;
+  vector<kmarker> ind_bcuts; // nb cuts actually used in the plot
+  vector<float> zz; // Zero length vector for the kmarker constructor
+  vector<kmarker> bcuts({{"nbm==1",4,20,zz}, {"nbm==2",2,21,zz}, {"nbm>=3",kGreen+3,22,zz}, {"nbm>=2",kMagenta+2,23,zz}});
+
+  int nbins = 0; // Total number of njets bins (used in the base histo)
+  int ind= allkappas.size()-1; // Index of the kappa we'll be plotting, just the last in the vector
+  vector<vector<vector<float> > > kappas = allkappas[ind];
+  for(size_t iplane=0; iplane < kappas.size(); iplane++) {
+    k_ordered.push_back(vector<vector<kmarker> >());
+    for(size_t ibin=0; ibin < kappas[iplane].size(); ibin++){
+      if(allkappas.size()>2){
+	kappas[iplane][ibin][0] /= allkappas[ind%2][iplane][ibin][0];
+	kappas[iplane][ibin][1] = 0.;
+	kappas[iplane][ibin][2] = 0.;
+      }
+      TString bincut = abcd.bincuts[iplane][ibin];
+      bincut.ReplaceAll(" ","");
+      bincut.ReplaceAll("mm_","");
+      int index;
+      do{
+	index = bincut.First('[');
+	bincut.Remove(index, bincut.First(']')-index+1);
+      }while(index>=0);
+      bool found=false;
+      for(size_t ib=0; ib<bcuts.size(); ib++){
+	if(bincut.Contains(bcuts[ib].cut)){
+	  //// Storing the number of different nb cuts in ind_bcuts
+	  bool cutfound=false;
+	  for(size_t indb=0; indb<ind_bcuts.size(); indb++)
+	    if(ind_bcuts[indb].color == bcuts[ib].color) cutfound = true;
+	  if(!cutfound) ind_bcuts.push_back(bcuts[ib]);
+
+	  //// Cleaning the nb cut from the bincut
+	  bincut.ReplaceAll(bcuts[ib].cut+"&&","");
+	  for(size_t ik=0; ik<k_ordered[iplane].size(); ik++){
+	    //// Adding point to a given njets cut
+	    if(bincut==k_ordered[iplane][ik][0].cut){
+	      k_ordered[iplane][ik].push_back({bincut, bcuts[ib].color, bcuts[ib].style, kappas[iplane][ibin]});
+	      found = true;
+	      break;
+	    } // if same njets cut
+	  } // Loop over existing ordered kappas
+	  //// If it doesn't correspond to any njet cut yet, create a new bin
+	  if(!found) {
+	    k_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[ib].color, bcuts[ib].style, kappas[iplane][ibin]}}));
+	    found = true;
+	    nbins++;
+	  }
+	} // if bincut.Contains(bcuts[ib].cut)
+      } // Loop over nb cuts
+
+      //// If it doesn't correspond to any nb cut, create a new bin with default (color in [0], blue)
+      if(!found) {
+	k_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[0].color, bcuts[0].style, kappas[iplane][ibin]}}));
+	nbins++;
+	if(ind_bcuts.size()==0) ind_bcuts.push_back(bcuts[0]);
+      }
+    } // Loop over bin cuts
+  } // Loop over plane cuts
+
+  // //// Printing all values of kappa
+  // for(size_t iplane=0; iplane < k_ordered.size(); iplane++) {
+  //   cout<<endl<<"New plane"<<endl;
+  //   for(size_t ibin=0; ibin < k_ordered[iplane].size(); ibin++){
+  //     cout<<"Points for "<<k_ordered[iplane][ibin][0].cut<<endl;
+  //     for(size_t ib=0; ib<k_ordered[iplane][ibin].size(); ib++){
+  // 	cout<<"kappa = "<<k_ordered[iplane][ibin][ib].kappa[0]<<", color "<<k_ordered[iplane][ibin][ib].color<<endl;
+  //     }
+  //   }
+  // }
+
+
+  //// Plotting kappas
+  TCanvas can("can","",1100,700);
+  TLine line; line.SetLineWidth(2); line.SetLineStyle(2);
+  TLatex label; label.SetTextSize(0.05); label.SetTextFont(132); label.SetTextAlign(23);
+
+  float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = 2.2;
+  if(label_up) maxy = 2.4;
+  TH1D histo("histo", abcd.method, nbins, minx, maxx);
+  histo.SetMinimum(miny);
+  histo.SetMaximum(maxy);
+  histo.GetYaxis()->CenterTitle(true);
+  histo.GetXaxis()->SetLabelOffset(0.008);
+  if(allkappas.size()<=2) histo.SetYTitle("#kappa");
+  else histo.SetYTitle("#kappa^{scenario}/#kappa^{nominal}");
+  histo.Draw();
+
+  //// Filling vx, vy vectors with kappa coordinates. Each nb cut is stored in a TGraphAsymmetricErrors
+  int bin = 0;
+  vector<vector<double> > vx(ind_bcuts.size()), vexh(ind_bcuts.size()), vexl(ind_bcuts.size()); 
+  vector<vector<double> > vy(ind_bcuts.size()), veyh(ind_bcuts.size()), veyl(ind_bcuts.size());
+  for(size_t iplane=0; iplane < k_ordered.size(); iplane++) {
+    for(size_t ibin=0; ibin < k_ordered[iplane].size(); ibin++){
+      bin++;
+      histo.GetXaxis()->SetBinLabel(bin, cutsToLabel(k_ordered[iplane][ibin][0].cut));
+      // xval is the x position of the first marker in the group
+      double xval = bin, nbs = k_ordered[iplane][ibin].size(), minxb = 0.15, binw = 0;
+      // If there is more than one point in the group, it starts minxb to the left of the center of the bin
+      // binw is the distance between points in the njets group
+      if(nbs>1) {
+	xval -= minxb;
+	binw = 2*minxb/(nbs-1);
+      }
+      for(size_t ib=0; ib<k_ordered[iplane][ibin].size(); ib++){
+	//// Finding which TGraph this point goes into by comparing the color of the TGraph and the point
+	for(size_t indb=0; indb<ind_bcuts.size(); indb++){
+	  if(ind_bcuts[indb].color == k_ordered[iplane][ibin][ib].color){
+	    vx[indb].push_back(xval);
+	    xval += binw;
+	    vexl[indb].push_back(0);
+	    vexh[indb].push_back(0);      
+	    vy[indb].push_back(k_ordered[iplane][ibin][ib].kappa[0]);
+	    veyl[indb].push_back(k_ordered[iplane][ibin][ib].kappa[1]);
+	    veyh[indb].push_back(k_ordered[iplane][ibin][ib].kappa[2]);      	    
+	  }
+	} // Loop over nb cuts in ordered TGraphs
+      } // Loop over nb cuts in kappa plot
+    } // Loop over bin cuts
+
+    // Drawing line separating MET planes
+    line.SetLineStyle(2); line.SetLineWidth(2);
+    if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
+    // Drawing MET labels
+    if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, cutsToLabel(abcd.planecuts[iplane]));    
+    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.25, cutsToLabel(abcd.planecuts[iplane]));
+  } // Loop over plane cuts
+
+  //// Drawing legend and TGraphs
+  double legX(opts.LeftMargin()+0.026), legY(1-opts.TopMargin()-0.04), legSingle = 0.05;
+  if(label_up) legY = 0.8;
+  double legW = 0.22, legH = legSingle*(ind_bcuts.size()+1)/2;
+  if(ind_bcuts.size()>3) legH = legSingle*((ind_bcuts.size()+1)/2);
+  TLegend leg(legX, legY-legH, legX+legW, legY);
+  leg.SetTextSize(opts.LegendEntryHeight()); leg.SetFillColor(0); 
+  leg.SetFillStyle(0); leg.SetBorderSize(0);
+  leg.SetTextFont(42); 
+  leg.SetNColumns(2);
+  TGraphAsymmErrors graph[20]; // There's problems with vectors of TGraphs, so using an array
+  for(size_t indb=0; indb<ind_bcuts.size(); indb++){
+      graph[indb] = TGraphAsymmErrors(vx[indb].size(), &(vx[indb][0]), &(vy[indb][0]), 
+				      &(vexl[indb][0]), &(vexh[indb][0]), &(veyl[indb][0]), &(veyh[indb][0]));
+      graph[indb].SetMarkerStyle(ind_bcuts[indb].style); graph[indb].SetMarkerSize(1.65); 
+      graph[indb].SetMarkerColor(ind_bcuts[indb].color); 
+      graph[indb].SetLineColor(ind_bcuts[indb].color); graph[indb].SetLineWidth(2);
+      graph[indb].Draw("p same");   
+      leg.AddEntry(&graph[indb], cutsToLabel(ind_bcuts[indb].cut), "p");
+  } // Loop over TGraphs
+  if(ind_bcuts.size()>1) leg.Draw();
+
+  line.SetLineStyle(3); line.SetLineWidth(1);
+  line.DrawLine(minx, 1, maxx, 1);
+
+  TString fname="plots/kappa_"+abcd.method+".pdf";
+  can.SaveAs(fname);
+  cout<<endl<<" open "<<fname<<endl;
+
+}
 
 
 
