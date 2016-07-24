@@ -345,6 +345,7 @@ int main(int argc, char *argv[]){
       abcds.back().setMj12();
       abcds.back().caption += ". Using $M_J^{1.2}$";
     }
+    if(method.Contains("noint")) abcds.back().setIntNbNj(false);
     if(method.Contains("_el") || method.Contains("_mu") || method.Contains("_emu")) abcds.back().setLeptons();
     if(method.Contains("_el"))  abcds.back().caption += ". Only electrons";
     if(method.Contains("_mu"))  abcds.back().caption += ". Only muons";

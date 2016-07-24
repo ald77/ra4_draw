@@ -23,7 +23,19 @@ abcd_method::abcd_method(TString imethod, vector<TString> iplanecuts, vector<TSt
   // Set up whether we integrate R1/R3 in Nb and Njets
   int_nbnj = true;
 
-  // Setting up all the cuts serially
+  serializeCuts();
+
+  } // Constructor
+
+//// Setting the integration in Nb and Njets
+void abcd_method::setIntNbNj(bool int_nbnj_b){
+  int_nbnj = int_nbnj_b;
+  serializeCuts();
+}
+
+// Setting up all the cuts serially
+void abcd_method::serializeCuts(){
+  allcuts.clear();
   for(size_t iplane=0; iplane < planecuts.size(); iplane++) {
     //// Finding the OR of all bin cuts to apply to R1/R3 if int_nbnj is true
     TString c_allnbnj = "(("+bincuts[iplane][0];
@@ -55,8 +67,7 @@ abcd_method::abcd_method(TString imethod, vector<TString> iplanecuts, vector<TSt
       } // Loop over ABCD cuts
     } // Loop over bin cuts
   } // Loop over plane cuts
-
-  }
+} //serializeCuts
 
 //// Returns index in allcuts of a given bin in a plane and ABCD
 size_t abcd_method::indexBin(size_t indplane, size_t indbin, size_t indabcd){
@@ -73,8 +84,8 @@ size_t abcd_method::indexBin(size_t indplane, size_t indbin, size_t indabcd){
 //// Changes all cuts to use mj12
 void abcd_method::setMj12(){
   for(size_t iabcd=0; iabcd < abcdcuts.size(); iabcd++) abcdcuts[iabcd].ReplaceAll("mj14", "mj");
-  for(size_t ind=0; ind < allcuts.size(); ind++) allcuts[ind].ReplaceAll("mj14", "mj");
   basecuts.ReplaceAll("mj14", "mj");
+  serializeCuts();
 }
 
 
@@ -95,14 +106,11 @@ void abcd_method::setLeptons(){
     if(method.Contains("_mu"))  abcdcuts[iabcd].ReplaceAll("nleps", "nmus");
     if(method.Contains("_emu")) abcdcuts[iabcd].ReplaceAll("nleps==2", "(nels==1&&nmus==1)");
   } // Loop over ABCD cuts
-  for(size_t ind=0; ind < allcuts.size(); ind++){
-    if(method.Contains("_el"))  allcuts[ind].ReplaceAll("nleps", "nels");
-    if(method.Contains("_mu"))  allcuts[ind].ReplaceAll("nleps", "nmus");
-    if(method.Contains("_emu")) allcuts[ind].ReplaceAll("nleps==2", "(nels==1&&nmus==1)");
-  } // Loop over all cuts
   if(method.Contains("_el"))  basecuts.ReplaceAll("nleps", "nels");
   if(method.Contains("_mu"))  basecuts.ReplaceAll("nleps", "nmus");
   if(method.Contains("_emu")) basecuts.ReplaceAll("nleps==2", "(nels==1&&nmus==1)");
+
+  serializeCuts();
 }
 
 

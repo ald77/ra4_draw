@@ -22,7 +22,9 @@ public:
   void setMj12();
   void printCuts();
   TString lowerNjets(TString &cut);
-  
+  void serializeCuts();
+  void setIntNbNj(bool int_nbnj_b);
+
 
   abcd_method(TString imethod, std::vector<TString> iplanecuts, std::vector<TString> ibincuts, 
 	     std::vector<TString> iabcdcuts, TString icaption="", TString ibasecuts="");
