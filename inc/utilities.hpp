@@ -60,6 +60,7 @@ std::string ToLongString(const T& x){
 
 TString RoundNumber(double num, int decimals, double denom=1.);
 TString cuts2tex(TString cuts);
+TString cutsToLabel(TString cut);
 
 double gsl_ran_gamma (const double a, const double b, TRandom3 &rand);
 double intGaus(double mean, double sigma, double minX, double maxX);

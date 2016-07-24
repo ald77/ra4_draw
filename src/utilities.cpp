@@ -163,6 +163,39 @@ TString RoundNumber(double num, int decimals, double denom){
   return result;
 }
 
+//// Converting ROOT cuts to ROOT labels
+TString cutsToLabel(TString cut){
+  if(cut.Contains("mm_")){
+    cut.ReplaceAll("mm_","");
+    int ind;
+    do{
+      ind = cut.First('[');
+      cut.Remove(ind, cut.First(']')-ind+1);
+    }while(ind>=0);
+  } // Cleaning up mismeasured cuts
+  cut.ReplaceAll(" ","");
+  cut.ReplaceAll("met>150&&met<=200", "150<met<=200");
+  cut.ReplaceAll("met>200&&met<=350", "200<met<=350");
+  cut.ReplaceAll("met>350&&met<=500", "350<met<=500");
+  cut.ReplaceAll("njets>=5&&njets<=7", "5<=njets<=7");
+  cut.ReplaceAll("njets>=6&&njets<=8", "6<=njets<=8");
+  cut.ReplaceAll("nbm>=1&&nbm<=2", "1<=nbm<=2");
+
+  cut.ReplaceAll("met","E_{T}^{miss}");
+  cut.ReplaceAll("njets","N_{jets}");
+  cut.ReplaceAll("nbm","N_{b}");
+  cut.ReplaceAll("=="," = ");
+  cut.ReplaceAll(">="," #geq ");
+  cut.ReplaceAll("<="," #leq ");
+  cut.ReplaceAll(">"," > ");
+  cut.ReplaceAll("<"," < ");
+  cut.ReplaceAll("&&",", ");
+
+  return cut;
+}
+
+
+
 TString cuts2tex(TString cuts){
   cuts.ReplaceAll(" ", "");
   if(cuts.Contains("met>200")){

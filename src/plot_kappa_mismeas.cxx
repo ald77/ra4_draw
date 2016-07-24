@@ -1,6 +1,4 @@
-///// table_preds: Generates tables with MC/data yields, bkg predictions
-/////              ABCDs are defined in abcd_method, with planecuts (typicaly MET bins),
-////               bincuts (typically Nb/Njets bins), and abcdcuts (the cuts for the 4 regions)
+///// plot_kappa_mismeas: Makes kappa plots (and ratio plots) for the various mismeasurement scenarios
 
 #include <fstream>
 #include <iostream>
@@ -18,6 +16,7 @@
 #include "TStyle.h"
 #include "TLine.h"
 #include "TLatex.h"
+#include "TLegend.h"
 #include "TGraphAsymmErrors.h"
 #include "RooStats/NumberCountingUtils.h"
 
@@ -43,90 +42,205 @@ namespace{
   TString skim = "standard";
   TString only_method = "";
   float lumi;
-  int Nscen = 11;
+  int Nscen = 2;
 }
+struct kmarker{
+  TString cut;
+  int color;
+  int style;
+  vector<float> kappa;
+};
 
-
-TString cutsToLabel(TString cut);
 void plotKappa(abcd_method &abcd, vector<vector<vector<vector<float> > > > &allkappas);
 
 //// Plots kappa if allkappas is size 1 or 2, and ratio of kappa/kappa_nominal if larger
 //// Will move
 void plotKappa(abcd_method &abcd, vector<vector<vector<vector<float> > > > &allkappas){
-  float fontSize = 0.05;
+
+  bool labdown = true; //// Putting the MET labels at the bottom
+
+  //// Setting plot style
+  float fontSize = 0.054;
+  gStyle->SetNdivisions(708, "xyz");   // 5 primary ticks and 4 secondary ticks
   gStyle->SetOptStat(0);              // No Stats box
   gStyle->SetPadTickX(1);             // Ticks at the right
   gStyle->SetPadTickY(1);             // Ticks at the top
+  gStyle->SetTitleOffset(0.8,"y");     
   gStyle->SetTextSize(fontSize);            // Set global text size
   gStyle->SetTitleFontSize(fontSize);      // Set top title size
-  gStyle->SetTitleSize(fontSize,"xyz");     // Set the 2 axes title size
-  gStyle->SetLabelSize(fontSize,"xyz");     // Set the 2 axes label size
+  gStyle->SetTitleSize(fontSize*1.4,"xyz");     // Set the 2 axes title size
+  gStyle->SetLabelSize(fontSize,"yz");      // Set the 2 axes label size
+  gStyle->SetLabelSize(fontSize,"x");     // Set the 2 axes label size
+  gStyle->SetLabelSize(fontSize,"x");     // Set the 2 axes label size
   float PadRightMargin  = 0.05;
   float PadTopMargin    = 0.09;
-  float PadBottomMargin = 0.16;
   float PadLeftMargin   = 0.12;
+  float PadBottomMargin = 0.11;
+  if(labdown) PadBottomMargin = 0.15;
   gStyle->SetPadRightMargin (PadRightMargin);    
   gStyle->SetPadBottomMargin(PadBottomMargin); 
   gStyle->SetPadTopMargin(PadTopMargin); 
   gStyle->SetPadLeftMargin  (PadLeftMargin); 
 
-  int Nkap = 0, color=4;
-  if(allkappas.size()>2) color = 2;
-  int ind= allkappas.size()-1;
-  vector<double>  vx, vy, vexl, vexh, veyl, veyh;
+  //// k_ordered has all the kappas group in sets of nb cuts (typically, in bins of njets)
+  vector<vector<vector<kmarker> > > k_ordered;
+  vector<kmarker> ind_bcuts; // nb cuts actually used in the plot
+  vector<float> zz; // Zero length vector for the kmarker constructor
+  vector<kmarker> bcuts({{"nbm==1",4,20,zz}, {"nbm==2",2,21,zz}, {"nbm>=3",kGreen+3,22,zz}, {"nbm>=2",kMagenta+2,23,zz}});
+
+  int nbins = 0; // Total number of njets bins (used in the base histo)
+  int ind= allkappas.size()-1; // Index of the kappa we'll be plotting, just the last in the vector
   vector<vector<vector<float> > > kappas = allkappas[ind];
   for(size_t iplane=0; iplane < kappas.size(); iplane++) {
+    k_ordered.push_back(vector<vector<kmarker> >());
     for(size_t ibin=0; ibin < kappas[iplane].size(); ibin++){
-      Nkap++;
-      double kap = kappas[iplane][ibin][0];
-      if(allkappas.size()<=2){
-	vy.push_back(kap);
-	veyl.push_back(kappas[iplane][ibin][1]);
-	veyh.push_back(kappas[iplane][ibin][2]);
-      } else {
-	vy.push_back(kap/allkappas[ind%2][iplane][ibin][0]);
-	veyl.push_back(0);
-	veyh.push_back(0);      
+      if(allkappas.size()>2){
+	kappas[iplane][ibin][0] /= allkappas[ind%2][iplane][ibin][0];
+	kappas[iplane][ibin][1] = 0.;
+	kappas[iplane][ibin][2] = 0.;
       }
-      vx.push_back(Nkap);
-      vexl.push_back(0);
-      vexh.push_back(0);      
+      TString bincut = abcd.bincuts[iplane][ibin];
+      bincut.ReplaceAll(" ","");
+      bincut.ReplaceAll("mm_","");
+      int index;
+      do{
+	index = bincut.First('[');
+	bincut.Remove(index, bincut.First(']')-index+1);
+      }while(index>=0);
+      bool found=false;
+      for(size_t ib=0; ib<bcuts.size(); ib++){
+	if(bincut.Contains(bcuts[ib].cut)){
+	  //// Storing the number of different nb cuts in ind_bcuts
+	  bool cutfound=false;
+	  for(size_t indb=0; indb<ind_bcuts.size(); indb++)
+	    if(ind_bcuts[indb].color == bcuts[ib].color) cutfound = true;
+	  if(!cutfound) ind_bcuts.push_back(bcuts[ib]);
+
+	  //// Cleaning the nb cut from the bincut
+	  bincut.ReplaceAll(bcuts[ib].cut+"&&","");
+	  for(size_t ik=0; ik<k_ordered[iplane].size(); ik++){
+	    //// Adding point to a given njets cut
+	    if(bincut==k_ordered[iplane][ik][0].cut){
+	      k_ordered[iplane][ik].push_back({bincut, bcuts[ib].color, bcuts[ib].style, kappas[iplane][ibin]});
+	      found = true;
+	      break;
+	    } // if same njets cut
+	  } // Loop over existing ordered kappas
+	  //// If it doesn't correspond to any njet cut yet, create a new bin
+	  if(!found) {
+	    k_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[ib].color, bcuts[ib].style, kappas[iplane][ibin]}}));
+	    found = true;
+	    nbins++;
+	  }
+	} // if bincut.Contains(bcuts[ib].cut)
+      } // Loop over nb cuts
+
+      //// If it doesn't correspond to any nb cut, create a new bin with default (color in [0], blue)
+      if(!found) {
+	k_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[0].color, bcuts[0].style, kappas[iplane][ibin]}}));
+	nbins++;
+	if(ind_bcuts.size()==0) ind_bcuts.push_back(bcuts[0]);
+      }
     } // Loop over bin cuts
   } // Loop over plane cuts
 
+  // //// Printing all values of kappa
+  // for(size_t iplane=0; iplane < k_ordered.size(); iplane++) {
+  //   cout<<endl<<"New plane"<<endl;
+  //   for(size_t ibin=0; ibin < k_ordered[iplane].size(); ibin++){
+  //     cout<<"Points for "<<k_ordered[iplane][ibin][0].cut<<endl;
+  //     for(size_t ib=0; ib<k_ordered[iplane][ibin].size(); ib++){
+  // 	cout<<"kappa = "<<k_ordered[iplane][ibin][ib].kappa[0]<<", color "<<k_ordered[iplane][ibin][ib].color<<endl;
+  //     }
+  //   }
+  // }
 
-  TCanvas can("can","",1100,600);
+
+  //// Plotting kappas
+  TCanvas can("can","",1100,700);
   TLine line; line.SetLineWidth(2); line.SetLineStyle(2);
   TLatex label; label.SetTextSize(0.05); label.SetTextFont(132); label.SetTextAlign(23);
 
-  TGraphAsymmErrors graph(vx.size(), &(vx[0]), &(vy[0]), &(vexl[0]), &(vexh[0]), &(veyl[0]), &(veyh[0]));
-  graph.SetMarkerStyle(20); graph.SetMarkerSize(1.65); 
-  graph.SetMarkerColor(color); graph.SetLineColor(color); graph.SetLineWidth(2);
-  int nbins = Nkap;
-  float minx = 0.5, maxx = Nkap+0.5, miny = 0, maxy = 2.7;
+  float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = 2.4;
+  if(labdown) maxy = 2.1;
   TH1D histo("histo", abcd.method, nbins, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
-  histo.Draw();
-  graph.Draw("p same");
+  histo.GetYaxis()->CenterTitle(true);
+  histo.GetXaxis()->SetLabelOffset(0.008);
   if(allkappas.size()<=2) histo.SetYTitle("#kappa");
   else histo.SetYTitle("#kappa^{scenario}/#kappa^{nominal}");
-  Nkap = 0;
-  for(size_t iplane=0; iplane < kappas.size(); iplane++) {
-    for(size_t ibin=0; ibin < kappas[iplane].size(); ibin++){
-      Nkap++;
-      histo.GetXaxis()->SetBinLabel(Nkap, cutsToLabel(abcd.bincuts[iplane][ibin]));
+  histo.Draw();
+
+  //// Filling vx, vy vectors with kappa coordinates. Each nb cut is stored in a TGraphAsymmetricErrors
+  int bin = 0;
+  vector<vector<double> > vx(ind_bcuts.size()), vexh(ind_bcuts.size()), vexl(ind_bcuts.size()); 
+  vector<vector<double> > vy(ind_bcuts.size()), veyh(ind_bcuts.size()), veyl(ind_bcuts.size());
+  for(size_t iplane=0; iplane < k_ordered.size(); iplane++) {
+    for(size_t ibin=0; ibin < k_ordered[iplane].size(); ibin++){
+      bin++;
+      histo.GetXaxis()->SetBinLabel(bin, cutsToLabel(k_ordered[iplane][ibin][0].cut));
+      // xval is the x position of the first marker in the group
+      double xval = bin, nbs = k_ordered[iplane][ibin].size(), minxb = 0.15, binw = 0;
+      // If there is more than one point in the group, it starts minxb to the left of the center of the bin
+      // binw is the distance between points in the njets group
+      if(nbs>1) {
+	xval -= minxb;
+	binw = 2*minxb/(nbs-1);
+      }
+      for(size_t ib=0; ib<k_ordered[iplane][ibin].size(); ib++){
+	//// Finding which TGraph this point goes into by comparing the color of the TGraph and the point
+	for(size_t indb=0; indb<ind_bcuts.size(); indb++){
+	  if(ind_bcuts[indb].color == k_ordered[iplane][ibin][ib].color){
+	    vx[indb].push_back(xval);
+	    xval += binw;
+	    vexl[indb].push_back(0);
+	    vexh[indb].push_back(0);      
+	    vy[indb].push_back(k_ordered[iplane][ibin][ib].kappa[0]);
+	    veyl[indb].push_back(k_ordered[iplane][ibin][ib].kappa[1]);
+	    veyh[indb].push_back(k_ordered[iplane][ibin][ib].kappa[2]);      	    
+	  }
+	} // Loop over nb cuts in ordered TGraphs
+      } // Loop over nb cuts in kappa plot
     } // Loop over bin cuts
-    line.DrawLine(Nkap+0.5, miny, Nkap+0.5, maxy);
-    label.DrawLatex((2*Nkap-kappas[iplane].size()+1.)/2., maxy-0.1, cutsToLabel(abcd.planecuts[iplane]));
+
+    // Drawing line separating MET planes
+    if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
+    // Drawing MET labels
+    if(!labdown) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, cutsToLabel(abcd.planecuts[iplane]));    
+    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.26, cutsToLabel(abcd.planecuts[iplane]));
   } // Loop over plane cuts
+
+  //// Drawing legend and TGraphs
+  float legFSize = 0.043;
+  double legX(PadLeftMargin+0.026), legY(0.8), legSingle = 0.05;
+  if(labdown) legY = 1-PadTopMargin-0.05;
+  double legW = 0.22, legH = legSingle*(ind_bcuts.size()+1)/2;
+  if(ind_bcuts.size()>3) legH = legSingle*((ind_bcuts.size()+1)/2);
+  TLegend leg(legX, legY-legH, legX+legW, legY);
+  leg.SetTextSize(legFSize); leg.SetFillColor(0); 
+  leg.SetFillStyle(0); leg.SetBorderSize(0);
+  leg.SetTextFont(42); 
+  leg.SetNColumns(2);
+  TGraphAsymmErrors graph[20]; // There's problems with vectors of TGraphs, so using an array
+  for(size_t indb=0; indb<ind_bcuts.size(); indb++){
+      graph[indb] = TGraphAsymmErrors(vx[indb].size(), &(vx[indb][0]), &(vy[indb][0]), 
+				      &(vexl[indb][0]), &(vexh[indb][0]), &(veyl[indb][0]), &(veyh[indb][0]));
+      graph[indb].SetMarkerStyle(ind_bcuts[indb].style); graph[indb].SetMarkerSize(1.65); 
+      graph[indb].SetMarkerColor(ind_bcuts[indb].color); 
+      graph[indb].SetLineColor(ind_bcuts[indb].color); graph[indb].SetLineWidth(2);
+      graph[indb].Draw("p same");   
+      leg.AddEntry(&graph[indb], cutsToLabel(ind_bcuts[indb].cut), "p");
+  } // Loop over TGraphs
+  if(ind_bcuts.size()>1) leg.Draw();
 
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
-  
+
   TString fname="plots/kappa_"+abcd.method+".pdf";
   can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl;
+
 }
 
 
@@ -167,7 +281,7 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc(bfolder+"/cms2r0/babymaker/babies/mismeasured/2016_06_14/mc/merged_mm_std_nj5mj250/");
-  foldermc = "/net/cms26/cms26r0/babymaker/babies/mismeasured_v2/2016_06_14/mc/merged_mm_std_nj5mj250/";
+  //foldermc = "/net/cms26/cms26r0/babymaker/babies/mismeasured_v2/2016_06_14/mc/merged_mm_std_nj5mj250/";
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
   folderdata = foldermc;
   if(skim.Contains("met150")){
@@ -228,7 +342,7 @@ int main(int argc, char *argv[]){
   //   baseline+" && ntruleps==2");
 
 
-  auto proc_other = Proc<Baby_full>("Other", Process::Type::background, colors("tt_1l"),
+  auto proc_other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
     {foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
 	foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
 	foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
@@ -268,10 +382,10 @@ int main(int argc, char *argv[]){
   TString c_nj5   = "njets==5";
 
   ////// ABCD cuts
-  vector<TString> abcdcuts_std = {"mt<=140 && mj14<=400  &&  nj_all_1l", 
-                                  "mt<=140 && mj14>400   &&  nj_1l", 
-                                  "mt>140  && mj14<=400  &&  nj_all_1l",          
-                                  "mt>140  && mj14>400   &&  nj_1l"};
+  vector<TString> abcdcuts_std = {"mt<=140 && mj14<=400  && nj_all_1l", 
+                                  "mt<=140 && mj14>400   && nj_1l", 
+                                  "mt>140  && mj14<=400  && nj_all_1l",          
+                                  "mt>140  && mj14>400   && nj_1l"};
 
   vector<TString> abcdcuts_veto = {"mt<=140 && mj14<=400 && nleps==1 && nbm>=1  &&  nj_all_1l", 
                                    "mt<=140 && mj14>400  && nleps==1 && nbm>=1  &&  nj_1l", 
@@ -683,34 +797,6 @@ TString cutsToTex(TString cut){
   cut.ReplaceAll("&&",", ");
 
   cut = "$"+cut+"$";
-  return cut;
-}
-
-
-//// Converting ROOT cuts to ROOT labels
-TString cutsToLabel(TString cut){
-  cut.ReplaceAll("mm_","");
-  int ind;
-  do{
-    ind = cut.First('[');
-    cut.Remove(ind, cut.First(']')-ind+1);
-  }while(ind>=0);
-  cut.ReplaceAll(" ","");
-  cut.ReplaceAll("met>150&&met<=200", "150<met<=200");
-  cut.ReplaceAll("met>200&&met<=350", "200<met<=350");
-  cut.ReplaceAll("met>350&&met<=500", "350<met<=500");
-  cut.ReplaceAll("njets>=5&&njets<=7", "5<=njets<=7");
-  cut.ReplaceAll("njets>=6&&njets<=8", "6<=njets<=8");
-  cut.ReplaceAll("nbm>=1&&nbm<=2", "1<=nbm<=2");
-
-  cut.ReplaceAll("met","E_{T}^{miss}");
-  cut.ReplaceAll("njets","N_{jets}");
-  cut.ReplaceAll("nbm","N_{b}");
-  cut.ReplaceAll("==","=");
-  cut.ReplaceAll(">=","#geq");
-  cut.ReplaceAll("<=","#leq");
-  cut.ReplaceAll("&&",", ");
-
   return cut;
 }
 
