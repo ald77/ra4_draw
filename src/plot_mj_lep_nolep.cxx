@@ -94,7 +94,7 @@ int main(){
     pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
 				 mjnolep&&high_met, "weight", {250., 400.}), procs_nolep, plot_types);
 
-    NamedFunc mc_cut = "mm_mj14_lep"+s+"<=400&&mm_met"+s+"<=500&&mm_nbm"+s+"<=2&&mm_nleps"+s+"==1&&mm_ht"+s+">500&&mm_met"+s+">200&&mm_njets"+s+">=6&&mm_nbm"+s+">=1";
+    NamedFunc mc_cut = "mm_mj14_nolep"+s+">250.&&mm_mj14_lep"+s+"<=400&&mm_met"+s+"<=500&&mm_nbm"+s+"<=2&&mm_nleps"+s+"==1&&mm_ht"+s+">500&&mm_met"+s+">200&&mm_njets"+s+">=6&&mm_nbm"+s+">=1";
     auto tt1l = Proc<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
       {folder_mc+"*_TTJets*Lept*.root", folder_mc+"*_TTJets_HT*.root"}, mc_cut&&"ntruleps<=1&&stitch");
     auto tt2l = Proc<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
@@ -114,7 +114,7 @@ int main(){
 	  folder_mc+"*_ZH_HToBB*.root", folder_mc+"_ZZ_*.root"}, mc_cut);
     auto data_2016 = Proc<Baby_full>("2016 Data", Process::Type::data, kBlack,
       {"/net/cms2/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/*.root"},
-      "json2p6&&pass&&(trig[4]||trig[8]||trig[13]||trig[33])&&mj14<=400&&met<=500&&nbm<=2&&nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1");
+      "json2p6&&pass&&(trig[4]||trig[8]||trig[13]||trig[33])&&mj14>250.&&mj14<=400&&met<=500&&nbm<=2&&nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1");
     vector<shared_ptr<Process> > procs = {tt1l, tt2l, wjets, single_t, ttv, other, data_2016};
     NamedFunc mt("mt",[scenario](const Baby &b){
 	bool is_data = false;
