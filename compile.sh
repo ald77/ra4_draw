@@ -5,7 +5,7 @@ exit_code=0;
 if [ $# -ne 0 ] && [ "$1" == "clean" ]
 then
     rm -rf run/*.exe bin/*.o bin/*.a bin/*.d *.out src/baby*.cpp inc/baby*.hpp
-    ./run/remove_backups.sh
+    ./run/remove_backups.py
     exit_code=$?
 else
     bad_file=$(mktemp -t compile_XXXXXXXXXXXXXXXX)
