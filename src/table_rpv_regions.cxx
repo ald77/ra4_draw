@@ -66,13 +66,13 @@ int main(){
 	mc_folder+"*ZJetsToQQ_HT600toInf_13TeV-madgraph*"});
   
   //Signal Samples
-  auto tbs1000_off = Proc<Baby_full>("m_{glu}=1.0$ TeV$", Process::Type::signal, colors("tt_1l"),
+  auto tbs1000 = Proc<Baby_full>("m_{glu}=1000$ GeV$", Process::Type::signal, colors("tt_1l"),
     {sig_folder+"*RPV_mGluino-1000*"});
   
-  auto tbs1400_off = Proc<Baby_full>("m_{glu}=1.4$ TeV$", Process::Type::signal, colors("tt_1l"),
+  auto tbs1400 = Proc<Baby_full>("m_{glu}=1400$ GeV$", Process::Type::signal, colors("tt_1l"),
     {sig_folder+"*RPV_mGluino-1400*"});
   
-  vector<shared_ptr<Process> > samples = {other, singlet, wjets, qcd, tt, tbs1000_off, tbs1400_off};
+  vector<shared_ptr<Process> > samples = {other, singlet, wjets, qcd, tt, tbs1000, tbs1400};
   
   PlotMaker pm;
   pm.Push<Table>("rpv_regions", vector<TableRow>{
