@@ -357,7 +357,7 @@ int main(int argc, char *argv[]){
       table_cuts.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data()));
 
     TString tname = "preds"; tname += iabcd;
-    pm.Push<Table>(tname.Data(),  table_cuts, all_procs, false);   
+    pm.Push<Table>(tname.Data(),  table_cuts, all_procs, true, false);   
   } // Loop over ABCD methods
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////

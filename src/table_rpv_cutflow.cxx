@@ -95,7 +95,7 @@ int main(){
 	TableRow("$M_{J}>800$","nleps==1&&ht>1200&&nbm>=1&&njets>=4&&mj>800",0,0,"weight*w_pu_rpv/eff_trig"),
 	TableRow("$N_{jets}\\geq8$","nleps==1&&ht>1200&&nbm>=1&&njets>=8&&mj>800",0,0,"weight*w_pu_rpv/eff_trig"),
 	TableRow("$N_{b}\\geq3$","nleps==1&&ht>1200&&nbm>=3&&njets>=8&&mj>800",0,1,"weight*w_pu_rpv/eff_trig"),
-	},samples);
+	},samples,false,true);
   
   pm.MakePlots(lumi);
 }

@@ -76,6 +76,7 @@ int main(){
   
   PlotMaker pm;
   pm.Push<Table>("rpv_regions", vector<TableRow>{
+      //0-lepton
       TableRow("$N_{leps}=0$, $H_{T}>1500$, $N_{b}\\geq1$"),
 	TableRow("Baseline"),
 	TableRow("$M_{J}>500$, $N_{jets}\\geq4$", "nleps==0&&ht>1500&&nbm>=1&&mj>500&&njets>=4",0,0,"weight*w_pu_rpv/eff_trig"),
@@ -94,7 +95,7 @@ int main(){
 	TableRow("$\\quad N_{b}=3$", "nleps==0&&ht>1500&&nbm==3&&mj>800&&njets>=10",0,0,"weight*w_pu_rpv/eff_trig"),
 	TableRow("$\\quad N_{b}\\geq4$", "nleps==0&&ht>1500&&nbm>=4&&mj>800&&njets>=10",0,1,"weight*w_pu_rpv/eff_trig"),
 
-	
+	//1-lepton
 	TableRow("$N_{leps}=1$, $H_{T}>1200$, $N_{b}\\geq1$"),
 	TableRow("Baseline"),
 	TableRow("$M_{J}>500$, $N_{jets}\\geq4$", "nleps==1&&ht>1200&&nbm>=1&&mj>500&&njets>=4",0,0,"weight*w_pu_rpv/eff_trig"),
@@ -110,7 +111,7 @@ int main(){
 	TableRow("$\\quad N_{b}=2$", "nleps==1&&ht>1200&&nbm==2&&mj>800&&njets>=8",0,0,"weight*w_pu_rpv/eff_trig"),
 	TableRow("$\\quad N_{b}=3$", "nleps==1&&ht>1200&&nbm==3&&mj>800&&njets>=8",0,0,"weight*w_pu_rpv/eff_trig"),
 	TableRow("$\\quad N_{b}\\geq4$", "nleps==1&&ht>1200&&nbm>=4&&mj>800&&njets>=8",0,0,"weight*w_pu_rpv/eff_trig"),
-	},samples);
+	},samples,false);
   
   pm.MakePlots(lumi);
 }

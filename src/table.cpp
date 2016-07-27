@@ -98,10 +98,12 @@ void Table::TableColumn::RecordEvent(const Baby &baby){
 Table::Table(const string &name,
              const vector<TableRow> &rows,
              const vector<shared_ptr<Process> > &processes,
+	     bool do_zbi,
 	     bool print_table):
   Figure(),
   name_(name),
   rows_(rows),
+  do_zbi_(do_zbi),
   print_table_(print_table),
   backgrounds_(),
   signals_(),
@@ -253,7 +255,8 @@ void Table::PrintHeader(ofstream &file) const{
   }
   
   for(size_t i = 0; i < signals_.size(); ++i){
-    file << " | rr";
+    if(do_zbi_) file << " | rr";
+    else file << " | r";
   }
 
   file << " }\n";
@@ -280,7 +283,9 @@ void Table::PrintHeader(ofstream &file) const{
   }
   
   for(size_t i = 0; i < signals_.size(); ++i){
-    file << " & " << ToLatex(signals_.at(i)->process_->name_) << " & $Z_{\\text{Bi}}$";
+    file << " & " << ToLatex(signals_.at(i)->process_->name_);
+    if(do_zbi_)
+      file << " & $Z_{\\text{Bi}}$";
   }
 
   file << "\\\\\n";
@@ -317,10 +322,12 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
     }
 
     for(size_t i = 0; i < signals_.size(); ++i){
-      file << " & " << luminosity*signals_.at(i)->sumw_.at(irow) << " & "
-           << RooStats::NumberCountingUtils::BinomialExpZ(luminosity*signals_.at(i)->sumw_.at(irow),
-                                                          luminosity*GetYield(backgrounds_, irow),
-                                                          hypot(GetError(backgrounds_, irow)/GetYield(backgrounds_, irow), 0.3));
+      file << " & " << luminosity*signals_.at(i)->sumw_.at(irow);
+      if(do_zbi_){
+	file << " & " << RooStats::NumberCountingUtils::BinomialExpZ(luminosity*signals_.at(i)->sumw_.at(irow),
+								     luminosity*GetYield(backgrounds_, irow),
+								     hypot(GetError(backgrounds_, irow)/GetYield(backgrounds_, irow), 0.3));
+      }
     }
   }else{
     file << "    \\multicolumn{" << NumColumns() << "}{c}{" << row.label_ << "}";
@@ -361,7 +368,9 @@ void Table::PrintFooter(ofstream &file) const{
   }
   
   for(size_t i = 0; i < signals_.size(); ++i){
-    file << " & " << ToLatex(signals_.at(i)->process_->name_) << " & $Z_{\\text{Bi}}$";
+    file << " & " << ToLatex(signals_.at(i)->process_->name_);
+    if(do_zbi_)
+      file << " & $Z_{\\text{Bi}}$";
   }
 
   file << "\\\\\n";
@@ -375,7 +384,7 @@ size_t Table::NumColumns() const{
   return 1
     + (backgrounds_.size() <= 1 ? backgrounds_.size() : backgrounds_.size()+1)
     + (datas_.size() <= 1 ? datas_.size() : datas_.size()+1)
-    + 2*signals_.size();
+    + (do_zbi_ ? 2 : 1)*signals_.size();
 }
 
 double Table::GetYield(const vector<unique_ptr<TableColumn> > &columns,

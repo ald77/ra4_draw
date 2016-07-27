@@ -37,6 +37,7 @@ public:
   Table(const std::string &name,
 	const std::vector<TableRow> &rows,
 	const std::vector<std::shared_ptr<Process> > &processes,
+	bool do_zbi=true,
 	bool print_table=true);
   Table(Table &&) = default;
   Table& operator=(Table &&) = default;
@@ -55,6 +56,7 @@ public:
   
   std::string name_;
   std::vector<TableRow> rows_;
+  bool do_zbi_;
   bool print_table_;
 
 private:
