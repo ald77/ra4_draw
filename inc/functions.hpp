@@ -4,7 +4,7 @@
 #include <cstddef>
 
 #include "named_func.hpp"
-
+ 
 namespace Functions{
   extern const NamedFunc n_isr_match;
   extern const NamedFunc njets_weights_ttisr;
@@ -24,6 +24,8 @@ namespace Functions{
   bool IsGoodTrack(const Baby &b, std::size_t itk);
 
   NamedFunc::ScalarType NJetsWeights_ttISR(const Baby &b, bool use_baby_nisr);
+  NamedFunc::ScalarType NJetsWeights_vISR(const Baby &b);
+  int NISRMatch(const Baby &b);
 
   void DileptonAngles(const Baby &b,
 		      NamedFunc::ScalarType &eta1, NamedFunc::ScalarType &phi1,

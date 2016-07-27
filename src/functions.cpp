@@ -5,49 +5,13 @@
 #include "utilities.hpp"
 
 namespace Functions{
-  const NamedFunc n_isr_match("n_isr_match",[](const Baby &b) -> NamedFunc::ScalarType{
-      int Nisr=0;
-      for (size_t ijet(0); ijet<b.jets_pt()->size(); ijet++){
-        if(!IsGoodJet(b, ijet)) continue;
-        bool matched=false;
-        for (size_t imc(0); imc<b.mc_pt()->size(); imc++){
-          if(b.mc_status()->at(imc)!=23 || abs(b.mc_id()->at(imc))>5) continue;
-          if(!(abs(b.mc_mom()->at(imc))==6 || abs(b.mc_mom()->at(imc))==23 ||
-               abs(b.mc_mom()->at(imc))==24 || abs(b.mc_mom()->at(imc))==15)) continue; // In our ntuples where all taus come from W
-          float dR = deltaR(b.jets_eta()->at(ijet), b.jets_phi()->at(ijet), b.mc_eta()->at(imc), b.mc_phi()->at(imc));
-          if(dR<0.4){
-            matched = true;
-            break;
-          }
-        } // Loop over MC particles
-        if(!matched) Nisr++;
-      } // Loop over jets
-
-      return Nisr;
-    });
+  const NamedFunc n_isr_match("n_isr_match", NISRMatch);
 
   const NamedFunc njets_weights_ttisr("njets_weights_ttisr", [](const Baby &b){
       return NJetsWeights_ttISR(b, false);
     });
 
-  const NamedFunc njets_weights_visr("njets_weights_visr", [](const Baby &b) -> NamedFunc::ScalarType{
-      if (b.ntrupv()<0) return 1.; // Do not reweight Data
-
-      float wgt = b.weight()/b.eff_trig()/b.w_toppt();
-      if(b.SampleType()<30 && b.SampleType()>=60) return wgt;
-
-      int nisrjets(b.njets());
-      // weights derived in DY+jets
-      if      (nisrjets==0) return 0.981*wgt; //  +- 0.001
-      else if (nisrjets==1) return 1.071*wgt; //  +- 0.001
-      else if (nisrjets==2) return 1.169*wgt; //  +- 0.003
-      else if (nisrjets==3) return 1.157*wgt; //  +- 0.007
-      else if (nisrjets==4) return 1.014*wgt; //  +- 0.013
-      else if (nisrjets==5) return 0.920*wgt; //  +- 0.025
-      else if (nisrjets==6) return 0.867*wgt; //  +- 0.048
-      else if (nisrjets>=7) return 0.935*wgt; //  +- 0.088
-      else return wgt;
-    });
+  const NamedFunc njets_weights_visr("njets_weights_visr", NJetsWeights_vISR);
 
   const NamedFunc min_dphi_lep_met("min_dphi_lep_met", [](const Baby &b) -> NamedFunc::ScalarType{
       double phi1, eta1, phi2, eta2;
@@ -239,11 +203,8 @@ namespace Functions{
 
     float wgt = b.weight()/b.eff_trig()/b.w_toppt();
 
-    int nisrjets = b.njets();
-    if (b.SampleType()==20) {
-      if (use_baby_nisr) nisrjets = b.nisr();
-      else nisrjets = b.njets() - 2;
-    }
+    int nisrjets = use_baby_nisr ? b.nisr() : NISRMatch(b);
+
     // weights derived in TTJets and applied using the nisr calculation algorithm
     if      (nisrjets==0) return 1.099*wgt; //  +- 0.012
     else if (nisrjets==1) return 0.969*wgt; //  +- 0.014
@@ -253,6 +214,46 @@ namespace Functions{
     else if (nisrjets==5) return 0.661*wgt; //  +- 0.088
     else if (nisrjets>=6) return 0.566*wgt; //  +- 0.133
     else return wgt;
+  }
+
+  NamedFunc::ScalarType NJetsWeights_vISR(const Baby &b){
+    if (b.ntrupv()<0) return 1.; // Do not reweight Data
+    
+    float wgt = b.weight()/b.eff_trig()/b.w_toppt();
+    if(b.SampleType()<30 && b.SampleType()>=60) return wgt;
+    
+    int nisrjets(b.njets());
+    // weights derived in DY+jets
+    if      (nisrjets==0) return 0.981*wgt; //  +- 0.001
+    else if (nisrjets==1) return 1.071*wgt; //  +- 0.001
+    else if (nisrjets==2) return 1.169*wgt; //  +- 0.003
+    else if (nisrjets==3) return 1.157*wgt; //  +- 0.007
+    else if (nisrjets==4) return 1.014*wgt; //  +- 0.013
+    else if (nisrjets==5) return 0.920*wgt; //  +- 0.025
+    else if (nisrjets==6) return 0.867*wgt; //  +- 0.048
+    else if (nisrjets>=7) return 0.935*wgt; //  +- 0.088
+    else return wgt;
+  }
+
+  int NISRMatch(const Baby &b){
+    int Nisr=0;
+    for (size_t ijet(0); ijet<b.jets_pt()->size(); ++ijet){
+      if(!IsGoodJet(b, ijet)) continue;
+      bool matched=false;
+      for (size_t imc(0); imc<b.mc_pt()->size(); ++imc){
+	if(b.mc_status()->at(imc)!=23 || abs(b.mc_id()->at(imc))>5) continue;
+	if(!(abs(b.mc_mom()->at(imc))==6 || abs(b.mc_mom()->at(imc))==23 ||
+	     abs(b.mc_mom()->at(imc))==24 || abs(b.mc_mom()->at(imc))==15)) continue; // In our ntuples where all taus come from W
+	float dR = deltaR(b.jets_eta()->at(ijet), b.jets_phi()->at(ijet), b.mc_eta()->at(imc), b.mc_phi()->at(imc));
+	if(dR<0.4){
+	  matched = true;
+	  break;
+	}
+      } // Loop over MC particles
+      if(!matched) ++Nisr;
+    } // Loop over jets
+
+    return Nisr;
   }
 
   void DileptonAngles(const Baby &b,
