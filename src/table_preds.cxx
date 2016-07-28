@@ -45,6 +45,7 @@ namespace{
   bool debug = false;
   TString skim = "standard";
   TString only_method = "";
+  TString mc_lumi = "";
   float lumi;
 }
 
@@ -110,6 +111,7 @@ int main(int argc, char *argv[]){
     lumi = 0.815;
   } else lumi = 2.6;
   if(skim.Contains("mj12")) ReplaceAll(baseline, "mj14","mj");
+  if(mc_lumi!="") lumi = mc_lumi.Atof();
 
   //// Use this process to make quick plots. Requires being run without split_bkg
   auto proc_bkg = Proc<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
@@ -121,7 +123,7 @@ int main(int argc, char *argv[]){
     // 	foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
     // 	foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
     // 	foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
-     {foldermc+"*_TTJets_Tune*.root"},
+    {foldermc+"*_TTJets_Tune*.root"},
     baseline+" && stitch");
 
   auto proc_t1c = Proc<Baby_full>("T1tttt(C)", Process::Type::signal, colors("t1tttt"),
@@ -220,8 +222,9 @@ int main(int argc, char *argv[]){
   PlotMaker pm;
 
   ///// Running over these methods
-  vector<TString> methods_std = {"m2lveto", "m2lonly", "mvetoonly", "signal", "m5j", 
-				 "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
+  vector<TString> methods_all = {"m2lveto", "m2lonly", "mvetoonly", "signal", "signal_nb1", "signal_nb2",  
+				 "m5j", "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
+  vector<TString> methods_std = {"m2lonly", "mvetoonly", "m5j", "signal", "signal_nb1", "signal_nb2"};
   vector<TString> methods_met150 = {"m2lvetomet150", "m2lonlymet150", "mvetoonlymet150", "m1lmet150"};
   vector<TString> methods = methods_std;
   if(skim.Contains("met150")) methods = methods_met150;
@@ -246,8 +249,9 @@ int main(int argc, char *argv[]){
     //////// General assignments to all methods
     if(method.Contains("2l") || method.Contains("veto")) {
       metcuts = vector<TString>{c_lowmet, c_midmet};
+      if(only_mc) metcuts.push_back(c_higmet);
       bincuts = vector<TString>{c_lownj, c_hignj}; // 2l nj cuts automatically lowered in abcd_method
-      caption = "Dilepton validation regions (with filters). D3 and D4 have ";
+      caption = "Dilepton validation regions. D3 and D4 have ";
     } else {
       if(only_dilepton) continue;
       abcdcuts = abcdcuts_std;
@@ -296,9 +300,20 @@ int main(int argc, char *argv[]){
                                 c_midnb+" && "+c_lownj, c_midnb+" && "+c_hignj, 
                                 c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj}; 
       caption = "Signal search regions";
+      if(method.Contains("nb1")) {
+	bincuts = vector<TString>{c_lownb+" && "+c_lownj, c_lownb+" && "+c_hignj}; 
+	caption += " for $\\nb=1$";
+      }
+      if(method.Contains("nb2")) {
+	bincuts = vector<TString>{c_midnb+" && "+c_lownj, c_midnb+" && "+c_hignj, 
+				  c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj}; 
+	caption += " for $\\nb\\geq2$";
+      }
+	
     }
     if(method.Contains("m5j")) {
       metcuts = vector<TString>{c_lowmet, c_midmet};
+      if(only_mc) metcuts.push_back(c_higmet);
       bincuts = vector<TString>{c_lownb+" && "+c_nj5, c_midnb+" && "+c_nj5, c_hignb+" && "+c_nj5}; 
       caption = "Validation regions with $1\\ell, \\njets=5$";
     }
@@ -448,7 +463,8 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   
   //// Setting output file name
   int digits_lumi = 1;
-  if(!full_lumi && !skim.Contains("2015")) digits_lumi = 3;
+  if(lumi < 1) digits_lumi = 3;
+  if(lumi >= 10) digits_lumi = 0;
   TString lumi_s = RoundNumber(lumi, digits_lumi); 
   TString outname = "tables/table_pred_lumi"+lumi_s; outname.ReplaceAll(".","p");
   if(skim.Contains("2015")) outname += "_2015";
@@ -684,8 +700,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   TLine line; line.SetLineWidth(2); line.SetLineStyle(2);
   TLatex label; label.SetTextSize(0.05); label.SetTextFont(42); label.SetTextAlign(23);
 
-  float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = 2.2;
-  if(label_up) maxy = 2.4;
+  float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = 2.4;
+  if(label_up) maxy = 2.6;
   TH1D histo("histo", "", nbins, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
@@ -751,7 +767,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
       graph[indb].SetMarkerStyle(ind_bcuts[indb].style); graph[indb].SetMarkerSize(1.65); 
       graph[indb].SetMarkerColor(ind_bcuts[indb].color); 
       graph[indb].SetLineColor(ind_bcuts[indb].color); graph[indb].SetLineWidth(2);
-      graph[indb].Draw("p same");   
+      graph[indb].Draw("p0 same");   
       leg.AddEntry(&graph[indb], cutsToLabel(ind_bcuts[indb].cut), "p");
   } // Loop over TGraphs
   if(ind_bcuts.size()>1) leg.Draw();
@@ -835,6 +851,7 @@ void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
 void printDebug(abcd_method &abcd, vector<vector<GammaParams> > &allyields, TString baseline,
                 vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds){
 
+  int digits = 3;
   cout<<endl<<endl<<"=================== Printing cuts for method "<<abcd.method<<" ==================="<<endl;  
   cout<<"-- Baseline cuts: "<<baseline<<endl;
   for(size_t iplane=0; iplane < abcd.planecuts.size(); iplane++) {
@@ -842,14 +859,14 @@ void printDebug(abcd_method &abcd, vector<vector<GammaParams> > &allyields, TStr
     for(size_t ibin=0; ibin < abcd.bincuts[iplane].size(); ibin++){
       for(size_t iabcd=0; iabcd < abcd.abcdcuts.size(); iabcd++){
         size_t index = abcd.indexBin(iplane, ibin, iabcd);
-        cout<<"MC: "<<setw(7)<<RoundNumber(allyields[1][index].Yield(),2)
+        cout<<"MC: "<<setw(7)<<RoundNumber(allyields[1][index].Yield(),digits)
             <<"  Data: "<<setw(4)<<RoundNumber(allyields[0][index].Yield(), 0)
             <<"  - "<< abcd.allcuts[index]<<endl;
       } // Loop over ABCD cuts
-      cout<<"Kappa = "<<RoundNumber(kappas[iplane][ibin][0],2)<<"+"<<RoundNumber(kappas[iplane][ibin][1],2)
-          <<"-"<<RoundNumber(kappas[iplane][ibin][2],2)<<", Prediction = "
-          <<RoundNumber(preds[iplane][ibin][0],2)<<"+"<<RoundNumber(preds[iplane][ibin][1],2)
-          <<"-"<<RoundNumber(preds[iplane][ibin][2],2)<<endl;
+      cout<<"Kappa = "<<RoundNumber(kappas[iplane][ibin][0],digits)<<"+"<<RoundNumber(kappas[iplane][ibin][1],digits)
+          <<"-"<<RoundNumber(kappas[iplane][ibin][2],digits)<<", Prediction = "
+          <<RoundNumber(preds[iplane][ibin][0],digits)<<"+"<<RoundNumber(preds[iplane][ibin][1],digits)
+          <<"-"<<RoundNumber(preds[iplane][ibin][2],digits)<<endl;
       cout<<endl;
     } // Loop over bin cuts
   } // Loop over plane cuts
@@ -862,10 +879,11 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"method", required_argument, 0, 'm'},  // Method to run on (if you just want one)
+      {"lumi", required_argument, 0, 'l'},    // Luminosity to normalize MC with (no data)
       {"skim", required_argument, 0, 's'},    // Which skim to use: standard, met150, 2015 data
       {"split_bkg", no_argument, 0, 'b'},     // Prints Other, tt1l, tt2l contributions
       {"no_signal", no_argument, 0, 'n'},     // Does not print signal columns
-      {"do_leptons", no_argument, 0, 'l'},    // Does tables for e/mu/emu as well
+      {"do_leptons", no_argument, 0, 'p'},    // Does tables for e/mu/emu as well
       {"unblind", no_argument, 0, 'u'},       // Unblinds R4/D4
       {"full_lumi", no_argument, 0, 'f'},     // Uses all data (does not apply nonblind)
       {"only_mc", no_argument, 0, 'o'},       // Uses MC as data for the predictions
@@ -876,13 +894,17 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "m:s:ufdbnl2o", long_options, &option_index);
+    opt = getopt_long(argc, argv, "m:s:ufdbnl:p2o", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
     switch(opt){
     case 'm':
       only_method = optarg;
+      break;
+    case 'l':
+      mc_lumi = optarg;
+      only_mc = true;
       break;
     case 's':
       skim = optarg;
@@ -896,7 +918,7 @@ void GetOptions(int argc, char *argv[]){
     case '2':
       only_dilepton = true;
       break;
-    case 'l':
+    case 'p':
       do_leptons = true;
       break;
     case 'n':
