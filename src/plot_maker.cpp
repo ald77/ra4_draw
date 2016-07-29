@@ -72,7 +72,7 @@ void PlotMaker::GetYields(){
   auto start_time = Clock::now();
 
   auto babies = GetBabies();
-  size_t num_threads = (false && multithreaded_) ? min(babies.size(), static_cast<size_t>(thread::hardware_concurrency())) : 1;
+  size_t num_threads = multithreaded_ ? min(babies.size(), static_cast<size_t>(thread::hardware_concurrency())) : 1;
   cout << "Processing " << babies.size() << " babies with " << num_threads << " threads." << endl;
 
   long num_entries = 0;
@@ -94,7 +94,6 @@ void PlotMaker::GetYields(){
       num_entries += GetYield(ref(baby));
     }
   }
-
   auto end_time = Clock::now();
   double num_seconds = chrono::duration<double>(end_time-start_time).count();
   cout << num_threads << " threads processed "

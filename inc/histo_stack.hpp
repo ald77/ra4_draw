@@ -27,10 +27,6 @@ public:
     SingleHist(const HistoStack &stack,
                const std::shared_ptr<Process> &process,
                const TH1D &hist);
-    SingleHist(const SingleHist &) = default;
-    SingleHist& operator=(const SingleHist &) = default;
-    SingleHist(SingleHist &&) = default;
-    SingleHist& operator=(SingleHist &&) = default;
     ~SingleHist() = default;
 
     TH1D raw_hist_;//!<Histogram storing distribution before stacking and luminosity weighting
@@ -47,6 +43,10 @@ public:
 
   private:
     SingleHist() = delete;
+    SingleHist(const SingleHist &) = delete;
+    SingleHist& operator=(const SingleHist &) = delete;
+    SingleHist(SingleHist &&) = delete;
+    SingleHist& operator=(SingleHist &&) = delete;
 
     NamedFunc proc_and_hist_cut_;
     NamedFunc::VectorType cut_vector_, wgt_vector_, val_vector_;

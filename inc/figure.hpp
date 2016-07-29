@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <mutex>
 
 #include "process.hpp"
 #include "baby.hpp"
@@ -14,10 +15,6 @@ public:
   public:
     FigureComponent(const Figure &figure,
                     const std::shared_ptr<Process> &process);
-    FigureComponent(const FigureComponent &) = default;
-    FigureComponent& operator=(const FigureComponent &) = default;
-    FigureComponent(FigureComponent &&) = default;
-    FigureComponent& operator=(FigureComponent &&) = default;
     virtual ~FigureComponent() = default;
 
     virtual void RecordEvent(const Baby &baby) = 0;
@@ -25,8 +22,15 @@ public:
     const Figure& figure_;//!<Reference to figure containing this component
     std::shared_ptr<Process> process_;//!<Process associated to this part of the figure
     
+  protected:
+    std::mutex mutex_;
+
   private:
     FigureComponent() = delete;
+    FigureComponent(const FigureComponent &) = delete;
+    FigureComponent& operator=(const FigureComponent &) = delete;
+    FigureComponent(FigureComponent &&) = delete;
+    FigureComponent& operator=(FigureComponent &&) = delete;
   };
 
   Figure() = default;

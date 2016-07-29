@@ -150,6 +150,7 @@ HistoStack::SingleHist::SingleHist(const HistoStack &figure,
 }
 
 void HistoStack::SingleHist::RecordEvent(const Baby &baby){
+  lock_guard<mutex> lock(mutex_);
   const HistoStack& stack = static_cast<const HistoStack&>(figure_);
   size_t min_vec_size;
   bool have_vec = false;
@@ -289,25 +290,25 @@ HistoStack::HistoStack(const HistoDef &definition,
   empty.SetStats(false);
   empty.Sumw2(true);
   for(const auto &process: processes){
-    SingleHist hist(*this, process, empty);
-    hist.raw_hist_.SetFillColor(process->GetFillColor());
-    hist.raw_hist_.SetFillStyle(process->GetFillStyle());
-    hist.raw_hist_.SetLineColor(process->GetLineColor());
-    hist.raw_hist_.SetLineStyle(process->GetLineStyle());
-    hist.raw_hist_.SetLineWidth(process->GetLineWidth());
-    hist.raw_hist_.SetMarkerColor(process->GetMarkerColor());
-    hist.raw_hist_.SetMarkerStyle(process->GetMarkerStyle());
-    hist.raw_hist_.SetMarkerSize(process->GetMarkerSize());
+    unique_ptr<SingleHist> hist(new SingleHist(*this, process, empty));
+    hist->raw_hist_.SetFillColor(process->GetFillColor());
+    hist->raw_hist_.SetFillStyle(process->GetFillStyle());
+    hist->raw_hist_.SetLineColor(process->GetLineColor());
+    hist->raw_hist_.SetLineStyle(process->GetLineStyle());
+    hist->raw_hist_.SetLineWidth(process->GetLineWidth());
+    hist->raw_hist_.SetMarkerColor(process->GetMarkerColor());
+    hist->raw_hist_.SetMarkerStyle(process->GetMarkerStyle());
+    hist->raw_hist_.SetMarkerSize(process->GetMarkerSize());
 
     switch(process->type_){
     case Process::Type::data:
-      datas_.emplace_back(new SingleHist(hist));
+      datas_.push_back(move(hist));
       break;
     case Process::Type::background:
-      backgrounds_.emplace_back(new SingleHist(hist));
+      backgrounds_.push_back(move(hist));
       break;
     case Process::Type::signal:
-      signals_.emplace_back(new SingleHist(hist));
+      signals_.push_back(move(hist));
       break;
     default:
       break;

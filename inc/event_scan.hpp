@@ -15,9 +15,6 @@ class EventScan final : public Figure{
  public:
    SingleScan(const EventScan &event_scan,
               const std::shared_ptr<Process> &process);
-   SingleScan& operator=(const SingleScan &) = default;
-   SingleScan(SingleScan &&) = default;
-   SingleScan& operator=(SingleScan &&) = default;
    ~SingleScan() = default;
 
    void RecordEvent(const Baby &baby) final;
@@ -26,6 +23,10 @@ class EventScan final : public Figure{
 
  private:
    SingleScan() = delete;
+   SingleScan(const SingleScan &) = delete;
+   SingleScan& operator=(const SingleScan &) = delete;
+   SingleScan(SingleScan &&) = delete;
+   SingleScan& operator=(SingleScan &&) = delete;
 
    std::ofstream out_;//!<File to which results are printed
    NamedFunc full_cut_;//!<Cached scan&&process cut

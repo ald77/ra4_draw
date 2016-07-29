@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <set>
+#include <mutex>
 
 #include "baby.hpp"
 #include "named_func.hpp"
@@ -29,7 +30,6 @@ public:
   NamedFunc cut_;
 
   std::set<Baby*> Babies() const;
-  static const std::set<std::unique_ptr<Baby> > & BabyPool();
 
   ~Process() = default;
 
@@ -49,6 +49,7 @@ private:
   Process& operator=(Process &&) = delete;
 
   static std::set<std::unique_ptr<Baby> > baby_pool_;
+  static std::mutex mutex_;
 };
 
 template<typename BabyType>
@@ -68,6 +69,7 @@ Process::Process(BabyType * /*dummy_baby*/,
   name_(name),
   type_(type),
   cut_(cut){
+  std::lock_guard<std::mutex> lock(mutex_);
   for(const auto &file: files){
     const auto &full_files = Glob(file);
     for(const auto &full_file: full_files){

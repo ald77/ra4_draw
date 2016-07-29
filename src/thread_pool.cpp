@@ -1,4 +1,5 @@
 #include "thread_pool.hpp"
+#include "TThread.h"
 
 using namespace std;
 
@@ -9,6 +10,7 @@ ThreadPool::ThreadPool():
   stop_at_empty_(),
   mutex_(),
   cv_(){
+  TThread::Initialize();
   size_t num_threads = thread::hardware_concurrency();
   if(num_threads > 2){
     --num_threads;
@@ -25,6 +27,7 @@ ThreadPool::ThreadPool(std::size_t num_threads):
   stop_at_empty_(),
   mutex_(),
   cv_(){
+  TThread::Initialize();
   Resize(num_threads);
 }
 

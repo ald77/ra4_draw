@@ -21,6 +21,7 @@ EventScan::SingleScan::SingleScan(const EventScan &event_scan,
 }
 
 void EventScan::SingleScan::RecordEvent(const Baby &baby){
+  lock_guard<mutex> lock(mutex_);
   const EventScan &scan = static_cast<const EventScan&>(figure_);
   int w = scan.width_;
 

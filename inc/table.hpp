@@ -17,10 +17,6 @@ public:
   public:
     TableColumn(const Table &table,
 		const std::shared_ptr<Process> &process);
-    TableColumn(const TableColumn &) = default;
-    TableColumn& operator=(const TableColumn &) = default;
-    TableColumn(TableColumn &&) = default;
-    TableColumn& operator=(TableColumn &&) = default;
     ~TableColumn() = default;
 
     void RecordEvent(const Baby &baby) final;
@@ -29,6 +25,10 @@ public:
 
   private:
     TableColumn() = delete;
+    TableColumn(const TableColumn &) = delete;
+    TableColumn& operator=(const TableColumn &) = delete;
+    TableColumn(TableColumn &&) = delete;
+    TableColumn& operator=(TableColumn &&) = delete;
 
     std::vector<NamedFunc> proc_and_table_cut_;
     NamedFunc::VectorType cut_vector_, wgt_vector_, val_vector_;

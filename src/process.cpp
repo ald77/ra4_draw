@@ -4,9 +4,11 @@
 
 using namespace std;
 
-std::set<std::unique_ptr<Baby> > Process::baby_pool_{};
+set<unique_ptr<Baby> > Process::baby_pool_{};
+mutex Process::mutex_{};
 
 set<Baby*> Process::Babies() const{
+  lock_guard<mutex> lock(mutex_);
   set<Baby*> babies;
   for(const auto &baby: baby_pool_){
     const auto &procs = baby->processes_;
@@ -15,8 +17,4 @@ set<Baby*> Process::Babies() const{
     }
   }
   return babies;
-}
-
-const std::set<std::unique_ptr<Baby> > & Process::BabyPool(){
-  return baby_pool_;
 }
