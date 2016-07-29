@@ -21,21 +21,12 @@
 #include "histo_stack.hpp"
 #include "utilities.hpp"
 
-
 using namespace std;
 using namespace PlotOptTypes;
 
 namespace{
   bool single_thread = true;
   TString method = "";
-}
-
-template<typename T>
-shared_ptr<Process> Proc(const string process_name, Process::Type type,
-                         int color, const set<string> &files, const string &cut = "1"){
-  return make_shared<Process>(process_name, type, color,
-                              unique_ptr<Baby>(new T(files)),
-                              cut);
 }
 
 int main(int argc, char *argv[]){
@@ -50,7 +41,7 @@ int main(int argc, char *argv[]){
 
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
-  if(Contains(hostname, "cms") || Contains(hostname, "compute-"))  
+  if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
   string lowmet_fndata(bfolder+"/cms2r0/babymaker/babies/"+rcfolder+"2016_06_26/data/merged_met150/");
   string himet_fndata(bfolder+"/cms2r0/babymaker/babies/"+rcfolder+"2016_06_26/data/merged_standard/");
@@ -61,61 +52,58 @@ int main(int argc, char *argv[]){
 
   string baseline("nleps>=1 && ht>500 && met>150 && met<500 && pass && njets>=3");
 
-
   Palette colors("txt/colors.txt", "default");
 
-
-  auto ndata = Proc<Baby_full>("Data (2016, 2.6 fb^{-1})", Process::Type::data, kBlack, 
-    {lowmet_fndata+"/*.root", himet_fndata+"/*.root"}, 
+  auto ndata = Process::MakeShared<Baby_full>("Data (2016, 2.6 fb^{-1})", Process::Type::data, kBlack,
+    {lowmet_fndata+"/*.root", himet_fndata+"/*.root"},
     baseline+"&&json2p6 && (trig[4]||trig[8]||trig[13]||trig[33])");
-  auto odata = Proc<Baby_full>("Data (2015, 2.3 fb^{-1})", Process::Type::data, kRed+1, {himet_fodata+"/*.root"}, 
-                                  baseline+" && (trig[4]||trig[8]||trig[28]||trig[14])");
-  
+  auto odata = Process::MakeShared<Baby_full>("Data (2015, 2.3 fb^{-1})", Process::Type::data, kRed+1, {himet_fodata+"/*.root"},
+                                              baseline+" && (trig[4]||trig[8]||trig[28]||trig[14])");
 
-  auto tt1l = Proc<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
+
+  auto tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
     {lowmet_fmc+"*_TTJets*Lept*.root", lowmet_fmc+"*_TTJets_HT*.root",
-    himet_fmc+"*_TTJets*Lept*.root", himet_fmc+"*_TTJets_HT*.root"},
+        himet_fmc+"*_TTJets*Lept*.root", himet_fmc+"*_TTJets_HT*.root"},
     baseline+" && stitch && ntruleps==1");
-  auto tt2l = Proc<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
+  auto tt2l = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
     {lowmet_fmc+"*_TTJets*Lept*.root", lowmet_fmc+"*_TTJets_HT*.root",
-    himet_fmc+"*_TTJets*Lept*.root", himet_fmc+"*_TTJets_HT*.root"},
+        himet_fmc+"*_TTJets*Lept*.root", himet_fmc+"*_TTJets_HT*.root"},
     baseline+" && stitch && ntruleps==2");
-  auto other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
+  auto other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     {lowmet_fmc+"*_WJetsToLNu*.root",lowmet_fmc+"*_ST_*.root",
-      lowmet_fmc+"*_TTW*.root",lowmet_fmc+"*_TTZ*.root",
-      lowmet_fmc+"*DYJetsToLL*.root",lowmet_fmc+"*QCD_HT*.root",
-      lowmet_fmc+"*_ZJet*.root",lowmet_fmc+"*_ttHJetTobb*.root",
-      lowmet_fmc+"*_TTGJets*.root",lowmet_fmc+"*_TTTT*.root",
-      lowmet_fmc+"*_WH_HToBB*.root",lowmet_fmc+"*_ZH_HToBB*.root",
-      lowmet_fmc+"*_WWTo*.root",lowmet_fmc+"*_WZ*.root",lowmet_fmc+"*_ZZ_*.root",
-      himet_fmc+"*_WJetsToLNu*.root",himet_fmc+"*_ST_*.root",
-      himet_fmc+"*_TTW*.root",himet_fmc+"*_TTZ*.root",
-      himet_fmc+"*DYJetsToLL*.root",himet_fmc+"*QCD_HT*.root",
-      himet_fmc+"*_ZJet*.root",himet_fmc+"*_ttHJetTobb*.root",
-      himet_fmc+"*_TTGJets*.root",himet_fmc+"*_TTTT*.root",
-      himet_fmc+"*_WH_HToBB*.root",himet_fmc+"*_ZH_HToBB*.root",
-      himet_fmc+"*_WWTo*.root",himet_fmc+"*_WZ*.root",himet_fmc+"*_ZZ_*.root"},
-      baseline+" && stitch");
+        lowmet_fmc+"*_TTW*.root",lowmet_fmc+"*_TTZ*.root",
+        lowmet_fmc+"*DYJetsToLL*.root",lowmet_fmc+"*QCD_HT*.root",
+        lowmet_fmc+"*_ZJet*.root",lowmet_fmc+"*_ttHJetTobb*.root",
+        lowmet_fmc+"*_TTGJets*.root",lowmet_fmc+"*_TTTT*.root",
+        lowmet_fmc+"*_WH_HToBB*.root",lowmet_fmc+"*_ZH_HToBB*.root",
+        lowmet_fmc+"*_WWTo*.root",lowmet_fmc+"*_WZ*.root",lowmet_fmc+"*_ZZ_*.root",
+        himet_fmc+"*_WJetsToLNu*.root",himet_fmc+"*_ST_*.root",
+        himet_fmc+"*_TTW*.root",himet_fmc+"*_TTZ*.root",
+        himet_fmc+"*DYJetsToLL*.root",himet_fmc+"*QCD_HT*.root",
+        himet_fmc+"*_ZJet*.root",himet_fmc+"*_ttHJetTobb*.root",
+        himet_fmc+"*_TTGJets*.root",himet_fmc+"*_TTTT*.root",
+        himet_fmc+"*_WH_HToBB*.root",himet_fmc+"*_ZH_HToBB*.root",
+        himet_fmc+"*_WWTo*.root",himet_fmc+"*_WZ*.root",himet_fmc+"*_ZZ_*.root"},
+    baseline+" && stitch");
 
-  auto tt1l_74x = Proc<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
+  auto tt1l_74x = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
     {himet_fmc_74x+"*_TTJets*Lept*.root", himet_fmc_74x+"*_TTJets_HT*.root"},
     baseline+" && stitch && ntruleps==1");
-  auto tt2l_74x = Proc<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
+  auto tt2l_74x = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
     {himet_fmc_74x+"*_TTJets*Lept*.root", himet_fmc_74x+"*_TTJets_HT*.root"},
     baseline+" && stitch && ntruleps==2");
-  auto other_74x = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
+  auto other_74x = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     {himet_fmc_74x+"*_WJetsToLNu*.root",himet_fmc_74x+"*_ST_*.root",
-      himet_fmc_74x+"*_TTW*.root",himet_fmc_74x+"*_TTZ*.root",
-      himet_fmc_74x+"*DYJetsToLL*.root",himet_fmc_74x+"*QCD_HT*.root",
-      himet_fmc_74x+"*_ZJet*.root",himet_fmc_74x+"*_ttHJetTobb*.root",
-      himet_fmc_74x+"*_TTGJets*.root",himet_fmc_74x+"*_TTTT*.root",
-      himet_fmc_74x+"*_WH_HToBB*.root",himet_fmc_74x+"*_ZH_HToBB*.root",
-      himet_fmc_74x+"*_WWTo*.root",himet_fmc_74x+"*_WZ*.root",himet_fmc_74x+"*_ZZ_*.root"},
-      baseline+" && stitch");
+        himet_fmc_74x+"*_TTW*.root",himet_fmc_74x+"*_TTZ*.root",
+        himet_fmc_74x+"*DYJetsToLL*.root",himet_fmc_74x+"*QCD_HT*.root",
+        himet_fmc_74x+"*_ZJet*.root",himet_fmc_74x+"*_ttHJetTobb*.root",
+        himet_fmc_74x+"*_TTGJets*.root",himet_fmc_74x+"*_TTTT*.root",
+        himet_fmc_74x+"*_WH_HToBB*.root",himet_fmc_74x+"*_ZH_HToBB*.root",
+        himet_fmc_74x+"*_WWTo*.root",himet_fmc_74x+"*_WZ*.root",himet_fmc_74x+"*_ZZ_*.root"},
+    baseline+" && stitch");
 
   vector<shared_ptr<Process> > procs_2015 = {odata, tt1l_74x, tt2l_74x, other_74x};
   vector<shared_ptr<Process> > lowmet_procs = {ndata, tt1l, tt2l, other};
-
 
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
   log_lumi.Title(TitleType::preliminary)
@@ -136,64 +124,61 @@ int main(int argc, char *argv[]){
 
   string mjname = "M_{J}^{with lep}";
   if(do_rc) mjname = "M_{J}^{no lep}";
-  
+
   /////////// 1 lepton
   pm_2015.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-				    "met>200&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=3", "weight", 
-				    {250., 400.}),procs_2015, plot_types);
+                                    "met>200&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=3", "weight",
+                                    {250., 400.}),procs_2015, plot_types);
   if(!do_rc){
     pm_2015.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-				      "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=5", "weight", 
-				      {250., 400.}),procs_2015, plot_types);
+                                      "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=5", "weight",
+                                      {250., 400.}),procs_2015, plot_types);
     pm_2015.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-				      "met>200&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=6", "weight", 
-				      {250., 400.}),procs_2015, plot_types);
+                                      "met>200&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=6", "weight",
+                                      {250., 400.}),procs_2015, plot_types);
   }
   pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-  			       "met>150&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=3", "weight", 
-  			       {250., 400.}),lowmet_procs, plot_types);
+                               "met>150&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=3", "weight",
+                               {250., 400.}),lowmet_procs, plot_types);
   if(!do_rc){
     pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-				 "met>150&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=5", "weight", 
-				 {250., 400.}),lowmet_procs, plot_types);
+                                 "met>150&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=5", "weight",
+                                 {250., 400.}),lowmet_procs, plot_types);
     pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-				 "met>150&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=6", "weight", 
-				 {250., 400.}),lowmet_procs, plot_types);
+                                 "met>150&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=6", "weight",
+                                 {250., 400.}),lowmet_procs, plot_types);
   }
-
 
   /////////// 2 leptons
   pm_2015.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-			       "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=3", "weight", 
-				    {250., 400.}),procs_2015, plot_types);
+                                    "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=3", "weight",
+                                    {250., 400.}),procs_2015, plot_types);
   if(!do_rc){
     pm_2015.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-				      "met>200&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=5", "weight", 
-				      {250., 400.}),procs_2015, plot_types);
+                                      "met>200&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=5", "weight",
+                                      {250., 400.}),procs_2015, plot_types);
     pm_2015.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-				      "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=6", "weight", 
-				      {250., 400.}),procs_2015, plot_types);
+                                      "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=6", "weight",
+                                      {250., 400.}),procs_2015, plot_types);
   }
 
   pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-  			       "met>150&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=3", "weight", 
-  			       {250., 400.}),lowmet_procs, plot_types);
+                               "met>150&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=3", "weight",
+                               {250., 400.}),lowmet_procs, plot_types);
   if(!do_rc){
     pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-				 "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets==3", "weight", 
-				 {250., 400.}),lowmet_procs, plot_types);
+                                 "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets==3", "weight",
+                                 {250., 400.}),lowmet_procs, plot_types);
     pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-				 "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets==4", "weight", 
-				 {250., 400.}),lowmet_procs, plot_types);
+                                 "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets==4", "weight",
+                                 {250., 400.}),lowmet_procs, plot_types);
     pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-				 "met>150&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=5", "weight", 
-				 {250., 400.}),lowmet_procs, plot_types);
+                                 "met>150&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=5", "weight",
+                                 {250., 400.}),lowmet_procs, plot_types);
     pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-				 "met>150&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=6", "weight", 
-				 {250., 400.}),lowmet_procs, plot_types);
+                                 "met>150&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=6", "weight",
+                                 {250., 400.}),lowmet_procs, plot_types);
   }
-
-
 
   if(single_thread) pm.multithreaded_ = false;
   pm.MakePlots(lumi);
@@ -212,9 +197,9 @@ void GetOptions(int argc, char *argv[]){
     char opt = -1;
     int option_index;
     opt = getopt_long(argc, argv, "s", long_options, &option_index);
-    
+
     if( opt == -1) break;
-    
+
     string optname;
     switch(opt){
     case 's':

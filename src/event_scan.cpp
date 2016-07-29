@@ -106,17 +106,17 @@ void EventScan::Print(double /*luminosity*/,
   }
 }
 
-set<shared_ptr<Process> > EventScan::GetProcesses() const{
-  set<shared_ptr<Process> > processes;
+set<const Process*> EventScan::GetProcesses() const{
+  set<const Process *> processes;
   for(const auto &scan: scans_){
-    processes.insert(scan->process_);
+    processes.insert(scan->process_.get());
   }
   return processes;
 }
 
-Figure::FigureComponent * EventScan::GetComponent(const shared_ptr<Process> &process){
+Figure::FigureComponent * EventScan::GetComponent(const Process *process){
   for(const auto &scan: scans_){
-    if(scan->process_ == process) return scan.get();
+    if(scan->process_.get() == process) return scan.get();
   }
   return nullptr;
 }

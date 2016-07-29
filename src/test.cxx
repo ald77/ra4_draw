@@ -1,5 +1,6 @@
 #include "test.hpp"
 
+#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -20,20 +21,13 @@
 #include "table.hpp"
 #include "histo_stack.hpp"
 #include "event_scan.hpp"
+#include "utilities.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
 
 namespace{
   bool single_thread = false;
-}
-
-template<typename T>
-shared_ptr<Process> Proc(const string process_name, Process::Type type,
-                         int color, const set<string> &files, const string &cut = "1"){
-  return make_shared<Process>(process_name, type, color,
-                              unique_ptr<Baby>(new T(files)),
-                              cut);
 }
 
 int main(int argc, char *argv[]){
@@ -46,33 +40,33 @@ int main(int argc, char *argv[]){
 
   Palette colors("txt/colors.txt", "default");
 
-  auto tt1l = Proc<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
+  auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
     {trig_skim_mc+"*_TTJets*Lept*.root", trig_skim_mc+"*_TTJets_HT*.root"},
     "ntruleps<=1&&stitch");
-  auto tt2l = Proc<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
+  auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
     {trig_skim_mc+"*_TTJets*Lept*.root", trig_skim_mc+"*_TTJets_HT*.root"},
     "ntruleps>=2&&stitch");
-  auto wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
+  auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
     {trig_skim_mc+"*_WJetsToLNu*.root"});
-  auto single_t = Proc<Baby_full>("Single t", Process::Type::background, colors("single_t"),
+  auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
     {trig_skim_mc+"*_ST_*.root"});
-  auto ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
+  auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
     {trig_skim_mc+"*_TTWJets*.root", trig_skim_mc+"*_TTZTo*.root"});
-  auto other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
+  auto other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     {trig_skim_mc+"*DYJetsToLL*.root", trig_skim_mc+"*_QCD_HT*.root",
         trig_skim_mc+"*_ZJet*.root", trig_skim_mc+"*_WWTo*.root",
         trig_skim_mc+"*ggZH_HToBB*.root", trig_skim_mc+"*ttHJetTobb*.root",
         trig_skim_mc+"*_TTGJets*.root", trig_skim_mc+"*_TTTT_*.root",
         trig_skim_mc+"*_WH_HToBB*.root", trig_skim_mc+"*_WZTo*.root",
-        trig_skim_mc+"*_ZH_HToBB*.root", trig_skim_mc+"_ZZ_*.root"});
+        trig_skim_mc+"*_ZH_HToBB*.root", trig_skim_mc+"*_ZZ_*.root"});
 
-  auto t1tttt_nc = Proc<Baby_full>("T1tttt(1500,100)", Process::Type::signal, colors("t1tttt"),
+  auto t1tttt_nc = Process::MakeShared<Baby_full>("T1tttt(1500,100)", Process::Type::signal, colors("t1tttt"),
     {trig_skim_mc+"*SMS-T1tttt_mGluino-1500_mLSP-100*.root"});
-  auto t1tttt_c = Proc<Baby_full>("T1tttt(1200,800)", Process::Type::signal, colors("t1tttt"),
+  auto t1tttt_c = Process::MakeShared<Baby_full>("T1tttt(1200,800)", Process::Type::signal, colors("t1tttt"),
     {trig_skim_mc+"*SMS-T1tttt_mGluino-1200_mLSP-800*.root"});
   t1tttt_c->SetLineStyle(2);
 
-  auto data = Proc<Baby_full>("Data", Process::Type::data, kBlack,
+  auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     {"/net/cms27/cms27r0/babymaker/2016_04_29/data/merged_1lht500met200/*.root"},"pass&&(trig[4]||trig[8])");
 
   vector<shared_ptr<Process> > full_trig_skim = {data, t1tttt_nc, t1tttt_c, tt1l, tt2l, wjets, single_t, ttv, other};
@@ -116,23 +110,24 @@ int main(int argc, char *argv[]){
                                "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {140.}),
                       full_trig_skim, all_plot_types);
   pm.Push<HistoStack>(HistoDef("sometag", 15, 0., 1500., "mj08", "M_{J}^{0.8} [GeV]",
-			       "nleps==1&&ht>500&&met>200", "weight", {400.}),
+                               "nleps==1&&ht>500&&met>200", "weight", {400.}),
                       full_trig_skim, all_plot_types);
   pm.Push<Table>("cutflow", vector<TableRow>{
       TableRow("Baseline"),
-	TableRow("No Selection", "1"),
-	TableRow("$1\\ell$, $H_{T}>500$, $E_{\\text{T}}^{\\text{miss}}>200$", "nleps==1&&ht>500&&met>200"),
-	TableRow("$N_{\\text{jets}}\\geq6$", "nleps==1&&ht>500&&met>200&&njets>=6"),
-	TableRow("$N_{b}\\geq1$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1"),
-	TableRow("$M_{J}>250$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1&&mj14>250", 1, 0),
-	TableRow("ABCD Signal Region"),
-	TableRow("$m_{T}>140$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1&&mj14>250&&mt>140"),
-	TableRow("$M_{J}>400$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1&&mj14>400&&mt>140"),
-	TableRow("Binning"),
-	TableRow("$E_{\\text{T}}^{\\text{miss}}>500$", "nleps==1&&ht>500&&met>500&&njets>=6&&nbm>=1&&mj14>400&&mt>140"),
-	TableRow("$N_{\\text{jets}}\\geq9$", "nleps==1&&ht>500&&met>500&&njets>=9&&nbm>=1&&mj14>400&&mt>140"),
-	TableRow("$N_{b}\\geq3$", "nleps==1&&ht>500&&met>500&&njets>=9&&nbm>=3&&mj14>400&&mt>140")
-	}, full_trig_skim);
+        TableRow("No Selection", "1"),
+        TableRow("$1\\ell$, $H_{T}>500$, $E_{\\text{T}}^{\\text{miss}}>200$", "nleps==1&&ht>500&&met>200"),
+        TableRow("$N_{\\text{jets}}\\geq6$", "nleps==1&&ht>500&&met>200&&njets>=6"),
+        TableRow("$N_{b}\\geq1$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1"),
+        TableRow("$M_{J}>250$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1&&mj14>250", 1, 0),
+        TableRow("ABCD Signal Region"),
+        TableRow("$m_{T}>140$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1&&mj14>250&&mt>140"),
+        TableRow("$M_{J}>400$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1&&mj14>400&&mt>140"),
+        TableRow("Binning"),
+        TableRow("$E_{\\text{T}}^{\\text{miss}}>500$", "nleps==1&&ht>500&&met>500&&njets>=6&&nbm>=1&&mj14>400&&mt>140"),
+        TableRow("$N_{\\text{jets}}\\geq9$", "nleps==1&&ht>500&&met>500&&njets>=9&&nbm>=1&&mj14>400&&mt>140"),
+        TableRow("$N_{b}\\geq3$", "nleps==1&&ht>500&&met>500&&njets>=9&&nbm>=3&&mj14>400&&mt>140")
+        }, full_trig_skim);
+  pm.Push<EventScan>("scan", true, vector<NamedFunc>{"weight", "met"}, vector<shared_ptr<Process> >{tt1l});
 
   if(single_thread) pm.multithreaded_ = false;
   pm.MakePlots(lumi);
@@ -153,9 +148,9 @@ void GetOptions(int argc, char *argv[]){
     char opt = -1;
     int option_index;
     opt = getopt_long(argc, argv, "s", long_options, &option_index);
-    
+
     if( opt == -1) break;
-    
+
     string optname;
     switch(opt){
     case 's':

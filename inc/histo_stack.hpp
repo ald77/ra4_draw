@@ -62,9 +62,9 @@ public:
   void Print(double luminosity,
              const std::string &subdir) final;
 
-  std::set<std::shared_ptr<Process> > GetProcesses() const final;
+  std::set<const Process*> GetProcesses() const final;
 
-  FigureComponent * GetComponent(const std::shared_ptr<Process> &process) final;
+  FigureComponent * GetComponent(const Process *process) final;
 
   HistoDef definition_;//!<Specification of content: plotted variable, binning, etc.
   std::vector<PlotOpt> plot_options_;//!<Styles with which to draw plot
@@ -83,12 +83,6 @@ private:
   HistoStack(const HistoStack &) = delete;
   HistoStack& operator=(const HistoStack &) = delete;
   HistoStack() = delete;
-
-  const std::vector<SingleHist> & GetHistoList(const std::shared_ptr<Process> &process) const;
-  std::vector<SingleHist> & GetHistoList(const std::shared_ptr<Process> &process);
-
-  const SingleHist & Histo(const std::shared_ptr<Process> &process) const;
-  SingleHist & Histo(const std::shared_ptr<Process> &process);
 
   void RefreshScaledHistos();
   void InitializeHistos() const;
@@ -133,7 +127,7 @@ private:
 
   void GetTitleSize(double &width, double &height, bool in_pixels) const;
 
-  const std::vector<std::unique_ptr<SingleHist> >& GetComponentList(const std::shared_ptr<Process> &process);
+  const std::vector<std::unique_ptr<SingleHist> >& GetComponentList(const Process *process);
 };
 
 #endif

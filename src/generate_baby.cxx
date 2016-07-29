@@ -421,11 +421,13 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "#include \"TChain.h\"\n\n";
   file << "#include \"TString.h\"\n\n";
 
+  file << "class Process;\n";
   file << "class NamedFunc;\n\n";
 
   file << "class Baby{\n";
   file << "public:\n";
-  file << "  explicit Baby(const std::set<std::string> &file_names);\n";
+  file << "  explicit Baby(const std::set<std::string> &file_names,\n";
+  file << "                const std::set<const Process*> &processes = std::set<const Process*>{});\n";
   file << "  Baby(Baby &&) = default;\n";
   file << "  Baby& operator=(Baby &&) = default;\n";
   file << "  virtual ~Baby() = default;\n\n";
@@ -436,6 +438,8 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "  const std::set<std::string> & FileNames() const;\n\n";
   file << "  int SampleType() const;\n";
   file << "  int SetSampleType(const TString &filename);\n\n";
+
+  file << "  std::set<const Process*> processes_;\n\n";
 
   for(const auto &var: vars){
     if(var.ImplementInBase()){
@@ -601,7 +605,9 @@ void WriteBaseSource(const set<Variable> &vars){
 
   file << "  \\param[in] file_names ntuple files to read from\n";
   file << "*/\n";
-  file << "Baby::Baby(const set<string> &file_names):\n";
+  file << "Baby::Baby(const set<string> &file_names,\n";
+  file << "           const set<const Process*> &processes):\n";
+  file << "  processes_(processes),\n";
   file << "  chain_(nullptr),\n";
   file << "  file_names_(file_names),\n";
   file << "  total_entries_(0),\n";
@@ -768,7 +774,7 @@ void WriteSpecializedHeader(const set<Variable> &vars, const string &type){
 
   file << "class Baby_" << type << ": virtual public Baby{\n";
   file << "public:\n";
-  file << "  explicit Baby_" << type << "(const std::set<std::string> &file_names);\n";
+  file << "  explicit Baby_" << type << "(const std::set<std::string> &file_names, const std::set<const Process*> &processes = std::set<const Process*>{});\n";
   file << "  virtual ~Baby_" << type << "() = default;\n\n";
 
   file << "  virtual void GetEntry(long entry);\n\n";
@@ -841,15 +847,15 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
 
   file << "  \\param[in] file_names ntuple files to read from\n";
   file << "*/\n";
-  file << "Baby_" << type << "::Baby_" << type << "(const set<string> &file_names):\n";
+  file << "Baby_" << type << "::Baby_" << type << "(const set<string> &file_names, const set<const Process*> &processes):\n";
   int implemented_here = 0;
   for(const auto & var: vars){
     if(var.ImplementIn(type) || var.EverythingIn(type)) ++implemented_here;
   }
   if(implemented_here == 0){
-    file << "  Baby(file_names){\n";
+    file << "  Baby(file_names, processes){\n";
   }else{
-    file << "  Baby(file_names),\n";
+    file << "  Baby(file_names, processes),\n";
     set<Variable>::const_iterator last = vars.cend();
     for(auto var = vars.cbegin(); var != vars.cend(); ++var){
       if(var->ImplementIn(type) || var->EverythingIn(type)){

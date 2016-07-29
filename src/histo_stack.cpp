@@ -444,24 +444,24 @@ void HistoStack::Print(double luminosity,
   }
 }
 
-set<shared_ptr<Process> > HistoStack::GetProcesses() const{
-  set<shared_ptr<Process> > processes;
+set<const Process*> HistoStack::GetProcesses() const{
+  set<const Process*> processes;
   for(const auto &proc: backgrounds_){
-    processes.insert(proc->process_);
+    processes.insert(proc->process_.get());
   }
   for(const auto &proc: signals_){
-    processes.insert(proc->process_);
+    processes.insert(proc->process_.get());
   }
   for(const auto &proc: datas_){
-    processes.insert(proc->process_);
+    processes.insert(proc->process_.get());
   }
   return processes;
 }
 
-Figure::FigureComponent * HistoStack::GetComponent(const shared_ptr<Process> &process){
+Figure::FigureComponent * HistoStack::GetComponent(const Process *process){
   const auto &component_list = GetComponentList(process);
   for(const auto &component: component_list){
-    if(component->process_ == process){
+    if(component->process_.get() == process){
       return component.get();
     }
   }
@@ -1335,7 +1335,7 @@ void HistoStack::GetTitleSize(double &width, double &height, bool in_pixels) con
   }
 }
 
-const vector<unique_ptr<HistoStack::SingleHist> >& HistoStack::GetComponentList(const shared_ptr<Process> &process){
+const vector<unique_ptr<HistoStack::SingleHist> >& HistoStack::GetComponentList(const Process *process){
   switch(process->type_){
   case Process::Type::data:
     return datas_;

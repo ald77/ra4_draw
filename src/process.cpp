@@ -1,21 +1,22 @@
 #include "process.hpp"
 
+#include "utilities.hpp"
+
 using namespace std;
 
-Process::Process(const string &name,
-                 Type type,
-                 int color,
-                 unique_ptr<Baby> baby,
-                 const NamedFunc &cut):
-  TAttFill(color, type == Type::background ? 1001 : 0),
-  TAttLine(type == Type::background ? 1 : color,
-           1,
-           type == Type::background ? 1 :
-           type == Type::signal ? 5
-           : 3),
-  TAttMarker(color, 20, 1.2),
-  name_(name),
-  type_(type),
-  baby_(move(baby)),
-  cut_(cut){
+std::set<std::unique_ptr<Baby> > Process::baby_pool_{};
+
+set<Baby*> Process::Babies() const{
+  set<Baby*> babies;
+  for(const auto &baby: baby_pool_){
+    const auto &procs = baby->processes_;
+    if(procs.find(this) != procs.end()){
+      babies.insert(baby.get());
+    }
   }
+  return babies;
+}
+
+const std::set<std::unique_ptr<Baby> > & Process::BabyPool(){
+  return baby_pool_;
+}

@@ -26,10 +26,10 @@ namespace {
   double CSVMedium = 0.800;
 }
 
-void addSlices(PlotMaker &pm, const vector<double> slices, NamedFunc svar, 
-               const vector<double> xbins, NamedFunc xvar, string xlabel, 
-               const NamedFunc &baseline, const NamedFunc &weight, 
-               const vector<shared_ptr<Process> > &proc, 
+void addSlices(PlotMaker &pm, const vector<double> slices, NamedFunc svar,
+               const vector<double> xbins, NamedFunc xvar, string xlabel,
+               const NamedFunc &baseline, const NamedFunc &weight,
+               const vector<shared_ptr<Process> > &proc,
                const vector<PlotOpt> &plot_types, int tag_digits=0);
 
 bool isRelIsoEl(const Baby &b, size_t iel);
@@ -47,34 +47,32 @@ NamedFunc::ScalarType isrSystemPt(const Baby &b);
 NamedFunc::ScalarType nJetsWeights_ttisr(const Baby &b, bool use_baby_nisr);
 NamedFunc::ScalarType nJetsWeights_visr(const Baby &b);
 
-
 int main(){
   gErrorIgnoreLevel = 6000;
 
-
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
-  if(Contains(hostname, "cms") || Contains(hostname, "compute-"))  
+  if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   Palette colors("txt/colors.txt", "default");
 
   //// Processes for ISR skims
   string dir_mc_isr = bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_"+isrtype+"/";
-  auto tt1l = Proc<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
+  auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
     {dir_mc_isr+"*_TTJets*SingleLept*.root"}, "ntruleps<=1");
-  auto tt2l = Proc<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
+  auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
     {dir_mc_isr+"*_TTJets*DiLept*.root"}, "ntruleps>=2");
-  auto single_t = Proc<Baby_full>("Single t", Process::Type::background, colors("single_t"),
+  auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
     {dir_mc_isr+"*_ST_*.root"});
-  auto dyjets = Proc<Baby_full>("DY+jets", Process::Type::background, kOrange-3,
+  auto dyjets = Process::MakeShared<Baby_full>("DY+jets", Process::Type::background, kOrange-3,
     //{dir_mc_isr+"*DYJetsToLL_M-50_Tu*.root"});
     {dir_mc_isr+"*DYJetsToLL_M-50_*.root"},"stitch"); // Inclusive + HT-binned DY
-  auto ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
+  auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
     {dir_mc_isr+"*_TTWJets*.root", dir_mc_isr+"*_TTZTo*.root", dir_mc_isr+"*_TTGJets*.root"});
-  auto other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
+  auto other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     {dir_mc_isr+"*_WJetsToLNu*.root",
-	// dir_mc_isr+"*QCD_HT*.root", // Has some ugly high-weight events
+        // dir_mc_isr+"*QCD_HT*.root", // Has some ugly high-weight events
         dir_mc_isr+"*_ZJet*.root", dir_mc_isr+"*_WWTo*.root",
         dir_mc_isr+"*ggZH_HToBB*.root", dir_mc_isr+"*ttHJetTobb*.root",
         dir_mc_isr+"*_TTTT_*.root",
@@ -83,16 +81,16 @@ int main(){
 
   //// For "honest" closure
   string dir_mc_isr_alg = bfolder+"/cms2r0/babymaker/babies/2016_07_18/mc/merged_"+isrtype+"/";
-  auto tt1l_alg = Proc<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
+  auto tt1l_alg = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
     {dir_mc_isr_alg+"*_TTJets*SingleLept*.root"}, "ntruleps<=1");
-  auto tt2l_alg = Proc<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
+  auto tt2l_alg = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
     {dir_mc_isr_alg+"*_TTJets*DiLept*.root"}, "ntruleps>=2");
 
   //// Only used for W+jets
-  auto wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
+  auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
     {dir_mc_isr+"*_WJetsToLNu*.root"},
     "stitch");
-  auto other_w = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
+  auto other_w = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     {dir_mc_isr+"*DYJetsToLL_M-50_Tu*.root",dir_mc_isr+"*QCD_HT*.root",
         dir_mc_isr+"*_ZJet*.root", dir_mc_isr+"*_WWTo*.root",
         dir_mc_isr+"*ggZH_HToBB*.root", dir_mc_isr+"*ttHJetTobb*.root",
@@ -102,7 +100,7 @@ int main(){
 
   string dir_data_isr = bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/skim_"+isrtype+"/";
   string lumi_label = RoundNumber(lumi,1).Data();
-  auto data = Proc<Baby_full>("Data "+lumi_label+" fb^{-1}", Process::Type::data, kBlack,
+  auto data = Process::MakeShared<Baby_full>("Data "+lumi_label+" fb^{-1}", Process::Type::data, kBlack,
     {dir_data_isr+"*.root"},
     "pass && (trig[19]||trig[23])");
 
@@ -114,41 +112,40 @@ int main(){
 
   vector<shared_ptr<Process> > procs_alg = {data, tt2l_alg, tt1l_alg, dyjets, single_t, ttv, other};
 
-
   //// Processes for 1l ttbar closure
   string dir_mc_std(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/");
   string dir_data_std(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
 
-  auto std_data = Proc<Baby_full>("Data", Process::Type::data, kBlack, 
-    {dir_data_std+"/*.root"}, 
+  auto std_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
+    {dir_data_std+"/*.root"},
     "(trig[4]||trig[8]||trig[13]||trig[33])");
 
-  auto std_tt1l = Proc<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
+  auto std_tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
     {dir_mc_std+"*_TTJets*SingleLept*.root"},
     "ntruleps==1");
-  auto std_tt2l = Proc<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
+  auto std_tt2l = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
     {dir_mc_std+"*_TTJets*DiLept*.root"},
     "ntruleps==2");
-  auto std_wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
+  auto std_wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
     {dir_mc_std+"*_WJetsToLNu*.root"},
     "stitch");
-  auto std_singlet = Proc<Baby_full>("Single t", Process::Type::background, colors("single_t"),
+  auto std_singlet = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
     {dir_mc_std+"*_ST_*.root"});
-  auto std_ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
+  auto std_ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
     {dir_mc_std+"*_TTWJets*.root", dir_mc_std+"*_TTZTo*.root"});
-  auto std_other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
+  auto std_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     {dir_mc_std+"*DYJetsToLL*.root",dir_mc_std+"*QCD_HT*.root",
-	dir_mc_std+"*_ZJet*.root",dir_mc_std+"*_ttHJetTobb*.root",
-	dir_mc_std+"*_TTGJets*.root",dir_mc_std+"*_TTTT*.root",
-	dir_mc_std+"*_WH_HToBB*.root",dir_mc_std+"*_ZH_HToBB*.root",
-	dir_mc_std+"*_WWTo*.root",dir_mc_std+"*_WZ*.root",dir_mc_std+"*_ZZ_*.root"},
+        dir_mc_std+"*_ZJet*.root",dir_mc_std+"*_ttHJetTobb*.root",
+        dir_mc_std+"*_TTGJets*.root",dir_mc_std+"*_TTTT*.root",
+        dir_mc_std+"*_WH_HToBB*.root",dir_mc_std+"*_ZH_HToBB*.root",
+        dir_mc_std+"*_WWTo*.root",dir_mc_std+"*_WZ*.root",dir_mc_std+"*_ZZ_*.root"},
     "stitch");
 
   string dir_mc_std_alg = bfolder+"/cms2r0/babymaker/babies/2016_07_18/mc/merged_standard/";
-  auto std_tt1l_alg = Proc<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
+  auto std_tt1l_alg = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
     {dir_mc_std_alg+"*_TTJets*SingleLept*.root"},
     "ntruleps==1");
-  auto std_tt2l_alg = Proc<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
+  auto std_tt2l_alg = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
     {dir_mc_std_alg+"*_TTJets*DiLept*.root"},
     "ntruleps==2");
 
@@ -258,7 +255,7 @@ int main(){
       pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[1], "2^{nd} ISR jet p_{T} [GeV]", baseline && nisrjets20>1, iweight), *iprocs, plot_types);
       pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[2], "3^{rd} ISR jet p_{T} [GeV]", baseline && nisrjets20>2, iweight), *iprocs, plot_types);
       pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[3], "4^{th} ISR jet p_{T} [GeV]", baseline && nisrjets20>3, iweight), *iprocs, plot_types);
-    
+
       pm.Push<HistoStack>(HistoDef(isrtype, ptbins, max_reliso_elspt, "Leading electron p_{T} [GeV]", baseline && nreliso_els>0., iweight), *iprocs, plot_types);
       pm.Push<HistoStack>(HistoDef(isrtype, ptbins, max_reliso_muspt, "Leading muon p_{T} [GeV]", baseline && nreliso_mus>0., iweight), *iprocs, plot_types);
 
@@ -275,20 +272,18 @@ int main(){
     } // if not wjets_tt1l
   } // Loop over weights
 
-
-
   if (single_thread) pm.multithreaded_ = false;
   pm.MakePlots(lumi);
 }
 
-void addSlices(PlotMaker &pm, const vector<double> slices, NamedFunc svar, 
-               const vector<double> xbins, NamedFunc xvar, string xlabel, 
-               const NamedFunc &baseline, const NamedFunc &weight, 
-               const vector<shared_ptr<Process> > &proc, 
+void addSlices(PlotMaker &pm, const vector<double> slices, NamedFunc svar,
+               const vector<double> xbins, NamedFunc xvar, string xlabel,
+               const NamedFunc &baseline, const NamedFunc &weight,
+               const vector<shared_ptr<Process> > &proc,
                const vector<PlotOpt> &plot_types, int tag_digits){
 
   //add the inclusive version first
-  pm.Push<HistoStack>(HistoDef(isrtype+"_incl", xbins, xvar, xlabel, baseline, weight), proc, plot_types);  
+  pm.Push<HistoStack>(HistoDef(isrtype+"_incl", xbins, xvar, xlabel, baseline, weight), proc, plot_types);
   for(unsigned i(0); i<slices.size(); i++){
     NamedFunc cut = baseline && svar>=slices[i];
     if (i<(slices.size()-1)) cut = cut && svar<slices[i+1];
@@ -395,7 +390,7 @@ NamedFunc::ScalarType nJetsWeights_visr(const Baby &b){
   float wgt = b.weight()/b.eff_trig()/b.w_toppt();
   if(b.SampleType()<30 && b.SampleType()>=60) return wgt;
 
-  int nisrjets(b.njets()); 
+  int nisrjets(b.njets());
   // weights derived in DY+jets
   if      (nisrjets==0) return 0.981*wgt; //  +- 0.001
   else if (nisrjets==1) return 1.071*wgt; //  +- 0.001

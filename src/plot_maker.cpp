@@ -14,6 +14,7 @@
 #include <functional>
 #include <mutex>
 #include <chrono>
+#include <map>
 
 #include "TLegend.h"
 
@@ -21,6 +22,7 @@
 #include "timer.hpp"
 #include "thread_pool.hpp"
 #include "named_func.hpp"
+#include "process.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -48,7 +50,7 @@ PlotMaker::PlotMaker():
   \param[in] luminosity Integrated luminosity with which to draw plots
 */
 void PlotMaker::MakePlots(double luminosity,
-                          const std::string &subdir){
+                          const string &subdir){
   GetYields();
 
   for(auto &figure: figures_){
@@ -56,7 +58,7 @@ void PlotMaker::MakePlots(double luminosity,
   }
 }
 
-const std::vector<std::unique_ptr<Figure> > & PlotMaker::Figures() const{
+const vector<unique_ptr<Figure> > & PlotMaker::Figures() const{
   return figures_;
 }
 
@@ -69,70 +71,90 @@ void PlotMaker::Clear(){
 void PlotMaker::GetYields(){
   auto start_time = Clock::now();
 
-  set<shared_ptr<Process> > processes = GetProcesses();
-  size_t num_threads = multithreaded_ ? min(processes.size(), static_cast<size_t>(thread::hardware_concurrency())) : 1;
-  cout << "Processing " << processes.size() << " samples with " << num_threads << " threads." << endl;
+  auto babies = GetBabies();
+  size_t num_threads = (false && multithreaded_) ? min(babies.size(), static_cast<size_t>(thread::hardware_concurrency())) : 1;
+  cout << "Processing " << babies.size() << " babies with " << num_threads << " threads." << endl;
 
   long num_entries = 0;
 
   if(multithreaded_ && num_threads>1){
-    vector<future<long> > num_entries_future(processes.size());
+    vector<future<long> > num_entries_future(babies.size());
 
     ThreadPool tp(num_threads);
     size_t i = 0;
-    for(const auto &proc: processes){
-      num_entries_future.at(i) = tp.Push(bind(&PlotMaker::GetYield, this, ref(proc)));
+    for(const auto &baby: babies){
+      num_entries_future.at(i) = tp.Push(bind(&PlotMaker::GetYield, this, ref(baby)));
       ++i;
     }
     for(auto& entries: num_entries_future){
       num_entries += entries.get();
     }
   }else{
-    for(const auto &proc: processes){
-      num_entries += GetYield(ref(proc));
+    for(const auto &baby: babies){
+      num_entries += GetYield(ref(baby));
     }
   }
 
   auto end_time = Clock::now();
   double num_seconds = chrono::duration<double>(end_time-start_time).count();
-  cout << num_threads << " threads finished "
-       << processes.size() << " samples with "
+  cout << num_threads << " threads processed "
+       << babies.size() << " babies with "
        << num_entries << " events in "
        << num_seconds << " seconds = "
        << 0.001*num_entries/num_seconds << " kHz."
        << endl;
 }
 
-long PlotMaker::GetYield(const std::shared_ptr<Process> &process){
+long PlotMaker::GetYield(Baby *baby_ptr){
   auto start_time = Clock::now();
+  Baby &baby = *baby_ptr;
+  string tag = "";
+  if(baby.FileNames().size() == 1){
+    tag = Basename(*baby.FileNames().cbegin());
+  }else{
+    tag = "Baby for processes";
+  }
+  ostringstream oss;
+  oss << " [";
+  for(auto proc = baby.processes_.cbegin(); proc != baby.processes_.cend(); ++proc){
+    if(proc != baby.processes_.cbegin()) oss << ", ";
+    oss << (*proc)->name_;
+  }
+  oss << "]" << flush;
+  tag += oss.str();
   {
     lock_guard<mutex> lock(print_mutex);
-    cout << "Starting to process " << process->name_ << " with cut " << process->cut_ << "." << endl;
+    cout << "Processing " << tag << endl;
   }
-
-  Baby &baby = *(process->baby_);
 
   long num_entries = baby.GetEntries();
   {
     lock_guard<mutex> lock(print_mutex);
-    cout << process->name_ << " has " << num_entries << " entries." << endl;
+    cout << tag << " has " << num_entries << " entries." << endl;
   }
 
-  set<Figure::FigureComponent*> figure_components = GetComponents(process);
+  vector<pair<const Process*, set<Figure::FigureComponent*> > > proc_figs(baby.processes_.size());
+  size_t iproc = 0;
+  for(const auto &proc: baby.processes_){
+    proc_figs.at(iproc).first = proc;
+    proc_figs.at(iproc).second = GetComponents(proc);
+    ++iproc;
+  }
 
-  Timer timer(process->name_, num_entries, 10.);
+  Timer timer(tag, num_entries, 10.);
   for(long entry = 0; entry < num_entries; ++entry){
     timer.Iterate();
     baby.GetEntry(entry);
 
-    if(process->cut_.IsScalar()){
-      if(!process->cut_.GetScalar(baby)) continue;
-    }else{
-      if(!HavePass(process->cut_.GetVector(baby))) continue;
-    }
-
-    for(auto &component: figure_components){
-      component->RecordEvent(baby);
+    for(const auto &proc_fig: proc_figs){
+      if(proc_fig.first->cut_.IsScalar()){
+        if(!proc_fig.first->cut_.GetScalar(baby)) continue;
+      }else{
+        if(!HavePass(proc_fig.first->cut_.GetVector(baby))) continue;
+      }
+      for(const auto &component: proc_fig.second){
+        component->RecordEvent(baby);
+      }
     }
   }
 
@@ -140,15 +162,25 @@ long PlotMaker::GetYield(const std::shared_ptr<Process> &process){
   double num_seconds = chrono::duration<double>(end_time - start_time).count();
   {
     lock_guard<mutex> lock(print_mutex);
-    cout << "Finished processing " << process->name_ << ". "
+    cout << "Finished processing " << tag << ". "
          << num_entries << " events in " << num_seconds << " seconds = "
          << 0.001*num_entries/num_seconds << " kHz. "<< endl;
   }
   return num_entries;
 }
 
-std::set<std::shared_ptr<Process> > PlotMaker::GetProcesses() const{
-  set<shared_ptr<Process> > processes;
+set<Baby*> PlotMaker::GetBabies() const{
+  set<Baby*> babies;
+  for(auto &proc: GetProcesses()){
+    for(const auto &baby: proc->Babies()){
+      babies.insert(baby);
+    }
+  }
+  return babies;
+}
+
+set<const Process*> PlotMaker::GetProcesses() const{
+  set<const Process*> processes;
   for(const auto &figure: figures_){
     for(const auto &process: figure->GetProcesses()){
       processes.insert(process);
@@ -157,7 +189,7 @@ std::set<std::shared_ptr<Process> > PlotMaker::GetProcesses() const{
   return processes;
 }
 
-std::set<Figure::FigureComponent*> PlotMaker::GetComponents(const std::shared_ptr<Process> &process) const{
+set<Figure::FigureComponent*> PlotMaker::GetComponents(const Process *process) const{
   set<Figure::FigureComponent*> figure_components;
   for(auto &figure: figures_){
     auto processes = figure->GetProcesses();

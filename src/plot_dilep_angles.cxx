@@ -22,27 +22,27 @@ int main(){
   Palette colors("txt/colors.txt", "default");
 
   string folder_mc = "/net/cms2/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/";
-  auto tt1l = Proc<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
+  auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
     {folder_mc+"*_TTJets*Lept*.root", folder_mc+"*_TTJets_HT*.root"}, "ntruleps<=1&&stitch");
-  auto tt2l = Proc<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
+  auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
     {folder_mc+"*_TTJets*Lept*.root", folder_mc+"*_TTJets_HT*.root"}, "ntruleps>=2&&stitch");
-  auto wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
+  auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
     {folder_mc+"*_WJetsToLNu*.root"});
-  auto single_t = Proc<Baby_full>("Single t", Process::Type::background, colors("single_t"),
+  auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
     {folder_mc+"*_ST_*.root"});
-  auto ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
+  auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
     {folder_mc+"*_TTWJets*.root", folder_mc+"*_TTZTo*.root"});
-  auto other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
+  auto other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     {folder_mc+"*DYJetsToLL*.root", folder_mc+"*_QCD_HT*.root",
         folder_mc+"*_ZJet*.root", folder_mc+"*_WWTo*.root",
         folder_mc+"*ggZH_HToBB*.root", folder_mc+"*ttHJetTobb*.root",
         folder_mc+"*_TTGJets*.root", folder_mc+"*_TTTT_*.root",
         folder_mc+"*_WH_HToBB*.root", folder_mc+"*_WZTo*.root",
         folder_mc+"*_ZH_HToBB*.root", folder_mc+"_ZZ_*.root"});
-  auto data_2016 = Proc<Baby_full>("2016 Data", Process::Type::data, kBlack,
+  auto data_2016 = Process::MakeShared<Baby_full>("2016 Data", Process::Type::data, kBlack,
     {"/net/cms2/cms2r0/babymaker/babies/2016_06_21/data/skim_standard/*.root"},
     "pass&&(trig[4]||trig[8]||trig[13]||trig[33])");
-  auto data_2015 = Proc<Baby_full>("2015 Data", Process::Type::data, kRed,
+  auto data_2015 = Process::MakeShared<Baby_full>("2015 Data", Process::Type::data, kRed,
     {"/net/cms2/cms2r0/babymaker/babies/2016_04_29/data/merged_1lht500met200/*.root"},
     "pass&&(trig[4]||trig[8]||trig[13]||trig[28])");
 
@@ -111,11 +111,11 @@ int main(){
 
   pm.Push<EventScan>("dilep_angle", dilep_mm || dilep_em, vector<NamedFunc>{
       "run", "lumiblock", "event", "nmus", "nels", "nveto",
-	dphi_ll, dr_ll, min_dphi_lmet, max_dphi_lmet, min_dphi_lj,
-	max_dphi_lj, min_dr_lj, max_dr_lj, min_dphi_metj, max_dphi_metj,
-	"mj14", "mt", "njets", "nbm", "met", "met_phi", "leps_pt",
-	"leps_phi", "leps_eta", "leps_id", "jets_pt", "jets_phi", "jets_eta"
-	}, procs, 10);
+        dphi_ll, dr_ll, min_dphi_lmet, max_dphi_lmet, min_dphi_lj,
+        max_dphi_lj, min_dr_lj, max_dr_lj, min_dphi_metj, max_dphi_metj,
+        "mj14", "mt", "njets", "nbm", "met", "met_phi", "leps_pt",
+        "leps_phi", "leps_eta", "leps_id", "jets_pt", "jets_phi", "jets_eta"
+        }, procs, 10);
 
   //pm.multithreaded_ = false;
   pm.MakePlots(lumi);
@@ -125,7 +125,7 @@ bool IsGoodMuon(const Baby &b, size_t imu){
   return imu<b.mus_pt()->size()
     && b.mus_pt()->at(imu)>20.
     && fabs(b.mus_eta()->at(imu))<2.4
-    && b.mus_sigid()->at(imu)
+                                  && b.mus_sigid()->at(imu)
     && b.mus_miniso()->at(imu) >= 0.
     && b.mus_miniso()->at(imu) < 0.2;
 }
@@ -134,7 +134,7 @@ bool IsGoodElectron(const Baby &b, size_t iel){
   return iel<b.els_pt()->size()
     && b.els_pt()->at(iel)>20.
     && fabs(b.els_sceta()->at(iel))<2.5
-    && b.els_sigid()->at(iel)
+                                    && b.els_sigid()->at(iel)
     && b.els_miniso()->at(iel) >= 0.
     && b.els_miniso()->at(iel) < 0.1;
 }
@@ -158,12 +158,12 @@ bool IsGoodJet(const Baby &b, size_t ijet){
 
   return b.jets_pt()->at(ijet) > 30.
     && b.jets_eta()->at(ijet) < 2.
-    && !b.jets_islep()->at(ijet);
+                                && !b.jets_islep()->at(ijet);
 }
 
 void GetAngles(const Baby &b,
-	       double &phi1, double &eta1,
-	       double &phi2, double &eta2){
+               double &phi1, double &eta1,
+               double &phi2, double &eta2){
   phi1 = -999.; eta1 = -999.;
   phi2 = -999.; eta2 = -999.;
   bool h1=false, h2=false;
@@ -176,7 +176,7 @@ void GetAngles(const Baby &b,
           h1 = true;
         }else if(!h2){
           phi2 = b.els_phi()->at(iel);
-	  eta2 = b.els_sceta()->at(iel);
+          eta2 = b.els_sceta()->at(iel);
           h2 = true;
         }
       }
@@ -203,7 +203,7 @@ void GetAngles(const Baby &b,
           h1 = true;
         }else if(!h2){
           phi2 = b.mus_phi()->at(imu);
-	  eta2 = b.mus_eta()->at(imu);
+          eta2 = b.mus_eta()->at(imu);
           h2 = true;
         }
       }

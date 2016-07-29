@@ -11,6 +11,8 @@
 #include <memory>
 
 #include <unistd.h>
+#include <glob.h>
+#include <libgen.h>
 
 #include "TMath.h"
 #include "TCanvas.h"
@@ -20,6 +22,23 @@
 using namespace std;
 
 mutex Multithreading::root_mutex;
+
+set<string> Glob(const string &pattern){
+  glob_t glob_result;
+  glob(pattern.c_str(), GLOB_TILDE, nullptr, &glob_result);
+  set<string> ret;
+  for(size_t i=0; i<glob_result.gl_pathc; ++i){
+    ret.emplace(realpath(glob_result.gl_pathv[i], nullptr));
+  }
+  globfree(&glob_result);
+  return ret;
+}
+
+string Basename(const string &filename){
+  vector<char> c(filename.cbegin(), filename.cend());
+  c.push_back(0);
+  return string(basename(&c.at(0)));
+}
 
 bool Contains(const string &str, const string &pat){
   return str.find(pat) != string::npos;

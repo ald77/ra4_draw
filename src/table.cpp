@@ -144,11 +144,11 @@ void Table::Print(double luminosity,
   cout << "Wrote table to " << file_name << endl;
 }
 
-vector<GammaParams> Table::Yield(const std::shared_ptr<Process> &process, double luminosity) const{
+vector<GammaParams> Table::Yield(const Process *process, double luminosity) const{
   const auto &component_list = GetComponentList(process);
   const TableColumn *col = nullptr;
   for(const auto &component: component_list){
-    if(component->process_ == process){
+    if(component->process_.get() == process){
       col = static_cast<const TableColumn *>(component.get());
     }
   }
@@ -186,24 +186,24 @@ vector<GammaParams> Table::DataYield(double luminosity) const{
   return yields;
 }
 
-set<shared_ptr<Process> > Table::GetProcesses() const{
-  set<shared_ptr<Process> > processes;
+set<const Process*> Table::GetProcesses() const{
+  set<const Process*> processes;
   for(const auto &proc: backgrounds_){
-    processes.insert(proc->process_);
+    processes.insert(proc->process_.get());
   }
   for(const auto &proc: signals_){
-    processes.insert(proc->process_);
+    processes.insert(proc->process_.get());
   }
   for(const auto &proc: datas_){
-    processes.insert(proc->process_);
+    processes.insert(proc->process_.get());
   }
   return processes;
 }
 
-Figure::FigureComponent * Table::GetComponent(const shared_ptr<Process> &process){
+Figure::FigureComponent * Table::GetComponent(const Process *process){
   const auto &component_list = GetComponentList(process);
   for(const auto &component: component_list){
-    if(component->process_ == process){
+    if(component->process_.get() == process){
       return component.get();
     }
   }
@@ -211,7 +211,7 @@ Figure::FigureComponent * Table::GetComponent(const shared_ptr<Process> &process
   return nullptr;
 }
 
-const vector<unique_ptr<Table::TableColumn> >& Table::GetComponentList(const shared_ptr<Process> &process) const{
+const vector<unique_ptr<Table::TableColumn> >& Table::GetComponentList(const Process *process) const{
   switch(process->type_){
   case Process::Type::data:
     return datas_;

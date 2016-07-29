@@ -17,14 +17,6 @@
 using namespace std;
 using namespace PlotOptTypes;
 
-template<typename T>
-shared_ptr<Process> Proc(const string process_name, Process::Type type,
-                         int color, const set<string> &files, const string &cut = "1"){
-  return make_shared<Process>(process_name, type, color,
-                              unique_ptr<Baby>(new T(files)),
-                              cut);
-}
-
 int main(){
   gErrorIgnoreLevel = 6000;
 
@@ -36,19 +28,19 @@ int main(){
 
   Palette colors("txt/colors.txt", "default");
 
-  auto tt1l = Proc<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
+  auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
     {trig_skim_mc+"*_TTJets*Lept*.root", trig_skim_mc+"*_TTJets_HT*.root"},
     "ntruleps<=1&&stitch");
-  auto tt2l = Proc<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
+  auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
     {trig_skim_mc+"*_TTJets*Lept*.root", trig_skim_mc+"*_TTJets_HT*.root"},
     "ntruleps>=2&&stitch");
-  auto wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
+  auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
     {trig_skim_mc+"*_WJetsToLNu*.root"});
-  auto single_t = Proc<Baby_full>("Single t", Process::Type::background, colors("single_t"),
+  auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
     {trig_skim_mc+"*_ST_*.root"});
-  auto ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
+  auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
     {trig_skim_mc+"*_TTWJets*.root", trig_skim_mc+"*_TTZTo*.root"});
-  auto other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
+  auto other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     {trig_skim_mc+"*DYJetsToLL*.root", trig_skim_mc+"*_QCD_HT*.root",
         trig_skim_mc+"*_ZJet*.root", trig_skim_mc+"*_WWTo*.root",
         trig_skim_mc+"*ggZH_HToBB*.root", trig_skim_mc+"*ttHJetTobb*.root",
@@ -56,33 +48,33 @@ int main(){
         trig_skim_mc+"*_WH_HToBB*.root", trig_skim_mc+"*_WZTo*.root",
         trig_skim_mc+"*_ZH_HToBB*.root", trig_skim_mc+"_ZZ_*.root"});
 
-  auto t1tttt_nc = Proc<Baby_full>("T1tttt(1500,100)", Process::Type::signal, colors("t1tttt"),
+  auto t1tttt_nc = Process::MakeShared<Baby_full>("T1tttt(1500,100)", Process::Type::signal, colors("t1tttt"),
     {trig_mc+"*SMS-T1tttt_mGluino-1500_mLSP-100*.root"});
-  auto t1tttt_c = Proc<Baby_full>("T1tttt(1200,800)", Process::Type::signal, colors("t1tttt"),
+  auto t1tttt_c = Process::MakeShared<Baby_full>("T1tttt(1200,800)", Process::Type::signal, colors("t1tttt"),
     {trig_mc+"*SMS-T1tttt_mGluino-1200_mLSP-800*.root"});
   t1tttt_c->SetLineStyle(2);
 
-  auto data_1l = Proc<Baby_full>("Data", Process::Type::data, kBlack,
+  auto data_1l = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     {"/net/cms2/cms2r0/babymaker/babies/2016_05_31/data/met/*.root"},"pass&&trig[28]"); // 0.589 fb-1
   vector<shared_ptr<Process> > full_trig_skim_1l = {data_1l, t1tttt_nc, t1tttt_c, tt1l, tt2l, wjets, single_t, ttv, other};
 
   //
   // 2l  / 0l
   //
-  auto tt1l_unskim = Proc<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
+  auto tt1l_unskim = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
     {trig_mc+"*_TTJets*Lept*.root"},
     "ntruleps<=1");
-  auto tt2l_unskim = Proc<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
+  auto tt2l_unskim = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
     {trig_mc+"*_TTJets*Lept*.root"},
     "ntruleps>=2");
-  auto tt_unskim = Proc<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_1l"),
+  auto tt_unskim = Process::MakeShared<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_1l"),
     {trig_mc+"*_TTJets_TuneCUETP8M1_13TeV*.root"});
-  auto dy_unskim = Proc<Baby_full>("DY", Process::Type::background, colors("wjets"),
+  auto dy_unskim = Process::MakeShared<Baby_full>("DY", Process::Type::background, colors("wjets"),
     {trig_mc+"*DYJetsToLL*HT*.root"});
-  auto qcd_unskim = Proc<Baby_full>("QCD", Process::Type::background, colors("qcd"),
+  auto qcd_unskim = Process::MakeShared<Baby_full>("QCD", Process::Type::background, colors("qcd"),
     {trig_mc+"*_QCD_HT700to1000*.root",trig_mc+"*_QCD_HT1000to1500*.root",
         trig_mc+"*_QCD_HT1500to2000*.root",trig_mc+"*_QCD_HT2000toInf*.root"});
-  auto other_unskim = Proc<Baby_full>("Other", Process::Type::background, colors("ttv"),
+  auto other_unskim = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("ttv"),
     {trig_mc+"*_TTWJet*root",  trig_mc+"*_TTZTo*.root",
         trig_mc+"*_ZJet*.root", trig_mc+"*_WWTo*.root",
         trig_mc+"*ggZH_HToBB*.root", trig_mc+"*ttHJetTobb*.root",
@@ -91,11 +83,11 @@ int main(){
         trig_skim_mc+"*_ST_*.root", trig_skim_mc+"*_WJetsToLNu*.root",
         trig_mc+"*_ZH_HToBB*.root", trig_mc+"_ZZ_*.root"});
 
-  auto data_2l = Proc<Baby_full>("Data", Process::Type::data, kBlack,
+  auto data_2l = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     {"/net/cms2/cms2r0/babymaker/babies/2016_05_31/data/singlelep/combined/*.root"},"pass&&(trig[20]||trig[22])"); // 0.589 fb-1
   vector<shared_ptr<Process> > full_trig_skim_2l = {data_2l, t1tttt_nc, t1tttt_c, tt1l_unskim, tt2l_unskim, dy_unskim, other_unskim};
 
-  auto data_0l = Proc<Baby_full>("Data", Process::Type::data, kBlack,
+  auto data_0l = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     {"/net/cms2/cms2r0/babymaker/babies/2016_05_31/data/jetht/*.root"},"pass&&trig[12]"); // FIXME: trigger
   vector<shared_ptr<Process> > full_trig_skim_0l = {data_0l, t1tttt_nc, t1tttt_c, qcd_unskim, tt_unskim, other_unskim};
 
@@ -122,46 +114,45 @@ int main(){
   ///////////////////////// ttbar
   //////////////////////////////////////////////////////////////////////////////
 
-  for(int ilep=2; ilep<3; ilep++)
-    {
-      string lepcut;
-      if(ilep==0)  lepcut=commoncut+"&&nels==1&&nmus==0";
-      if(ilep==1)  lepcut=commoncut+"&&nels==0&&nmus==1";
-      if(ilep==2)  lepcut=commoncut+"&&nleps==1";
+  for(int ilep=2; ilep<3; ilep++){
+    string lepcut;
+    if(ilep==0)  lepcut=commoncut+"&&nels==1&&nmus==0";
+    if(ilep==1)  lepcut=commoncut+"&&nels==0&&nmus==1";
+    if(ilep==2)  lepcut=commoncut+"&&nleps==1";
 
-      //
-      // event-level variables except ones related to fatjet
-      //
-      pm.Push<HistoStack>(HistoDef(15, 500, 2000., "ht", "H_{T} [GeV]",
-                                   lepcut+"&&njets>=5&&nbm>=1", "weight", {500.}),
-                          full_trig_skim_1l, all_plot_types);
-      pm.Push<HistoStack>(HistoDef(10, 200, 500., "met", "E_{T}^{miss} [GeV]",
-                                   lepcut+"&&njets>=5&&nbm>=1", "weight", {200., 350., 500.}),
-                          full_trig_skim_1l, all_plot_types);
-      pm.Push<HistoStack>(HistoDef(16, -0.5, 15.5, "njets", "N_{jets}",
-                                   lepcut+"&&nbm>=1", "weight", {5.5, 8.5}),
-                          full_trig_skim_1l, all_plot_types);
+    //
+    // event-level variables except ones related to fatjet
+    //
+    pm.Push<HistoStack>(HistoDef(15, 500, 2000., "ht", "H_{T} [GeV]",
+                                 lepcut+"&&njets>=5&&nbm>=1", "weight", {500.}),
+                        full_trig_skim_1l, all_plot_types);
+    pm.Push<HistoStack>(HistoDef(10, 200, 500., "met", "E_{T}^{miss} [GeV]",
+                                 lepcut+"&&njets>=5&&nbm>=1", "weight", {200., 350., 500.}),
+                        full_trig_skim_1l, all_plot_types);
+    pm.Push<HistoStack>(HistoDef(16, -0.5, 15.5, "njets", "N_{jets}",
+                                 lepcut+"&&nbm>=1", "weight", {5.5, 8.5}),
+                        full_trig_skim_1l, all_plot_types);
 
-      pm.Push<HistoStack>(HistoDef(16, 0., 280., "mt", "m_{T} [GeV]",
-                                   lepcut+"&&njets>=5&&nbm>=1", "weight", {140.}),
-                          full_trig_skim_1l, all_plot_types);
+    pm.Push<HistoStack>(HistoDef(16, 0., 280., "mt", "m_{T} [GeV]",
+                                 lepcut+"&&njets>=5&&nbm>=1", "weight", {140.}),
+                        full_trig_skim_1l, all_plot_types);
 
-      //
-      // fatjets
-      //
-      pm.Push<HistoStack>(HistoDef(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]",
-                                   lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
-                          full_trig_skim_1l, all_plot_types);
-      pm.Push<HistoStack>(HistoDef(20, 0, 400., "fjets14_m[0]", "m_{J1} [GeV]",
-                                   lepcut+"&&njets<=5&&nbm>=1", "weight", {999.}),
-                          full_trig_skim_1l, all_plot_types);
+    //
+    // fatjets
+    //
+    pm.Push<HistoStack>(HistoDef(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]",
+                                 lepcut+"&&njets>=5&&nbm>=1", "weight", {999.}),
+                        full_trig_skim_1l, all_plot_types);
+    pm.Push<HistoStack>(HistoDef(20, 0, 400., "fjets14_m[0]", "m_{J1} [GeV]",
+                                 lepcut+"&&njets<=5&&nbm>=1", "weight", {999.}),
+                        full_trig_skim_1l, all_plot_types);
 
-      // event-level variables related to fatjet
-      pm.Push<HistoStack>(HistoDef(10, 0., 1500., "mj14", "M_{J} [GeV]",
-                                   lepcut+"&&njets>=5&&nbm>=1", "weight", {400.}),
-                          full_trig_skim_1l, all_plot_types);
+    // event-level variables related to fatjet
+    pm.Push<HistoStack>(HistoDef(10, 0., 1500., "mj14", "M_{J} [GeV]",
+                                 lepcut+"&&njets>=5&&nbm>=1", "weight", {400.}),
+                        full_trig_skim_1l, all_plot_types);
 
-    }
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   ///////////////////////// Dilepton: Drelll-Yan and ttbar

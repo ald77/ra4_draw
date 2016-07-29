@@ -26,14 +26,6 @@ using namespace std;
 using namespace PlotOptTypes;
 
 namespace{
-template<typename T>
-  shared_ptr<Process> Proc(const string process_name, Process::Type type,
-			   int color, const set<string> &files, const NamedFunc &cut = true){
-  return make_shared<Process>(process_name, type, color,
-                              unique_ptr<Baby>(new T(files)),
-                              cut);
-}
-
   float bignum = numeric_limits<float>::max();
 }
 
@@ -76,9 +68,9 @@ TH2D ColNorm(const TH2D &hin){
 }
 
 int RegionIndex(const Baby &b, size_t i,
-		double low_nj, double high_nj,
-		double low_met, double high_met,
-		bool cluster_leps){
+                double low_nj, double high_nj,
+                double low_met, double high_met,
+                bool cluster_leps){
   double low_nb = 0.5;
   if(b.mm_nleps()->at(i)==2){
     low_nb = -0.5;
@@ -87,7 +79,7 @@ int RegionIndex(const Baby &b, size_t i,
     low_nj += 1.-b.mm_nleps()->at(i);
     high_nj += 1.-b.mm_nleps()->at(i);
   }
-  bool pass_baseline = 
+  bool pass_baseline =
     b.mm_ht()->at(i)>500
     && b.mm_met()->at(i)>low_met && b.mm_met()->at(i)<=high_met
     && b.mm_njets()->at(i)>low_nj && b.mm_njets()->at(i)<=high_nj
@@ -119,13 +111,13 @@ int RegionIndex(const Baby &b, size_t i,
 bool IsTransferNoLep(const Baby &b){
   return RegionIndex(b, 0, 6, bignum, 200., bignum, false) == -1
     && (RegionIndex(b, 2, 6, bignum, 200., bignum, false) == 5
-	|| RegionIndex(b, 2, 6, bignum, 200., bignum, false) == 6);
+        || RegionIndex(b, 2, 6, bignum, 200., bignum, false) == 6);
 }
 
 bool IsTransferLep(const Baby &b){
   return RegionIndex(b, 0, 6, bignum, 200., bignum, true) == -1
     && (RegionIndex(b, 2, 6, bignum, 200., bignum, true) == 5
-	|| RegionIndex(b, 2, 6, bignum, 200., bignum, true) == 6);
+        || RegionIndex(b, 2, 6, bignum, 200., bignum, true) == 6);
 }
 
 void Fill(bool pass, TH1D &h_pass, TH1D &h_total, double x, double w){
@@ -196,8 +188,8 @@ void SetAxisLabels(TAxis &a, bool use_total){
 
 TH2D Expand(const TH2D &h){
   TH2D g("", FullTitle(h).c_str(),
-	 h.GetNbinsX()+1, -2.5, h.GetNbinsX()-1.5,
-	 h.GetNbinsY()+1, -2.5, h.GetNbinsY()-1.5);
+         h.GetNbinsX()+1, -2.5, h.GetNbinsX()-1.5,
+         h.GetNbinsY()+1, -2.5, h.GetNbinsY()-1.5);
 
   for(int ix = 0; ix <= h.GetNbinsX()+1; ++ix){
     for(int iy = 0; iy <= h.GetNbinsY()+1; ++iy){
@@ -307,23 +299,23 @@ int main(){
   string folder_mc="/net/cms26/cms26r0/babymaker/babies/mismeasured_v2/2016_06_14/mc/merged_mm_std_nj5mj250/";
   auto baby_nontt = make_shared<Baby_full>(set<string>{
       folder_mc+"*_DYJetsToLL*.root",
-	folder_mc+"*_QCD_HT*.root",
-	folder_mc+"*_ST*channel*.root",
-	folder_mc+"*_TTGJets*.root",
-	folder_mc+"*_TTTT*.root",
-	folder_mc+"*_TTWJetsTo*.root",
-	folder_mc+"*_TTZTo*.root",
-	folder_mc+"*_WH_HToBB*.root",
-	folder_mc+"*_WJetsToLNu_HT-*.root",
-	folder_mc+"*_WWTo*.root",
-	folder_mc+"*_WZTo*.root",
-	folder_mc+"*_ZH*.root",
-	folder_mc+"*_ZZ*.root",
-	folder_mc+"*_ttHJetTobb*.root"
-	});
+        folder_mc+"*_QCD_HT*.root",
+        folder_mc+"*_ST*channel*.root",
+        folder_mc+"*_TTGJets*.root",
+        folder_mc+"*_TTTT*.root",
+        folder_mc+"*_TTWJetsTo*.root",
+        folder_mc+"*_TTZTo*.root",
+        folder_mc+"*_WH_HToBB*.root",
+        folder_mc+"*_WJetsToLNu_HT-*.root",
+        folder_mc+"*_WWTo*.root",
+        folder_mc+"*_WZTo*.root",
+        folder_mc+"*_ZH*.root",
+        folder_mc+"*_ZZ*.root",
+        folder_mc+"*_ttHJetTobb*.root"
+        });
   auto baby_tt = make_shared<Baby_full>(set<string>{
       folder_mc+"*_TTJets*Lept*.root", folder_mc+"*_TTJets_HT*.root"
-	});
+        });
 
   TH1D h_1l_mm_lep_pt("h_1l_mm_lep_pt", ";Mismeasured Lepton p_{T} [GeV];Entries", 20, 0., 2000.);
   TH2D h_1l_mt_mj_lep("h_1l_mt_mj_lep", ";M_{J} (with lep) [GeV];m_{T} [GeV]", 100, 0., 1000., 100, 0., 1000.);
@@ -418,150 +410,150 @@ int main(){
       bool mm = b->mm()->at(ibad);
 
       if(mm){
-	h_transfer_mm_lep.Fill(RegionIndex(*b, igood, 5.5, bignum, 200., bignum, true),
-			       RegionIndex(*b, ibad, 5.5, bignum, 200., bignum, true),
-			       w);
-	h_transfer_mm_nolep.Fill(RegionIndex(*b, igood, 5.5, bignum, 200., bignum, false),
-				 RegionIndex(*b, ibad, 5.5, bignum, 200., bignum, false),
-				 w);
-	h_transfer_lowmet_mm_lep.Fill(RegionIndex(*b, igood, 5.5, bignum, 200., 350., true),
-				      RegionIndex(*b, ibad, 5.5, bignum, 200., 350., true),
-				      w);
-	h_transfer_lowmet_mm_nolep.Fill(RegionIndex(*b, igood, 5.5, bignum, 200., 350., false),
-					RegionIndex(*b, ibad, 5.5, bignum, 200., 350., false),
-					w);
-	h_transfer_medmet_mm_lep.Fill(RegionIndex(*b, igood, 5.5, bignum, 350., 500., true),
-				      RegionIndex(*b, ibad, 5.5, bignum, 350., 500., true),
-				      w);
-	h_transfer_medmet_mm_nolep.Fill(RegionIndex(*b, igood, 5.5, bignum, 350., 500., false),
-					RegionIndex(*b, ibad, 5.5, bignum, 350., 500., false),
-					w);
-	h_transfer_highmet_mm_lep.Fill(RegionIndex(*b, igood, 5.5, bignum, 500., bignum, true),
-				       RegionIndex(*b, ibad, 5.5, bignum, 500., bignum, true),
-				       w);
-	h_transfer_highmet_mm_nolep.Fill(RegionIndex(*b, igood, 5.5, bignum, 500., bignum, false),
-					 RegionIndex(*b, ibad, 5.5, bignum, 500., bignum, false),
-					 w);
-	h_transfer_lownj_mm_lep.Fill(RegionIndex(*b, igood, 5.5, 8.5, 200., bignum, true),
-				     RegionIndex(*b, ibad, 5.5, 8.5, 200., bignum, true),
-				     w);
-	h_transfer_lownj_mm_nolep.Fill(RegionIndex(*b, igood, 5.5, 8.5, 200., bignum, false),
-				       RegionIndex(*b, ibad, 5.5, 8.5, 200., bignum, false),
-				       w);
-	h_transfer_highnj_mm_lep.Fill(RegionIndex(*b, igood, 8.5, bignum, 200., bignum, true),
-				      RegionIndex(*b, ibad, 8.5, bignum, 200., bignum, true),
-				      w);
-	h_transfer_highnj_mm_nolep.Fill(RegionIndex(*b, igood, 8.5, bignum, 200., bignum, false),
-					RegionIndex(*b, ibad, 8.5, bignum, 200., bignum, false),
-					w);
+        h_transfer_mm_lep.Fill(RegionIndex(*b, igood, 5.5, bignum, 200., bignum, true),
+                               RegionIndex(*b, ibad, 5.5, bignum, 200., bignum, true),
+                               w);
+        h_transfer_mm_nolep.Fill(RegionIndex(*b, igood, 5.5, bignum, 200., bignum, false),
+                                 RegionIndex(*b, ibad, 5.5, bignum, 200., bignum, false),
+                                 w);
+        h_transfer_lowmet_mm_lep.Fill(RegionIndex(*b, igood, 5.5, bignum, 200., 350., true),
+                                      RegionIndex(*b, ibad, 5.5, bignum, 200., 350., true),
+                                      w);
+        h_transfer_lowmet_mm_nolep.Fill(RegionIndex(*b, igood, 5.5, bignum, 200., 350., false),
+                                        RegionIndex(*b, ibad, 5.5, bignum, 200., 350., false),
+                                        w);
+        h_transfer_medmet_mm_lep.Fill(RegionIndex(*b, igood, 5.5, bignum, 350., 500., true),
+                                      RegionIndex(*b, ibad, 5.5, bignum, 350., 500., true),
+                                      w);
+        h_transfer_medmet_mm_nolep.Fill(RegionIndex(*b, igood, 5.5, bignum, 350., 500., false),
+                                        RegionIndex(*b, ibad, 5.5, bignum, 350., 500., false),
+                                        w);
+        h_transfer_highmet_mm_lep.Fill(RegionIndex(*b, igood, 5.5, bignum, 500., bignum, true),
+                                       RegionIndex(*b, ibad, 5.5, bignum, 500., bignum, true),
+                                       w);
+        h_transfer_highmet_mm_nolep.Fill(RegionIndex(*b, igood, 5.5, bignum, 500., bignum, false),
+                                         RegionIndex(*b, ibad, 5.5, bignum, 500., bignum, false),
+                                         w);
+        h_transfer_lownj_mm_lep.Fill(RegionIndex(*b, igood, 5.5, 8.5, 200., bignum, true),
+                                     RegionIndex(*b, ibad, 5.5, 8.5, 200., bignum, true),
+                                     w);
+        h_transfer_lownj_mm_nolep.Fill(RegionIndex(*b, igood, 5.5, 8.5, 200., bignum, false),
+                                       RegionIndex(*b, ibad, 5.5, 8.5, 200., bignum, false),
+                                       w);
+        h_transfer_highnj_mm_lep.Fill(RegionIndex(*b, igood, 8.5, bignum, 200., bignum, true),
+                                      RegionIndex(*b, ibad, 8.5, bignum, 200., bignum, true),
+                                      w);
+        h_transfer_highnj_mm_nolep.Fill(RegionIndex(*b, igood, 8.5, bignum, 200., bignum, false),
+                                        RegionIndex(*b, ibad, 8.5, bignum, 200., bignum, false),
+                                        w);
       }
       h_transfer_all_lep.Fill(RegionIndex(*b, igood, 5.5, bignum, 200., bignum, true),
-			      RegionIndex(*b, ibad, 5.5, bignum, 200., bignum, true),
-			      w);
+                              RegionIndex(*b, ibad, 5.5, bignum, 200., bignum, true),
+                              w);
       h_transfer_all_nolep.Fill(RegionIndex(*b, igood, 5.5, bignum, 200., bignum, false),
-				RegionIndex(*b, ibad, 5.5, bignum, 200., bignum, false),
-				w);
+                                RegionIndex(*b, ibad, 5.5, bignum, 200., bignum, false),
+                                w);
       h_transfer_lowmet_all_lep.Fill(RegionIndex(*b, igood, 5.5, bignum, 200., 350., true),
-				     RegionIndex(*b, ibad, 5.5, bignum, 200., 350., true),
-				     w);
+                                     RegionIndex(*b, ibad, 5.5, bignum, 200., 350., true),
+                                     w);
       h_transfer_lowmet_all_nolep.Fill(RegionIndex(*b, igood, 5.5, bignum, 200., 350., false),
-				       RegionIndex(*b, ibad, 5.5, bignum, 200., 350., false),
-				       w);
+                                       RegionIndex(*b, ibad, 5.5, bignum, 200., 350., false),
+                                       w);
       h_transfer_medmet_all_lep.Fill(RegionIndex(*b, igood, 5.5, bignum, 350., 500., true),
-				     RegionIndex(*b, ibad, 5.5, bignum, 350., 500., true),
-				     w);
+                                     RegionIndex(*b, ibad, 5.5, bignum, 350., 500., true),
+                                     w);
       h_transfer_medmet_all_nolep.Fill(RegionIndex(*b, igood, 5.5, bignum, 350., 500., false),
-				       RegionIndex(*b, ibad, 5.5, bignum, 350., 500., false),
-				       w);
+                                       RegionIndex(*b, ibad, 5.5, bignum, 350., 500., false),
+                                       w);
       h_transfer_highmet_all_lep.Fill(RegionIndex(*b, igood, 5.5, bignum, 500., bignum, true),
-				      RegionIndex(*b, ibad, 5.5, bignum, 500., bignum, true),
-				      w);
+                                      RegionIndex(*b, ibad, 5.5, bignum, 500., bignum, true),
+                                      w);
       h_transfer_highmet_all_nolep.Fill(RegionIndex(*b, igood, 5.5, bignum, 500., bignum, false),
-					RegionIndex(*b, ibad, 5.5, bignum, 500., bignum, false),
-					w);
+                                        RegionIndex(*b, ibad, 5.5, bignum, 500., bignum, false),
+                                        w);
       h_transfer_lownj_all_lep.Fill(RegionIndex(*b, igood, 5.5, 8.5, 200., bignum, true),
-				    RegionIndex(*b, ibad, 5.5, 8.5, 200., bignum, true),
-				    w);
+                                    RegionIndex(*b, ibad, 5.5, 8.5, 200., bignum, true),
+                                    w);
       h_transfer_lownj_all_nolep.Fill(RegionIndex(*b, igood, 5.5, 8.5, 200., bignum, false),
-				      RegionIndex(*b, ibad, 5.5, 8.5, 200., bignum, false),
-				      w);
+                                      RegionIndex(*b, ibad, 5.5, 8.5, 200., bignum, false),
+                                      w);
       h_transfer_highnj_all_lep.Fill(RegionIndex(*b, igood, 8.5, bignum, 200., bignum, true),
-				     RegionIndex(*b, ibad, 8.5, bignum, 200., bignum, true),
-				     w);
+                                     RegionIndex(*b, ibad, 8.5, bignum, 200., bignum, true),
+                                     w);
       h_transfer_highnj_all_nolep.Fill(RegionIndex(*b, igood, 8.5, bignum, 200., bignum, false),
-				       RegionIndex(*b, ibad, 8.5, bignum, 200., bignum, false),
-				       w);
+                                       RegionIndex(*b, ibad, 8.5, bignum, 200., bignum, false),
+                                       w);
 
       if(mm
-	 && (b->mm_nleps()->at(igood)>0 || b->mm_nleps()->at(ibad)>0)
-	 && (b->mm_ht()->at(igood)>500 || b->mm_ht()->at(ibad)>500)
-	 && (b->mm_met()->at(igood)>200 || b->mm_met()->at(ibad)>200)
-	 && (b->mm_njets()->at(igood)>=5 || b->mm_njets()->at(ibad)>=5)){
+         && (b->mm_nleps()->at(igood)>0 || b->mm_nleps()->at(ibad)>0)
+         && (b->mm_ht()->at(igood)>500 || b->mm_ht()->at(ibad)>500)
+         && (b->mm_met()->at(igood)>200 || b->mm_met()->at(ibad)>200)
+         && (b->mm_njets()->at(igood)>=5 || b->mm_njets()->at(ibad)>=5)){
 
-	if(b->mm_nleps()->at(ibad)==1){
-	  h_1l_dmt_dmjlep.Fill(b->mm_mj14_lep()->at(ibad)-b->mm_mj14_lep()->at(igood),
-			       b->mm_mt()->at(ibad)-b->mm_mt()->at(igood),
-			       10.*w);
-	  h_1l_dmt_dmjnolep.Fill(b->mm_mj14_nolep()->at(ibad)-b->mm_mj14_nolep()->at(igood),
-				 b->mm_mt()->at(ibad)-b->mm_mt()->at(igood),
-				 10.*w);
-	  if(b->mm_met()->at(ibad)>500.){
-	    h_1l_dmt_dmjlep_highmet.Fill(b->mm_mj14_lep()->at(ibad)-b->mm_mj14_lep()->at(igood),
-					 b->mm_mt()->at(ibad)-b->mm_mt()->at(igood),
-					 10.*w);
-	    h_1l_dmt_dmjnolep_highmet.Fill(b->mm_mj14_nolep()->at(ibad)-b->mm_mj14_nolep()->at(igood),
-					   b->mm_mt()->at(ibad)-b->mm_mt()->at(igood),
-					   10.*w);
-	  }
-	  if(b->mm_njets()->at(ibad)>8.5){
-	    h_1l_dmt_dmjlep_highnj.Fill(b->mm_mj14_lep()->at(ibad)-b->mm_mj14_lep()->at(igood),
-				 b->mm_mt()->at(ibad)-b->mm_mt()->at(igood),
-				 10.*w);
-	    h_1l_dmt_dmjnolep_highnj.Fill(b->mm_mj14_nolep()->at(ibad)-b->mm_mj14_nolep()->at(igood),
-				   b->mm_mt()->at(ibad)-b->mm_mt()->at(igood),
-				   10.*w);
-	  }
-	  h_1l_mm_lep_pt.Fill(b->mm_lep_pt()->at(ibad), w);
-	  h_1l_mt_mj_lep.Fill(b->mm_mj14_lep()->at(igood), b->mm_mt()->at(igood), w);
-	  h_1l_mt_mj_nolep.Fill(b->mm_mj14_nolep()->at(igood), b->mm_mt()->at(igood), w);
-	  h_1l_mm_mt_mm_mj_lep.Fill(b->mm_mj14_lep()->at(ibad), b->mm_mt()->at(ibad), w);
-	  h_1l_mm_mt_mm_mj_nolep.Fill(b->mm_mj14_nolep()->at(ibad), b->mm_mt()->at(ibad), w);
-	  h_1l_mj_nolep_mj_lep.Fill(b->mm_mj14_lep()->at(igood), b->mm_mj14_nolep()->at(igood), w);
-	  h_1l_mm_mj_nolep_mm_mj_lep.Fill(b->mm_mj14_lep()->at(ibad), b->mm_mj14_nolep()->at(ibad), w);
-	  h_1l_mm_mt_mt.Fill(b->mm_mt()->at(igood), b->mm_mt()->at(ibad), w);
-	  h_1l_mm_mj_nolep_mj_nolep.Fill(b->mm_mj14_nolep()->at(igood), b->mm_mj14_nolep()->at(ibad), w);
-	  h_1l_mm_mj_lep_mj_lep.Fill(b->mm_mj14_lep()->at(igood), b->mm_mj14_lep()->at(ibad), w);
-	}else if(b->mm_nleps()->at(ibad)==2){
-	  h_2l_mm_lep_pt.Fill(b->mm_lep_pt()->at(ibad), w);
-	  h_2l_mt_mj_lep.Fill(b->mm_mj14_lep()->at(igood), b->mm_mt()->at(igood), w);
-	  h_2l_mt_mj_nolep.Fill(b->mm_mj14_nolep()->at(igood), b->mm_mt()->at(igood), w);
-	  h_2l_mm_mt_mm_mj_lep.Fill(b->mm_mj14_lep()->at(ibad), b->mm_mt()->at(ibad), w);
-	  h_2l_mm_mt_mm_mj_nolep.Fill(b->mm_mj14_nolep()->at(ibad), b->mm_mt()->at(ibad), w);
-	  h_2l_mj_nolep_mj_lep.Fill(b->mm_mj14_lep()->at(igood), b->mm_mj14_nolep()->at(igood), w);
-	  h_2l_mm_mj_nolep_mm_mj_lep.Fill(b->mm_mj14_lep()->at(ibad), b->mm_mj14_nolep()->at(ibad), w);
-	  h_2l_mm_mt_mt.Fill(b->mm_mt()->at(igood), b->mm_mt()->at(ibad), w);
-	  h_2l_mm_mj_nolep_mj_nolep.Fill(b->mm_mj14_nolep()->at(igood), b->mm_mj14_nolep()->at(ibad), w);
-	  h_2l_mm_mj_lep_mj_lep.Fill(b->mm_mj14_lep()->at(igood), b->mm_mj14_lep()->at(ibad), w);
-	}
+        if(b->mm_nleps()->at(ibad)==1){
+          h_1l_dmt_dmjlep.Fill(b->mm_mj14_lep()->at(ibad)-b->mm_mj14_lep()->at(igood),
+                               b->mm_mt()->at(ibad)-b->mm_mt()->at(igood),
+                               10.*w);
+          h_1l_dmt_dmjnolep.Fill(b->mm_mj14_nolep()->at(ibad)-b->mm_mj14_nolep()->at(igood),
+                                 b->mm_mt()->at(ibad)-b->mm_mt()->at(igood),
+                                 10.*w);
+          if(b->mm_met()->at(ibad)>500.){
+            h_1l_dmt_dmjlep_highmet.Fill(b->mm_mj14_lep()->at(ibad)-b->mm_mj14_lep()->at(igood),
+                                         b->mm_mt()->at(ibad)-b->mm_mt()->at(igood),
+                                         10.*w);
+            h_1l_dmt_dmjnolep_highmet.Fill(b->mm_mj14_nolep()->at(ibad)-b->mm_mj14_nolep()->at(igood),
+                                           b->mm_mt()->at(ibad)-b->mm_mt()->at(igood),
+                                           10.*w);
+          }
+          if(b->mm_njets()->at(ibad)>8.5){
+            h_1l_dmt_dmjlep_highnj.Fill(b->mm_mj14_lep()->at(ibad)-b->mm_mj14_lep()->at(igood),
+                                        b->mm_mt()->at(ibad)-b->mm_mt()->at(igood),
+                                        10.*w);
+            h_1l_dmt_dmjnolep_highnj.Fill(b->mm_mj14_nolep()->at(ibad)-b->mm_mj14_nolep()->at(igood),
+                                          b->mm_mt()->at(ibad)-b->mm_mt()->at(igood),
+                                          10.*w);
+          }
+          h_1l_mm_lep_pt.Fill(b->mm_lep_pt()->at(ibad), w);
+          h_1l_mt_mj_lep.Fill(b->mm_mj14_lep()->at(igood), b->mm_mt()->at(igood), w);
+          h_1l_mt_mj_nolep.Fill(b->mm_mj14_nolep()->at(igood), b->mm_mt()->at(igood), w);
+          h_1l_mm_mt_mm_mj_lep.Fill(b->mm_mj14_lep()->at(ibad), b->mm_mt()->at(ibad), w);
+          h_1l_mm_mt_mm_mj_nolep.Fill(b->mm_mj14_nolep()->at(ibad), b->mm_mt()->at(ibad), w);
+          h_1l_mj_nolep_mj_lep.Fill(b->mm_mj14_lep()->at(igood), b->mm_mj14_nolep()->at(igood), w);
+          h_1l_mm_mj_nolep_mm_mj_lep.Fill(b->mm_mj14_lep()->at(ibad), b->mm_mj14_nolep()->at(ibad), w);
+          h_1l_mm_mt_mt.Fill(b->mm_mt()->at(igood), b->mm_mt()->at(ibad), w);
+          h_1l_mm_mj_nolep_mj_nolep.Fill(b->mm_mj14_nolep()->at(igood), b->mm_mj14_nolep()->at(ibad), w);
+          h_1l_mm_mj_lep_mj_lep.Fill(b->mm_mj14_lep()->at(igood), b->mm_mj14_lep()->at(ibad), w);
+        }else if(b->mm_nleps()->at(ibad)==2){
+          h_2l_mm_lep_pt.Fill(b->mm_lep_pt()->at(ibad), w);
+          h_2l_mt_mj_lep.Fill(b->mm_mj14_lep()->at(igood), b->mm_mt()->at(igood), w);
+          h_2l_mt_mj_nolep.Fill(b->mm_mj14_nolep()->at(igood), b->mm_mt()->at(igood), w);
+          h_2l_mm_mt_mm_mj_lep.Fill(b->mm_mj14_lep()->at(ibad), b->mm_mt()->at(ibad), w);
+          h_2l_mm_mt_mm_mj_nolep.Fill(b->mm_mj14_nolep()->at(ibad), b->mm_mt()->at(ibad), w);
+          h_2l_mj_nolep_mj_lep.Fill(b->mm_mj14_lep()->at(igood), b->mm_mj14_nolep()->at(igood), w);
+          h_2l_mm_mj_nolep_mm_mj_lep.Fill(b->mm_mj14_lep()->at(ibad), b->mm_mj14_nolep()->at(ibad), w);
+          h_2l_mm_mt_mt.Fill(b->mm_mt()->at(igood), b->mm_mt()->at(ibad), w);
+          h_2l_mm_mj_nolep_mj_nolep.Fill(b->mm_mj14_nolep()->at(igood), b->mm_mj14_nolep()->at(ibad), w);
+          h_2l_mm_mj_lep_mj_lep.Fill(b->mm_mj14_lep()->at(igood), b->mm_mj14_lep()->at(ibad), w);
+        }
       }
 
       if(b->mm_ht()->at(ibad)>500. && b->mm_met()->at(ibad)>200.
-	 && b->mm_njets()->at(ibad)>=5 && b->mm_nbm()->at(ibad)>=1){
-	if(b->mm_nleps()->at(ibad)==1){
-	  Fill(mm, h_num_1l_mt, h_den_1l_mt, b->mm_mt()->at(ibad), w);
-	  Fill(mm, h_num_1l_mj_lep, h_den_1l_mj_lep, b->mm_mj14_lep()->at(ibad), w);
-	  Fill(mm, h_num_1l_mj_nolep, h_den_1l_mj_nolep, b->mm_mj14_nolep()->at(ibad), w);
-	  Fill(mm, h_num_1l_met, h_den_1l_met, b->mm_met()->at(ibad), w);
-	  Fill(mm, h_num_1l_njets, h_den_1l_njets, b->mm_njets()->at(ibad), w);
-	  Fill(mm, h_num_1l_nbm, h_den_1l_nbm, b->mm_nbm()->at(ibad), w);
-	}else if(b->mm_nleps()->at(ibad)>=2){
-	  Fill(mm, h_num_2l_mt, h_den_2l_mt, b->mm_mt()->at(ibad), w);
-	  Fill(mm, h_num_2l_mj_lep, h_den_2l_mj_lep, b->mm_mj14_lep()->at(ibad), w);
-	  Fill(mm, h_num_2l_mj_nolep, h_den_2l_mj_nolep, b->mm_mj14_nolep()->at(ibad), w);
-	  Fill(mm, h_num_2l_met, h_den_2l_met, b->mm_met()->at(ibad), w);
-	  Fill(mm, h_num_2l_njets, h_den_2l_njets, b->mm_njets()->at(ibad), w);
-	  Fill(mm, h_num_2l_nbm, h_den_2l_nbm, b->mm_nbm()->at(ibad), w);
-	}
+         && b->mm_njets()->at(ibad)>=5 && b->mm_nbm()->at(ibad)>=1){
+        if(b->mm_nleps()->at(ibad)==1){
+          Fill(mm, h_num_1l_mt, h_den_1l_mt, b->mm_mt()->at(ibad), w);
+          Fill(mm, h_num_1l_mj_lep, h_den_1l_mj_lep, b->mm_mj14_lep()->at(ibad), w);
+          Fill(mm, h_num_1l_mj_nolep, h_den_1l_mj_nolep, b->mm_mj14_nolep()->at(ibad), w);
+          Fill(mm, h_num_1l_met, h_den_1l_met, b->mm_met()->at(ibad), w);
+          Fill(mm, h_num_1l_njets, h_den_1l_njets, b->mm_njets()->at(ibad), w);
+          Fill(mm, h_num_1l_nbm, h_den_1l_nbm, b->mm_nbm()->at(ibad), w);
+        }else if(b->mm_nleps()->at(ibad)>=2){
+          Fill(mm, h_num_2l_mt, h_den_2l_mt, b->mm_mt()->at(ibad), w);
+          Fill(mm, h_num_2l_mj_lep, h_den_2l_mj_lep, b->mm_mj14_lep()->at(ibad), w);
+          Fill(mm, h_num_2l_mj_nolep, h_den_2l_mj_nolep, b->mm_mj14_nolep()->at(ibad), w);
+          Fill(mm, h_num_2l_met, h_den_2l_met, b->mm_met()->at(ibad), w);
+          Fill(mm, h_num_2l_njets, h_den_2l_njets, b->mm_njets()->at(ibad), w);
+          Fill(mm, h_num_2l_nbm, h_den_2l_nbm, b->mm_nbm()->at(ibad), w);
+        }
       }
     }
   }
@@ -641,22 +633,22 @@ int main(){
 
   Palette colors("txt/colors.txt", "default");
 
-  auto tt1l = Proc<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
+  auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
     {folder_mc+"*_TTJets*Lept*.root", folder_mc+"*_TTJets_HT*.root"}, "ntruleps<=1&&stitch");
-  auto tt2l = Proc<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
+  auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
     {folder_mc+"*_TTJets*Lept*.root", folder_mc+"*_TTJets_HT*.root"}, "ntruleps>=2&&stitch");
-  auto wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
+  auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
     {folder_mc+"*_WJetsToLNu_HT-*.root"});
-  auto single_t = Proc<Baby_full>("Single t", Process::Type::background, colors("single_t"),
+  auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
     {folder_mc+"*_ST*channel*.root"});
-  auto ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
+  auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
     {folder_mc+"*_TTWJetsTo*.root", folder_mc+"*_TTZTo*.root"});
-  auto other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
+  auto other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     {folder_mc+"*_DYJetsToLL*.root", folder_mc+"*_QCD_HT*.root",
-	folder_mc+"*_TTGJets*.root", folder_mc+"*_TTTT*.root",
-	folder_mc+"*_WH_HToBB*.root", folder_mc+"*_WWTo*.root",
-	folder_mc+"*_WZTo*.root", folder_mc+"*_ZH*.root",
-	folder_mc+"*_ZZ*.root", folder_mc+"*_ttHJetTobb*.root"});
+        folder_mc+"*_TTGJets*.root", folder_mc+"*_TTTT*.root",
+        folder_mc+"*_WH_HToBB*.root", folder_mc+"*_WWTo*.root",
+        folder_mc+"*_WZTo*.root", folder_mc+"*_ZH*.root",
+        folder_mc+"*_ZZ*.root", folder_mc+"*_ttHJetTobb*.root"});
 
   vector<shared_ptr<Process> > procs = {tt1l, tt2l, wjets, single_t, ttv, other};
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
@@ -672,74 +664,74 @@ int main(){
 
   PlotMaker pm;
   pm.Push<HistoStack>(HistoDef("transfer", 5, -0.5, 4.5, "ntruleps", "True Num. Leptons",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 5, -0.5, 4.5, "mm_nleps[0]", "Correct Num. Leptons",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 5, -0.5, 4.5, "mm_nleps[2]", "Mismeasured Num. Leptons",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 2000., "mm_ht[0]", "Correct H_{T} [GeV]",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 2000., "mm_ht[2]", "Mismeasured H_{T} [GeV]",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 15, 0., 1500., "mm_met[0]", "Correct MET [GeV]",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 15, 0., 1500., "mm_met[2]", "Mismeasured MET [GeV]",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 16, -0.5, 15.5, "mm_njets[0]", "Correct N_{jets}",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 16, -0.5, 15.5, "mm_njets[2]", "Mismeasured N_{jets}",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 7, -0.5, 6.5, "mm_nbm[0]", "Correct N_{b}",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 7, -0.5, 6.5, "mm_nbm[2]", "Mismeasured N_{b}",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 10, 0., 700., "mm_mt[0]", "Correct m_{T} [GeV]",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 10, 0., 700., "mm_mt[2]", "Mismeasured m_{T} [GeV]",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_lep[0]", "Correct M_{J} (with lep) [GeV]",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_lep[2]", "Mismeasured M_{J} (with lep) [GeV]",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_nolep[0]", "Correct M_{J} (no lep) [GeV]",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_nolep[2]", "Mismeasured M_{J} (no lep) [GeV]",
-		      is_transfer_lep), procs, plot_types);
+                               is_transfer_lep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 5, -0.5, 4.5, "ntruleps", "True Num. Leptons",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 5, -0.5, 4.5, "mm_nleps[0]", "Correct Num. Leptons",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 5, -0.5, 4.5, "mm_nleps[2]", "Mismeasured Num. Leptons",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 2000., "mm_ht[0]", "Correct H_{T} [GeV]",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 2000., "mm_ht[2]", "Mismeasured H_{T} [GeV]",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 15, 0., 1500., "mm_met[0]", "Correct MET [GeV]",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 15, 0., 1500., "mm_met[2]", "Mismeasured MET [GeV]",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 16, -0.5, 15.5, "mm_njets[0]", "Correct N_{jets}",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 16, -0.5, 15.5, "mm_njets[2]", "Mismeasured N_{jets}",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 7, -0.5, 6.5, "mm_nbm[0]", "Correct N_{b}",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 7, -0.5, 6.5, "mm_nbm[2]", "Mismeasured N_{b}",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 10, 0., 700., "mm_mt[0]", "Correct m_{T} [GeV]",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 10, 0., 700., "mm_mt[2]", "Mismeasured m_{T} [GeV]",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_lep[0]", "Correct M_{J} (with lep) [GeV]",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_lep[2]", "Mismeasured M_{J} (with lep) [GeV]",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_nolep[0]", "Correct M_{J} (no lep) [GeV]",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_nolep[2]", "Mismeasured M_{J} (no lep) [GeV]",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_nolep[2]", "Mismeasured M_{J} (no lep) [GeV]",
-		      is_transfer_nolep), procs, plot_types);
+                               is_transfer_nolep), procs, plot_types);
   pm.MakePlots(2.6);
 }

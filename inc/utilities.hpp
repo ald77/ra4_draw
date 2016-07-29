@@ -8,6 +8,7 @@
 #include <sstream>
 #include <limits>
 #include <mutex>
+#include <set>
 
 #include "TH1D.h"
 #include "TRandom3.h"
@@ -18,6 +19,9 @@
 namespace Multithreading{
   extern std::mutex root_mutex;
 }
+
+std::set<std::string> Glob(const std::string &pattern);
+std::string Basename(const std::string &filename);
 
 bool Contains(const std::string &str, const std::string &pat);
 bool StartsWith(const std::string &str, const std::string &pat);

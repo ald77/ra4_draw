@@ -17,14 +17,6 @@
 using namespace std;
 using namespace PlotOptTypes;
 
-template<typename T>
-shared_ptr<Process> Proc(const string process_name, Process::Type type,
-                         int color, const set<string> &files, const string &cut = "1"){
-  return make_shared<Process>(process_name, type, color,
-                              unique_ptr<Baby>(new T(files)),
-                              cut);
-}
-
 int main(){
   gErrorIgnoreLevel = 6000;
 
@@ -35,13 +27,13 @@ int main(){
 
   Palette colors("txt/colors.txt", "default");
 
-  auto tt = Proc<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_1l"),
+  auto tt = Process::MakeShared<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_1l"),
     {trig_skim_mc+"*_TTJets*Lept*.root", trig_skim_mc+"*_TTJets_HT*.root"},
     "stitch");
 
-  auto t1tttt_nc = Proc<Baby_full>("T1tttt(1800,200)", Process::Type::signal, colors("t1tttt"),
+  auto t1tttt_nc = Process::MakeShared<Baby_full>("T1tttt(1800,200)", Process::Type::signal, colors("t1tttt"),
     {trig_skim_data+"*SMS-T1tttt_mGluino-1800_mLSP-200_*.root"});
-  auto t1tttt_c = Proc<Baby_full>("T1tttt(1400,1000)", Process::Type::signal, colors("t1tttt"),
+  auto t1tttt_c = Process::MakeShared<Baby_full>("T1tttt(1400,1000)", Process::Type::signal, colors("t1tttt"),
     {trig_skim_data+"*SMS-T1tttt_mGluino-1400_mLSP-1000_*.root"});
   t1tttt_c->SetLineStyle(2);
 

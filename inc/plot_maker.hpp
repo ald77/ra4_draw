@@ -6,9 +6,10 @@
 #include <memory>
 #include <utility>
 
-#include "process.hpp"
 #include "plot_opt.hpp"
 #include "figure.hpp"
+
+class Process;
 
 class PlotMaker{
 public:
@@ -44,10 +45,11 @@ private:
   std::vector<std::unique_ptr<Figure> > figures_;//!<Figures to be produced
 
   void GetYields();
-  long GetYield(const std::shared_ptr<Process> &proc);
+  long GetYield(Baby *baby_ptr);
 
-  std::set<std::shared_ptr<Process> > GetProcesses() const;
-  std::set<Figure::FigureComponent*> GetComponents(const std::shared_ptr<Process> &process) const;
+  std::set<Baby*> GetBabies() const;
+  std::set<const Process *> GetProcesses() const;
+  std::set<Figure::FigureComponent*> GetComponents(const Process *process) const;
 };
 
 #endif

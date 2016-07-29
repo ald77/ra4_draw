@@ -39,9 +39,9 @@ public:
   virtual void Print(double luminosity,
                      const std::string &subdir) = 0;
 
-  virtual std::set<std::shared_ptr<Process> > GetProcesses() const = 0;
+  virtual std::set<const Process*> GetProcesses() const = 0;
 
-  virtual FigureComponent * GetComponent(const std::shared_ptr<Process> &process) = 0;
+  virtual FigureComponent * GetComponent(const Process *process) = 0;
 };
 
 #endif

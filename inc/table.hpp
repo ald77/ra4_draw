@@ -46,13 +46,13 @@ public:
   void Print(double luminosity,
              const std::string &subdir) final;
   
-  std::vector<GammaParams> Yield(const std::shared_ptr<Process> &process, double luminosity) const;
+  std::vector<GammaParams> Yield(const Process *process, double luminosity) const;
   std::vector<GammaParams> BackgroundYield(double luminosity) const;
   std::vector<GammaParams> DataYield(double luminosity) const;
   
-  std::set<std::shared_ptr<Process> > GetProcesses() const final;
+  std::set<const Process*> GetProcesses() const final;
 
-  FigureComponent * GetComponent(const std::shared_ptr<Process> &process) final;
+  FigureComponent * GetComponent(const Process *process) final;
   
   std::string name_;
   std::vector<TableRow> rows_;
@@ -68,7 +68,7 @@ private:
   Table& operator=(const Table &) = delete;
   Table() = delete;
 
-  const std::vector<std::unique_ptr<TableColumn> >& GetComponentList(const std::shared_ptr<Process> &process) const;
+  const std::vector<std::unique_ptr<TableColumn> >& GetComponentList(const Process *process) const;
 
   void PrintHeader(std::ofstream &file) const;
   void PrintRow(std::ofstream &file, std::size_t irow, double luminosity) const;

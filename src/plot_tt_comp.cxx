@@ -18,14 +18,6 @@
 using namespace std;
 using namespace PlotOptTypes;
 
-template<typename T>
-shared_ptr<Process> Proc(const string process_name, Process::Type type,
-                         int color, const set<string> &files, const string &cut = "1"){
-  return make_shared<Process>(process_name, type, color,
-                              unique_ptr<Baby>(new T(files)),
-                              cut);
-}
-
 int main(){
   gErrorIgnoreLevel = 6000;
 
@@ -38,16 +30,16 @@ int main(){
   Palette colors("txt/colors.txt", "default");
 
   //tt amcanlo lo
-  auto tt_amcatnlo_lo = Proc<Baby_full>("t#bar{t}, aMC@NLO (LO, MLM)", Process::Type::background, kBlack,
+  auto tt_amcatnlo_lo = Process::MakeShared<Baby_full>("t#bar{t}, aMC@NLO (LO, MLM)", Process::Type::background, kBlack,
     {mc_amcatnlo_lo+"*TTJets_TuneCUETP8M1*madgraphMLM*.root"});
   //tt Powheg
-  auto tt_powheg = Proc<Baby_full>("t#bar{t}, Powheg", Process::Type::background, kRed,
+  auto tt_powheg = Process::MakeShared<Baby_full>("t#bar{t}, Powheg", Process::Type::background, kRed,
     {mc_powheg+"*_TT_*powheg*.root"});
   tt_powheg->SetLineStyle(2);
   //tt amcanlo nlo
-  auto tt_amcatnlo_nlo = Proc<Baby_full>("t#bar{t}, aMC@NLO (NLO, FxFx)", Process::Type::background, kBlue,
+  auto tt_amcatnlo_nlo = Process::MakeShared<Baby_full>("t#bar{t}, aMC@NLO (NLO, FxFx)", Process::Type::background, kBlue,
     {mc_amcatnlo_nlo+"*TTJets_TuneCUETP8M1*amcatnlo*.root"});
-  tt_amcatnlo_nlo->SetLineStyle(3);    
+  tt_amcatnlo_nlo->SetLineStyle(3);
 
   vector<shared_ptr<Process> > tt_sams = {tt_amcatnlo_lo, tt_powheg, tt_amcatnlo_nlo};
 
@@ -70,63 +62,63 @@ int main(){
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info).Bottom(BottomType::ratio).Stack(StackType::data_norm);
   vector<PlotOpt> plot_types = {log_shapes};
 
-  PlotMaker pm;  
+  PlotMaker pm;
 
   // 0-lepton selection
   pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
-			       "nleps==0","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==0","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
   pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
-			       "nleps==0","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==0","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
   pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
-			       "nleps==0","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==0","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
   pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
-			       "nleps==0","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  
-  pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
-			       "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
-			       "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
-			       "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
-			       "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==0","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
 
   pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
-			       "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
   pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
-			       "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
   pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
-			       "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
   pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
-			       "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+
+  pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
+                               "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+  pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
+                               "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+  pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
+                               "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+  pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
+                               "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
 
   // 1-lepton selectio
   pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
-			       "nleps==1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
   pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
-			       "nleps==1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
   pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
-			       "nleps==1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
   pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
-			       "nleps==1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  
-  pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
-			       "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
-			       "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
-			       "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
-			       "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
 
   pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
-			       "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
   pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
-			       "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
   pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
-			       "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
   pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
-			       "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+                               "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
 
-  pm.MakePlots(lumi); 
+  pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
+                               "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+  pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
+                               "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+  pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
+                               "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+  pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
+                               "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+
+  pm.MakePlots(lumi);
 }

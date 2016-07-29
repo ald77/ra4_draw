@@ -46,9 +46,9 @@ class EventScan final : public Figure{
  void Print(double luminosity,
             const std::string &subdir) final;
 
- std::set<std::shared_ptr<Process> > GetProcesses() const final;
+ std::set<const Process*> GetProcesses() const final;
 
- FigureComponent * GetComponent(const std::shared_ptr<Process> &process) final;
+ FigureComponent * GetComponent(const Process *process) final;
 
  unsigned Precision() const;
  EventScan & Precision(unsigned precision);

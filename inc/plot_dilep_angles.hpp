@@ -11,14 +11,6 @@
 #include "process.hpp"
 #include "named_func.hpp"
 
-template<typename T>
-std::shared_ptr<Process> Proc(const std::string process_name, Process::Type type,
-			      int color, const std::set<std::string> &files, const std::string &cut = "1"){
-  return std::make_shared<Process>(process_name, type, color,
-				   std::unique_ptr<Baby>(new T(files)),
-				   cut);
-}
-
 bool IsGoodMuon(const Baby &b, std::size_t imu);
 bool IsGoodElectron(const Baby &b, std::size_t iel);
 bool IsGoodTrack(const Baby &b, std::size_t itk);

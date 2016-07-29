@@ -30,14 +30,6 @@ namespace{
   bool single_thread = false;
 }
 
-/*template<typename T>
-shared_ptr<Process> Proc(const string process_name, Process::Type type,
-                         int color, const set<string> &files, const string &cut = "1"){
-  return make_shared<Process>(process_name, type, color,
-                              unique_ptr<Baby>(new T(files)),
-                              cut);
-}
-*/
 int main(int argc, char *argv[]){
   gErrorIgnoreLevel = 6000;
   GetOptions(argc, argv);
@@ -48,52 +40,47 @@ int main(int argc, char *argv[]){
 
   Palette colors("txt/colors.txt", "default");
 
-  auto dy = Proc<Baby_full>("Drell Yan", Process::Type::background, colors("wjets"),
+  auto dy = Process::MakeShared<Baby_full>("Drell Yan", Process::Type::background, colors("wjets"),
     {trig_skim_mc+"*DYJetsToLL*.root"},"stitch");
-  auto diboson = Proc<Baby_full>("WW,ZZ,WZ", Process::Type::background, colors("single_t"),
+  auto diboson = Process::MakeShared<Baby_full>("WW,ZZ,WZ", Process::Type::background, colors("single_t"),
     {trig_skim_mc+"*_WWTo*.root",trig_skim_mc+"*_WZTo*.root", trig_skim_mc+"_ZZ_*.root"});
-  auto tt = Proc<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_2l"),
+  auto tt = Process::MakeShared<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_2l"),
     {trig_skim_mc+"*_TTJets*Lept*.root", trig_skim_mc+"*_TTJets_HT*.root"},
     "stitch");
-  auto wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("ttv"),
+  auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("ttv"),
     {trig_skim_mc+"*_WJetsToLNu*.root"});
 
-
-
- 
-
-  //auto wjets = Proc<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
+  //auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
   //  {trig_skim_mc+"*_WJetsToLNu*.root"});
-  //auto single_t = Proc<Baby_full>("Single t", Process::Type::background, colors("single_t"),
+  //auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
   // {trig_skim_mc+"*_ST_*.root"});
-  /* auto ttv = Proc<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
+  /* auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
      {trig_skim_mc+"*_TTWJets*.root", trig_skim_mc+"*_TTZTo*.root"});*/
-  auto other = Proc<Baby_full>("Other", Process::Type::background, colors("other"),
+  auto other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     {/*trig_skim_mc+"*_WJetsToLNu*.root",*/ trig_skim_mc+"*_QCD_HT*.root",
         trig_skim_mc+"*_ZJet*.root",/* trig_skim_mc+"*_WWTo*.root",*/
         trig_skim_mc+"*ggZH_HToBB*.root", trig_skim_mc+"*ttHJetTobb*.root",
         trig_skim_mc+"*_TTGJets*.root", trig_skim_mc+"*_TTTT_*.root",
         trig_skim_mc+"*_WH_HToBB*.root"/*, trig_skim_mc+"*_WZTo*.root"*/,
         trig_skim_mc+"*_ZH_HToBB*.root",trig_skim_mc+"*_ST_*.root"/*, trig_skim_mc+"_ZZ_*.root"*/
-	,trig_skim_mc+"*_TTWJets*.root", trig_skim_mc+"*_TTZTo*.root"});
+        ,trig_skim_mc+"*_TTWJets*.root", trig_skim_mc+"*_TTZTo*.root"});
 
-  auto t1tttt_nc = Proc<Baby_full>("T1tttt(1500,100)", Process::Type::signal, colors("t1tttt"),
+  auto t1tttt_nc = Process::MakeShared<Baby_full>("T1tttt(1500,100)", Process::Type::signal, colors("t1tttt"),
     {trig_skim_mc+"*SMS-T1tttt_mGluino-1500_mLSP-100*.root"});
-  auto t1tttt_c = Proc<Baby_full>("T1tttt(1200,800)", Process::Type::signal, colors("t1tttt"),
+  auto t1tttt_c = Process::MakeShared<Baby_full>("T1tttt(1200,800)", Process::Type::signal, colors("t1tttt"),
     {trig_skim_mc+"*SMS-T1tttt_mGluino-1200_mLSP-800*.root"});
   t1tttt_c->SetLineStyle(2);
 
-
-  auto data = Proc<Baby_full>("Data", Process::Type::data, kBlack,
+  auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     {"/net/cms2/cms2r0/babymaker/babies/2016_06_26/data/skim_nleps2/*.root"},"json2p6&&pass&&(trig[20]||trig[21]||trig[23]||trig[29]||trig[24]||trig[4]||trig[8]||trig[13]||trig[33])");
 
- auto data_ee = Proc<Baby_full>("Data, ee", Process::Type::data, kBlack,
-   {"/net/cms2/cms2r0/babymaker/babies/2016_06_26/data/skim_nleps2/*.root"},"nels==2&&elel_m>60&&json2p6&&pass&&(trig[20]||trig[21]||trig[23]||trig[29]||trig[24]||trig[4]||trig[8]||trig[13]||trig[33])");
+  auto data_ee = Process::MakeShared<Baby_full>("Data, ee", Process::Type::data, kBlack,
+    {"/net/cms2/cms2r0/babymaker/babies/2016_06_26/data/skim_nleps2/*.root"},"nels==2&&elel_m>60&&json2p6&&pass&&(trig[20]||trig[21]||trig[23]||trig[29]||trig[24]||trig[4]||trig[8]||trig[13]||trig[33])");
 
- auto data_mumu = Proc<Baby_full>("Data, #mu#mu", Process::Type::background, 30,
-   {"/net/cms2/cms2r0/babymaker/babies/2016_06_26/data/skim_nleps2/*.root"},"nmus==2&&mumu_m>60&&json2p6&&pass&&(trig[20]||trig[21]||trig[23]||trig[29]||trig[24]||trig[4]||trig[8]||trig[13]||trig[33])");
+  auto data_mumu = Process::MakeShared<Baby_full>("Data, #mu#mu", Process::Type::background, 30,
+    {"/net/cms2/cms2r0/babymaker/babies/2016_06_26/data/skim_nleps2/*.root"},"nmus==2&&mumu_m>60&&json2p6&&pass&&(trig[20]||trig[21]||trig[23]||trig[29]||trig[24]||trig[4]||trig[8]||trig[13]||trig[33])");
 
- vector<shared_ptr<Process> > full_trig_skim = {data, t1tttt_nc, t1tttt_c, dy, diboson, tt, wjets, other};
+  vector<shared_ptr<Process> > full_trig_skim = {data, t1tttt_nc, t1tttt_c, dy, diboson, tt, wjets, other};
   vector<shared_ptr<Process> > ee_vs_mumu = {data_ee,data_mumu};
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
   log_lumi.Title(TitleType::preliminary)
@@ -113,7 +100,6 @@ int main(int argc, char *argv[]){
                                     log_lumi_info, lin_lumi_info, log_shapes_info, lin_shapes_info};
   vector<PlotOpt> norms = {log_lumi_info, lin_lumi_info};
   vector<PlotOpt> shapes = {lin_shapes_info,log_shapes_info};
-  
 
   PlotMaker pm;
   double pi = acos(-1.);
@@ -140,19 +126,17 @@ int main(int argc, char *argv[]){
   NamedFunc min_dr_lj("min_dr_lj", MinDeltaRLepJet);
   NamedFunc max_dr_lj("max_dr_lj", MaxDeltaRLepJet);
 
-
   string selections[] = {"nleps==2&&ht<200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120",
                          "nleps==2&&ht>200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120",
-			 "nleps==2&&ht<200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120&&met>200",
-			 "nleps==2&&ht>200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120&&met>200",
-			 /*"nleps==2&&ht>200&&njets<=2&&nbl==0&&met<500&&(elel_m+mumu_m+999)>200&&leps_pt[0]>120"*/};
+                         "nleps==2&&ht<200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120&&met>200",
+                         "nleps==2&&ht>200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120&&met>200",
+                         /*"nleps==2&&ht>200&&njets<=2&&nbl==0&&met<500&&(elel_m+mumu_m+999)>200&&leps_pt[0]>120"*/};
 
   string leps[] = {"&&nels==1&&nmus==1","&&nels==2&&elel_m>60","&&nmus==2&&mumu_m>60"/*,"&&nmus==2&&mumu_m>200","&&nels==2&&elel_m>200","&&nels==1&&nmus==1"*/};
- 
+
   pm.Push<HistoStack>(HistoDef(50,0,500, "elel_m", "m_{el el} [GeV]", "nels==2&&ht>200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", "weight", {60}), full_trig_skim, norms);
   pm.Push<HistoStack>(HistoDef(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", "nmus==2&&ht>200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", "weight", {60}), full_trig_skim, norms);
 
-  
   for(unsigned int ilep=0;ilep<1;ilep++){
     pm.Push<HistoStack>(HistoDef(30,0,600, "leps_pt[0]", "Leading lepton p_{T}","nleps==2&&ht>200&&nbl==0&&njets<=2&&met<500"+leps[ilep], "weight", {120}), full_trig_skim, norms);
     pm.Push<HistoStack>(HistoDef(20,0,1000, "ht", "H_{T}","nleps==2&&nbl==0&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], "weight", {200}), full_trig_skim, norms);
@@ -160,18 +144,15 @@ int main(int argc, char *argv[]){
     pm.Push<HistoStack>(HistoDef(9,-0.5,8.5, "njets", "N_{jets}","nleps==2&&ht>200&&nbl==0&&met<500&&leps_pt[0]>120"+leps[ilep], "weight", {2.5}), full_trig_skim, norms);
   }
 
-
   pm.Push<HistoStack>(HistoDef(50,0,500, "elel_m", "m_{el el} [GeV]", "nels==2&&ht<200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", "weight", {60}), full_trig_skim, norms);
   pm.Push<HistoStack>(HistoDef(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", "nmus==2&&ht<200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", "weight", {60}), full_trig_skim, norms);
 
-  
   for(unsigned int ilep=0;ilep<2;ilep++){
     pm.Push<HistoStack>(HistoDef(30,0,600, "leps_pt[0]", "Leading lepton p_{T}","nleps==2&&ht<200&&nbl==0&&njets<=2&&met<500"+leps[ilep], "weight", {120}), full_trig_skim, norms);
     pm.Push<HistoStack>(HistoDef(20,0,1000, "ht", "H_{T}","nleps==2&&nbl==0&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], "weight", {200}), full_trig_skim, norms);
     pm.Push<HistoStack>(HistoDef(5,-0.5,4.5, "nbl", "N_{b, loose}","nleps==2&&ht<200&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], "weight", {0.5}), full_trig_skim, norms);
     pm.Push<HistoStack>(HistoDef(9,-0.5,8.5, "njets", "N_{jets}","nleps==2&&ht<200&&nbl==0&&met<500&&leps_pt[0]>120"+leps[ilep], "weight", {2.5}), full_trig_skim, norms);
   }
-  
 
   for(unsigned int isel=0;isel<2;isel++){
     for(unsigned int ilep=0;ilep<2;ilep++){
@@ -196,31 +177,25 @@ int main(int argc, char *argv[]){
     pm_data.Push<HistoStack>(HistoDef(25,0,500, "mt", "m_{T} [GeV]", selections[isel], "weight", {140}), ee_vs_mumu, norms);
     pm_data.Push<HistoStack>(HistoDef(20, 0., pi, min_dphi_lmet, "Min. #Delta#phi(l,MET)", selections[isel]), ee_vs_mumu, norms);
     pm_data.Push<HistoStack>(HistoDef(20, 0., pi, max_dphi_lmet, "Max. #Delta#phi(l,MET)", selections[isel]), ee_vs_mumu, norms);
-    // if(ilep==0) 
+    // if(ilep==0)
     pm_data.Push<HistoStack>(HistoDef(20,0,1000, "elel_m+mumu_m+999", "m_{lep lep} [GeV]", selections[isel], "weight", {90}), ee_vs_mumu, norms);
     // if(ilep==1) pm.Push<HistoStack>(HistoDef(20,0,1000, "elmu_m", "m_{el mu} [GeV]", selections[isel]+leps[ilep], "weight", {90}), ee_vs_mumu, shapes);
     // if(ilep==2) pm.Push<HistoStack>(HistoDef(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", selections[isel]+leps[ilep], "weight", {90}), ee_vs_mumu, shapes);
-     
-  }
-  
-  
 
+  }
 
   if(single_thread) pm.multithreaded_ = false;
   pm.MakePlots(lumi);
   cout<<lumi<<endl;
   if(single_thread) pm_data.multithreaded_ = false;
   pm_data.MakePlots(1.0);
-
-
 }
-
 
 bool IsGoodMuon(const Baby &b, size_t imu){
   return imu<b.mus_pt()->size()
     && b.mus_pt()->at(imu)>20.
     && fabs(b.mus_eta()->at(imu))<2.4
-    && b.mus_sigid()->at(imu)
+                                  && b.mus_sigid()->at(imu)
     && b.mus_miniso()->at(imu) >= 0.
     && b.mus_miniso()->at(imu) < 0.2;
 }
@@ -229,7 +204,7 @@ bool IsGoodElectron(const Baby &b, size_t iel){
   return iel<b.els_pt()->size()
     && b.els_pt()->at(iel)>20.
     && fabs(b.els_sceta()->at(iel))<2.5
-    && b.els_sigid()->at(iel)
+                                    && b.els_sigid()->at(iel)
     && b.els_miniso()->at(iel) >= 0.
     && b.els_miniso()->at(iel) < 0.1;
 }
@@ -253,12 +228,12 @@ bool IsGoodJet(const Baby &b, size_t ijet){
 
   return b.jets_pt()->at(ijet) > 30.
     && b.jets_eta()->at(ijet) < 2.
-    && !b.jets_islep()->at(ijet);
+                                && !b.jets_islep()->at(ijet);
 }
 
 void GetAngles(const Baby &b,
-	       double &phi1, double &eta1,
-	       double &phi2, double &eta2){
+               double &phi1, double &eta1,
+               double &phi2, double &eta2){
   phi1 = -999.; eta1 = -999.;
   phi2 = -999.; eta2 = -999.;
   bool h1=false, h2=false;
@@ -271,7 +246,7 @@ void GetAngles(const Baby &b,
           h1 = true;
         }else if(!h2){
           phi2 = b.els_phi()->at(iel);
-	  eta2 = b.els_sceta()->at(iel);
+          eta2 = b.els_sceta()->at(iel);
           h2 = true;
         }
       }
@@ -298,7 +273,7 @@ void GetAngles(const Baby &b,
           h1 = true;
         }else if(!h2){
           phi2 = b.mus_phi()->at(imu);
-	  eta2 = b.mus_eta()->at(imu);
+          eta2 = b.mus_eta()->at(imu);
           h2 = true;
         }
       }
@@ -530,9 +505,9 @@ void GetOptions(int argc, char *argv[]){
     char opt = -1;
     int option_index;
     opt = getopt_long(argc, argv, "s", long_options, &option_index);
-    
+
     if( opt == -1) break;
-    
+
     string optname;
     switch(opt){
     case 's':
