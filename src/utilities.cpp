@@ -18,6 +18,7 @@
 #include "TCanvas.h"
 #include "TVector2.h"
 #include "TH1D.h"
+#include "RooStats/RooStatsUtils.h"
 
 using namespace std;
 
@@ -159,6 +160,21 @@ string FullTitle(const TH1 &h){
     +";"+h.GetYaxis()->GetTitle();
 }
 
+TString HoursMinSec(float fseconds){
+  long seconds = round(fseconds);
+  int minutes((seconds/60)%60), hours(seconds/3600);
+  TString hhmmss("");
+  if(hours<10) hhmmss += "0";
+  hhmmss += hours; hhmmss += ":";
+  if(minutes<10) hhmmss += "0";
+  hhmmss += minutes; hhmmss += ":";
+  if((seconds%60)<10) hhmmss += "0";
+  hhmmss += seconds%60; 
+
+  return hhmmss;
+}
+
+
 TString RoundNumber(double num, int decimals, double denom){
   if(denom==0 || !isfinite(num) || !isfinite(denom)) return " - ";
   double neg = 1; if(num*denom<0) neg = -1;
@@ -290,6 +306,45 @@ double intGaus(double mean, double sigma, double minX, double maxX){
 
 float deltaR(float eta1, float phi1, float eta2, float phi2){
   return hypot(TVector2::Phi_mpi_pi(phi2-phi1), eta2-eta1);
+}
+
+// Finds significance of observation Nbkg, for an expected background Nbkg+Eup_bkg-Edown_bkg
+// The mean of the Poisson is Nbkg convolved with the asymmetric lognormal(Eup_bkg, Edown_bkg)
+double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg){
+  double precision = 0.03; // Desired precision on the p-value
+  double Nmin = 1/pow(precision,2), Nmax = 5e7; // Nmax controls max sigmas achievable (5e7->5.5 sigma)
+  double Nbelow=0, Nabove=0;
+  if(Edown_bkg<0) Edown_bkg = Eup_bkg; // If down uncertainty not specified, symmetric lognormal
+  if(Edown_bkg>Nbkg) {
+    cout<<"Down uncertainty ("<<Edown_bkg<<") has to be smaller than Nbkg ("<<Nbkg<<")"<<endl;
+    return -999.;
+  }
+  TRandom3 rand(1234);
+  double mu, valG;
+  while(min(Nbelow,Nabove)<Nmin && (Nbelow+Nabove)<Nmax){
+    // Convolving expected bkg with log-normal
+    mu = Nbkg;
+    valG = rand.Gaus(0,1);
+    if(mu==0) mu = 2*fabs(valG)*Eup_bkg; // Apply 2-sided Gaussian uncertainty
+    else if(valG>=0) mu *= exp(valG*log(1+Eup_bkg/Nbkg));
+    else if(Edown_bkg<0.8*Nbkg) mu *= exp(-valG*log(1-Edown_bkg/Nbkg));
+    else mu = max(0., mu + valG*Edown_bkg);
+    // Finding if toy above the observed yield
+    if(rand.PoissonD(mu)>=Nobs) Nabove++;
+    else Nbelow++;
+  }
+
+  if(Nabove==0){
+    cout<<"No toys above Nobs="<<Nobs<<" for Nbkg "<<Nbkg<<"+"<<Eup_bkg<<"-"<<Edown_bkg<<". Returning "
+	<<RooStats::PValueToSignificance(1/Nmax)<<endl;
+    return RooStats::PValueToSignificance(1/Nmax);
+  }
+  if(Nbelow==0){
+    cout<<"No toys below Nobs="<<Nobs<<" for Nbkg "<<Nbkg<<"+"<<Eup_bkg<<"-"<<Edown_bkg<<". Returning "
+	<<RooStats::PValueToSignificance(1-1/Nmax)<<endl;
+    return RooStats::PValueToSignificance(1-1/Nmax);
+  }
+  return RooStats::PValueToSignificance(Nabove/(Nbelow+Nabove));
 }
 
 // yields[Nobs][Nsam] has the entries for each sample for each observable going into kappa

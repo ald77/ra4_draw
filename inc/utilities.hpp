@@ -62,10 +62,12 @@ std::string ToLongString(const T& x){
   return oss.str();
 }
 
+TString HoursMinSec(float fseconds);
 TString RoundNumber(double num, int decimals, double denom=1.);
 TString cuts2tex(TString cuts);
 TString cutsToLabel(TString cut);
 
+double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg=-1.);
 double gsl_ran_gamma (const double a, const double b, TRandom3 &rand);
 double intGaus(double mean, double sigma, double minX, double maxX);
 float deltaR(float eta1, float phi1, float eta2, float phi2);

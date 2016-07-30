@@ -7,6 +7,7 @@
 #include <vector>
 #include <ctime>
 #include <iomanip>  // setw
+#include <chrono>
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -56,7 +57,7 @@ void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds);
 void printDebug(abcd_method &abcd, vector<vector<GammaParams> > &allyields, TString baseline,
                 vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds);
-TString Zbi(double Nobs, double Nbkg, double Ebkg);
+TString Zbi(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg);
 TString cutsToTex(TString cut);
 
 void GetOptions(int argc, char *argv[]);
@@ -65,8 +66,8 @@ int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
   GetOptions(argc, argv);
 
-  time_t begtime, endtime;
-  time(&begtime);
+  chrono::high_resolution_clock::time_point begTime;
+  begTime = chrono::high_resolution_clock::now();
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining processes //////////////////////////////////////////
@@ -418,8 +419,9 @@ int main(int argc, char *argv[]){
     cout<<" pdflatex "<<tablenames[ind]<<"  > /dev/null"<<endl;
   cout<<endl;
 
-  time(&endtime);
-  cout<<endl<<"Finding "<<abcds.size()<<" tables took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
+  double seconds = (chrono::duration<double>(chrono::high_resolution_clock::now() - begTime)).count();
+  TString hhmmss = HoursMinSec(seconds);
+  cout<<endl<<"Finding "<<abcds.size()<<" tables took "<<round(seconds)<<" seconds ("<<hhmmss<<")"<<endl<<endl;
 } // main
 
 ////////////////////////////////////////// End of main //////////////////////////////////////////////////////
@@ -450,7 +452,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   //// Setting output file name
   int digits_lumi = 1;
   if(lumi < 1) digits_lumi = 3;
-  if(lumi >= 10) digits_lumi = 0;
+  if(lumi >= 15) digits_lumi = 0;
   TString lumi_s = RoundNumber(lumi, digits_lumi);
   TString outname = "tables/table_pred_lumi"+lumi_s; outname.ReplaceAll(".","p");
   if(skim.Contains("2015")) outname += "_2015";
@@ -472,8 +474,8 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if(do_signal) out << " & T1tttt(NC) & T1tttt(C) ";
   if(split_bkg) out << " & Other & $t\\bar{t}(1\\ell)$ & $t\\bar{t}(2\\ell)$ ";
   out << "& $\\kappa$ & MC bkg. & Pred.";
-  if(!only_mc) out << "& Obs. & Obs./MC "<<(do_zbi?"& $Z_{\\rm Bi}$":"");
-  else if(do_signal) out << "& $Z_{\\rm Bi}$(NC) & $Z_{\\rm Bi}$(C)";
+  if(!only_mc) out << "& Obs. & Obs./MC "<<(do_zbi?"& Signi.":"");
+  else if(do_signal) out << "& Signi.(NC) & Signi.(C)";
   out << " \\\\ \\hline\\hline\n";
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -534,11 +536,14 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
             out << ump << ratio_s;
           }
           //// Printing Zbi significance
-          if(do_zbi && iabcd==3) out << ump << Zbi(allyields[0][index].Yield(), preds[iplane][ibin][0], preds[iplane][ibin][1]);
+          if(do_zbi && iabcd==3) out << ump << Zbi(allyields[0][index].Yield(), preds[iplane][ibin][0], 
+						   preds[iplane][ibin][1], preds[iplane][ibin][2]);
         } else {// if not only_mc
           if(iabcd==3 && do_signal) {
-            out<<ump<<Zbi(allyields[0][index].Yield()+allyields[2][index].Yield(),preds[iplane][ibin][0],preds[iplane][ibin][1]);
-            out<<ump<<Zbi(allyields[0][index].Yield()+allyields[3][index].Yield(),preds[iplane][ibin][0],preds[iplane][ibin][1]);
+            out<<ump<<Zbi(allyields[0][index].Yield()+allyields[2][index].Yield(),preds[iplane][ibin][0],
+			  preds[iplane][ibin][1], preds[iplane][ibin][2]);
+            out<<ump<<Zbi(allyields[0][index].Yield()+allyields[3][index].Yield(),preds[iplane][ibin][0],
+			  preds[iplane][ibin][1], preds[iplane][ibin][2]);
           }
         }
         out << "\\\\ \n";
@@ -596,15 +601,18 @@ TString cutsToTex(TString cut){
 }
 
 //// Estimating significance
-TString Zbi(double Nobs, double Nbkg, double Ebkg){
-  double Nsig = Nobs-Nbkg;
-  double zbi = RooStats::NumberCountingUtils::BinomialExpZ(Nsig, Nbkg, Ebkg/Nbkg);
-  if(Nbkg==0) zbi = RooStats::NumberCountingUtils::BinomialWithTauExpZ(Nsig, Nbkg, 1/Ebkg);
-  if(zbi<0) zbi=0;
-  TString zbi_s = RoundNumber(zbi,1);
-  if(zbi_s!="-") zbi_s = "$"+zbi_s+"\\sigma$";
-  if(Nsig<=0 || Ebkg<=0) zbi_s = "-";
-  //cout<<"Zbi for Nobs "<<Nobs<<", Nbkg "<<Nbkg<<", Ebkg "<<Ebkg<<" is "<<zbi_s<<endl;
+TString Zbi(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg){
+  TString zbi_s;
+  if(false){ // Old, bad Zbi
+    double Nsig = Nobs-Nbkg;
+    double zbi = RooStats::NumberCountingUtils::BinomialExpZ(Nsig, Nbkg, Eup_bkg/Nbkg);
+    if(Nbkg==0) zbi = RooStats::NumberCountingUtils::BinomialWithTauExpZ(Nsig, Nbkg, 1/Eup_bkg);
+    if(zbi<0) zbi=0;
+    zbi_s = RoundNumber(zbi,1);
+    if(zbi_s!="-") zbi_s = "$"+zbi_s+"\\sigma$";
+    if(Nsig<=0 || Eup_bkg<=0) zbi_s = "-";
+  } else zbi_s = "$"+RoundNumber(Significance(Nobs, Nbkg, Eup_bkg, Edown_bkg),1)+"\\sigma$";
+  //cout<<"Zbi for Nobs "<<Nobs<<", Nbkg "<<Nbkg<<", Ebkg "<<Eup_bkg<<" is "<<zbi_s<<endl;
   return zbi_s;
 }
 
