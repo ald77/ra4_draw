@@ -63,6 +63,7 @@ std::string ToLongString(const T& x){
 }
 
 TString HoursMinSec(float fseconds);
+TString AddCommas(double num);
 TString RoundNumber(double num, int decimals, double denom=1.);
 TString cuts2tex(TString cuts);
 TString cutsToLabel(TString cut);

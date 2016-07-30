@@ -174,6 +174,15 @@ TString HoursMinSec(float fseconds){
   return hhmmss;
 }
 
+TString AddCommas(double num){
+  TString result(""); result += num;
+  int posdot(result.First('.'));
+  if(posdot==-1) posdot = result.Length();
+  for(int ind(posdot-3); ind > 0; ind -= 3)
+    result.Insert(ind, ",");
+  return result;
+}
+
 
 TString RoundNumber(double num, int decimals, double denom){
   if(denom==0 || !isfinite(num) || !isfinite(denom)) return " - ";

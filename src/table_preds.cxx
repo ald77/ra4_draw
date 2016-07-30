@@ -369,6 +369,7 @@ int main(int argc, char *argv[]){
 
   bool single_thread = false;
   if(single_thread) pm.multithreaded_ = false;
+  pm.min_print_ = true;
   pm.MakePlots(lumi);
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////

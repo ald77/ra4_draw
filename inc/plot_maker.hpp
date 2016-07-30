@@ -40,6 +40,7 @@ public:
   void Clear();
 
   bool multithreaded_;
+  bool min_print_;
 
 private:
   std::vector<std::unique_ptr<Figure> > figures_;//!<Figures to be produced

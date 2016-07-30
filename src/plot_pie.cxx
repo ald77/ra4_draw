@@ -118,6 +118,7 @@ int main(){
 
   PlotMaker pm;
   pm.Push<Table>("chart",  table_cuts, all_procs, true, true, true);
+  pm.min_print_ = true;
   pm.MakePlots(40.);
 
   time(&endtime);

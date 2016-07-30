@@ -15,6 +15,7 @@
 #include <mutex>
 #include <chrono>
 #include <map>
+#include <iomanip>  // setw
 
 #include "TLegend.h"
 
@@ -42,6 +43,7 @@ namespace{
  */
 PlotMaker::PlotMaker():
   multithreaded_(true),
+  min_print_(false),
   figures_(){
 }
 
@@ -81,13 +83,23 @@ void PlotMaker::GetYields(){
     vector<future<long> > num_entries_future(babies.size());
 
     ThreadPool tp(num_threads);
-    size_t i = 0;
+    size_t Nbabies = 0;
     for(const auto &baby: babies){
-      num_entries_future.at(i) = tp.Push(bind(&PlotMaker::GetYield, this, ref(baby)));
-      ++i;
+      num_entries_future.at(Nbabies) = tp.Push(bind(&PlotMaker::GetYield, this, ref(baby)));
+      ++Nbabies;
     }
+    size_t Nfiles=0;
+    long printStep=Nbabies/20+1; // Print up 20 lines of info
+    auto start_entries_time = Clock::now();
     for(auto& entries: num_entries_future){
       num_entries += entries.get();
+      Nfiles++;
+      if(min_print_ && (Nfiles%printStep==1 || Nfiles==Nbabies)){
+	double seconds = chrono::duration<double>(Clock::now()-start_entries_time).count();
+	cout<<"Done "<<setw(log10(Nbabies)+1)<<Nfiles<<"/"<<Nbabies<<" files: "<<setw(10)<<AddCommas(num_entries)
+	    <<" entries in "<<HoursMinSec(seconds)<<"  ->  "<<setw(5)<<RoundNumber(num_entries/1000.,1,seconds)
+	    <<" kHz "<<endl;
+      }
     }
   }else{
     for(const auto &baby: babies){
@@ -96,12 +108,13 @@ void PlotMaker::GetYields(){
   }
   auto end_time = Clock::now();
   double num_seconds = chrono::duration<double>(end_time-start_time).count();
-  cout << num_threads << " threads processed "
-       << babies.size() << " babies with "
-       << num_entries << " events in "
-       << num_seconds << " seconds = "
-       << 0.001*num_entries/num_seconds << " kHz."
-       << endl;
+  if(!min_print_) cout << endl << num_threads << " threads processed "
+		       << babies.size() << " babies with "
+		       << AddCommas(num_entries) << " events in "
+		       << num_seconds << " seconds = "
+		       << 0.001*num_entries/num_seconds << " kHz."
+		       << endl;
+  cout << endl;
 }
 
 long PlotMaker::GetYield(Baby *baby_ptr){
@@ -123,13 +136,13 @@ long PlotMaker::GetYield(Baby *baby_ptr){
   tag += oss.str();
   {
     lock_guard<mutex> lock(print_mutex);
-    cout << "Processing " << tag << endl;
+    if(!min_print_) cout << "Processing " << tag << endl;
   }
 
   long num_entries = baby.GetEntries();
   {
     lock_guard<mutex> lock(print_mutex);
-    cout << tag << " has " << num_entries << " entries." << endl;
+    if(!min_print_) cout << tag << " has " << num_entries << " entries." << endl;
   }
 
   vector<pair<const Process*, set<Figure::FigureComponent*> > > proc_figs(baby.processes_.size());
@@ -142,7 +155,7 @@ long PlotMaker::GetYield(Baby *baby_ptr){
 
   Timer timer(tag, num_entries, 10.);
   for(long entry = 0; entry < num_entries; ++entry){
-    timer.Iterate();
+    if(!min_print_) timer.Iterate();
     baby.GetEntry(entry);
 
     for(const auto &proc_fig: proc_figs){
@@ -161,9 +174,9 @@ long PlotMaker::GetYield(Baby *baby_ptr){
   double num_seconds = chrono::duration<double>(end_time - start_time).count();
   {
     lock_guard<mutex> lock(print_mutex);
-    cout << "Finished processing " << tag << ". "
-         << num_entries << " events in " << num_seconds << " seconds = "
-         << 0.001*num_entries/num_seconds << " kHz. "<< endl;
+    if(!min_print_) cout << "Finished processing " << tag << ". "
+			 << num_entries << " events in " << num_seconds << " seconds = "
+			 << 0.001*num_entries/num_seconds << " kHz. "<< endl;
   }
   return num_entries;
 }
