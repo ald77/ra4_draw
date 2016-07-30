@@ -437,6 +437,11 @@ string NamedFunc::PrettyName() const{
   string pretty = name_;
   if(pretty == "1") return "";
   
+  ReplaceAll(pretty, "ht1l_stmin2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,min}");
+  ReplaceAll(pretty, "ht1l_stmax2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,max}");
+  ReplaceAll(pretty, "ht1l_stave2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,ave}");
+  ReplaceAll(pretty, "st", "S_{T}");
+
   ReplaceAll(pretty, "met>150&&met<=200", "150<met<=200");
   ReplaceAll(pretty, "met>200&&met<=350", "200<met<=350");
   ReplaceAll(pretty, "met>350&&met<=500", "350<met<=500");

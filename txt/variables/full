@@ -384,6 +384,7 @@ std::vector<int> fjets13_nconst
 
 int nfjets14
 float mj14
+float mj14_original
 std::vector<float> fjets14_pt
 std::vector<float> fjets14_eta
 std::vector<float> fjets14_phi
