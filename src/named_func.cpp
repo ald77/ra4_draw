@@ -436,24 +436,33 @@ string NamedFunc::PlainName() const{
 string NamedFunc::PrettyName() const{
   string pretty = name_;
   if(pretty == "1") return "";
+  
+  ReplaceAll(pretty, "met>150&&met<=200", "150<met<=200");
+  ReplaceAll(pretty, "met>200&&met<=350", "200<met<=350");
+  ReplaceAll(pretty, "met>350&&met<=500", "350<met<=500");
+  ReplaceAll(pretty, "njets>=5&&njets<=7", "5<=njets<=7");
+  ReplaceAll(pretty, "njets>=6&&njets<=8", "6<=njets<=8");
+  ReplaceAll(pretty, "nbm>=1&&nbm<=2", "1<=nbm<=2");
+
   ReplaceAll(pretty, "1==1", "Full Sample");
   ReplaceAll(pretty, "el_tks_chg*lep_charge<0", "OS");
   ReplaceAll(pretty, "mu_tks_chg*lep_charge<0", "OS");
   ReplaceAll(pretty, "had_tks_chg*lep_charge<0", "OS");
-  ReplaceAll(pretty, "Sum$(abs(mc_id)==11)","n^{true}_{e}");
-  ReplaceAll(pretty, "Sum$(abs(mc_id)==13)","n^{true}_{#mu}");
-  ReplaceAll(pretty, "Sum$(genels_pt>0)", "n^{true}_{e}");
-  ReplaceAll(pretty, "Sum$(genmus_pt>0)", "n^{true}_{#mu}");
-  ReplaceAll(pretty, "Sum$(mus_sigid&&mus_miniso<0.2)","n_{#mu}^{10}");
-  ReplaceAll(pretty, "Sum$(els_sigid&&els_miniso<0.1)","n_{e}^{10}");
+  ReplaceAll(pretty, "Sum$(abs(mc_id)==11)","N^{true}_{e}");
+  ReplaceAll(pretty, "Sum$(abs(mc_id)==13)","N^{true}_{#mu}");
+  ReplaceAll(pretty, "Sum$(genels_pt>0)", "N^{true}_{e}");
+  ReplaceAll(pretty, "Sum$(genmus_pt>0)", "N^{true}_{#mu}");
+  ReplaceAll(pretty, "Sum$(mus_sigid&&mus_miniso<0.2)","N_{#mu}^{10}");
+  ReplaceAll(pretty, "Sum$(els_sigid&&els_miniso<0.1)","N_{e}^{10}");
   ReplaceAll(pretty, "nvmus==1&&nmus==1&&nvels==0","1 #mu");
   ReplaceAll(pretty, "nvmus10==0&&nvels10==0", "0 leptons");
-  ReplaceAll(pretty, "(nmus+nels)", "n_{lep}");
-  ReplaceAll(pretty, "(nels+nmus)", "n_{lep}");
-  ReplaceAll(pretty, "(nvmus+nvels)", "n^{veto}_{lep}");
-  ReplaceAll(pretty, "nvmus==2&&nmus>=1","n_{#mu}#geq1, n^{veto}_{#mu}=2");
-  ReplaceAll(pretty, "nvels==2&&nels>=1","n_{e}#geq1, n^{veto}_{e}=2");
-  ReplaceAll(pretty, "(nvmus>=2||nvels>=2)","n^{veto}_{lep} #geq 2");
+  ReplaceAll(pretty, "(nmus+nels)", "N_{lep}");
+  ReplaceAll(pretty, "(nels+nmus)", "N_{lep}");
+  ReplaceAll(pretty, "nveto", "N^{veto}_{tks}");
+  ReplaceAll(pretty, "(nvmus+nvels)", "N^{veto}_{lep}");
+  ReplaceAll(pretty, "nvmus==2&&nmus>=1","N_{#mu}#geq1, N^{veto}_{#mu}=2");
+  ReplaceAll(pretty, "nvels==2&&nels>=1","N_{e}#geq1, N^{veto}_{e}=2");
+  ReplaceAll(pretty, "(nvmus>=2||nvels>=2)","N^{veto}_{lep} #geq 2");
   ReplaceAll(pretty, "(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))>80&&(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))<100",
              "80<m_{ll}<100");
   ReplaceAll(pretty, "mumuv_m>80&&mumuv_m<100",
@@ -462,20 +471,20 @@ string NamedFunc::PrettyName() const{
              "80<m_{ll}<100");
   ReplaceAll(pretty, "onht>350&&onmet>100&&","");
   ReplaceAll(pretty, "jets_islep[0]==0","");
-  ReplaceAll(pretty, "(nels==0&&nmus==1)","n_{#mu}=1");
-  ReplaceAll(pretty, "(nels==1&&nmus==0)","n_{#font[12]{e}}=1");
+  ReplaceAll(pretty, "(nels==0&&nmus==1)","N_{#mu}=1");
+  ReplaceAll(pretty, "(nels==1&&nmus==0)","N_{#font[12]{e}}=1");
   ReplaceAll(pretty, "Max$(abs(els_eta)*(els_sigid&&els_miniso<0.1&&els_pt>20))<1.479","barrel #font[12]{e}");
   ReplaceAll(pretty, "Max$(abs(els_eta)*(els_sigid&&els_miniso<0.1&&els_pt>20))>1.479","endcap #font[12]{e}");
 
-  ReplaceAll(pretty, "nleps", "n_{l}");
-  ReplaceAll(pretty, "nvleps", "n_{l}");
-  ReplaceAll(pretty, "nmus", "n_{#mu}");
-  ReplaceAll(pretty, "nels", "n_{e}");
-  ReplaceAll(pretty, "nvmus", "n^{veto}_{#mu}");
-  ReplaceAll(pretty, "nvels", "n^{veto}_{e}");
-  ReplaceAll(pretty, "ntruleps", "n^{true}_{l}");
+  ReplaceAll(pretty, "nleps", "N_{lep}");
+  ReplaceAll(pretty, "nvleps", "N_{lep}");
+  ReplaceAll(pretty, "nmus", "N_{#mu}");
+  ReplaceAll(pretty, "nels", "N_{e}");
+  ReplaceAll(pretty, "nvmus", "N^{veto}_{#mu}");
+  ReplaceAll(pretty, "nvels", "N^{veto}_{e}");
+  ReplaceAll(pretty, "ntruleps", "N^{true}_{lep}");
   ReplaceAll(pretty, "_ra2b", "^{ra2b}");
-  ReplaceAll(pretty, "npv", "n_{PV}");
+  ReplaceAll(pretty, "npv", "N_{PV}");
   ReplaceAll(pretty, "mumu_pt1", "p_{T}^{#mu}");
   ReplaceAll(pretty, "elel_pt1", "p_{T}^{e}");
 
@@ -484,10 +493,10 @@ string NamedFunc::PrettyName() const{
 
   ReplaceAll(pretty, "onmet", "MET^{on}");
   ReplaceAll(pretty, "onht", "H_{T}^{on}");
-  ReplaceAll(pretty, "njets30","n_{jets}^{30}");
+  ReplaceAll(pretty, "njets30","N_{jets}^{30}");
   ReplaceAll(pretty, "els_pt","p^{e}_{T}");
   ReplaceAll(pretty, "mus_pt","p^{#mu}_{T}");
-  ReplaceAll(pretty, "fjets_nconst","n_{const}^{fat jet}");
+  ReplaceAll(pretty, "fjets_nconst","N_{const}^{fat jet}");
   ReplaceAll(pretty, "fjets_30_m[0]","m(J_{1})");
   ReplaceAll(pretty, "fjets_m[0]","m(J_{1})");
   ReplaceAll(pretty, "(fjets_pt*cosh(fjets_eta))","p_{fatjet}");
@@ -497,7 +506,7 @@ string NamedFunc::PrettyName() const{
   ReplaceAll(pretty, "els_reliso","RelIso");
   ReplaceAll(pretty, "mus_miniso_tr15","MiniIso");
   ReplaceAll(pretty, "els_miniso_tr15","MiniIso");
-  ReplaceAll(pretty, "njets","n_{jets}");
+  ReplaceAll(pretty, "njets","N_{jets}");
   ReplaceAll(pretty, "abs(lep_id)==13&&","");
   ReplaceAll(pretty, ">=", " #geq ");
   ReplaceAll(pretty, ">", " > ");
@@ -505,14 +514,14 @@ string NamedFunc::PrettyName() const{
   ReplaceAll(pretty, "<", " < ");
   ReplaceAll(pretty, "&&", ", ");
   ReplaceAll(pretty, "==", " = ");
-  ReplaceAll(pretty, "met", "MET");
+  ReplaceAll(pretty, "met", "E_{T}^{miss}");
   ReplaceAll(pretty, "ht_hlt", "H_{T}^{HLT}");
   ReplaceAll(pretty, "mht", "MHT");
   ReplaceAll(pretty, "ht", "H_{T}");
   ReplaceAll(pretty, "mt", "m_{T}");
   ReplaceAll(pretty, "ntks_chg==0", " ITV");
-  ReplaceAll(pretty, "nbm","n_{b}");
-  ReplaceAll(pretty, "nbl","n_{b,l}");
+  ReplaceAll(pretty, "nbm","N_{b}");
+  ReplaceAll(pretty, "nbl","N_{b,l}");
   ReplaceAll(pretty, "mj", " M_{J}");
 
   ReplaceAll(pretty, "el_tks_mt", "Track m_{T}");

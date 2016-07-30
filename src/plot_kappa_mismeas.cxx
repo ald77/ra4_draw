@@ -842,7 +842,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<vector<float> > > > &allk
     graph[indb].SetMarkerStyle(ind_bcuts[indb].style); graph[indb].SetMarkerSize(1.65);
     graph[indb].SetMarkerColor(ind_bcuts[indb].color);
     graph[indb].SetLineColor(ind_bcuts[indb].color); graph[indb].SetLineWidth(2);
-    graph[indb].Draw("p same");
+    graph[indb].Draw("p0 same");
     leg.AddEntry(&graph[indb], cutsToLabel(ind_bcuts[indb].cut), "p");
   } // Loop over TGraphs
   if(ind_bcuts.size()>1) leg.Draw();

@@ -10,6 +10,7 @@
 #include "table_row.hpp"
 #include "process.hpp"
 #include "gamma_params.hpp"
+#include "plot_opt.hpp"
 
 class Table final: public Figure{
 public:
@@ -38,7 +39,8 @@ public:
 	const std::vector<TableRow> &rows,
 	const std::vector<std::shared_ptr<Process> > &processes,
 	bool do_zbi=true,
-	bool print_table=true);
+	bool print_table=true,
+	bool print_pie=false);
   Table(Table &&) = default;
   Table& operator=(Table &&) = default;
   ~Table() = default;
@@ -58,6 +60,8 @@ public:
   std::vector<TableRow> rows_;
   bool do_zbi_;
   bool print_table_;
+  bool print_pie_;
+  std::vector<PlotOpt> plot_options_;//!<Styles with which to draw pie chart
 
 private:
   std::vector<std::unique_ptr<TableColumn> > backgrounds_;//!<Background components of the figure
@@ -72,6 +76,7 @@ private:
 
   void PrintHeader(std::ofstream &file) const;
   void PrintRow(std::ofstream &file, std::size_t irow, double luminosity) const;
+  void PrintPie(std::size_t irow, double luminosity) const;
   void PrintFooter(std::ofstream &file) const;
 
   std::size_t NumColumns() const;

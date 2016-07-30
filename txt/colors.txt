@@ -3,6 +3,7 @@
  t1tttt   255   0   0
  tt_1l      1 148 218
  tt_2l    153 220 255
+ tt_ltau  153 153 255
  wjets      9 186   1
  dy       255 102   0
  single_t 222 186 135

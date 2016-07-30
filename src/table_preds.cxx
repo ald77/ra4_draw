@@ -129,7 +129,7 @@ int main(int argc, char *argv[]){
   auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
     {foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"},
     baseline+" && stitch && ntruleps==2");
-  auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("tt_1l"),
+  auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     {foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
         foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
         foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",

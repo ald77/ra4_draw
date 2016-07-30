@@ -6,6 +6,11 @@
 #include <sys/stat.h>
 
 #include "RooStats/NumberCountingUtils.h"
+#include "TH1D.h"
+#include "TCanvas.h"
+#include "TPie.h"
+#include "TLegend.h"
+#include "TString.h"
 
 #include "utilities.hpp"
 
@@ -100,12 +105,15 @@ Table::Table(const string &name,
              const vector<TableRow> &rows,
              const vector<shared_ptr<Process> > &processes,
 	     bool do_zbi,
-	     bool print_table):
+	     bool print_table,
+	     bool print_pie):
   Figure(),
   name_(name),
   rows_(rows),
   do_zbi_(do_zbi),
   print_table_(print_table),
+  print_pie_(print_pie),
+  plot_options_({PlotOpt("txt/plot_styles.txt", "Pie")}),
   backgrounds_(),
   signals_(),
   datas_(){
@@ -124,6 +132,8 @@ Table::Table(const string &name,
       break;
     }
   }
+
+  
 }
 
 void Table::Print(double luminosity,
@@ -343,7 +353,57 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
     }
     file << "\n";
   }
-}
+
+  if(print_pie_) PrintPie(irow, luminosity);
+} // PrintRow
+
+void Table::PrintPie(std::size_t irow, double luminosity) const{
+  size_t Nbkg = backgrounds_.size();
+  float Yield_tt = 0, Yield_tot = luminosity*GetYield(backgrounds_, irow);
+  vector<double> counts(Nbkg);
+  vector<int> colors(Nbkg);
+  vector<const char*> labels(Nbkg);
+  vector<TH1D> histos(Nbkg, TH1D("","",1,-1.,1.));
+  TLegend leg(0., 0., 1., 1.);
+  for(size_t ind = 0; ind < Nbkg; ++ind){
+    counts[ind] = luminosity*backgrounds_.at(ind)->sumw_.at(irow);
+    histos[ind].SetFillColor(backgrounds_.at(ind)->process_->GetFillColor());
+    colors.at(ind) = backgrounds_.at(ind)->process_->GetFillColor();
+    string label = backgrounds_.at(ind)->process_->name_;
+    leg.AddEntry(&histos[ind], label.c_str(), "f");
+    labels.at(ind) =  label.c_str();
+    if(Contains(label,"t#bar{t}") && !Contains(label,"t#bar{t}V")) Yield_tt += counts[ind];
+    
+  } // Loop over backgrounds
+
+  // Define piechart
+  TPie pie("", "", Nbkg, &counts.at(0), &colors.at(0), &labels.at(0));
+  pie.SetCircle(0.5, 0.48, 0.35);
+  pie.SetTitle(rows_.at(irow).cut_.PrettyName()+" (N="+RoundNumber(Yield_tot,1)
+	       +", Nt#bar{t}="+RoundNumber(Yield_tt*100,1,Yield_tot)+"%)");
+
+  string plot_name;
+  // For now, use only the first PlotOpt in the vector
+  TCanvas can("", "", plot_options_[0].CanvasWidth(), plot_options_[0].CanvasHeight());
+  can.SetFillColorAlpha(0, 0.);
+  can.SetFillStyle(4000);
+
+  // Printing pie chart with percentages
+  pie.SetLabelFormat("%perc");
+  pie.Draw();
+  plot_name = "plots/pie_"+name_+"_"+(rows_.at(irow).cut_.PlainName())+"_perc_lumi"+RoundNumber(luminosity,0)+".pdf";
+  can.SaveAs(plot_name.c_str());
+  cout<<" open "<<plot_name<<endl;
+
+  // Printing legend
+  if(irow==0){
+    leg.Draw();
+    plot_name = "plots/pie_"+name_+"_legend_lumi"+RoundNumber(luminosity,0)+".pdf";
+    can.SaveAs(plot_name.c_str());
+    cout<<" open "<<plot_name<<endl;
+  }
+} // PrintPie
+
 
 void Table::PrintFooter(ofstream &file) const{
   file << "    \\hline\n";

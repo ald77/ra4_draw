@@ -38,3 +38,16 @@
   NDivisions	  = 708
   Font		  = 42
   UseCMYK	  = 0
+
+[Pie]
+  CanvasW	   = 512
+  CanvasH	   = 512
+  LegendEntrySize  = 0.05
+  TitleSize	   = 0.045 
+  LabelSize	   = 0.06     
+  PadRightMargin   = 0.047
+  PadTopMargin	   = 0.075
+  PadBottomMargin  = 0.145
+  xTitleOffset	   = 1.08     
+  PadLeftMargin	   = 0.175
+  yTitleOffset	   = 1.
