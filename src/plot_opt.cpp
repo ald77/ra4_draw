@@ -36,6 +36,8 @@ PlotOpt::PlotOpt():
   legend_pad_(0.028),
   legend_density_(1.),
   log_minimum_(0.),
+  ratio_minimum_(0.1),
+  ratio_maximum_(1.9),
   n_divisions_(606),
   n_divisions_bottom_(606),
   font_(42),
@@ -344,6 +346,24 @@ double PlotOpt::LogMinimum() const{
   return log_minimum_;
 }
 
+PlotOpt & PlotOpt::RatioMinimum(double ratio_minimum){
+  ratio_minimum_ = ratio_minimum;
+  return *this;
+}
+
+double PlotOpt::RatioMinimum() const{
+  return ratio_minimum_;
+}
+
+PlotOpt & PlotOpt::RatioMaximum(double ratio_maximum){
+  ratio_maximum_ = ratio_maximum;
+  return *this;
+}
+
+double PlotOpt::RatioMaximum() const{
+  return ratio_maximum_;
+}
+
 PlotOpt & PlotOpt::Font(int font){
   font_ = font;
   return *this;
@@ -539,6 +559,10 @@ void PlotOpt::SetProperty(const string &property,
     BottomHeight(stod(value));
   }else if(property == "LogMinimum"){
     LogMinimum(stod(value));
+  }else if(property == "RatioMinimum"){
+    RatioMinimum(stod(value));
+  }else if(property == "RatioMaximum"){
+    RatioMaximum(stod(value));
   }else if(property == "nDivisions" || property == "NDivisions"){
     NDivisions(stoi(value));
   }else if(property == "nDivisionsBottom" || property == "NDivisionsBottom"){

@@ -98,6 +98,11 @@ public:
   PlotOpt & LogMinimum(double log_minimum);
   double LogMinimum() const;
 
+  PlotOpt & RatioMinimum(double ratio_minimum);
+  double RatioMinimum() const;
+  PlotOpt & RatioMaximum(double ratio_maximum);
+  double RatioMaximum() const;
+
   PlotOpt & NDivisions(int n_divisions);
   int NDivisions() const;
   PlotOpt & NDivisionsBottom(int n_divisions);
@@ -148,6 +153,7 @@ private:
   double legend_entry_height_, legend_max_height_;
   double legend_marker_width_, legend_pad_, legend_density_;
   double log_minimum_;
+  double ratio_minimum_, ratio_maximum_;
   int n_divisions_, n_divisions_bottom_;
   int font_;
   bool show_background_error_;

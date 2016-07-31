@@ -16,6 +16,10 @@
 #include "table.hpp"
 #include "plot_opt.hpp"
 
+namespace{
+  bool do_met150 = true;
+}
+
 using namespace std;
 
 int main(){
@@ -32,10 +36,12 @@ int main(){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/");
+  if(do_met150) foldermc = (bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_met150/");
   Palette colors("txt/colors.txt", "default");
 
   // Cuts in baseline speed up the yield finding
   string baseline = "mj14>250 && nleps>=1 && ht>500 && met>200 && pass && njets>=5 && weight<1"; // Excluding one QCD event
+  if(do_met150)  baseline = "mj14>250 && nleps>=1 && ht>500 && met>150 && pass && njets>=5";
 
   auto proc_tt1l = Process::MakeShared<Baby_full>("t#bar{t} (l)", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets_HT*.root"},
@@ -45,20 +51,20 @@ int main(){
     baseline+" && stitch && ntruleps==2 && ntrutaush==0");
   auto proc_ttltau = Process::MakeShared<Baby_full>("t#bar{t} (#tau_{h}l)", Process::Type::background, colors("tt_ltau"),
     {foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"},
-    baseline+" && stitch && ntruleps==2 && ntrutaush==1");
+    baseline+" && stitch && ntruleps==2 && ntrutaush>=1");
   auto proc_wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
     {foldermc+"*_WJetsToLNu*.root"}, baseline+" && stitch");
   auto proc_single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
-    {foldermc+"*_ST_*.root"});
+    {foldermc+"*_ST_*.root"}, baseline);
   auto proc_ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
-    {foldermc+"*_TTWJets*.root", foldermc+"*_TTZTo*.root"}, baseline);
+    {foldermc+"*_TTWJets*.root", foldermc+"*_TTZ*.root"}, baseline);
   auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    {foldermc+"*DYJetsToLL*.root", foldermc+"*_QCD_HT*.root",
-        foldermc+"*_ZJet*.root", foldermc+"*_WWTo*.root",
-        foldermc+"*ggZH_HToBB*.root", foldermc+"*ttHJetTobb*.root",
-        foldermc+"*_TTGJets*.root", foldermc+"*_TTTT_*.root",
-        foldermc+"*_WH_HToBB*.root", foldermc+"*_WZTo*.root",
-        foldermc+"*_ZH_HToBB*.root", foldermc+"_ZZ_*.root"}, baseline+" && stitch");
+    {foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
+        foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
+        foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
+        foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
+        foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
+    baseline+" && stitch");
 
   // auto proc_tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l", Process::Type::background, colors("tt_1l"),
   //   {foldermc+"*_TTJets_Tune*.root"},
@@ -78,6 +84,7 @@ int main(){
   TString c_midmet  = "met>350 && met<=500";
   TString c_higmet  = "met>500";
   vector<TString> metcuts({c_lowmet, c_midmet, c_higmet});
+  if(do_met150) metcuts = vector<TString>({c_vlowmet});
 
   ////// Nb cuts
   TString c_lownb = "nbm==1";
@@ -113,8 +120,9 @@ int main(){
       cuts.push_back("nleps==2 && "+metcuts[imet]+"&&"+njcuts[inj]);
  
   vector<TableRow> table_cuts;
-  for(size_t icut=0; icut<cuts.size(); icut++)
+  for(size_t icut=0; icut<cuts.size(); icut++){
     table_cuts.push_back(TableRow(cuts2tex(cuts[icut]).Data(), cuts[icut].Data()));
+  }
 
   PlotMaker pm;
   pm.Push<Table>("chart",  table_cuts, all_procs, true, true, true);

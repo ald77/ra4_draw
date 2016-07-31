@@ -347,8 +347,8 @@ void HistoStack::Print(double luminosity,
     TGraphAsymmErrors bottom_background;
     if(this_opt_.Bottom() != BottomType::off){
       bottom_background = TGraphAsymmErrors(&bot_plots.back());
-      bottom_background.SetMinimum(0.1);
-      bottom_background.SetMaximum(1.9);
+      bottom_background.SetMinimum(this_opt_.RatioMinimum());
+      bottom_background.SetMaximum(this_opt_.RatioMaximum());
       bot_plots.pop_back();
     }
 
@@ -1010,8 +1010,8 @@ std::vector<TH1D> HistoStack::GetBottomPlots(double &the_min, double &the_max) c
   }
 
   if(this_opt_.Bottom() == BottomType::ratio){
-    the_min = 0.1;
-    the_max = 1.9;
+    the_min = this_opt_.RatioMinimum();
+    the_max = this_opt_.RatioMaximum();
     for(auto &h: out){
       h.GetYaxis()->SetTitle("Data/MC");
       h.SetMinimum(the_min);
