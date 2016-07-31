@@ -780,8 +780,8 @@ void HistoStack::FixYAxis(vector<TH1D> &bottom_plots) const{
 
     //Scale offset by good empirical numbers
     offset = 0.6+0.25*digits;
-  }
-
+  
+}
   for(auto &hist: backgrounds_){
     hist->scaled_hist_.SetTitleOffset(offset, "y");
   }
@@ -792,7 +792,7 @@ void HistoStack::FixYAxis(vector<TH1D> &bottom_plots) const{
     hist->scaled_hist_.SetTitleOffset(offset, "y");
   }
   for(auto &hist: bottom_plots){
-    hist.SetTitleOffset(offset, "y");
+    if(datas_.size()>0)hist.SetTitleOffset(offset, "y");
   }
 }
 
@@ -1013,13 +1013,20 @@ std::vector<TH1D> HistoStack::GetBottomPlots(double &the_min, double &the_max) c
     the_min = this_opt_.RatioMinimum();
     the_max = this_opt_.RatioMaximum();
     for(auto &h: out){
-      h.GetYaxis()->SetTitle("Data/MC");
+      if(datas_.size() != 0) h.GetYaxis()->SetTitle("Data/MC");
+      else {
+	string label = "#frac{MC}{"+backgrounds_.front()->process_->name_+"}";
+	h.GetYaxis()->SetTitle(label.c_str());
+	h.SetTitleSize(h.GetTitleSize("y")/1.5,"y");
+	h.SetTitleOffset(2.1,"y");
+      }
       h.SetMinimum(the_min);
       h.SetMaximum(the_max);
     }
   }else if(this_opt_.Bottom() == BottomType::diff){
     for(auto &h: out){
-      h.GetYaxis()->SetTitle("Data-MC");
+      if(datas_.size() != 0) h.GetYaxis()->SetTitle("Data-MC");
+      //else h.GetYaxis()->SetTitle(backgrounds_.front()->process_->name_.c_str());
       h.SetMinimum(the_min);
       h.SetMaximum(the_max);
     }

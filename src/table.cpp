@@ -10,6 +10,7 @@
 #include "TCanvas.h"
 #include "TPie.h"
 #include "TLegend.h"
+#include "TStyle.h"
 #include "TString.h"
 
 #include "utilities.hpp"
@@ -376,24 +377,12 @@ void Table::PrintPie(std::size_t irow, double luminosity) const{
     
   } // Loop over backgrounds
 
-  // Define piechart
-  TPie pie("", "", Nbkg, &counts.at(0), &colors.at(0), &labels.at(0));
-  pie.SetCircle(0.5, 0.48, 0.35);
-  pie.SetTitle(rows_.at(irow).cut_.PrettyName()+" (N="+RoundNumber(Yield_tot,1)
-	       +", Nt#bar{t}="+RoundNumber(Yield_tt*100,1,Yield_tot)+"%)");
-
-  string plot_name;
   // For now, use only the first PlotOpt in the vector
+  gStyle->SetTitleW(0.95);
   TCanvas can("", "", plot_options_[0].CanvasWidth(), plot_options_[0].CanvasHeight());
   can.SetFillColorAlpha(0, 0.);
   can.SetFillStyle(4000);
-
-  // Printing pie chart with percentages
-  pie.SetLabelFormat("%perc");
-  pie.Draw();
-  plot_name = "plots/pie_"+name_+"_"+(rows_.at(irow).cut_.PlainName())+"_perc_lumi"+RoundNumber(luminosity,0)+".pdf";
-  can.SaveAs(plot_name.c_str());
-  cout<<" open "<<plot_name<<endl;
+  string plot_name;
 
   // Printing legend
   if(irow==0){
@@ -402,6 +391,20 @@ void Table::PrintPie(std::size_t irow, double luminosity) const{
     can.SaveAs(plot_name.c_str());
     cout<<" open "<<plot_name<<endl;
   }
+
+  // Define piechart
+  TPie pie("", "", Nbkg, &counts.at(0), &colors.at(0), &labels.at(0));
+  pie.SetCircle(0.5, 0.48, 0.35);
+  pie.SetTitle(rows_.at(irow).cut_.PrettyName()+" (N="+RoundNumber(Yield_tot,1)
+	       +", t#bar{t}="+RoundNumber(Yield_tt*100,1,Yield_tot)+"%)");
+
+  // Printing pie chart with percentages
+  pie.SetLabelFormat("%perc");
+  pie.Draw();
+  plot_name = "plots/pie_"+name_+"_"+(rows_.at(irow).cut_.PlainName())+"_perc_lumi"+RoundNumber(luminosity,0)+".pdf";
+  can.SaveAs(plot_name.c_str());
+  cout<<" open "<<plot_name<<endl;
+
 } // PrintPie
 
 

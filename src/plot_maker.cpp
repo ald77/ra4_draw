@@ -89,12 +89,12 @@ void PlotMaker::GetYields(){
       ++Nbabies;
     }
     size_t Nfiles=0;
-    long printStep=Nbabies/20+1; // Print up 20 lines of info
+    long printStep=Nbabies/20+1; // Print up to 20 lines of info
     auto start_entries_time = Clock::now();
     for(auto& entries: num_entries_future){
       num_entries += entries.get();
       Nfiles++;
-      if(min_print_ && (Nfiles%printStep==1 || Nfiles==Nbabies)){
+      if(min_print_ && ((Nfiles-1)%printStep==0 || Nfiles==Nbabies)){
 	double seconds = chrono::duration<double>(Clock::now()-start_entries_time).count();
 	cout<<"Done "<<setw(log10(Nbabies)+1)<<Nfiles<<"/"<<Nbabies<<" files: "<<setw(10)<<AddCommas(num_entries)
 	    <<" entries in "<<HoursMinSec(seconds)<<"  ->  "<<setw(5)<<RoundNumber(num_entries/1000.,1,seconds)
