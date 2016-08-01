@@ -67,6 +67,7 @@ TString AddCommas(double num);
 TString RoundNumber(double num, int decimals, double denom=1.);
 TString cuts2tex(TString cuts);
 TString cutsToLabel(TString cut);
+TString cutsToPlain(TString cut);
 
 double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg=-1.);
 double gsl_ran_gamma (const double a, const double b, TRandom3 &rand);

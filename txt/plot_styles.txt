@@ -39,6 +39,22 @@
   Font		  = 42
   UseCMYK	  = 0
 
+[Ratio]
+  CanvasW	  = 1100
+  CanvasH	  = 700
+  TitleSize	  = 0.06
+  LabelSize	  = 0.052
+  xTitleOffset	  = 1.
+  yTitleOffset	  = 1.2
+  PadLeftMargin	  = 0.15
+  PadRightMargin  = 0.05
+  PadTopMargin	  = 0.09
+  PadBottomMargin = 0.15
+  LegendEntrySize = 0.041
+  NDivisions	  = 708
+  Font		  = 42
+  UseCMYK	  = 0
+
 [Pie]
   CanvasW	   = 512
   CanvasH	   = 512

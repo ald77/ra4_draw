@@ -76,14 +76,13 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
-  //string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_21/data/skim_standard/");
-  if(skim.Contains("met150")){
-    foldermc = bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_met150/";
-    folderdata = bfolder+"/cms2r0/babymaker/babies/2016_06_21/data/skim_1lmet150/";
-  }
+  string ntupletag="_nleps1met200nj5";
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_met150_and_nleps1met200nj5/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_nl1st500met150/");
+  if(skim.Contains("met150")) ntupletag="_met150";
+  if(skim.Contains("both")) ntupletag="";
   if(skim.Contains("2015")){
+    ntupletag="1lht500met200";
     foldermc = bfolder+"/cms2r0/babymaker/babies/2016_04_29/mc/merged_1lht500met200/";
     folderdata = bfolder+"/cms2r0/babymaker/babies/2016_04_29/data/merged_1lht500met200/";
     if(only_method.Contains("old")) {
@@ -96,48 +95,46 @@ int main(int argc, char *argv[]){
 
   // Cuts in baseline speed up the yield finding
   string baseline = "mj14>250 && nleps>=1 && ht>500 && met>150 && pass && njets>=5";
-  if(skim.Contains("2015")) {
-    lumi = 2.3;
-  }else if(!full_lumi) {
-    baseline += " && nonblind";
-    lumi = 0.815;
-  } else lumi = 2.6;
+  if(skim.Contains("2015")) lumi = 2.3;
+  else if(!full_lumi) lumi = 0.815;
+  else lumi = 2.6;
+
   if(skim.Contains("mj12")) ReplaceAll(baseline, "mj14","mj");
   if(mc_lumi!="") lumi = mc_lumi.Atof();
 
   //// Use this process to make quick plots. Requires being run without split_bkg
   auto proc_bkg = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
-    // {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root",
-    //  foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
-    //  foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
-    //  foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
-    //  foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
-    //  foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
-    //  foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
-    //  foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
-    {foldermc+"*_TTJets_Tune*.root"},
+    // {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root",
+    //  foldermc+"*_WJetsToLNu*"+ntupletag+"*.root",foldermc+"*_ST_*"+ntupletag+"*.root",
+    //  foldermc+"*_TTW*"+ntupletag+"*.root",foldermc+"*_TTZ*"+ntupletag+"*.root",
+    //  foldermc+"*DYJetsToLL*"+ntupletag+"*.root",foldermc+"*QCD_HT*"+ntupletag+"*.root",
+    //  foldermc+"*_ZJet*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
+    //  foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_TTTT*"+ntupletag+"*.root",
+    //  foldermc+"*_WH_HToBB*"+ntupletag+"*.root",foldermc+"*_ZH_HToBB*"+ntupletag+"*.root",
+    //  foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",foldermc+"*_ZZ_*"+ntupletag+"*.root"},
+    {foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"},
     baseline+" && stitch");
 
   auto proc_t1c = Process::MakeShared<Baby_full>("T1tttt(C)", Process::Type::signal, colors("t1tttt"),
-    {foldermc+"*mGluino-1200_mLSP-800_*root"},
+    {foldermc+"*mGluino-1200_mLSP-800_*"+ntupletag+"*.root"},
     baseline+" && stitch");
   auto proc_t1nc = Process::MakeShared<Baby_full>("T1tttt(NC)", Process::Type::signal, colors("t1tttt"),
-    {foldermc+"*mGluino-1500_mLSP-100_*root"},
+    {foldermc+"*mGluino-1500_mLSP-100_*"+ntupletag+"*.root"},
     baseline+" && stitch");
   auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets_HT*.root"},
+    {foldermc+"*_TTJets*SingleLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
     baseline+" && stitch && ntruleps==1");
   auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
-    {foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"},
+    {foldermc+"*_TTJets*DiLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
     baseline+" && stitch && ntruleps==2");
   auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    {foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
-        foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
-        foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
-        foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
-        foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
-        foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
-        foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
+    {foldermc+"*_WJetsToLNu*"+ntupletag+"*.root",foldermc+"*_ST_*"+ntupletag+"*.root",
+        foldermc+"*_TTW*"+ntupletag+"*.root",foldermc+"*_TTZ*"+ntupletag+"*.root",
+        foldermc+"*DYJetsToLL*"+ntupletag+"*.root",foldermc+"*QCD_HT*"+ntupletag+"*.root",
+        foldermc+"*_ZJet*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
+        foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_TTTT*"+ntupletag+"*.root",
+        foldermc+"*_WH_HToBB*"+ntupletag+"*.root",foldermc+"*_ZH_HToBB*"+ntupletag+"*.root",
+        foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",foldermc+"*_ZZ_*"+ntupletag+"*.root"},
     baseline+" && stitch");
 
   string trigs = "(trig[4]||trig[8]||trig[13]||trig[33])";
@@ -145,6 +142,7 @@ int main(int argc, char *argv[]){
 
   if(only_method.Contains("old")) trigs = "(trig[4]||trig[8])";
   if(!skim.Contains("2015")) trigs += " && json2p6";
+  if(!full_lumi) trigs += " && nonblind";
 
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     {folderdata+"*.root"},baseline+" && "+trigs);
@@ -156,11 +154,6 @@ int main(int argc, char *argv[]){
     all_procs.push_back(proc_t1c);
   }
   if(!only_mc) all_procs.push_back(proc_data);
-  // if (split_bkg){
-  //   all_procs.push_back(proc_tt1l);
-  //   all_procs.push_back(proc_tt2l);
-  //   all_procs.push_back(proc_other);
-  // }
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining basic cuts //////////////////////////////////////////
@@ -299,8 +292,13 @@ int main(int argc, char *argv[]){
                                   c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj};
         caption += " for $\\nb\\geq2$";
       }
+    } // signal
 
-    }
+    if(method.Contains("allmetsignal")) {
+      metcuts = vector<TString>{c_vlowmet, c_lowmet, c_midmet, c_higmet};
+      caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
+    } // allmetsignal
+
     if(method.Contains("m5j")) {
       metcuts = vector<TString>{c_lowmet, c_midmet};
       if(only_mc) metcuts.push_back(c_higmet);
@@ -435,6 +433,7 @@ int main(int argc, char *argv[]){
 // if split_bkg: [2/4] Other, [3/5] tt1l, [4/6] tt2l
 TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                    vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds){
+  cout<<endl<<"Printing table (significance estimation can take a bit)"<<endl;
   //// Table general parameters
   int digits = 2;
   TString ump = " & ";
@@ -689,9 +688,11 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   } // Loop over plane cuts
 
   //// Plotting kappas
-  TCanvas can("can","",1100,700);
+  TCanvas can("can","");
   TLine line; line.SetLineWidth(2); line.SetLineStyle(2);
   TLatex label; label.SetTextSize(0.05); label.SetTextFont(42); label.SetTextAlign(23);
+  if(k_ordered.size()>3) label.SetTextSize(0.04);
+
 
   float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = 2.4;
   if(label_up) maxy = 2.6;
@@ -740,7 +741,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
     if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
     // Drawing MET labels
     if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, cutsToLabel(abcd.planecuts[iplane]));
-    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.25, cutsToLabel(abcd.planecuts[iplane]));
+    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.26, cutsToLabel(abcd.planecuts[iplane]));
   } // Loop over plane cuts
 
   //// Drawing legend and TGraphs
@@ -851,7 +852,7 @@ void printDebug(abcd_method &abcd, vector<vector<GammaParams> > &allyields, TStr
     for(size_t ibin=0; ibin < abcd.bincuts[iplane].size(); ibin++){
       for(size_t iabcd=0; iabcd < abcd.abcdcuts.size(); iabcd++){
         size_t index = abcd.indexBin(iplane, ibin, iabcd);
-        cout<<"MC: "<<setw(7)<<RoundNumber(allyields[1][index].Yield(),digits)
+        cout<<"MC: "<<setw(8)<<RoundNumber(allyields[1][index].Yield(),digits)
             <<"  Data: "<<setw(4)<<RoundNumber(allyields[0][index].Yield(), 0)
             <<"  - "<< abcd.allcuts[index]<<endl;
       } // Loop over ABCD cuts

@@ -207,6 +207,18 @@ TString RoundNumber(double num, int decimals, double denom){
   return result;
 }
 
+TString cutsToPlain(TString cut){
+  cut.ReplaceAll(" ",""); cut.ReplaceAll("/","_"); cut.ReplaceAll("\\","_");
+  cut.ReplaceAll(">=","GE"); cut.ReplaceAll("<=","SE"); cut.ReplaceAll("&","_");
+  cut.ReplaceAll(">","G"); cut.ReplaceAll("<","S"); cut.ReplaceAll("=","");
+  cut.ReplaceAll("{",""); cut.ReplaceAll("}",""); cut.ReplaceAll("(",""); cut.ReplaceAll(")",""); 
+  cut.ReplaceAll("+",""); cut.ReplaceAll("#",""); cut.ReplaceAll("^","");
+  cut.ReplaceAll("[",""); cut.ReplaceAll("]",""); cut.ReplaceAll("|","_");
+  cut.ReplaceAll("$",""); cut.ReplaceAll(",","_"); cut.ReplaceAll("!","NOT");
+
+  return cut;
+}
+
 //// Converting ROOT cuts to ROOT labels
 TString cutsToLabel(TString cut){
   if(cut.Contains("mm_")){
@@ -326,6 +338,10 @@ double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg){
   if(Edown_bkg<0) Edown_bkg = Eup_bkg; // If down uncertainty not specified, symmetric lognormal
   if(Edown_bkg>Nbkg) {
     cout<<"Down uncertainty ("<<Edown_bkg<<") has to be smaller than Nbkg ("<<Nbkg<<")"<<endl;
+    return -999.;
+  }
+  if(Nobs==0 && Nbkg==0) {
+    cout<<"Both Nobs and Nbkg are 0. Returning -999 sigma"<<endl;
     return -999.;
   }
   TRandom3 rand(1234);
