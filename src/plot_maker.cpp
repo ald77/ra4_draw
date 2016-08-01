@@ -165,6 +165,7 @@ long PlotMaker::GetYield(Baby *baby_ptr){
         if(!HavePass(proc_fig.first->cut_.GetVector(baby))) continue;
       }
       for(const auto &component: proc_fig.second){
+	lock_guard<mutex> lock(component->mutex_);
         component->RecordEvent(baby);
       }
     }

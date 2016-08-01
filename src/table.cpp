@@ -51,7 +51,6 @@ Table::TableColumn::TableColumn(const Table &table,
 }
 
 void Table::TableColumn::RecordEvent(const Baby &baby){
-  lock_guard<mutex> lock(mutex_);
   const Table& table = static_cast<const Table&>(figure_);
 
   bool have_vector;

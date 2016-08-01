@@ -21,8 +21,6 @@ public:
 
     const Figure& figure_;//!<Reference to figure containing this component
     std::shared_ptr<Process> process_;//!<Process associated to this part of the figure
-    
-  protected:
     std::mutex mutex_;
 
   private:

@@ -150,7 +150,6 @@ HistoStack::SingleHist::SingleHist(const HistoStack &figure,
 }
 
 void HistoStack::SingleHist::RecordEvent(const Baby &baby){
-  lock_guard<mutex> lock(mutex_);
   const HistoStack& stack = static_cast<const HistoStack&>(figure_);
   size_t min_vec_size;
   bool have_vec = false;
