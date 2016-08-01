@@ -31,7 +31,7 @@ public:
 
   std::set<Baby*> Babies() const;
 
-  ~Process() = default;
+  ~Process();
 
 private:
   template<typename BabyType>

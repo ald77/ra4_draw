@@ -18,3 +18,16 @@ set<Baby*> Process::Babies() const{
   }
   return babies;
 }
+
+Process::~Process(){
+  lock_guard<mutex> lock(mutex_);
+  auto baby_ptr_iter = baby_pool_.begin();
+  while(baby_ptr_iter != baby_pool_.end()){
+    auto current_iter = baby_ptr_iter++;
+    Baby &baby = *(current_iter->get());
+    baby.processes_.erase(this);
+    if(baby.processes_.size() == 0){
+      baby_pool_.erase(current_iter);
+    }
+  }
+}
