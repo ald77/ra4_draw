@@ -713,7 +713,7 @@ NamedFunc & NamedFunc::operator %= (const NamedFunc &func){
 
 /*!\brief Apply indexing operator and return result as a NamedFunc
  */
-NamedFunc NamedFunc::operator [] (const NamedFunc &func){
+NamedFunc NamedFunc::operator [] (const NamedFunc &func) const{
   if(IsScalar()) ERROR("Cannot apply indexing operator to scalar NamedFunc "+Name());
   if(func.IsVector()) ERROR("Cannot use vector "+func.Name()+" as index");
   const auto &vec = VectorFunction();

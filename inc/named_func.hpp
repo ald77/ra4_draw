@@ -53,7 +53,7 @@ public:
   NamedFunc & operator /= (const NamedFunc &func);
   NamedFunc & operator %= (const NamedFunc &func);
 
-  NamedFunc operator [] (const NamedFunc &func);
+  NamedFunc operator [] (const NamedFunc &func) const;
 
 private:
   NamedFunc() = delete;

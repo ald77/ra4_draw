@@ -1088,7 +1088,7 @@ void HistoStack::StripTopPlotLabels() const{
 double HistoStack::GetMaxDraw(double max_bound) const{
   double the_max = -numeric_limits<double>::infinity();
   for(const auto &hist: backgrounds_){
-    double this_max = hist->GetMax(max_bound, false);
+    double this_max = hist->GetMax(max_bound, this_opt_.ShowBackgroundError());
     if(this_max > the_max && this_max < max_bound){
       the_max = this_max;
     }
@@ -1119,7 +1119,7 @@ double HistoStack::GetMaxDraw(double max_bound) const{
 double HistoStack::GetMinDraw(double min_bound) const{
   double the_min = numeric_limits<double>::infinity();
   for(const auto &hist: backgrounds_){
-    double this_min = hist->GetMin(min_bound, false);
+    double this_min = hist->GetMin(min_bound, this_opt_.ShowBackgroundError());
     if(this_min < the_min && this_min > min_bound){
       the_min = this_min;
     }
