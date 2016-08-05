@@ -372,7 +372,7 @@ int main(int argc, char *argv[]){
     // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
     // if split_bkg [2/4] Other, [3/5] tt1l, [4/6] tt2l
     vector<vector<GammaParams> > allyields;
-    allyields.push_back(yield_table->DataYield(1));
+    allyields.push_back(yield_table->DataYield());
     allyields.push_back(yield_table->BackgroundYield(lumi));
     if(do_signal){
       allyields.push_back(yield_table->Yield(proc_t1nc.get(), lumi));

@@ -156,6 +156,7 @@ void Table::Print(double luminosity,
 }
 
 vector<GammaParams> Table::Yield(const Process *process, double luminosity) const{
+  if(process->type_ == Process::Type::background) luminosity = 1.;
   const auto &component_list = GetComponentList(process);
   const TableColumn *col = nullptr;
   for(const auto &component: component_list){
@@ -184,12 +185,12 @@ vector<GammaParams> Table::BackgroundYield(double luminosity) const{
   return yields;
 }
 
-vector<GammaParams> Table::DataYield(double luminosity) const{
+vector<GammaParams> Table::DataYield() const{
   vector<GammaParams> yields(rows_.size());  
   auto procs = GetProcesses();
   for(const auto &proc: procs){
     if(proc->type_ != Process::Type::data) continue;
-    vector<GammaParams> proc_yields = Yield(proc, luminosity);
+    vector<GammaParams> proc_yields = Yield(proc, 1.);
     for(size_t i = 0; i < proc_yields.size(); ++i){
       yields.at(i) += proc_yields.at(i);
     }
@@ -325,11 +326,11 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
 
     if(datas_.size() > 1){
       for(size_t i = 0; i < datas_.size(); ++i){
-        file << " & " << luminosity*datas_.at(i)->sumw_.at(irow);
+        file << " & " << datas_.at(i)->sumw_.at(irow);
       }
-      file << " & " << luminosity*GetYield(datas_, irow);
+      file << " & " << GetYield(datas_, irow);
     }else if(datas_.size() == 1){
-      file << " & " << luminosity*GetYield(datas_, irow);
+      file << " & " << GetYield(datas_, irow);
     }
 
     for(size_t i = 0; i < signals_.size(); ++i){
