@@ -425,6 +425,21 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "class NamedFunc;\n\n";
 
   file << "class Baby{\n";
+  file << "private:\n";
+  file << "  class Activator{\n";
+  file << "  public:\n";
+  file << "    Activator(Baby &baby);\n";
+  file << "    ~Activator();\n\n";
+
+  file << "  private:\n";
+  file << "    Baby & baby_;\n\n";
+
+  file << "    Activator(const Activator &) = delete;\n";
+  file << "    Activator & operator=(const Activator &) = delete;\n";
+  file << "    Activator(Activator &&) = delete;\n";
+  file << "    Activator & operator=(Activator &&) = delete;\n";
+  file << "  };\n\n";
+
   file << "public:\n";
   file << "  explicit Baby(const std::set<std::string> &file_names,\n";
   file << "                const std::set<const Process*> &processes = std::set<const Process*>{});\n";
@@ -458,6 +473,8 @@ void WriteBaseHeader(const set<Variable> &vars,
 
   file << "  static NamedFunc GetFunction(const std::string &var_name);\n\n";
 
+  file << "  std::unique_ptr<Activator> Activate();\n\n";
+
   file << "protected:\n";
   file << "  virtual void Initialize();\n\n";
 
@@ -465,6 +482,8 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "  long entry_;//!<Current entry\n\n";
 
   file << "private:\n";
+  file << "  friend class Activator;\n\n";
+
   file << "  Baby() = delete;\n";
   file << "  Baby(const Baby &) = delete;\n";
   file << "  Baby& operator=(const Baby &) = delete;\n\n";
@@ -473,6 +492,9 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "  int sample_type_;//!< Integer indicating what kind of sample the first file has\n";
   file << "  mutable long total_entries_;//!<Cached number of events in TChain\n";
   file << "  mutable bool cached_total_entries_;//!<Flag if cached event count up to date\n\n";
+
+  file << "  void ActivateChain();\n";
+  file << "  void DeactivateChain();\n\n";
 
   for(const auto &var: vars){
     if(!var.ImplementInBase()) continue;
@@ -601,6 +623,15 @@ void WriteBaseSource(const set<Variable> &vars){
   }
   file << "}\n\n";
 
+  file << "Baby::Activator::Activator(Baby &baby):\n";
+  file << "  baby_(baby){\n";
+  file << "  baby_.ActivateChain();\n";
+  file << "}\n\n";
+
+  file << "Baby::Activator::~Activator(){\n";
+  file << "  baby_.DeactivateChain();\n";
+  file << "}\n\n";
+
   file << "/*!\\brief Standard constructor\n\n";
 
   file << "  \\param[in] file_names ntuple files to read from\n";
@@ -633,12 +664,6 @@ void WriteBaseSource(const set<Variable> &vars){
     file << "  b_" << last_base->Name() << "_(nullptr),\n";
     file << "  c_" << last_base->Name() << "_(false){\n";
   }
-  file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
-  file << "  chain_ = unique_ptr<TChain>(new TChain(\"tree\"));\n";
-  file << "  for(const auto &file: file_names){\n";
-  file << "    chain_->Add((file).c_str());\n";
-  //file << "    chain_->Add((file+\"/tree\").c_str());\n";
-  file << "  }\n";
   file << "  TString filename=\"\";\n";
   file << "  if(file_names_.size()) filename = *file_names_.cbegin();\n";
   file << "  sample_type_ = SetSampleType(filename);\n";
@@ -730,15 +755,33 @@ void WriteBaseSource(const set<Variable> &vars){
   }
   file << "}\n\n";
 
+  file << "unique_ptr<Baby::Activator> Baby::Activate(){\n";
+  file << "  return unique_ptr<Baby::Activator>(new Baby::Activator(*this));\n";
+  file << "}\n\n";
+
   file << "/*! \\brief Setup all branches\n";
   file << "*/\n";
   file << "void Baby::Initialize(){\n";
-  file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
   file << "  chain_->SetMakeClass(1);\n";
   for(const auto &var: vars){
     if(!var.ImplementInBase()) continue;
     file << "  chain_->SetBranchAddress(\"" << var.Name() << "\", &" << var.Name() << "_, &b_" << var.Name() << "_);\n";
   }
+  file << "}\n\n";
+
+  file << "void Baby::ActivateChain(){\n";
+  file << "  if(chain_) ERROR(\"Chain has already been initialized\");\n";
+  file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
+  file << "  chain_ = unique_ptr<TChain>(new TChain(\"tree\"));\n";
+  file << "  for(const auto &file: file_names_){\n";
+  file << "    chain_->Add(file.c_str());\n";
+  file << "  }\n";
+  file << "  Initialize();\n";
+  file << "}\n\n";
+
+  file << "void Baby::DeactivateChain(){\n";
+  file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
+  file << "  chain_.reset();\n";
   file << "}\n\n";
 
   for(const auto &var: vars){
@@ -874,7 +917,6 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
       }
     }
   }
-  file << "  Initialize();\n";
   file << "}\n\n";
 
   file << "/*!\\brief Change current entry\n\n";
@@ -894,9 +936,6 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
   file << "*/\n";
   file << "void Baby_" << type << "::Initialize(){\n";
   file << "  Baby::Initialize();\n";
-  if(vars.size() > 0){
-    file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
-  }
   for(const auto &var: vars){
     if(var.ImplementIn(type) || var.EverythingIn(type)){
       file << "  chain_->SetBranchAddress(\"" << var.Name() << "\", &"

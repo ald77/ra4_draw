@@ -120,6 +120,7 @@ void PlotMaker::GetYields(){
 long PlotMaker::GetYield(Baby *baby_ptr){
   auto start_time = Clock::now();
   Baby &baby = *baby_ptr;
+  auto activator = baby.Activate();
   string tag = "";
   if(baby.FileNames().size() == 1){
     tag = Basename(*baby.FileNames().cbegin());
