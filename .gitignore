@@ -47,7 +47,8 @@ sftp-config.json
 *.aux
 
 # Auto-generated files
-inc/baby.hpp
-inc/baby_*.hpp
-src/baby.cpp
-src/baby_*.cpp
+inc/core/baby.hpp
+inc/core/baby_*.hpp
+src/core/baby.cpp
+src/core/baby_*.cpp
+.subdirs.mk

@@ -9,9 +9,9 @@ Doxygen-based documentation is available at [Adam's UCSB-HEP webpage](http://hep
 #### Setup and compilation
 Compilation requires c++11 and ROOT, but not CMSSW. To compile, simply run
 
-    ./compile.sh
+    ./compile.py
 
 #### Making histograms
 An example script is available under src/test.cxx. To execute, compile and then run
 
-    ./run/test.exe
+    ./run/core/test.exe
