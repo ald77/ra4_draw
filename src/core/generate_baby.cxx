@@ -740,7 +740,7 @@ void WriteBaseSource(const set<Variable> &vars){
       file << "    return ::GetFunction(&Baby::" << var->Name() << ", \"" << var->Name() << "\");\n";
     }
     file << "  }else{\n";
-    file << "    DBG(\"Function lookup failed for \\\"\" << var_name << \".\\\"\");\n";
+    file << "    DBG(\"Function lookup failed for \\\"\" << var_name << \"\\\"\");\n";
     file << "    return NamedFunc(var_name,\n";
     file << "                     [](const Baby &){\n";
     file << "                       return 0.;\n";

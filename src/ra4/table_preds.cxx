@@ -44,6 +44,7 @@ namespace{
   bool full_lumi = false;
   bool unblind = false;
   bool debug = false;
+  bool do_ht = false;
   TString skim = "standard";
   TString only_method = "";
   TString mc_lumi = "";
@@ -62,6 +63,12 @@ TString cutsToTex(TString cut);
 
 void GetOptions(int argc, char *argv[]);
 
+const NamedFunc st("st", [](const Baby &b) -> NamedFunc::ScalarType{
+    float stvar = b.ht();
+    for (const auto &pt: *(b.leps_pt())) stvar += pt; 
+    return stvar;
+  });
+
 int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
   GetOptions(argc, argv);
@@ -76,9 +83,19 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string ntupletag="_nleps1met200nj5";
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_met150_and_nleps1met200nj5/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_nl1st500met150/");
+  string ntupletag="_standard";
+
+  // string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_met150_and_nleps1met200nj5/");
+  // string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_nl1st500met150/");
+
+  // //// Chinchilla
+  //string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/");
+  //string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
+  
+  //// Capybara
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_standard/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_standard/");
+
   if(skim.Contains("met150")) ntupletag="_met150";
   if(skim.Contains("both")) ntupletag="";
   if(skim.Contains("2015")){
@@ -94,13 +111,12 @@ int main(int argc, char *argv[]){
   Palette colors("txt/colors.txt", "default");
 
   // Cuts in baseline speed up the yield finding
-  string baseline = "mj14>250 && nleps>=1 && ht>500 && met>150 && pass && njets>=5";
-  if(skim.Contains("2015")) lumi = 2.3;
-  else if(!full_lumi) lumi = 0.815;
-  else lumi = 2.6;
+  string baseline_s = "mj14>250 && nleps>=1 && met>150 && pass && njets>=5";
+  if(skim.Contains("mj12")) ReplaceAll(baseline_s, "mj14","mj");
 
-  if(skim.Contains("mj12")) ReplaceAll(baseline, "mj14","mj");
-  if(mc_lumi!="") lumi = mc_lumi.Atof();
+  NamedFunc baseline=baseline_s;
+  if(do_ht) baseline += " && ht>500";
+  else baseline = st>500 && baseline;
 
   //// Use this process to make quick plots. Requires being run without split_bkg
   auto proc_bkg = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
@@ -113,39 +129,48 @@ int main(int argc, char *argv[]){
     //  foldermc+"*_WH_HToBB*"+ntupletag+"*.root",foldermc+"*_ZH_HToBB*"+ntupletag+"*.root",
     //  foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",foldermc+"*_ZZ_*"+ntupletag+"*.root"},
     {foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"},
-    baseline+" && stitch");
+    baseline && "stitch");
 
   auto proc_t1c = Process::MakeShared<Baby_full>("T1tttt(C)", Process::Type::signal, colors("t1tttt"),
     {foldermc+"*mGluino-1200_mLSP-800_*"+ntupletag+"*.root"},
-    baseline+" && stitch");
+    baseline && "stitch");
   auto proc_t1nc = Process::MakeShared<Baby_full>("T1tttt(NC)", Process::Type::signal, colors("t1tttt"),
     {foldermc+"*mGluino-1500_mLSP-100_*"+ntupletag+"*.root"},
-    baseline+" && stitch");
+    baseline && "stitch");
   auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets*SingleLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
-    baseline+" && stitch && ntruleps==1");
+    baseline && "stitch && ntruleps==1");
   auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
     {foldermc+"*_TTJets*DiLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
-    baseline+" && stitch && ntruleps==2");
+    baseline && "stitch && ntruleps==2");
   auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     {foldermc+"*_WJetsToLNu*"+ntupletag+"*.root",foldermc+"*_ST_*"+ntupletag+"*.root",
         foldermc+"*_TTW*"+ntupletag+"*.root",foldermc+"*_TTZ*"+ntupletag+"*.root",
-        foldermc+"*DYJetsToLL*"+ntupletag+"*.root",foldermc+"*QCD_HT*"+ntupletag+"*.root",
+        foldermc+"*DYJetsToLL*"+ntupletag+"*.root",
+	//foldermc+"*QCD_HT*"+ntupletag+"*.root",
+	foldermc+"*QCD_HT*0_Tune*"+ntupletag+"*.root", foldermc+"*QCD_HT*Inf_Tune*"+ntupletag+"*.root",
         foldermc+"*_ZJet*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
         foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_TTTT*"+ntupletag+"*.root",
         foldermc+"*_WH_HToBB*"+ntupletag+"*.root",foldermc+"*_ZH_HToBB*"+ntupletag+"*.root",
         foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",foldermc+"*_ZZ_*"+ntupletag+"*.root"},
-    baseline+" && stitch");
+    baseline && "stitch");
 
   string trigs = "(trig[4]||trig[8]||trig[13]||trig[33])";
   if(skim.Contains("2015")) trigs = "(trig[4]||trig[8]||trig[28]||trig[14])";
+
+  // Setting luminosity
+  if(skim.Contains("2015")) lumi = 2.3;
+  else if(!full_lumi) lumi = 0.815;
+  else lumi = 2.6;
+  if(mc_lumi!="") lumi = mc_lumi.Atof();
+
 
   if(only_method.Contains("old")) trigs = "(trig[4]||trig[8])";
   if(!skim.Contains("2015")) trigs += " && json2p6";
   if(!full_lumi) trigs += " && nonblind";
 
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    {folderdata+"*.root"},baseline+" && "+trigs);
+    {folderdata+"*.root"},baseline && trigs);
 
   vector<shared_ptr<Process> > all_procs = {proc_tt1l, proc_tt2l, proc_other};
   //vector<shared_ptr<Process> > all_procs = {proc_bkg};
@@ -403,7 +428,7 @@ int main(int argc, char *argv[]){
     plotKappa(abcds[imethod], kappas);
 
     //// Print MC/Data yields, cuts applied, kappas, preds
-    if(debug) printDebug(abcds[imethod], allyields, baseline, kappas, preds);
+    if(debug) printDebug(abcds[imethod], allyields, TString(baseline.Name()), kappas, preds);
 
   } // Loop over ABCD methods
 
@@ -758,7 +783,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   for(size_t indb=0; indb<ind_bcuts.size(); indb++){
     graph[indb] = TGraphAsymmErrors(vx[indb].size(), &(vx[indb][0]), &(vy[indb][0]),
                                     &(vexl[indb][0]), &(vexh[indb][0]), &(veyl[indb][0]), &(veyh[indb][0]));
-    graph[indb].SetMarkerStyle(ind_bcuts[indb].style); graph[indb].SetMarkerSize(1.65);
+    graph[indb].SetMarkerStyle(ind_bcuts[indb].style); graph[indb].SetMarkerSize(1.4);
     graph[indb].SetMarkerColor(ind_bcuts[indb].color);
     graph[indb].SetLineColor(ind_bcuts[indb].color); graph[indb].SetLineWidth(2);
     graph[indb].Draw("p0 same");
@@ -880,6 +905,7 @@ void GetOptions(int argc, char *argv[]){
       {"only_mc", no_argument, 0, 'o'},       // Uses MC as data for the predictions
       {"debug", no_argument, 0, 'd'},         // Debug: prints yields and cuts used
       {"only_dilepton", no_argument, 0, '2'}, // Makes tables only for dilepton tests
+      {"doht", no_argument, 0, 0},            // Cuts on ht>500 instead of st>500
       {0, 0, 0, 0}
     };
 
@@ -925,6 +951,12 @@ void GetOptions(int argc, char *argv[]){
       full_lumi = true;
       break;
     case 0:
+      optname = long_options[option_index].name;
+      if(optname == "doht"){
+        do_ht = true;
+      }else{
+        printf("Bad option! Found option name %s\n", optname.c_str());
+      }
       break;
     default:
       printf("Bad option! getopt_long returned character code 0%o\n", opt);
