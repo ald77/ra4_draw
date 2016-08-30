@@ -1178,7 +1178,7 @@ vector<shared_ptr<TLegend> > HistoStack::GetLegends(){
     auto &leg = legends.at(GetLegendIndex(entries_added, n_entries, legends.size()));
     ostringstream label;
     label << fixed << setprecision(1) << "L=" << luminosity_ << " fb^{-1}";
-    if(this_opt_.Stack() == StackType::data_norm){
+    if(this_opt_.Stack() == StackType::data_norm && datas_.size() > 0){
       label << ", (" << 100.*mc_scale_ << "#pm" << 100.*mc_scale_error_ << ")%";
     }
     auto entry = leg->AddEntry(&blank_, label.str().c_str(), "f");

@@ -45,6 +45,7 @@ sftp-config.json
 # LaTeX
 *.tex
 *.aux
+*.gz
 
 # Auto-generated files
 inc/core/baby.hpp
