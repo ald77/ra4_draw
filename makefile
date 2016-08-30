@@ -1,8 +1,3 @@
-EXEDIR := run
-OBJDIR := bin
-SRCDIR := src
-INCDIR := inc
-MAKEDIR := bin
 BABYDIR := txt/variables
 LIBFILE := $(OBJDIR)/libStatObj.a
 
@@ -31,21 +26,48 @@ BABY_INCS := $(addprefix $(INCDIR)/core/baby_, $(addsuffix .hpp, $(BABY_TYPES)))
 BABY_OBJS := $(addprefix $(OBJDIR)/core/baby_, $(addsuffix .o, $(BABY_TYPES)))
 BABY_DEPS := $(addprefix $(MAKEDIR)/core/baby_, $(addsuffix .d, $(BABY_TYPES)))
 
-HEADERS := $(shell find $(INCDIR) -name "*.hpp")
-OBJSRCS := $(shell find $(SRCDIR) -name "*.cpp")
-EXESRCS := $(shell find $(SRCDIR) -name "*.cxx")
+FILTER_OUT = $(foreach v,$(2),$(if $(findstring $(1),$(v)),,$(v)))
+
+HEADERS := $(call FILTER_OUT,.\#,$(shell find $(INCDIR) -name "*.hpp"))
+OBJSRCS := $(call FILTER_OUT,.\#,$(shell find $(SRCDIR) -name "*.cpp"))
+EXESRCS := $(call FILTER_OUT,.\#,$(shell find $(SRCDIR) -name "*.cxx"))
 ALLSRCS := $(OBJSRCS) $(EXESRCS)
 
 EXECUTABLES := $(subst $(SRCDIR),$(EXEDIR),$(subst .cxx,.exe,$(EXESRCS)))
 OBJECTS := $(subst $(SRCDIR),$(OBJDIR),$(subst .cpp,.o,$(OBJSRCS))) $(OBJDIR)/core/baby.o $(BABY_OBJS)
 DEPFILES := $(subst $(SRCDIR),$(MAKEDIR),$(subst .cpp,.d,$(subst .cxx,.d,$(ALLSRCS))))
 
+PRINT_FUNC = echo -e "\e[34;1m$(1):\e[0m $($(1))"
+
 all: delay
+
+print_vars:
+	$(call PRINT_FUNC,SRCDIR)
+	$(call PRINT_FUNC,INCDIR)
+	$(call PRINT_FUNC,MAKEDIR)
+	$(call PRINT_FUNC,OBJDIR)
+	$(call PRINT_FUNC,EXEDIR)
+
+	$(call PRINT_FUNC,BABY_FILES)
+	$(call PRINT_FUNC,BABY_TYPES)
+	$(call PRINT_FUNC,BABY_SRCS)
+	$(call PRINT_FUNC,BABY_INCS)
+	$(call PRINT_FUNC,BABY_OBJS)
+	$(call PRINT_FUNC,BABY_DEPS)
+
+	$(call PRINT_FUNC,HEADERS)
+	$(call PRINT_FUNC,OBJSRCS)
+	$(call PRINT_FUNC,EXESRCS)
+	$(call PRINT_FUNC,ALLSRCS)
+
+	$(call PRINT_FUNC,EXECUTABLES)
+	$(call PRINT_FUNC,OBJECTS)
+	$(call PRINT_FUNC,DEPFILES)
 
 include .subdirs.mk
 
-.subdirs.mk: .generate_subdir_make.py $(BABY_SRCS) $(BABY_INCS) $(HEADERS) $(ALLSRCS)
-	./.generate_subdir_make.py $(SRCDIR) $(INCDIR) $(OBJDIR) $(MAKEDIR) $(EXEDIR)
+.subdirs.mk: $(BABY_SRCS) $(BABY_INCS) $(HEADERS) $(ALLSRCS)
+	./compile.py set_dirs --src_dir $(SRCDIR) --inc_dir $(INCDIR) --obj_dir $(OBJDIR) --make_dir $(MAKEDIR) --exe_dir $(EXEDIR)
 
 $(OBJDIR)/core/generate_baby.o: $(SRCDIR)/core/generate_baby.cxx
 	$(COMPILE)
@@ -72,5 +94,5 @@ $(LIBFILE): $(OBJECTS)
 $(OBJDIR)/%.a:
 	ar rcsv $@ $^
 
-.PHONY: all delay
+.PHONY: all delay test
 .DELETE_ON_ERROR:
