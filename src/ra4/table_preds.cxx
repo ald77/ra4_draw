@@ -37,15 +37,16 @@ using namespace std;
 
 namespace{
   bool only_mc = false;
+  bool only_kappa = false;
   bool split_bkg = true;
   bool only_dilepton = false;
   bool do_leptons = false;
   bool do_signal = true;
-  bool full_lumi = false;
   bool unblind = false;
   bool debug = false;
   bool do_ht = false;
   TString skim = "standard";
+  TString json = "2p6";
   TString only_method = "";
   TString mc_lumi = "";
   float lumi;
@@ -63,6 +64,7 @@ TString cutsToTex(TString cut);
 
 void GetOptions(int argc, char *argv[]);
 
+//// Defining st because older ntuples don't have it
 const NamedFunc st("st", [](const Baby &b) -> NamedFunc::ScalarType{
     float stvar = b.ht();
     for (const auto &pt: *(b.leps_pt())) stvar += pt; 
@@ -83,26 +85,28 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string ntupletag="_standard";
-
-  // string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_met150_and_nleps1met200nj5/");
-  // string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_nl1st500met150/");
+  string ntupletag="";
+  if(only_method!="" && !only_method.Contains("allmet") && !only_method.Contains("onemet")){
+    if(only_method.Contains("met150")) ntupletag = "_metG150";
+    else ntupletag = "_metG200";
+  }
 
   // //// Chinchilla
-  //string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/");
-  //string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
+  // ntupletag="standard";
+  // string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/");
+  // string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
   
   //// Capybara
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_standard/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_standard/");
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_stdnj5/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_stdnj5/");
 
-  if(skim.Contains("met150")) ntupletag="_met150";
-  if(skim.Contains("both")) ntupletag="";
+  // Old 2015 data
   if(skim.Contains("2015")){
-    ntupletag="1lht500met200";
-    foldermc = bfolder+"/cms2r0/babymaker/babies/2016_04_29/mc/merged_1lht500met200/";
-    folderdata = bfolder+"/cms2r0/babymaker/babies/2016_04_29/data/merged_1lht500met200/";
+    ntupletag="stdnj5";
+    foldermc = bfolder+"/cms2r0/babymaker/babies/2016_04_29/mc/merged_mcbase_stdnj5/";
+    folderdata = bfolder+"/cms2r0/babymaker/babies/2016_04_29/data/merged_stdnj5/";
     if(only_method.Contains("old")) {
+      ntupletag="1lht500met200";
       foldermc = bfolder+"/cms2r0/babymaker/babies/2015_11_28/mc/skim_1lht500met200/";
       folderdata = bfolder+"/cms2r0/babymaker/babies/2016_02_04/data/singlelep/combined/skim_1lht500met200/";
     }
@@ -115,19 +119,11 @@ int main(int argc, char *argv[]){
   if(skim.Contains("mj12")) ReplaceAll(baseline_s, "mj14","mj");
 
   NamedFunc baseline=baseline_s;
-  if(do_ht) baseline += " && ht>500";
-  else baseline = st>500 && baseline;
+  if(do_ht) baseline = baseline && "ht>500";
+  else baseline = baseline && st>500;
 
   //// Use this process to make quick plots. Requires being run without split_bkg
   auto proc_bkg = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
-    // {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root",
-    //  foldermc+"*_WJetsToLNu*"+ntupletag+"*.root",foldermc+"*_ST_*"+ntupletag+"*.root",
-    //  foldermc+"*_TTW*"+ntupletag+"*.root",foldermc+"*_TTZ*"+ntupletag+"*.root",
-    //  foldermc+"*DYJetsToLL*"+ntupletag+"*.root",foldermc+"*QCD_HT*"+ntupletag+"*.root",
-    //  foldermc+"*_ZJet*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
-    //  foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_TTTT*"+ntupletag+"*.root",
-    //  foldermc+"*_WH_HToBB*"+ntupletag+"*.root",foldermc+"*_ZH_HToBB*"+ntupletag+"*.root",
-    //  foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",foldermc+"*_ZZ_*"+ntupletag+"*.root"},
     {foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"},
     baseline && "stitch");
 
@@ -143,34 +139,57 @@ int main(int argc, char *argv[]){
   auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
     {foldermc+"*_TTJets*DiLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
     baseline && "stitch && ntruleps==2");
+  
+  // Filling all other processes
+  vector<string> vnames_other({"_WJetsToLNu", "_ST_", "_TTW", "_TTZ", "DYJetsToLL", 
+	"_ZJet", "_ttHJetTobb", "_TTGJets", "_TTTT", 
+	"_WH_HToBB", "_ZH_HToBB", "_WWTo", "_WZ", "_ZZ_"});
+  // QCD changed name in Capybara (2016_08_10)
+  if(skim.Contains("2015")) vnames_other.push_back("QCD_HT");
+  else{
+    vnames_other.push_back("QCD_HT*0_Tune");
+    vnames_other.push_back("QCD_HT*Inf_Tune");
+  }
+  set<string> names_other;
+  for(auto name : vnames_other)
+    names_other.insert(name = foldermc + "*" + name + "*" + ntupletag + "*.root");
   auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    {foldermc+"*_WJetsToLNu*"+ntupletag+"*.root",foldermc+"*_ST_*"+ntupletag+"*.root",
-        foldermc+"*_TTW*"+ntupletag+"*.root",foldermc+"*_TTZ*"+ntupletag+"*.root",
-        foldermc+"*DYJetsToLL*"+ntupletag+"*.root",
-	//foldermc+"*QCD_HT*"+ntupletag+"*.root",
-	foldermc+"*QCD_HT*0_Tune*"+ntupletag+"*.root", foldermc+"*QCD_HT*Inf_Tune*"+ntupletag+"*.root",
-        foldermc+"*_ZJet*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
-        foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_TTTT*"+ntupletag+"*.root",
-        foldermc+"*_WH_HToBB*"+ntupletag+"*.root",foldermc+"*_ZH_HToBB*"+ntupletag+"*.root",
-        foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",foldermc+"*_ZZ_*"+ntupletag+"*.root"},
-    baseline && "stitch");
+    names_other, baseline && "stitch");
 
-  string trigs = "(trig[4]||trig[8]||trig[13]||trig[33])";
+  //string trigs = "(trig[4]||trig[8]||trig[13]||trig[33])";
+  string trigs = "trig_ra4";
   if(skim.Contains("2015")) trigs = "(trig[4]||trig[8]||trig[28]||trig[14])";
 
   // Setting luminosity
+  string jsonCuts = "nonblind";
   if(skim.Contains("2015")) lumi = 2.3;
-  else if(!full_lumi) lumi = 0.815;
-  else lumi = 2.6;
+  else if(json=="0p815"){
+    lumi = 0.815;
+    jsonCuts = "nonblind";
+  } else if(json=="2p6"){
+    lumi = 2.6;
+    jsonCuts = "json2p6";
+  } else if(json=="1p7"){
+    lumi = 1.7;
+    jsonCuts = "json4p0&&!json2p6";
+  } else if(json=="4p0"){
+    lumi = 4.3;
+    jsonCuts = "json4p0";
+  } else if(json=="7p65"){
+    lumi = 7.65;
+    jsonCuts = "json7p65";
+  } else if(json=="12p9"){
+    lumi = 12.9;
+    jsonCuts = "json12p9";
+  }
   if(mc_lumi!="") lumi = mc_lumi.Atof();
 
 
   if(only_method.Contains("old")) trigs = "(trig[4]||trig[8])";
-  if(!skim.Contains("2015")) trigs += " && json2p6";
-  if(!full_lumi) trigs += " && nonblind";
+  if(!skim.Contains("2015")) trigs += " && "+jsonCuts;
 
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    {folderdata+"*.root"},baseline && trigs);
+    {folderdata+"*"+ntupletag+"*.root"},baseline && trigs);
 
   vector<shared_ptr<Process> > all_procs = {proc_tt1l, proc_tt2l, proc_other};
   //vector<shared_ptr<Process> > all_procs = {proc_bkg};
@@ -232,11 +251,14 @@ int main(int argc, char *argv[]){
 
   ///// Running over these methods
   vector<TString> methods_all = {"m2lveto", "m2lonly", "mvetoonly", "signal", "signal_nb1", "signal_nb2",
-                                 "m5j", "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
+                                 "m2lvetomet150", "m2lonlymet150", "mvetoonlymet150", "m1lmet150",
+				 "m5j", "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
+ 
   vector<TString> methods_std = {"m2lonly", "mvetoonly", "m5j", "signal", "signal_nb1", "signal_nb2"};
-  vector<TString> methods_met150 = {"m2lvetomet150", "m2lonlymet150", "mvetoonlymet150", "m1lmet150"};
-  vector<TString> methods = methods_std;
-  if(skim.Contains("met150")) methods = methods_met150;
+  vector<TString> methods_2l = {"m2lonlyallmet", "m2lvetoallmet", "m2lonlyonemet", "m2lvetoonemet"};
+
+  vector<TString> methods = methods_2l;
+
   if(only_method!="") methods = vector<TString>({only_method});
   if(do_leptons){
     for(auto name: methods){
@@ -259,6 +281,8 @@ int main(int argc, char *argv[]){
     if(method.Contains("2l") || method.Contains("veto")) {
       metcuts = vector<TString>{c_lowmet, c_midmet};
       if(only_mc) metcuts.push_back(c_higmet);
+      if(method.Contains("allmet")) metcuts = vector<TString>{c_vlowmet, c_lowmet, c_midmet};
+      if(method.Contains("onemet")) metcuts = vector<TString>{"met>150 && met<=500"};
       bincuts = vector<TString>{c_lownj, c_hignj}; // 2l nj cuts automatically lowered in abcd_method
       caption = "Dilepton validation regions. D3 and D4 have ";
     } else {
@@ -421,8 +445,10 @@ int main(int argc, char *argv[]){
     findPreds(abcds[imethod], allyields, kappas, preds);
 
     //// Makes table MC/Data yields, kappas, preds, Zbi
-    TString fullname = printTable(abcds[imethod], allyields, kappas, preds);
-    tablenames.push_back(fullname);
+    if(!only_kappa) {
+      TString fullname = printTable(abcds[imethod], allyields, kappas, preds);
+      tablenames.push_back(fullname);
+    }
 
     //// Plotting kappa
     plotKappa(abcds[imethod], kappas);
@@ -432,16 +458,18 @@ int main(int argc, char *argv[]){
 
   } // Loop over ABCD methods
 
-  //// Printing names of ouput files
-  cout<<endl<<"===== Tables to be moved to the AN/PAS/paper:"<<endl;
-  for(size_t ind=0; ind<tablenames.size(); ind++){
-    TString name=tablenames[ind]; name.ReplaceAll("fulltable","table");
-    cout<<" mv "<<name<<"  ${tables_folder}"<<endl;
+  if(!only_kappa){
+    //// Printing names of ouput files
+    cout<<endl<<"===== Tables to be moved to the AN/PAS/paper:"<<endl;
+    for(size_t ind=0; ind<tablenames.size(); ind++){
+      TString name=tablenames[ind]; name.ReplaceAll("fulltable","table");
+      cout<<" mv "<<name<<"  ${tables_folder}"<<endl;
+    }
+    cout<<endl<<"===== Tables that can be compiled"<<endl;
+    for(size_t ind=0; ind<tablenames.size(); ind++)
+      cout<<" pdflatex "<<tablenames[ind]<<"  > /dev/null"<<endl;
+    cout<<endl;
   }
-  cout<<endl<<"===== Tables that can be compiled"<<endl;
-  for(size_t ind=0; ind<tablenames.size(); ind++)
-    cout<<" pdflatex "<<tablenames[ind]<<"  > /dev/null"<<endl;
-  cout<<endl;
 
   double seconds = (chrono::duration<double>(chrono::high_resolution_clock::now() - begTime)).count();
   TString hhmmss = HoursMinSec(seconds);
@@ -484,6 +512,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if(skim.Contains("mj12")) outname += "_mj12";
   if(unblind) outname += "_unblind";
   else outname += "_blind";
+  if(do_ht) outname += "_ht500";
   outname += "_"+abcd.method+".tex";
   ofstream out(outname);
 
@@ -896,22 +925,23 @@ void GetOptions(int argc, char *argv[]){
     static struct option long_options[] = {
       {"method", required_argument, 0, 'm'},  // Method to run on (if you just want one)
       {"lumi", required_argument, 0, 'l'},    // Luminosity to normalize MC with (no data)
-      {"skim", required_argument, 0, 's'},    // Which skim to use: standard, met150, 2015 data
+      {"skim", required_argument, 0, 's'},    // Which skim to use: standard, 2015 data
+      {"json", required_argument, 0, 'j'},    // Which JSON to use: 0p815, 2p6, 4p0, 7p65, 12p9
       {"split_bkg", no_argument, 0, 'b'},     // Prints Other, tt1l, tt2l contributions
       {"no_signal", no_argument, 0, 'n'},     // Does not print signal columns
       {"do_leptons", no_argument, 0, 'p'},    // Does tables for e/mu/emu as well
       {"unblind", no_argument, 0, 'u'},       // Unblinds R4/D4
-      {"full_lumi", no_argument, 0, 'f'},     // Uses all data (does not apply nonblind)
       {"only_mc", no_argument, 0, 'o'},       // Uses MC as data for the predictions
+      {"only_kappa", no_argument, 0, 'k'},    // Only plots kappa (no table)
       {"debug", no_argument, 0, 'd'},         // Debug: prints yields and cuts used
       {"only_dilepton", no_argument, 0, '2'}, // Makes tables only for dilepton tests
-      {"doht", no_argument, 0, 0},            // Cuts on ht>500 instead of st>500
+      {"ht", no_argument, 0, 0},            // Cuts on ht>500 instead of st>500
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "m:s:ufdbnl:p2o", long_options, &option_index);
+    opt = getopt_long(argc, argv, "m:s:j:udbnl:p2ok", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
@@ -923,8 +953,15 @@ void GetOptions(int argc, char *argv[]){
       mc_lumi = optarg;
       only_mc = true;
       break;
+    case 'k':
+      only_kappa = true;
+      only_mc = true;
+      break;
     case 's':
       skim = optarg;
+      break;
+    case 'j':
+      json = optarg;
       break;
     case 'b':
       split_bkg = false;
@@ -947,15 +984,13 @@ void GetOptions(int argc, char *argv[]){
     case 'd':
       debug = true;
       break;
-    case 'f':
-      full_lumi = true;
-      break;
     case 0:
       optname = long_options[option_index].name;
-      if(optname == "doht"){
+      if(optname == "ht"){
         do_ht = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
+	exit(1);
       }
       break;
     default:
