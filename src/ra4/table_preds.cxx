@@ -172,7 +172,7 @@ int main(int argc, char *argv[]){
   } else if(json=="1p7"){
     lumi = 1.7;
     jsonCuts = "json4p0&&!json2p6";
-  } else if(json=="4p0"){
+  } else if(json=="4p3"){
     lumi = 4.3;
     jsonCuts = "json4p0";
   } else if(json=="7p65"){
@@ -743,6 +743,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
 
   //// Plotting kappas
   TCanvas can("can","");
+  can.SetFillStyle(4000);
   TLine line; line.SetLineWidth(2); line.SetLineStyle(2);
   TLatex label; label.SetTextSize(0.05); label.SetTextFont(42); label.SetTextAlign(23);
   if(k_ordered.size()>3) label.SetTextSize(0.04);
@@ -812,7 +813,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   for(size_t indb=0; indb<ind_bcuts.size(); indb++){
     graph[indb] = TGraphAsymmErrors(vx[indb].size(), &(vx[indb][0]), &(vy[indb][0]),
                                     &(vexl[indb][0]), &(vexh[indb][0]), &(veyl[indb][0]), &(veyh[indb][0]));
-    graph[indb].SetMarkerStyle(ind_bcuts[indb].style); graph[indb].SetMarkerSize(1.4);
+    graph[indb].SetMarkerStyle(ind_bcuts[indb].style); graph[indb].SetMarkerSize(1.1);
     graph[indb].SetMarkerColor(ind_bcuts[indb].color);
     graph[indb].SetLineColor(ind_bcuts[indb].color); graph[indb].SetLineWidth(2);
     graph[indb].Draw("p0 same");
@@ -832,7 +833,9 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
 
-  TString fname="plots/kappa_"+abcd.method+".pdf";
+  TString fname="plots/kappa_" + abcd.method;
+  if(do_ht) fname  += "_ht500";
+  fname += ".pdf";
   can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl;
 
