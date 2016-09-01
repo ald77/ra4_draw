@@ -296,7 +296,7 @@ int main(){
   int igood = 0;
   int ibad = 2;
 
-  string folder_mc="/net/cms26/cms26r0/babymaker/babies/mismeasured_v2/2016_06_14/mc/merged_mm_std_nj5mj250/";
+  string folder_mc="/net/cms29/cms29r0/babymaker/babies/mismeasured_v2/2016_06_14/mc/merged_mm_std_nj5mj250/";
   auto baby_nontt = make_shared<Baby_full>(set<string>{
       folder_mc+"*_DYJetsToLL*.root",
         folder_mc+"*_QCD_HT*.root",
@@ -396,6 +396,7 @@ int main(){
   TH1D h_den_2l_nbm("h_den_2l_nbm", "Denominator;N_{b};Entries", 5, -0.5, 4.5);
 
   for(auto &b: {baby_nontt, baby_tt}){
+    auto activator = b->Activate();
     cout << "Getting entries..." << endl;
     long num_entries = b->GetEntries();
     cout << num_entries << " entries found." << endl;

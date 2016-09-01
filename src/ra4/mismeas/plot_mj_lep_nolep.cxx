@@ -38,7 +38,7 @@ int main(){
 
   Palette colors("txt/colors.txt", "default");
 
-  string folder_mc = "/net/cms26/cms26r0/babymaker/babies/mismeasured_v2/2016_06_14/mc/unskimmed/";
+  string folder_mc = "/net/cms29/cms29r0/babymaker/babies/mismeasured_v2/2016_06_14/mc/unskimmed/";
   set<string> file_names = {folder_mc+"*_TTJets*Lept*.root", folder_mc+"*_TTJets_HT*.root",
 			    folder_mc+"*_WJetsToLNu*.root", folder_mc+"*_ST_*.root",
 			    folder_mc+"*_TTWJets*.root", folder_mc+"*_TTZTo*.root",
@@ -82,7 +82,8 @@ int main(){
 	.Bottom(BottomType::ratio)
 	.YAxis(YAxisType::log)
 	.Stack(StackType::shapes);
-      vector<PlotOpt> plot_types = {log_lumi};
+      PlotOpt noinfo = log_lumi().Title(TitleType::preliminary);
+      vector<PlotOpt> plot_types = {log_lumi, noinfo};
 
       NamedFunc mjlep("mm_mj14_lep"+s+">250.");
       NamedFunc mjnolep("mm_mj14_nolep"+s+">250.");
@@ -191,10 +192,10 @@ int main(){
 	  if(is_data) return b.mt();
 	  else return b.mm_mt()->at(scenario);
 	});
-      if(false){
-	pm.Push<HistoStack>(HistoDef("mm"+to_string(scenario), 30, 0., 1500., mt, "m_{T} [GeV]", true,
-				     "weight", {140.}), procs, vector<PlotOpt>{log_lumi().Stack(StackType::data_norm)});
-      }
+      pm.Push<HistoStack>(HistoDef("mm"+to_string(scenario), 30, 0., 1500., mt, "m_{T} [GeV]", true,
+				   "weight", {140.}), procs,
+			  vector<PlotOpt>{log_lumi().Stack(StackType::data_norm),
+			      noinfo().Stack(StackType::data_norm)});
     }
   }
   pm.multithreaded_ = false;

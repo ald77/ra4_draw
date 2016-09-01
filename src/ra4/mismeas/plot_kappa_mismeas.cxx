@@ -37,13 +37,13 @@ namespace{
   bool only_dilepton = false;
   bool do_leptons = false;
   bool do_signal = false;
-  bool full_lumi = false;
+  bool full_lumi = true;
   bool unblind = false;
   bool debug = false;
   TString skim = "standard";
   TString only_method = "";
   float lumi;
-  int Nscen = 2;
+  int Nscen = 6;
 }
 
 void plotKappa(abcd_method &abcd, vector<vector<vector<vector<float> > > > &allkappas);
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc(bfolder+"/cms2r0/babymaker/babies/mismeasured/2016_06_14/mc/merged_mm_std_nj5mj250/");
-  //foldermc = "/net/cms26/cms26r0/babymaker/babies/mismeasured_v2/2016_06_14/mc/merged_mm_std_nj5mj250/";
+  foldermc = "/net/cms29/cms29r0/babymaker/babies/mismeasured_v2/2016_06_14/mc/merged_mm_std_nj5mj250/";
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
   folderdata = foldermc;
   if(skim.Contains("met150")){
@@ -102,15 +102,15 @@ int main(int argc, char *argv[]){
 
   lumi = 100; // to easily see digits
   auto proc_bkg = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
-    // {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root",
-    //  foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
-    //  foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
-    //  foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
-    //  foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
-    //  foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
-    //  foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
-    //  foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
-    {foldermc+"*TTJets_T*.root"},
+     {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root",
+      foldermc+"*_WJetsToLNu*.root",foldermc+"*_ST_*.root",
+      foldermc+"*_TTW*.root",foldermc+"*_TTZ*.root",
+      foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
+      foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
+      foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
+      foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
+      foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
+    //{foldermc+"*TTJets_T*.root"},
     baseline+" && stitch");
 
   auto proc_t1c = Process::MakeShared<Baby_full>("T1tttt(C)", Process::Type::signal, colors("t1tttt"),
@@ -144,10 +144,13 @@ int main(int argc, char *argv[]){
         foldermc+"*_WWTo*.root",foldermc+"*_WZ*.root",foldermc+"*_ZZ_*.root"},
     baseline+" && stitch");
 
-  string trigs = "(trig[4]||trig[8]||trig[13]||trig[33])";
-  if(skim.Contains("2015")) trigs = "(trig[4]||trig[8]||trig[28]||trig[14])";
+  string trigs = "(trig[4]||trig[8]||trig[28]||trig[14])";
+  if(skim.Contains("2016")) trigs = "(trig[4]||trig[8]||trig[13]||trig[33])";
+
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     {folderdata+"*.root"},baseline+" && "+trigs);
+
+  DBG(lumi << " " << skim << " " << trigs);
 
   //vector<shared_ptr<Process> > all_procs = {proc_tt1l, proc_tt2l, proc_other};
   vector<shared_ptr<Process> > all_procs = {proc_bkg};
@@ -226,6 +229,7 @@ int main(int argc, char *argv[]){
   methods.clear();
   for(auto name2: methods_ori){
     for(int iscen=0; iscen < Nscen; iscen++){
+      if(iscen != 0 && iscen != 2 && iscen != 5) continue;
       //if(iscen!=0 && iscen!=3) continue; // To just do the most extreme ones
       TString name = name2;
       name += "_mm"; name += iscen;
