@@ -466,5 +466,5 @@ double Table::GetError(const vector<unique_ptr<TableColumn> > &columns,
   for(const auto &column: columns){
     error += column->sumw2_.at(irow);
   }
-  return error;
+  return sqrt(error);
 }
