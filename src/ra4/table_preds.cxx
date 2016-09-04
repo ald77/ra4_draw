@@ -49,7 +49,7 @@ namespace{
   TString json = "2p6";
   TString only_method = "";
   TString mc_lumi = "";
-  float lumi;
+  float lumi=100.;
 }
 
 TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
@@ -97,6 +97,7 @@ int main(int argc, char *argv[]){
   // string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_06_26/data/merged_standard/");
   
   //// Capybara
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/");
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_stdnj5/");
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_stdnj5/");
 
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]){
   Palette colors("txt/colors.txt", "default");
 
   // Cuts in baseline speed up the yield finding
-  string baseline_s = "mj14>250 && nleps>=1 && met>150 && pass && njets>=5";
+  string baseline_s = "mj14>250 && nleps>=1 && met>150 && njets>=5";
   if(skim.Contains("mj12")) ReplaceAll(baseline_s, "mj14","mj");
 
   NamedFunc baseline=baseline_s;
@@ -125,20 +126,20 @@ int main(int argc, char *argv[]){
   //// Use this process to make quick plots. Requires being run without split_bkg
   auto proc_bkg = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"},
-    baseline && "stitch");
+    baseline && "stitch && pass");
 
   auto proc_t1c = Process::MakeShared<Baby_full>("T1tttt(C)", Process::Type::signal, colors("t1tttt"),
-    {foldermc+"*mGluino-1200_mLSP-800_*"+ntupletag+"*.root"},
+    {foldersig+"*mGluino-1300_mLSP-900_*.root"},
     baseline && "stitch");
   auto proc_t1nc = Process::MakeShared<Baby_full>("T1tttt(NC)", Process::Type::signal, colors("t1tttt"),
-    {foldermc+"*mGluino-1500_mLSP-100_*"+ntupletag+"*.root"},
+    {foldersig+"*mGluino-1700_mLSP-100_*.root"},
     baseline && "stitch");
   auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets*SingleLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
-    baseline && "stitch && ntruleps==1");
+    baseline && "stitch && ntruleps==1 && pass");
   auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
     {foldermc+"*_TTJets*DiLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
-    baseline && "stitch && ntruleps==2");
+    baseline && "stitch && ntruleps==2 && pass");
   
   // Filling all other processes
   vector<string> vnames_other({"_WJetsToLNu", "_ST_", "_TTW", "_TTZ", "DYJetsToLL", 
@@ -154,7 +155,7 @@ int main(int argc, char *argv[]){
   for(auto name : vnames_other)
     names_other.insert(name = foldermc + "*" + name + "*" + ntupletag + "*.root");
   auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    names_other, baseline && "stitch");
+    names_other, baseline && "stitch && pass");
 
   //string trigs = "(trig[4]||trig[8]||trig[13]||trig[33])";
   string trigs = "trig_ra4";
@@ -163,20 +164,23 @@ int main(int argc, char *argv[]){
   // Setting luminosity
   string jsonCuts = "nonblind";
   if(skim.Contains("2015")) lumi = 2.3;
-  else if(json=="0p815"){
-    lumi = 0.815;
+  else if(json=="0p869"){
+    lumi = 0.869;
     jsonCuts = "nonblind";
-  } else if(json=="2p6"){
-    lumi = 2.6;
+  } else if(json=="2p8"){
+    lumi = 2.8;
     jsonCuts = "json2p6";
-  } else if(json=="1p7"){
-    lumi = 1.7;
+  } else if(json=="1p5"){
+    lumi = 1.5;
     jsonCuts = "json4p0&&!json2p6";
   } else if(json=="4p3"){
     lumi = 4.3;
     jsonCuts = "json4p0";
-  } else if(json=="7p65"){
-    lumi = 7.65;
+  } else if(json=="3p4"){
+    lumi = 3.4;
+    jsonCuts = "json7p65&&!json4p0";
+  } else if(json=="7p7"){
+    lumi = 7.7;
     jsonCuts = "json7p65";
   } else if(json=="12p9"){
     lumi = 12.9;
@@ -189,7 +193,7 @@ int main(int argc, char *argv[]){
   if(!skim.Contains("2015")) trigs += " && "+jsonCuts;
 
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    {folderdata+"*"+ntupletag+"*.root"},baseline && trigs);
+    {folderdata+"*"+ntupletag+"*.root"},baseline && trigs && "pass");
 
   vector<shared_ptr<Process> > all_procs = {proc_tt1l, proc_tt2l, proc_other};
   //vector<shared_ptr<Process> > all_procs = {proc_bkg};
@@ -254,10 +258,9 @@ int main(int argc, char *argv[]){
                                  "m2lvetomet150", "m2lonlymet150", "mvetoonlymet150", "m1lmet150",
 				 "m5j", "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
  
-  vector<TString> methods_std = {"m2lonly", "mvetoonly", "m5j", "signal", "signal_nb1", "signal_nb2"};
-  vector<TString> methods_2l = {"m2lonlyallmet", "m2lvetoallmet", "m2lonlyonemet", "m2lvetoonemet"};
+  vector<TString> methods_std = {"m1lmet150", "m5j", "signal", "m2lveto", "m2lvetoonemet"};
 
-  vector<TString> methods = methods_2l;
+  vector<TString> methods = methods_std;
 
   if(only_method!="") methods = vector<TString>({only_method});
   if(do_leptons){
@@ -279,9 +282,8 @@ int main(int argc, char *argv[]){
 
     //////// General assignments to all methods
     if(method.Contains("2l") || method.Contains("veto")) {
-      metcuts = vector<TString>{c_lowmet, c_midmet};
+      metcuts = vector<TString>{c_vlowmet, c_lowmet, c_midmet};
       if(only_mc) metcuts.push_back(c_higmet);
-      if(method.Contains("allmet")) metcuts = vector<TString>{c_vlowmet, c_lowmet, c_midmet};
       if(method.Contains("onemet")) metcuts = vector<TString>{"met>150 && met<=500"};
       bincuts = vector<TString>{c_lownj, c_hignj}; // 2l nj cuts automatically lowered in abcd_method
       caption = "Dilepton validation regions. D3 and D4 have ";
@@ -319,7 +321,7 @@ int main(int argc, char *argv[]){
     }
 
     if(method.Contains("2lvetocombined")) {
-      metcuts = vector<TString>{"met>200&&met<=500"};
+      metcuts = vector<TString>{"met>150&&met<=500"};
       bincuts = vector<TString>{"njets>=6"}; // 2l nj cuts automatically lowered in abcd_method
       abcdcuts = abcdcuts_2lveto;
       caption += "either two reconstructed leptons, or one lepton and one track";
@@ -341,16 +343,20 @@ int main(int argc, char *argv[]){
                                   c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj};
         caption += " for $\\nb\\geq2$";
       }
+      if(method.Contains("allmet")) {
+	metcuts = vector<TString>{c_vlowmet, c_lowmet, c_midmet, c_higmet};
+	caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
+      } // allmetsignal
+      if(method.Contains("onemet")) {
+	metcuts = vector<TString>{"met>200"};
+	caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
+      } // allmetsignal
     } // signal
 
-    if(method.Contains("allmetsignal")) {
-      metcuts = vector<TString>{c_vlowmet, c_lowmet, c_midmet, c_higmet};
-      caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
-    } // allmetsignal
 
     if(method.Contains("m5j")) {
-      metcuts = vector<TString>{c_lowmet, c_midmet};
-      if(only_mc) metcuts.push_back(c_higmet);
+      metcuts = vector<TString>{c_lowmet, c_midmet, c_higmet};
+      //if(only_mc) metcuts.push_back(c_higmet);
       bincuts = vector<TString>{c_lownb+" && "+c_nj5, c_midnb+" && "+c_nj5, c_hignb+" && "+c_nj5};
       caption = "Validation regions with $1\\ell, \\njets=5$";
     }

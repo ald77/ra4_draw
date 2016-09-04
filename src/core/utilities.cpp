@@ -340,10 +340,7 @@ double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg){
     cout<<"Down uncertainty ("<<Edown_bkg<<") has to be smaller than Nbkg ("<<Nbkg<<")"<<endl;
     return -999.;
   }
-  // if(Nobs==0 && Nbkg==0) {
-  //   cout<<"Both Nobs and Nbkg are 0. Returning -999 sigma"<<endl;
-  //   return -999.;
-  // }
+  //if(Nobs==Nbkg) return 0.;
   TRandom3 rand(1234);
   double mu, valG;
   while( (min(Nbelow,Nabove)+Nequal)<Nmin && (Nbelow+Nequal+Nabove)<Nmax){
@@ -371,8 +368,7 @@ double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg){
 	<<RooStats::PValueToSignificance(1-1/Nmax)<<endl;
     return RooStats::PValueToSignificance(1-1/Nmax);
   }
-  if(Nobs>Nbkg) return RooStats::PValueToSignificance((Nabove+Nequal)/(Nbelow+Nequal+Nabove));
-  else return -(RooStats::PValueToSignificance((Nbelow+Nequal)/(Nbelow+Nequal+Nabove)));
+  return RooStats::PValueToSignificance((Nabove+Nequal/2.)/(Nbelow+Nequal+Nabove));
 }
 
 // yields[Nobs][Nsam] has the entries for each sample for each observable going into kappa

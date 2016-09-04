@@ -17,7 +17,7 @@
 #include "core/plot_opt.hpp"
 
 namespace{
-  bool do_met150 = true;
+  //bool do_met150 = true;
 }
 
 using namespace std;
@@ -35,13 +35,13 @@ int main(){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/");
-  if(do_met150) foldermc = (bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_met150/");
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_stdnj5/");
+  //if(do_met150) foldermc = (bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_met150/");
   Palette colors("txt/colors.txt", "default");
 
   // Cuts in baseline speed up the yield finding
-  string baseline = "mj14>250 && nleps>=1 && ht>500 && met>200 && pass && njets>=5 && weight<1"; // Excluding one QCD event
-  if(do_met150)  baseline = "mj14>250 && nleps>=1 && ht>500 && met>150 && pass && njets>=5";
+  string baseline = "mj14>250 && nleps>=1 && ht>500 && met>150 && pass && njets>=5 && weight<1"; // Excluding one QCD event
+  //if(do_met150)  baseline = "mj14>250 && nleps>=1 && ht>500 && met>150 && pass && njets>=5";
 
   auto proc_tt1l = Process::MakeShared<Baby_full>("t#bar{t} (l)", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets_HT*.root"},
@@ -59,7 +59,7 @@ int main(){
   auto proc_ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
     {foldermc+"*_TTWJets*.root", foldermc+"*_TTZ*.root"}, baseline);
   auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    {foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*.root",
+    {foldermc+"*DYJetsToLL*.root",foldermc+"*QCD_HT*0_Tune*.root",foldermc+"*QCD_HT*Inf_Tune*.root",
         foldermc+"*_ZJet*.root",foldermc+"*_ttHJetTobb*.root",
         foldermc+"*_TTGJets*.root",foldermc+"*_TTTT*.root",
         foldermc+"*_WH_HToBB*.root",foldermc+"*_ZH_HToBB*.root",
@@ -83,20 +83,22 @@ int main(){
   TString c_lowmet  = "met>200 && met<=350";
   TString c_midmet  = "met>350 && met<=500";
   TString c_higmet  = "met>500";
-  vector<TString> metcuts({c_lowmet, c_midmet, c_higmet});
-  if(do_met150) metcuts = vector<TString>({c_vlowmet});
+  vector<TString> metcuts({c_vlowmet, c_lowmet, c_midmet, c_higmet});
+  //  if(do_met150) metcuts = vector<TString>({c_vlowmet});
 
   ////// Nb cuts
   TString c_lownb = "nbm==1";
   TString c_midnb = "nbm==2";
   TString c_hignb = "nbm>=3";
   vector<TString> nbcuts({c_lownb, c_midnb, c_hignb});
+  //vector<TString> nbcuts({"nbm>=2"});
 
   ////// Njets cuts
   TString c_lownj = "njets>=6 && njets<=8";
   TString c_hignj = "njets>=9";
   TString c_nj5   = "njets==5";
   vector<TString> njcuts({c_nj5, c_lownj, c_hignj});
+  //vector<TString> njcuts({"njets>=6"});
 
   ////// mT cuts
   TString c_lowmt = "mt<=140";
