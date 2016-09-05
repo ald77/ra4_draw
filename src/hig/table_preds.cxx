@@ -89,8 +89,8 @@ int main(int argc, char *argv[]){
   string ntupletag="";
 
   //// Capybara
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/");
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/TChiHH/merged_higmc_higloose/");
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higtight/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/TChiHH/merged_higmc_higtight/");
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_stdnj5/");
 
   Palette colors("txt/colors.txt", "default");
@@ -104,17 +104,11 @@ int main(int argc, char *argv[]){
     {foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"},
     baseline && "stitch && pass");
 
-  vector<shared_ptr<Process> > proc_sigs({Process::MakeShared<Baby_full>("TChiHH(300)", Process::Type::signal, 2,
-    {foldersig+"*mGluino-300_*"+ntupletag+"*.root"}, baseline && "stitch"),
-	Process::MakeShared<Baby_full>("TChiHH(400)", Process::Type::signal, 2,
-    {foldersig+"*mGluino-400_*"+ntupletag+"*.root"}, baseline && "stitch") });
-
-  // auto proc_t1c = Process::MakeShared<Baby_full>("TChiHH(300)", Process::Type::signal, colors("t1tttt"),
-  //   {foldersig+"*mGluino-300_*"+ntupletag+"*.root"},
-  //   baseline && "stitch");
-  // auto proc_t1nc = Process::MakeShared<Baby_full>("TChiHH(400)", Process::Type::signal, colors("t1tttt"),
-  //   {foldersig+"*mGluino-400_*"+ntupletag+"*.root"},
-  //   baseline && "stitch");
+  vector<string> sigMasses({"225", "300", "400", "700"});
+  vector<shared_ptr<Process> > proc_sigs;
+  for(size_t ind=0; ind<sigMasses.size(); ind++)
+    proc_sigs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigMasses[ind]+")", Process::Type::signal, 2,
+      {foldersig+"*mGluino-"+sigMasses[ind]+"_*"+ntupletag+"*.root"}, baseline && "stitch"));
 
   auto proc_ttbar = Process::MakeShared<Baby_full>("ttbar", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets*"+ntupletag+"*.root"},
@@ -181,8 +175,8 @@ int main(int argc, char *argv[]){
   // baseline defined above
 
   ////// MET cuts
-  TString c_lowmet  = "met>100 && met<=250";
-  TString c_midmet  = "met>250 && met<=300";
+  TString c_lowmet  = "met>100 && met<=200";
+  TString c_midmet  = "met>200 && met<=300";
   TString c_higmet  = "met>300";
 
   ////// Nb cuts
@@ -269,8 +263,8 @@ int main(int argc, char *argv[]){
     else allyields.push_back(yield_table->BackgroundYield(lumi));
     allyields.push_back(yield_table->BackgroundYield(lumi));
     if(do_signal){
-      allyields.push_back(yield_table->Yield(proc_sigs[0].get(), lumi));
-      allyields.push_back(yield_table->Yield(proc_sigs[1].get(), lumi));
+      for(size_t ind=0; ind<proc_sigs.size(); ind++)
+	allyields.push_back(yield_table->Yield(proc_sigs[ind].get(), lumi));
     }
     if(split_bkg){
       allyields.push_back(yield_table->Yield(proc_other.get(), lumi));
@@ -408,7 +402,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
         // }
         //// Printing Other, tt1l, tt2l
         if(split_bkg){
-          size_t offset = (do_signal?2:0);
+          size_t offset = (do_signal?Nsig:0);
           out << ump <<RoundNumber(allyields[offset+2][index].Yield(), digits)
               << ump <<RoundNumber(allyields[offset+3][index].Yield(), digits)
               << ump <<RoundNumber(allyields[offset+4][index].Yield(), digits);
@@ -445,25 +439,23 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
 						   preds[iplane][ibin][1], preds[iplane][ibin][2]);
 	  //// Printing signal yields
 	  if(do_signal)
-	    out<<ump<<RoundNumber(allyields[2][index].Yield(), digits)<< ump <<RoundNumber(allyields[3][index].Yield(), digits);
+	    for(size_t ind=0; ind<Nsig; ind++) 
+	      out<<ump<<RoundNumber(allyields[2+ind][index].Yield(), digits);
         } else {// if not only_mc
 	  if(do_signal){
-	    out<<RoundNumber(allyields[2][index].Yield(), digits);
-	    if(do_zbi){
-	      out << ump;
-	      if(iabcd==3) 
-		out<<Zbi(allyields[0][index].Yield()+allyields[2][index].Yield(),preds[iplane][ibin][0],
-			 preds[iplane][ibin][1], preds[iplane][ibin][2]);
-	    } // if do_zbi
-	    out<< ump <<RoundNumber(allyields[3][index].Yield(), digits);
-	    if(do_zbi){
-	      out << ump;
-	      if(iabcd==3) 
-		out<<Zbi(allyields[0][index].Yield()+allyields[3][index].Yield(),preds[iplane][ibin][0],
-			 preds[iplane][ibin][1], preds[iplane][ibin][2]);
-	    } // if do_zbi
+	    for(size_t ind=0; ind<Nsig; ind++) {
+	      if(ind>0) out<<ump;
+	      out<<RoundNumber(allyields[2+ind][index].Yield(), digits);
+	      if(do_zbi){
+		out << ump;
+		if(iabcd==3) 
+		  out<<Zbi(allyields[0][index].Yield()+allyields[2+ind][index].Yield(),preds[iplane][ibin][0],
+			   preds[iplane][ibin][1], preds[iplane][ibin][2]);
+	      } // if do_zbi
+	    } // Loop over signals
 	  } // if do_signal
 	} //if only_mc
+
         out << "\\\\ \n";
       } // Loop over bin cuts
     } // Loop over ABCD cuts

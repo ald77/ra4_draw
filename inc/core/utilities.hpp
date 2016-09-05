@@ -9,11 +9,12 @@
 #include <limits>
 #include <mutex>
 #include <set>
+#include <numeric>
 
 #include "TH1D.h"
 #include "TRandom3.h"
 
-#define ERROR(x) do{throw std::runtime_error(string("Error in file ")+__FILE__+" at line "+to_string(__LINE__)+" (in "+__func__+"): "+x);}while(false)
+#define ERROR(x) do{throw std::runtime_error(std::string("Error in file ")+__FILE__+" at line "+std::to_string(__LINE__)+" (in "+__func__+"): "+x);}while(false)
 #define DBG(x) do{std::cerr << "In " << __FILE__ << " at line " << __LINE__ << " (in function " << __func__ << "): " << x << std::endl;}while(false)
 
 namespace Multithreading{
@@ -28,6 +29,23 @@ bool StartsWith(const std::string &str, const std::string &pat);
 void ReplaceAll(std::string &str, const std::string &orig, const std::string &rep);
 
 std::string execute(const std::string &cmd);
+
+
+template<typename T>
+std::vector<std::size_t> SortPermutation(const std::vector<T>& vec){
+  std::vector<std::size_t> p(vec.size());
+  std::iota(p.begin(), p.end(), 0);
+  std::sort(p.begin(), p.end(),
+	    [&](std::size_t i, std::size_t j){ return vec[i] < vec[j]; });
+  return p;
+}
+template<typename T>
+std::vector<T> ApplyPermutation(const std::vector<T>& vec, const std::vector<std::size_t>& perm){
+  if(vec.size() != perm.size()) ERROR("Bad permutation: vector and perm have to have the same size");
+  std::vector<T> vsorted(vec.size());
+  for(std::size_t ind=0; ind<vec.size(); ind++) vsorted[ind] = vec[perm[ind]];
+  return vsorted;
+}
 
 std::vector<std::string> Tokenize(const std::string& input,
                                   const std::string& tokens=" ");
