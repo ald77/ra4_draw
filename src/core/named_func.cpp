@@ -481,6 +481,9 @@ string NamedFunc::PrettyName() const{
   ReplaceAll(pretty, "Max$(abs(els_eta)*(els_sigid&&els_miniso<0.1&&els_pt>20))<1.479","barrel #font[12]{e}");
   ReplaceAll(pretty, "Max$(abs(els_eta)*(els_sigid&&els_miniso<0.1&&els_pt>20))>1.479","endcap #font[12]{e}");
 
+  ReplaceAll(pretty, "!low_dphi", "high #Delta#phi");
+  ReplaceAll(pretty, "hig_drmax", "#DeltaR^{max}_{bb}");
+  ReplaceAll(pretty, "ntks", "N_{tks}");
   ReplaceAll(pretty, "nleps", "N_{lep}");
   ReplaceAll(pretty, "nvleps", "N_{lep}");
   ReplaceAll(pretty, "nmus", "N_{#mu}");

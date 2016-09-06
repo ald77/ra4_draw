@@ -328,11 +328,11 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   size_t Nsig = proc_sigs.size(); // Number of signal points (for now it cannot be changed)
   bool do_zbi = true;
   if(!unblind) do_zbi = false;
-  size_t Ncol = 3; // The only colums alwasy printed are the bin names, kappa, and MC bkg.
+  size_t Ncol = 3; // The only colums always printed are the bin names, kappa, and MC bkg.
   if(split_bkg) Ncol += 3;
   if(do_signal) Ncol += Nsig;
   if(only_mc) {
-    if(do_zbi) Ncol += Nsig;
+    if(do_zbi && do_signal) Ncol += Nsig;
   } else {
     Ncol += 3;
     if(do_zbi) Ncol++;
@@ -413,8 +413,9 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                           << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits)
                           << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits) <<"}$ ";
         //// Printing MC Bkg yields
-        out << ump << RoundNumber(allyields[1][index].Yield(), digits)<< ump;
+        out << ump << RoundNumber(allyields[1][index].Yield(), digits);
         if(!only_mc){
+	  out << ump;
 	  //// Printing background predictions
 	  if(iabcd==3) out << "$"    << RoundNumber(preds[iplane][ibin][0], digits)
 			   << "^{+"  << RoundNumber(preds[iplane][ibin][1], digits)
@@ -444,8 +445,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
         } else {// if not only_mc
 	  if(do_signal){
 	    for(size_t ind=0; ind<Nsig; ind++) {
-	      if(ind>0) out<<ump;
-	      out<<RoundNumber(allyields[2+ind][index].Yield(), digits);
+	      out<<ump<<RoundNumber(allyields[2+ind][index].Yield(), digits);
 	      if(do_zbi){
 		out << ump;
 		if(iabcd==3) 
@@ -492,6 +492,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
 TString cutsToTex(TString cut){
   cut.ReplaceAll(" ","");
   cut.ReplaceAll("met>150&&met<=200", "150<met<=200");
+  cut.ReplaceAll("met>200&&met<=300", "200<met<=300");
   cut.ReplaceAll("met>200&&met<=350", "200<met<=350");
   cut.ReplaceAll("met>250&&met<=300", "250<met<=300");
   cut.ReplaceAll("met>350&&met<=500", "350<met<=500");

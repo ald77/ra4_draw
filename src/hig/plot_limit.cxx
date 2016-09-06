@@ -22,8 +22,9 @@
 using namespace std;
 
 namespace{
-  string filename = "txt/limits/limits_TChiHH.txt";
-  string model = "TChiHH";
+  TString lumi = "40";
+  TString filename = "txt/limits/limits_TChiHH_lumi"+lumi+".txt";
+  TString model = "TChiHH";
 }
 
 void GetOptions(int argc, char *argv[]);
@@ -107,15 +108,17 @@ int main(int argc, char *argv[]){
   //can.SetGrid(); 
   can.SetFillStyle(4000);
   TString chi1n = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
-  TString chi2n = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{2}}}";
+  TString chi2n = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.]{#scale[0.85]{_{2}}}";
   TString chi1pm= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{#pm}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
+  TString chii= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0,#pm}}}#kern[-3.]{#scale[0.85]{_{i}}}";
+  TString chij= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0,#mp}}}#kern[-3.]{#scale[0.85]{_{j}}}";
   TString mass_ = "m#kern[0.1]{#lower[-0.12]{_{";
-  float minh=150, maxh=1000;
+  float minh=200, maxh=1000;
   TH1D histo("histo", "", 18, minh, maxh);
   histo.SetMinimum(0);
   histo.SetMaximum(4.5);
   histo.GetYaxis()->CenterTitle(true);
-  histo.GetXaxis()->SetLabelOffset(0.008);
+  histo.GetXaxis()->SetLabelOffset(0.02);
   histo.SetXTitle("Higgsino mass "+mass_+chi1n+"}}} [GeV]");
   histo.SetYTitle("#sigma_{excl}^{95% CL}/#sigma_{theor}");
   histo.Draw();
@@ -140,19 +143,20 @@ int main(int argc, char *argv[]){
   grobs.Draw("same"); 
 
   //// Drawing CMS labels and line at 1
+  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";
+  TString lumiEner = "#font[42]{"+lumi+" fb^{-1} (13 TeV)}"; lumiEner.ReplaceAll("p",".");
+  TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.6]{"+chij+"}  #rightarrow hh#tilde{G}#tilde{G}";
+  TString mChis = mass_+chi2n+"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}, "+mass_+"#tilde{G}}}} = 1 GeV";
   cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
-  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}");
+  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsPrel);
   cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{12.9 fb^{-1} (13 TeV)}");
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
   line.DrawLine(minh, 1, maxh, 1);
   //// Drawing process and masses
   cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.045);
   cmslabel.SetTextFont(132);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, opts.BottomMargin()+0.09,"pp #rightarrow "+chi1n
-		     +"#kern[0.3]{"+chi1n+"} #rightarrow hh#tilde{G}#tilde{G}");
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, opts.BottomMargin()+0.04,mass_+chi2n
-		     +"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}, "
-		     +mass_+"#tilde{G}}}} = 1 GeV");
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, opts.BottomMargin()+0.09, ppChiChi);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, opts.BottomMargin()+0.04, mChis);
 
 
   double legX(0.54), legY(1-opts.TopMargin()-0.04), legSingle = 0.05;
@@ -166,12 +170,14 @@ int main(int argc, char *argv[]){
   leg.AddEntry(&grexp2, "Expected #pm 2#sigma");
   leg.Draw();
 
-  can.SaveAs("plots/higgsino_limits.pdf");
+  histo.Draw("axis same");
+  can.SaveAs("plots/higgsino_limits_lumi"+lumi+".pdf");
 
   // for(size_t i = 0; i < vxsec.size(); ++i) 
   //   cout<<vmx[i]<<" -> "<<vexp[i]<<"+"<<vup[i]<<"++"<<v2up[i]<<" -"<<vdown[i]<<"--"<<v2down[i]<<endl;
 
-
+  //////////////////////////////////////////////////////////////////////////////////////////////////////// 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////// 
   //// Plotting limits on absolute xsec
   maxy=-99.; miny=1e99;
   for(size_t i = 0; i < vxsec.size(); ++i){
@@ -190,8 +196,9 @@ int main(int argc, char *argv[]){
     //cout<<vmx[i]<<" -> "<<vobs[i]<<endl;
   }
 
+  histo.GetXaxis()->SetLabelOffset(0.01);
   histo.SetMinimum(miny/2.);
-  histo.SetMaximum(maxy*2.);
+  histo.SetMaximum(maxy*1.2);
   histo.SetYTitle("#sigma_{excl}^{95% CL} #times BF(hh #rightarrow bbbb) [fb]");
   histo.Draw();
   TGraphAsymmErrors gexp2(vmx.size(), &(vmx[0]), &(vexp[0]), &(zeroes[0]), &(zeroes[0]), &(v2down[0]), &(v2up[0]));
@@ -218,21 +225,47 @@ int main(int argc, char *argv[]){
 
   //// Drawing CMS labels
   cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
-  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}");
+  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsPrel);
   cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{12.9 fb^{-1} (13 TeV)}");
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
 
   //// Drawing process and masses
   cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.045);
   cmslabel.SetTextFont(132);
-  cmslabel.DrawLatex(opts.LeftMargin()+0.03, opts.BottomMargin()+0.09,"pp #rightarrow "+chi1n
-		     +"#kern[0.3]{"+chi1n+"} #rightarrow hh#tilde{G}#tilde{G}");
-  cmslabel.DrawLatex(opts.LeftMargin()+0.03, opts.BottomMargin()+0.04,mass_+chi2n
-		     +"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}, "
-		     +mass_+"#tilde{G}}}} = 1 GeV");
+  cmslabel.DrawLatex(opts.LeftMargin()+0.03, opts.BottomMargin()+0.09, ppChiChi);
+  cmslabel.DrawLatex(opts.LeftMargin()+0.03, opts.BottomMargin()+0.04, mChis);
 
 
-  can.SaveAs("plots/higgsino_limits_fb.pdf");
+  histo.Draw("axis same");
+  can.SaveAs("plots/higgsino_limits_fb_lumi"+lumi+".pdf");
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////// 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////// 
+  //// Plotting discovery significance
+  can.SetLogy(false);
+  histo.GetXaxis()->SetLabelOffset(0.02);
+  histo.SetMinimum(0);
+  histo.SetMaximum(3.5);
+  if(lumi=="40") histo.SetMaximum(4.5);
+  histo.SetYTitle(" Expected discovery significance [#sigma]");
+  histo.Draw();
+
+  TGraph gsig(vmx.size(), &(vmx[0]), &(vsigexp[0]));
+  gsig.SetLineWidth(3);  gsig.SetLineColor(4);
+  gsig.Draw("same"); 
+  //// Drawing CMS labels
+  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
+  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsPrel);
+  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
+  //// Drawing process and masses
+  cmslabel.SetTextAlign(33); cmslabel.SetTextSize(0.045);
+  cmslabel.SetTextFont(132);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.025, ppChiChi);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.09, mChis);
+
+  can.SaveAs("plots/higgsino_significance_lumi"+lumi+".pdf");
+
 
 }
 
