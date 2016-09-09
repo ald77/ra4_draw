@@ -57,6 +57,16 @@ void ReplaceAll(string &str, const string &orig, const string &rep){
   }
 }
 
+string CopyReplaceAll(const string &str, const string &orig, const string &rep){
+  string string_copy = str;
+  size_t loc = 0;
+  while ((loc = string_copy.find(orig, loc)) != string::npos) {
+    string_copy.replace(loc, orig.length(), rep);
+    loc += rep.length();
+  }
+  return string_copy;
+}
+
 string execute(const string &cmd){
   FILE *pipe = popen(cmd.c_str(), "r");
   if(!pipe) throw runtime_error("Could not open pipe.");

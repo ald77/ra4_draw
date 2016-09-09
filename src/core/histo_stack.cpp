@@ -871,7 +871,8 @@ TGraphAsymmErrors HistoStack::GetBackgroundError() const{
     g = TGraphAsymmErrors(&(backgrounds_.front()->scaled_hist_));
   }
   g.SetFillStyle(3002);
-  g.SetFillColor(kBlack);
+  // set the color of the error band to the line color, accomodating data-to-data plots
+  g.SetFillColor(backgrounds_.front()->scaled_hist_.GetLineColor());
   g.SetLineWidth(0);
   g.SetMarkerSize(0);
   return g;
@@ -970,6 +971,9 @@ std::vector<TH1D> HistoStack::GetBottomPlots(double &the_min, double &the_max) c
   }
   out.back() = band;
   out.back().SetFillStyle(3002);
+  // makes ratio error band colored for data-to-data plots as well
+  if (backgrounds_.front()->scaled_hist_.GetLineColor()!=kBlack)
+    out.back().SetFillColor(backgrounds_.front()->scaled_hist_.GetLineColor());
   out.back().SetLineWidth(0);
   out.back().SetMarkerStyle(0);
   out.back().SetMarkerSize(0);
@@ -1014,10 +1018,10 @@ std::vector<TH1D> HistoStack::GetBottomPlots(double &the_min, double &the_max) c
     for(auto &h: out){
       if(datas_.size() != 0) h.GetYaxis()->SetTitle("Data/MC");
       else {
-	string label = "#frac{MC}{"+backgrounds_.front()->process_->name_+"}";
-	h.GetYaxis()->SetTitle(label.c_str());
-	h.SetTitleSize(h.GetTitleSize("y")/1.5,"y");
-	h.SetTitleOffset(2.1,"y");
+        string label = "#frac{MC}{"+backgrounds_.front()->process_->name_+"}";
+        h.GetYaxis()->SetTitle(label.c_str());
+        h.SetTitleSize(h.GetTitleSize("y")/1.5,"y");
+        h.SetTitleOffset(2.1,"y");
       }
       h.SetMinimum(the_min);
       h.SetMaximum(the_max);
@@ -1029,8 +1033,7 @@ std::vector<TH1D> HistoStack::GetBottomPlots(double &the_min, double &the_max) c
       h.SetMinimum(the_min);
       h.SetMaximum(the_max);
     }
-  }
-
+}
   return out;
 }
 
