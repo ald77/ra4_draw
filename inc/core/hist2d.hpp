@@ -5,6 +5,7 @@
 #include "TGraph.h"
 #include "TLine.h"
 #include "TLatex.h"
+#include "TLegend.h"
 
 #include "core/figure.hpp"
 #include "core/axis.hpp"
@@ -76,6 +77,7 @@ private:
 				bool lumi_weighted) const;
   std::vector<TLine> GetLines() const;
   std::vector<std::shared_ptr<TLatex> > GetLabels(bool bkg_is_hist) const;
+  void AddEntry(TLegend &l, const SingleHist2D &h, const TGraph &g) const;
 
   const std::vector<std::unique_ptr<SingleHist2D> >& GetComponentList(const Process *process);
 };

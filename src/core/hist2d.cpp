@@ -211,15 +211,15 @@ void Hist2D::MakeOnePlot(const string &subdir){
   vector<TGraph> sig_graphs = GetGraphs(signals_, true);
   vector<TGraph> data_graphs = GetGraphs(datas_, false);
 
-  for(auto &g: data_graphs){
-    legend.AddEntry(&g, g.GetName(), "p");
+  for(size_t i = 0; i < datas_.size(); ++i){
+    AddEntry(legend, *datas_.at(i), data_graphs.at(i));
   }
-  for(auto &g: sig_graphs){
-    legend.AddEntry(&g, g.GetName(), "p");
+  for(size_t i = 0; i < signals_.size(); ++i){
+    AddEntry(legend, *signals_.at(i), sig_graphs.at(i));
   }
-  if(bkg_is_hist){
-    for(auto &g: bkg_graphs){
-      legend.AddEntry(&g, g.GetName(), "p");
+  if(!bkg_is_hist){
+    for(size_t i = 0; i < backgrounds_.size(); ++i){
+      AddEntry(legend, *backgrounds_.at(i), bkg_graphs.at(i));
     }
   }
 
@@ -234,10 +234,10 @@ void Hist2D::MakeOnePlot(const string &subdir){
   for(auto &l: lines){
     l.Draw();
   }
-  for(auto &g: sig_graphs){
+  for(auto &g: data_graphs){
     g.Draw("p");
   }
-  for(auto &g: data_graphs){
+  for(auto &g: sig_graphs){
     g.Draw("p");
   }
   for(auto &l: labels){
@@ -316,8 +316,7 @@ vector<TLine> Hist2D::GetLines() const{
 vector<shared_ptr<TLatex> > Hist2D::GetLabels(bool bkg_is_hist) const{
   float left = this_opt_.LeftMargin()+0.03;
   float right = bkg_is_hist ? 1.-this_opt_.RightMargin()-0.03 : 1.-0.05-0.03;
-  float bottom = 1.-this_opt_.TopMargin()-0.11;
-  float top = 1.-this_opt_.TopMargin()-0.01;
+  float top = 1.-this_opt_.TopMargin()-0.03;
   vector<shared_ptr<TLatex> > labels;
   string extra;
   switch(this_opt_.Title()){
@@ -329,18 +328,18 @@ vector<shared_ptr<TLatex> > Hist2D::GetLabels(bool bkg_is_hist) const{
   default:
     ERROR("Did not understand title type "+to_string(static_cast<int>(this_opt_.Title())));
   }
-  labels.push_back(make_shared<TLatex>(left, 0.5*(bottom+top),
+  labels.push_back(make_shared<TLatex>(left, top,
                                        ("#font[62]{CMS}#scale[0.76]{#font[52]{ "+extra+"}}").c_str()));
   labels.back()->SetNDC();
-  labels.back()->SetTextAlign(12);
+  labels.back()->SetTextAlign(13);
   labels.back()->SetTextFont(this_opt_.Font());
 
   ostringstream oss;
   oss << luminosity_ << " fb^{-1} (13 TeV)" << flush;
-  labels.push_back(make_shared<TLatex>(right, 0.5*(bottom+top),
+  labels.push_back(make_shared<TLatex>(right, top,
                                        oss.str().c_str()));
   labels.back()->SetNDC();
-  labels.back()->SetTextAlign(32);
+  labels.back()->SetTextAlign(33);
   labels.back()->SetTextFont(this_opt_.Font());
   return labels;
 }
@@ -351,6 +350,32 @@ string Hist2D::Name() const{
   }else{
     return tag_+"_VAR_"+yaxis_.var_.PlainName()+"_VS_"+xaxis_.var_.PlainName()+"_CUT_"+cut_.PlainName()+"_WGT_" + weight_.PlainName();
   }
+}
+
+void Hist2D::AddEntry(TLegend &l, const SingleHist2D &h, const TGraph &g) const{
+  string name = h.process_->name_;
+  ostringstream oss;
+  oss << name;
+  bool print_rho;
+  switch(this_opt_.Title()){
+  case TitleType::info:
+    print_rho = true;
+    break;
+  case TitleType::preliminary:
+  case TitleType::simulation:
+  case TitleType::supplementary:
+  case TitleType::data:
+  default:
+    print_rho = false;
+    break;
+  }
+  if(print_rho){
+    double rho = h.clusterizer_.GetHistogram(1.).GetCorrelationFactor();
+    oss.precision(2);
+    oss << " [#rho=" << rho << "]" << flush;
+  }
+  oss << flush;
+  l.AddEntry(&g, oss.str().c_str(), "p");
 }
 
 set<const Process*> Hist2D::GetProcesses() const{

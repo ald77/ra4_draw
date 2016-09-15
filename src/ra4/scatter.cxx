@@ -81,8 +81,8 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > tt_sig = {tt1l, tt2l, t1tttt};
 
   PlotOpt style("txt/plot_styles.txt", "Scatter");
-  vector<PlotOpt> bkg_hist = {style().Stack(StackType::data_norm)};
-  vector<PlotOpt> bkg_pts = {style().Stack(StackType::lumi_shapes)};
+  vector<PlotOpt> bkg_hist = {style().Stack(StackType::data_norm).Title(TitleType::preliminary)};
+  vector<PlotOpt> bkg_pts = {style().Stack(StackType::lumi_shapes).Title(TitleType::info)};
 
   NamedFunc baseline = "nleps==1&&st>500&&met>150&&njets>=6&&nbm>=1";
   NamedFunc weight = "weight";

@@ -279,20 +279,26 @@ void Clusterizer::SetupNodes(double luminosity) const{
   if(hist_mode_){
     int nx = hist_.GetNbinsX();
     int ny = hist_.GetNbinsY();
+    float xmin = hist_.GetXaxis()->GetBinLowEdge(1);
+    float xmax = hist_.GetXaxis()->GetBinUpEdge(hist_.GetNbinsX());
+    float dx = 0.5*(xmax-xmin);
+    float ymin = hist_.GetYaxis()->GetBinLowEdge(1);
+    float ymax = hist_.GetYaxis()->GetBinUpEdge(hist_.GetNbinsY());
+    float dy = 0.5*(ymax-ymin);
     for(int ix = 0; ix <= nx+1; ++ix){
-      float xlow = (ix >= 1)
-        ? hist_.GetXaxis()->GetBinLowEdge(ix)
-        : hist_.GetXaxis()->GetBinLowEdge(1);
-      float xhigh = (ix <= hist_.GetNbinsX())
-        ? hist_.GetXaxis()->GetBinUpEdge(ix)
-        : hist_.GetXaxis()->GetBinUpEdge(hist_.GetNbinsX());
+      float xlow = (ix <= 0) ? (xmin-dx)
+        : (ix > hist_.GetNbinsX()) ? (xmax+dx)
+        : hist_.GetXaxis()->GetBinLowEdge(ix);
+      float xhigh = (ix <= 0) ? (xmin-dx)
+        : (ix > hist_.GetNbinsX()) ? (xmax+dx)
+        : hist_.GetXaxis()->GetBinUpEdge(ix);
       for(int iy = 0; iy <= ny+1; ++iy){
-        float ylow = (iy >= 1)
-          ? hist_.GetYaxis()->GetBinLowEdge(iy)
-          : hist_.GetYaxis()->GetBinLowEdge(1);
-        float yhigh = (iy <= hist_.GetNbinsY())
-          ? hist_.GetYaxis()->GetBinUpEdge(iy)
-          : hist_.GetYaxis()->GetBinUpEdge(hist_.GetNbinsY());
+        float ylow = (iy <= 0) ? (ymin-dy)
+          : (iy > hist_.GetNbinsY()) ? (ymax+dy)
+          : hist_.GetYaxis()->GetBinLowEdge(iy);
+        float yhigh = (iy <= 0) ? (ymin-dy)
+          : (iy > hist_.GetNbinsY()) ? (ymax+dy)
+          : hist_.GetYaxis()->GetBinUpEdge(iy);
         
         float w = luminosity*hist_.GetBinContent(ix, iy);
         while(w > 0.){
