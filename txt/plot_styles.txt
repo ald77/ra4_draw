@@ -67,3 +67,26 @@
   xTitleOffset	   = 1.08     
   PadLeftMargin	   = 0.175
   yTitleOffset	   = 1.
+
+[Scatter]
+  CanvasW = 800
+  CanvasH = 600
+  TitleSize = 0.05
+  LabelSize = 0.05
+  xTitleOffset = 1.2
+  yTitleOffset = 1.2
+  zTitleOffset = 1.15
+  PadLeftMargin = 0.13
+  PadRightMargin = 0.175
+  PadTopMargin = 0.075
+  PadBottomMargin = 0.14
+  LegendEntrySize = 0.035
+  LegendMaxSize = 0.28
+  LegendMarkerWidth = 0.12
+  LegendPad = 0.028
+  LegendDensity = 1.
+  LogMinimum = 0.01
+  NDivisions = 606
+  Font = 42
+  UseCMYK = 0
+  ShowBackgroundError = 0

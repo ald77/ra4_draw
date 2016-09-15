@@ -60,6 +60,9 @@ public:
   PlotOpt & YTitleOffset(double y_title_offset);
   double YTitleOffset() const;
 
+  PlotOpt & ZTitleOffset(double z_title_offset);
+  double ZTitleOffset() const;
+
   PlotOpt & AutoYAxis(bool auto_y_axis);
   bool AutoYAxis() const;
 
@@ -144,7 +147,7 @@ private:
   PlotOptTypes::OverflowType overflow_type_;
   std::set<std::string> file_extensions_;
   double title_size_, label_size_;
-  double x_title_offset_, y_title_offset_;
+  double x_title_offset_, y_title_offset_, z_title_offset_;
   bool auto_y_axis_;
   int canvas_width_, canvas_height_;
   double left_margin_, right_margin_, bottom_margin_, top_margin_;
