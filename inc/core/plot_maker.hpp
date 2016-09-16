@@ -21,8 +21,9 @@ public:
   ~PlotMaker() = default;
 
   template<typename FigureType, typename... Args>
-  void Push(Args&&... args){
+  FigureType & Push(Args&&... args){
     figures_.emplace_back(static_cast<Figure*>(new FigureType(args...)));
+    return *static_cast<FigureType*>(figures_.back().get());
   }
 
   void MakePlots(double luminosity,

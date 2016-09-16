@@ -57,14 +57,9 @@ void ReplaceAll(string &str, const string &orig, const string &rep){
   }
 }
 
-string CopyReplaceAll(const string &str, const string &orig, const string &rep){
-  string string_copy = str;
-  size_t loc = 0;
-  while ((loc = string_copy.find(orig, loc)) != string::npos) {
-    string_copy.replace(loc, orig.length(), rep);
-    loc += rep.length();
-  }
-  return string_copy;
+string CopyReplaceAll(string str, const string &orig, const string &rep){
+  ReplaceAll(str, orig, rep);
+  return str;
 }
 
 string execute(const string &cmd){
@@ -79,6 +74,164 @@ string execute(const string &cmd){
 
   pclose(pipe);
   return result;
+}
+
+string CodeToPlainText(string code){
+  ReplaceAll(code, "((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "SLtrig");
+  ReplaceAll(code, "(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))>80&&(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))<100", "zmasswindow");
+  ReplaceAll(code, ".", "p");
+  ReplaceAll(code, "(", "");
+  ReplaceAll(code, ")", "");
+  ReplaceAll(code, "[", "");
+  ReplaceAll(code, "]", "");
+  ReplaceAll(code, "{", "");
+  ReplaceAll(code, "}", "");
+  ReplaceAll(code, "+", "p");
+  ReplaceAll(code, "-", "m");
+  ReplaceAll(code, "*", "x");
+  ReplaceAll(code, "/", "d");
+  ReplaceAll(code, "%", "_");
+  ReplaceAll(code, "!", "n");
+  ReplaceAll(code, "&&", "_");
+  ReplaceAll(code, "||", "_");
+  ReplaceAll(code, "==", "");
+  ReplaceAll(code, "<=", "le");
+  ReplaceAll(code, ">=", "ge");
+  ReplaceAll(code, ">", "g");
+  ReplaceAll(code, "<", "l");
+  ReplaceAll(code, "=", "");
+  ReplaceAll(code, "&", "_");
+  ReplaceAll(code, "|", "_");
+  ReplaceAll(code, "^", "_");
+  ReplaceAll(code, "~", "_");
+  ReplaceAll(code, "___", "__");
+  for(size_t i = 0; i < code.size(); ++i){
+    if(isalnum(code.at(i)) || code.at(i) == '.' || code.at(i) == '_') continue;
+    code = code.substr(0,i)+code.substr(i+1);
+  }
+
+  return code;
+}
+
+string CodeToRootTex(string code){
+  ReplaceAll(code, "ht1l_stmin2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,min}");
+  ReplaceAll(code, "ht1l_stmax2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,max}");
+  ReplaceAll(code, "ht1l_stave2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,ave}");
+  ReplaceAll(code, "st", "S_{T}");
+
+  ReplaceAll(code, "met>150&&met<=200", "150<met<=200");
+  ReplaceAll(code, "met>200&&met<=350", "200<met<=350");
+  ReplaceAll(code, "met>350&&met<=500", "350<met<=500");
+  ReplaceAll(code, "njets>=5&&njets<=7", "5<=njets<=7");
+  ReplaceAll(code, "njets>=6&&njets<=8", "6<=njets<=8");
+  ReplaceAll(code, "nbm>=1&&nbm<=2", "1<=nbm<=2");
+
+  ReplaceAll(code, "1==1", "Full Sample");
+  ReplaceAll(code, "el_tks_chg*lep_charge<0", "OS");
+  ReplaceAll(code, "mu_tks_chg*lep_charge<0", "OS");
+  ReplaceAll(code, "had_tks_chg*lep_charge<0", "OS");
+  ReplaceAll(code, "Sum$(abs(mc_id)==11)","N^{true}_{e}");
+  ReplaceAll(code, "Sum$(abs(mc_id)==13)","N^{true}_{#mu}");
+  ReplaceAll(code, "Sum$(genels_pt>0)", "N^{true}_{e}");
+  ReplaceAll(code, "Sum$(genmus_pt>0)", "N^{true}_{#mu}");
+  ReplaceAll(code, "Sum$(mus_sigid&&mus_miniso<0.2)","N_{#mu}^{10}");
+  ReplaceAll(code, "Sum$(els_sigid&&els_miniso<0.1)","N_{e}^{10}");
+  ReplaceAll(code, "nvmus==1&&nmus==1&&nvels==0","1 #mu");
+  ReplaceAll(code, "nvmus10==0&&nvels10==0", "0 leptons");
+  ReplaceAll(code, "(nmus+nels)", "N_{lep}");
+  ReplaceAll(code, "(nels+nmus)", "N_{lep}");
+  ReplaceAll(code, "nveto", "N^{veto}_{tks}");
+  ReplaceAll(code, "(nvmus+nvels)", "N^{veto}_{lep}");
+  ReplaceAll(code, "nvmus==2&&nmus>=1","N_{#mu}#geq1, N^{veto}_{#mu}=2");
+  ReplaceAll(code, "nvels==2&&nels>=1","N_{e}#geq1, N^{veto}_{e}=2");
+  ReplaceAll(code, "(nvmus>=2||nvels>=2)","N^{veto}_{lep} #geq 2");
+  ReplaceAll(code, "(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))>80&&(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))<100",
+             "80<m_{ll}<100");
+  ReplaceAll(code, "mumuv_m>80&&mumuv_m<100",
+             "80<m_{ll}<100");
+  ReplaceAll(code, "elelv_m>80&&elelv_m<100",
+             "80<m_{ll}<100");
+  ReplaceAll(code, "onht>350&&onmet>100&&","");
+  ReplaceAll(code, "jets_islep[0]==0","");
+  ReplaceAll(code, "(nels==0&&nmus==1)","N_{#mu}=1");
+  ReplaceAll(code, "(nels==1&&nmus==0)","N_{#font[12]{e}}=1");
+  ReplaceAll(code, "Max$(abs(els_eta)*(els_sigid&&els_miniso<0.1&&els_pt>20))<1.479","barrel #font[12]{e}");
+  ReplaceAll(code, "Max$(abs(els_eta)*(els_sigid&&els_miniso<0.1&&els_pt>20))>1.479","endcap #font[12]{e}");
+
+  ReplaceAll(code, "!low_dphi", "high #Delta#phi");
+  ReplaceAll(code, "hig_drmax", "#DeltaR^{max}_{bb}");
+  ReplaceAll(code, "ntks", "N_{tks}");
+  ReplaceAll(code, "nleps", "N_{lep}");
+  ReplaceAll(code, "nvleps", "N_{lep}");
+  ReplaceAll(code, "nmus", "N_{#mu}");
+  ReplaceAll(code, "nels", "N_{e}");
+  ReplaceAll(code, "nvmus", "N^{veto}_{#mu}");
+  ReplaceAll(code, "nvels", "N^{veto}_{e}");
+  ReplaceAll(code, "ntruleps", "N^{true}_{lep}");
+  ReplaceAll(code, "_ra2b", "^{ra2b}");
+  ReplaceAll(code, "npv", "N_{PV}");
+  ReplaceAll(code, "mumu_pt1", "p_{T}^{#mu}");
+  ReplaceAll(code, "elel_pt1", "p_{T}^{e}");
+
+  ReplaceAll(code, "abs(mc_id)==1000006", "stop");
+  ReplaceAll(code, "abs(mc_id)==1000022", "LSP");
+
+  ReplaceAll(code, "onmet", "MET^{on}");
+  ReplaceAll(code, "onht", "H_{T}^{on}");
+  ReplaceAll(code, "njets30","N_{jets}^{30}");
+  ReplaceAll(code, "els_pt","p^{e}_{T}");
+  ReplaceAll(code, "mus_pt","p^{#mu}_{T}");
+  ReplaceAll(code, "fjets_nconst","N_{const}^{fat jet}");
+  ReplaceAll(code, "fjets_30_m[0]","m(J_{1})");
+  ReplaceAll(code, "fjets_m[0]","m(J_{1})");
+  ReplaceAll(code, "(fjets_pt*cosh(fjets_eta))","p_{fatjet}");
+  ReplaceAll(code, "fjets_pt","p^{fatjet}_{T}");
+  ReplaceAll(code, "jets_pt","p^{jet}_{T}");
+  ReplaceAll(code, "mus_reliso","RelIso");
+  ReplaceAll(code, "els_reliso","RelIso");
+  ReplaceAll(code, "mus_miniso_tr15","MiniIso");
+  ReplaceAll(code, "els_miniso_tr15","MiniIso");
+  ReplaceAll(code, "njets","N_{jets}");
+  ReplaceAll(code, "abs(lep_id)==13&&","");
+  ReplaceAll(code, ">=", " #geq ");
+  ReplaceAll(code, ">", " > ");
+  ReplaceAll(code, "<=", " #leq ");
+  ReplaceAll(code, "<", " < ");
+  ReplaceAll(code, "&&", ", ");
+  ReplaceAll(code, "==", " = ");
+  ReplaceAll(code, "met", "E_{T}^{miss}");
+  ReplaceAll(code, "ht_hlt", "H_{T}^{HLT}");
+  ReplaceAll(code, "mht", "MHT");
+  ReplaceAll(code, "ht", "H_{T}");
+  ReplaceAll(code, "mt", "m_{T}");
+  ReplaceAll(code, "ntks_chg==0", " ITV");
+  ReplaceAll(code, "nbm","N_{b}");
+  ReplaceAll(code, "nbl","N_{b,l}");
+  ReplaceAll(code, "mj", " M_{J}");
+
+  ReplaceAll(code, "el_tks_mt", "Track m_{T}");
+  ReplaceAll(code, "mu_tks_mt", "Track m_{T}");
+  ReplaceAll(code, "had_tks_mt", "Track m_{T}");
+  ReplaceAll(code, "el_tks_pt", "Track p_{T}");
+  ReplaceAll(code, "mu_tks_pt", "Track p_{T}");
+  ReplaceAll(code, "had_tks_pt", "Track p_{T}");
+  ReplaceAll(code, "el_tks_miniso", "Track miniso");
+  ReplaceAll(code, "mu_tks_miniso", "Track miniso");
+  ReplaceAll(code, "had_tks_miniso", "Track miniso");
+  ReplaceAll(code, "el_tks_chg_miniso", "Track charged miniso");
+  ReplaceAll(code, "mu_tks_chg_miniso", "Track charged miniso");
+  ReplaceAll(code, "had_tks_chg_miniso", "Track charged miniso");
+  ReplaceAll(code, "jetsys_nob_pt", "ISR p_{T}");
+  ReplaceAll(code, "(", "");
+  ReplaceAll(code, ")", "");
+
+  return code;
+}
+
+string CodeToLatex(string code){
+  code = CodeToRootTex(code);
+  ReplaceAll(code, "#", "\\");
+  return code;
 }
 
 vector<string> Tokenize(const string& input,
@@ -215,88 +368,6 @@ TString RoundNumber(double num, int decimals, double denom){
     result += "0";
   if(result.Length()>15) cout<<"num "<<num<<", denom "<<denom<<"  ---->  "<<result<<endl;
   return result;
-}
-
-TString cutsToPlain(TString cut){
-  cut.ReplaceAll(" ",""); cut.ReplaceAll("/","_"); cut.ReplaceAll("\\","_");
-  cut.ReplaceAll(">=","GE"); cut.ReplaceAll("<=","SE"); cut.ReplaceAll("&","_");
-  cut.ReplaceAll(">","G"); cut.ReplaceAll("<","S"); cut.ReplaceAll("=","");
-  cut.ReplaceAll("{",""); cut.ReplaceAll("}",""); cut.ReplaceAll("(",""); cut.ReplaceAll(")",""); 
-  cut.ReplaceAll("+",""); cut.ReplaceAll("#",""); cut.ReplaceAll("^","");
-  cut.ReplaceAll("[",""); cut.ReplaceAll("]",""); cut.ReplaceAll("|","_");
-  cut.ReplaceAll("$",""); cut.ReplaceAll(",","_"); cut.ReplaceAll("!","NOT");
-
-  return cut;
-}
-
-//// Converting ROOT cuts to ROOT labels
-TString cutsToLabel(TString cut){
-  if(cut.Contains("mm_")){
-    cut.ReplaceAll("mm_","");
-    int ind;
-    do{
-      ind = cut.First('[');
-      cut.Remove(ind, cut.First(']')-ind+1);
-    }while(ind>=0);
-  } // Cleaning up mismeasured cuts
-  cut.ReplaceAll(" ","");
-  cut.ReplaceAll("met>150&&met<=200", "150<met<=200");
-  cut.ReplaceAll("met>200&&met<=350", "200<met<=350");
-  cut.ReplaceAll("met>350&&met<=500", "350<met<=500");
-  cut.ReplaceAll("njets>=5&&njets<=7", "5<=njets<=7");
-  cut.ReplaceAll("njets>=6&&njets<=8", "6<=njets<=8");
-  cut.ReplaceAll("nbm>=1&&nbm<=2", "1<=nbm<=2");
-
-  cut.ReplaceAll("met","E_{T}^{miss}");
-  cut.ReplaceAll("njets","N_{jets}");
-  cut.ReplaceAll("nbm","N_{b}");
-  cut.ReplaceAll("=="," = ");
-  cut.ReplaceAll(">="," #geq ");
-  cut.ReplaceAll("<="," #leq ");
-  cut.ReplaceAll(">"," > ");
-  cut.ReplaceAll("<"," < ");
-  cut.ReplaceAll("&&",", ");
-
-  return cut;
-}
-
-
-
-TString cuts2tex(TString cuts){
-  cuts.ReplaceAll(" ", "");
-  if(cuts.Contains("met>200")){
-    if(cuts.Contains("met<=400")) {
-      cuts.ReplaceAll("met<=400", "");
-      cuts.ReplaceAll("met>200", "200<met<=400");
-    }
-    if(cuts.Contains("met>400")) {
-      cuts.ReplaceAll("met>400", "");
-      cuts.ReplaceAll("met>200", "met>400");
-    }
-  }
-  //cuts.ReplaceAll("1&&", ""); 
-  cuts.ReplaceAll("&&1", "");
-  cuts.ReplaceAll("trig[0]", "\\text{HT350\\_MET100}");  cuts.ReplaceAll("trig[22]", "\\text{Ele27\\_eta2p1}");   
-  cuts.ReplaceAll("trig[4]", "\\text{Mu15\\_VVVL}"); cuts.ReplaceAll("trig[8]", "\\text{Ele15\\_VVVL}"); 
-  cuts.ReplaceAll("trig[14]", "\\text{MET170}");  cuts.ReplaceAll("trig[28]", "\\text{MET90}");  
-  cuts.ReplaceAll("trig[12]", "\\text{HT800}");  
-
-  cuts.ReplaceAll("&&&&", "&&");  cuts.ReplaceAll("&&", ", ");  
-  cuts.ReplaceAll("elelv_m", "m_{ee}"); cuts.ReplaceAll("elel_m", "m_{ee}"); cuts.ReplaceAll("elelv_pt", "p^{ee}_T"); 
-  cuts.ReplaceAll("mumuv_m", "m_{\\mu\\mu}"); cuts.ReplaceAll("mumu_m", "m_{\\mu\\mu}"); 
-  cuts.ReplaceAll("mumuv_pt", "p^{\\mu\\mu}_T"); 
-  cuts.ReplaceAll("ht_ra2", "H_T"); cuts.ReplaceAll("ht_clean", "H_T"); cuts.ReplaceAll("ht", "H_T"); 
-  cuts.ReplaceAll("mj14", "M_J^{1.4}"); cuts.ReplaceAll("mj", "M_J"); cuts.ReplaceAll("met", "\\mathrm{MET}");  
-  cuts.ReplaceAll("njets_ra2", "n_j");  cuts.ReplaceAll("njets_clean", "n_j");  cuts.ReplaceAll("njets", "N_j");  
-  cuts.ReplaceAll("nbm", "N_b");  cuts.ReplaceAll("nleps", "n_{\\ell}"); 
-  cuts.ReplaceAll("nvels", "n_e"); cuts.ReplaceAll("nels", "n_e");  
-  cuts.ReplaceAll("nvmus", "n_\\mu"); cuts.ReplaceAll("nmus", "n_\\mu");  cuts.ReplaceAll("nveto", "N_{\\rm veto}");  
-  cuts.ReplaceAll(">=", "\\geq ");  cuts.ReplaceAll("<=", " \\leq "); cuts.ReplaceAll("==", " = ");
-  cuts.ReplaceAll("pass_jets","\\text{JetID}"); cuts.ReplaceAll("pass_ra2, ","");cuts.ReplaceAll("pass, ","");
-  cuts.ReplaceAll("pass","\\text{all filters}");
-
-  cuts = "$"+cuts+"$";
-  return cuts;
 }
 
 // Code from http://www.hongliangjie.com/2012/12/19/how-to-generate-gamma-random-variables/

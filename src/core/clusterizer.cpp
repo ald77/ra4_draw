@@ -34,7 +34,7 @@ bool Point::operator<(const Point &other) const{
 float Clustering::WeightedDistance(const Point &a, const Point &b){
   float dx = a.x_ - b.x_;
   float dy = a.y_ - b.y_;
-  return a.w_*b.w_*(dx*dx+dy*dy)/(a.w_*b.w_);
+  return a.w_*b.w_*(dx*dx+dy*dy)/(a.w_+b.w_);
 }
 
 Node::Node(float x, float y, float w):

@@ -43,16 +43,16 @@ int main(int argc, char *argv[]){
 
   Palette colors("txt/colors.txt", "default");
 
-  auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
+  auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors.RGB(1,57,166),
     {mc_dir+"*_TTJets*Lept*.root", mc_dir+"*_TTJets_HT*.root"},
     "ntruleps<=1&&stitch");
   tt1l->SetMarkerStyle(23);
-  tt1l->SetMarkerSize(1.1);
-  auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
+  tt1l->SetMarkerSize(0.8);
+  auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors.RGB(86,160,211),
     {mc_dir+"*_TTJets*Lept*.root", mc_dir+"*_TTJets_HT*.root"},
     "ntruleps>=2&&stitch");
   tt2l->SetMarkerStyle(22);
-  tt2l->SetMarkerSize(1.1);
+  tt2l->SetMarkerSize(0.8);
   auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
     {mc_dir+"*_WJetsToLNu*.root"});
   auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
@@ -70,12 +70,12 @@ int main(int argc, char *argv[]){
   auto t1tttt = Process::MakeShared<Baby_full>("T1tttt(1500,100)", Process::Type::signal, colors("t1tttt"),
     {mc_dir+"*SMS-T1tttt_mGluino-1500_mLSP-100*.root"});
   t1tttt->SetMarkerStyle(21);
-  t1tttt->SetMarkerSize(1.25);
+  t1tttt->SetMarkerSize(0.9);
 
   auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     {base_path+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_stdnj5/*.root"},"pass&&trig_ra4&&json12p9");
   data->SetMarkerStyle(20);
-  data->SetMarkerSize(1.25);
+  data->SetMarkerSize(1.);
 
   vector<shared_ptr<Process> > all_procs = {data, t1tttt, tt1l, tt2l, wjets, single_t, ttv, other};
   vector<shared_ptr<Process> > tt_sig = {tt1l, tt2l, t1tttt};

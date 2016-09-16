@@ -230,9 +230,9 @@ int main(){
   }
   for (const auto &iweight: weight_opts){
     vector<shared_ptr<Process> > *iprocs = &procs;
-    if(iweight.PlainName()=="w_ttisr_alg") iprocs = &procs_alg;
+    if(CodeToPlainText(iweight.Name())=="w_ttisr_alg") iprocs = &procs_alg;
     if(do_tt1l) {//// 1l ttbar closure
-      if(iweight.PlainName()=="w_ttisr_alg")
+      if(CodeToPlainText(iweight.Name())=="w_ttisr_alg")
         pm.Push<HistoStack>(HistoDef("tt1l", 13, -0.5, 12.5, "njets", "Number of jets", baseline_1l, iweight), procs_1l_alg, plot_types);
       else
         pm.Push<HistoStack>(HistoDef("tt1l", 13, -0.5, 12.5, "njets", "Number of jets", baseline_1l, iweight), procs_1l, plot_types);
@@ -286,7 +286,7 @@ void addSlices(PlotMaker &pm, const vector<double> slices, NamedFunc svar,
     NamedFunc cut = baseline && svar>=slices[i];
     if (i<(slices.size()-1)) cut = cut && svar<slices[i+1];
 
-    string tag = isrtype+"_"+svar.PrettyName()+RoundNumber(slices[i],tag_digits).Data();
+    string tag = CodeToPlainText(isrtype+"_"+svar.Name()+RoundNumber(slices[i],tag_digits).Data());
     pm.Push<HistoStack>(HistoDef(tag, xbins, xvar, xlabel, cut, weight), proc, plot_types);
   }
 }

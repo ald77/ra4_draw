@@ -21,6 +21,7 @@
 #include "core/table.hpp"
 #include "core/histo_stack.hpp"
 #include "core/event_scan.hpp"
+#include "core/hist2d.hpp"
 #include "core/utilities.hpp"
 
 using namespace std;
@@ -34,40 +35,55 @@ int main(int argc, char *argv[]){
   gErrorIgnoreLevel = 6000;
   GetOptions(argc, argv);
 
-  double lumi = 2.3;
+  double lumi = 12.9;
 
-  string trig_skim_mc = "/net/cms27/cms27r0/babymaker/2016_04_29/mc/merged_1lht500met200/";
+  string base_path = "";
+  string hostname = execute("echo $HOSTNAME");
+  if(Contains(hostname, "cms") || Contains(hostname,"compute-")){
+    base_path = "/net/cms2";
+  }
+  string mc_dir = base_path+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_stdnj5/";
 
   Palette colors("txt/colors.txt", "default");
 
   auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
-    {trig_skim_mc+"*_TTJets*Lept*.root", trig_skim_mc+"*_TTJets_HT*.root"},
+    {mc_dir+"*_TTJets*Lept*.root", mc_dir+"*_TTJets_HT*.root"},
     "ntruleps<=1&&stitch");
+  tt1l->SetMarkerStyle(23);
+  tt1l->SetMarkerSize(0.8);
   auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
-    {trig_skim_mc+"*_TTJets*Lept*.root", trig_skim_mc+"*_TTJets_HT*.root"},
+    {mc_dir+"*_TTJets*Lept*.root", mc_dir+"*_TTJets_HT*.root"},
     "ntruleps>=2&&stitch");
+  tt1l->SetMarkerStyle(22);
+  tt1l->SetMarkerSize(0.8);
   auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
-    {trig_skim_mc+"*_WJetsToLNu*.root"});
+    {mc_dir+"*_WJetsToLNu*.root"});
   auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
-    {trig_skim_mc+"*_ST_*.root"});
+    {mc_dir+"*_ST_*.root"});
   auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
-    {trig_skim_mc+"*_TTWJets*.root", trig_skim_mc+"*_TTZTo*.root"});
+    {mc_dir+"*_TTWJets*.root", mc_dir+"*_TTZTo*.root"});
   auto other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    {trig_skim_mc+"*DYJetsToLL*.root", trig_skim_mc+"*_QCD_HT*.root",
-        trig_skim_mc+"*_ZJet*.root", trig_skim_mc+"*_WWTo*.root",
-        trig_skim_mc+"*ggZH_HToBB*.root", trig_skim_mc+"*ttHJetTobb*.root",
-        trig_skim_mc+"*_TTGJets*.root", trig_skim_mc+"*_TTTT_*.root",
-        trig_skim_mc+"*_WH_HToBB*.root", trig_skim_mc+"*_WZTo*.root",
-        trig_skim_mc+"*_ZH_HToBB*.root", trig_skim_mc+"*_ZZ_*.root"});
+    {mc_dir+"*DYJetsToLL*.root", mc_dir+"*_QCD_HT*.root",
+        mc_dir+"*_ZJet*.root", mc_dir+"*_WWTo*.root",
+        mc_dir+"*ggZH_HToBB*.root", mc_dir+"*ttHJetTobb*.root",
+        mc_dir+"*_TTGJets*.root", mc_dir+"*_TTTT_*.root",
+        mc_dir+"*_WH_HToBB*.root", mc_dir+"*_WZTo*.root",
+        mc_dir+"*_ZH_HToBB*.root", mc_dir+"*_ZZ_*.root"});
 
   auto t1tttt_nc = Process::MakeShared<Baby_full>("T1tttt(1500,100)", Process::Type::signal, colors("t1tttt"),
-    {trig_skim_mc+"*SMS-T1tttt_mGluino-1500_mLSP-100*.root"});
+    {mc_dir+"*SMS-T1tttt_mGluino-1500_mLSP-100*.root"});
+  t1tttt_nc->SetMarkerStyle(21);
+  t1tttt_nc->SetMarkerSize(0.9);
   auto t1tttt_c = Process::MakeShared<Baby_full>("T1tttt(1200,800)", Process::Type::signal, colors("t1tttt"),
-    {trig_skim_mc+"*SMS-T1tttt_mGluino-1200_mLSP-800*.root"});
+    {mc_dir+"*SMS-T1tttt_mGluino-1200_mLSP-800*.root"});
   t1tttt_c->SetLineStyle(2);
+  t1tttt_c->SetMarkerStyle(21);
+  t1tttt_c->SetMarkerSize(0.9);
 
   auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    {"/net/cms27/cms27r0/babymaker/2016_04_29/data/merged_1lht500met200/*.root"},"pass&&(trig[4]||trig[8])");
+    {base_path+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_stdnj5/*.root"},"pass&&trig_ra4&&json12p9");
+  data->SetMarkerStyle(20);
+  data->SetMarkerSize(1.);
 
   vector<shared_ptr<Process> > full_trig_skim = {data, t1tttt_nc, t1tttt_c, tt1l, tt2l, wjets, single_t, ttv, other};
 
@@ -86,53 +102,64 @@ int main(int argc, char *argv[]){
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info);
   vector<PlotOpt> all_plot_types = {log_lumi, lin_lumi, log_shapes, lin_shapes,
                                     log_lumi_info, lin_lumi_info, log_shapes_info, lin_shapes_info};
-
+  PlotOpt style2D("txt/plot_styles.txt", "Scatter");
+  vector<PlotOpt> bkg_hist = {style2D().Stack(StackType::data_norm).Title(TitleType::preliminary)};
+  vector<PlotOpt> bkg_pts = {style2D().Stack(StackType::lumi_shapes).Title(TitleType::info)};
+  
   PlotMaker pm;
   pm.Push<HistoStack>(HistoDef(7, -0.5, 6.5, "nleps", "Num. Leptons",
-                               "ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {0.5, 1.5}),
+                               "st>500&&met>200&&njets>=6&&nbm>=1", "weight", {0.5, 1.5}),
                       full_trig_skim, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(40, 0, 2000., "ht", "H_{T} [GeV]",
+  pm.Push<HistoStack>(HistoDef(40, 0, 2000., "st", "S_{T} [GeV]",
                                "nleps==1&&met>200&&njets>=6&&nbm>=1", "weight", {500.}),
                       full_trig_skim, all_plot_types);
   pm.Push<HistoStack>(HistoDef(40, 0, 1000., "met", "MET [GeV]",
-                               "nleps==1&&ht>500&&njets>=6&&nbm>=1", "weight", {200., 400.}),
+                               "nleps==1&&st>500&&njets>=6&&nbm>=1", "weight", {200., 400.}),
                       full_trig_skim, all_plot_types);
   pm.Push<HistoStack>(HistoDef(16, -0.5, 15.5, "njets", "Num. AK4 Jets",
-                               "nleps==1&&ht>500&&met>200&&nbm>=1", "weight", {5.5, 8.5}),
+                               "nleps==1&&st>500&&met>200&&nbm>=1", "weight", {5.5, 8.5}),
                       full_trig_skim, all_plot_types);
   pm.Push<HistoStack>(HistoDef(11, -0.5, 10.5, "nbm", "Num. b-Tagged Jets",
-                               "nleps==1&&ht>500&&met>200&&njets>=6", "weight", {0.5, 1.5, 2.5}),
+                               "nleps==1&&st>500&&met>200&&njets>=6", "weight", {0.5, 1.5, 2.5}),
                       full_trig_skim, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(24, 0., 1200., "mj", "M_{J} [GeV]",
-                               "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {250., 400.}),
+  pm.Push<HistoStack>(HistoDef(24, 0., 1200., "mj14", "M_{J} [GeV]",
+                               "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1", "weight", {250., 400.}),
                       full_trig_skim, all_plot_types);
   pm.Push<HistoStack>(HistoDef(12, 0., 420., "mt", "m_{T} [GeV]",
-                               "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {140.}),
+                               "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1", "weight", {140.}),
                       full_trig_skim, all_plot_types);
   pm.Push<HistoStack>(HistoDef("sometag", 15, 0., 1500., "mj08", "M_{J}^{0.8} [GeV]",
-                               "nleps==1&&ht>500&&met>200", "weight", {400.}),
+                               "nleps==1&&st>500&&met>200", "weight", {400.}),
                       full_trig_skim, all_plot_types);
-  pm.Push<Table>("cutflow", vector<TableRow>{
+  Table & cutflow = pm.Push<Table>("cutflow", vector<TableRow>{
       TableRow("Baseline"),
         TableRow("No Selection", "1"),
-        TableRow("$1\\ell$, $H_{T}>500$, $E_{\\text{T}}^{\\text{miss}}>200$", "nleps==1&&ht>500&&met>200"),
-        TableRow("$N_{\\text{jets}}\\geq6$", "nleps==1&&ht>500&&met>200&&njets>=6"),
-        TableRow("$N_{b}\\geq1$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1"),
-        TableRow("$M_{J}>250$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1&&mj14>250", 1, 0),
+        TableRow("$1\\ell$, $H_{T}>500$, $E_{\\text{T}}^{\\text{miss}}>200$", "nleps==1&&st>500&&met>200"),
+        TableRow("$N_{\\text{jets}}\\geq6$", "nleps==1&&st>500&&met>200&&njets>=6"),
+        TableRow("$N_{b}\\geq1$", "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1"),
+        TableRow("$M_{J}>250$", "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1&&mj14>250", 1, 0),
         TableRow("ABCD Signal Region"),
-        TableRow("$m_{T}>140$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1&&mj14>250&&mt>140"),
-        TableRow("$M_{J}>400$", "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1&&mj14>400&&mt>140"),
+        TableRow("$m_{T}>140$", "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1&&mj14>250&&mt>140"),
+        TableRow("$M_{J}>400$", "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1&&mj14>400&&mt>140"),
         TableRow("Binning"),
-        TableRow("$E_{\\text{T}}^{\\text{miss}}>500$", "nleps==1&&ht>500&&met>500&&njets>=6&&nbm>=1&&mj14>400&&mt>140"),
-        TableRow("$N_{\\text{jets}}\\geq9$", "nleps==1&&ht>500&&met>500&&njets>=9&&nbm>=1&&mj14>400&&mt>140"),
-        TableRow("$N_{b}\\geq3$", "nleps==1&&ht>500&&met>500&&njets>=9&&nbm>=3&&mj14>400&&mt>140")
+        TableRow("$E_{\\text{T}}^{\\text{miss}}>500$", "nleps==1&&st>500&&met>500&&njets>=6&&nbm>=1&&mj14>400&&mt>140"),
+        TableRow("$N_{\\text{jets}}\\geq9$", "nleps==1&&st>500&&met>500&&njets>=9&&nbm>=1&&mj14>400&&mt>140"),
+        TableRow("$N_{b}\\geq3$", "nleps==1&&st>500&&met>500&&njets>=9&&nbm>=3&&mj14>400&&mt>140")
         }, full_trig_skim);
   pm.Push<EventScan>("scan", true, vector<NamedFunc>{"weight", "met"}, vector<shared_ptr<Process> >{tt1l});
+  pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", {250., 400.}),
+                  Axis(25, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                  "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1", "weight",
+                  full_trig_skim, bkg_hist);
+  pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", {250., 400.}),
+                  Axis(25, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                  "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1", "weight",
+                  vector<shared_ptr<Process> >{tt1l, tt2l, t1tttt_nc}, bkg_pts);
 
   if(single_thread) pm.multithreaded_ = false;
   pm.MakePlots(lumi);
 
-  vector<GammaParams> yields = pm.GetLast<Table>()->BackgroundYield(lumi);
+  vector<GammaParams> yields = cutflow.BackgroundYield(lumi);
   for(const auto &yield: yields){
     cout << yield << endl;
   }

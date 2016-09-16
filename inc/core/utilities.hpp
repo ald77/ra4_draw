@@ -31,6 +31,9 @@ std::string CopyReplaceAll(const std::string &str, const std::string &orig, cons
 
 std::string execute(const std::string &cmd);
 
+std::string CodeToPlainText(std::string code);
+std::string CodeToLatex(std::string code);
+std::string CodeToRootTex(std::string code);
 
 template<typename T>
 std::vector<std::size_t> SortPermutation(const std::vector<T>& vec){
@@ -84,9 +87,6 @@ std::string ToLongString(const T& x){
 TString HoursMinSec(float fseconds);
 TString AddCommas(double num);
 TString RoundNumber(double num, int decimals, double denom=1.);
-TString cuts2tex(TString cuts);
-TString cutsToLabel(TString cut);
-TString cutsToPlain(TString cut);
 
 double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg=-1.);
 double gsl_ran_gamma (const double a, const double b, TRandom3 &rand);

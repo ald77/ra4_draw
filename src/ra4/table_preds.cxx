@@ -60,7 +60,6 @@ void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
 void printDebug(abcd_method &abcd, vector<vector<GammaParams> > &allyields, TString baseline,
                 vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds);
 TString Zbi(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg);
-TString cutsToTex(TString cut);
 
 void GetOptions(int argc, char *argv[]);
 
@@ -541,7 +540,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////// Printing results////////////////////////////////////////////////
   for(size_t iplane=0; iplane < abcd.planecuts.size(); iplane++) {
-    out<<endl<< "\\multicolumn{"<<Ncol<<"}{c}{"<<cutsToTex(abcd.planecuts[iplane])<<"}  \\\\ \\hline\n";
+    out<<endl<< "\\multicolumn{"<<Ncol<<"}{c}{$"<<CodeToLatex(abcd.planecuts[iplane].Data())<<"$}  \\\\ \\hline\n";
     for(size_t iabcd=0; iabcd < abcd.abcdcuts.size(); iabcd++){
       for(size_t ibin=0; ibin < abcd.bincuts[iplane].size(); ibin++){
         size_t index = abcd.indexBin(iplane, ibin, iabcd);
@@ -552,11 +551,11 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
         if(iabcd%2==0 && abcd.int_nbnj)
           out << "All "<<(abcd.bincuts[iplane][ibin].Contains("nbm")?"\\nb, ":"")<<"\\njets" ;
         else {
-          if(abcd.method.Contains("2lonly") && iabcd>=2) out<<cutsToTex(abcd.lowerNjets(abcd.bincuts[iplane][ibin]));
+          if(abcd.method.Contains("2lonly") && iabcd>=2) out<<"$"<<CodeToLatex(abcd.lowerNjets(abcd.bincuts[iplane][ibin]).Data())<<"$";
           else if(abcd.method.Contains("2lveto") && iabcd>=2){
             if(abcd.bincuts[iplane][ibin].Contains("6")) out<<"Low \\njets";
             else out<<"High \\njets";
-          } else out<<cutsToTex(abcd.bincuts[iplane][ibin]);
+          } else out<<"$"<<CodeToLatex(abcd.bincuts[iplane][ibin].Data())<<"$";
         }
         //// Printing signal yields
         if(do_signal)
@@ -637,29 +636,6 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
 
   return fullname;
 } // printTable
-
-//// Converting ROOT cuts to TeX
-TString cutsToTex(TString cut){
-  cut.ReplaceAll(" ","");
-  cut.ReplaceAll("met>150&&met<=200", "150<met<=200");
-  cut.ReplaceAll("met>200&&met<=350", "200<met<=350");
-  cut.ReplaceAll("met>350&&met<=500", "350<met<=500");
-  cut.ReplaceAll("njets>=5&&njets<=7", "5<=njets<=7");
-  cut.ReplaceAll("njets>=6&&njets<=8", "6<=njets<=8");
-  cut.ReplaceAll("nbm>=1&&nbm<=2", "1<=nbm<=2");
-
-  cut.ReplaceAll("met","\\met");
-  cut.ReplaceAll("njets","\\njets");
-  cut.ReplaceAll("nbm","\\nb");
-  cut.ReplaceAll("==","=");
-  cut.ReplaceAll(">=","\\geq");
-  cut.ReplaceAll("<=","\\leq");
-  cut.ReplaceAll("&&",", ");
-
-  cut = "$"+cut+"$";
-  return cut;
-}
-
 //// Estimating significance
 TString Zbi(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg){
   TString zbi_s;
@@ -772,7 +748,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   for(size_t iplane=0; iplane < k_ordered.size(); iplane++) {
     for(size_t ibin=0; ibin < k_ordered[iplane].size(); ibin++){
       bin++;
-      histo.GetXaxis()->SetBinLabel(bin, cutsToLabel(k_ordered[iplane][ibin][0].cut));
+      histo.GetXaxis()->SetBinLabel(bin, CodeToRootTex(k_ordered[iplane][ibin][0].cut.Data()).c_str());
       // xval is the x position of the first marker in the group
       double xval = bin, nbs = k_ordered[iplane][ibin].size(), minxb = 0.15, binw = 0;
       // If there is more than one point in the group, it starts minxb to the left of the center of the bin
@@ -801,8 +777,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
     line.SetLineStyle(2); line.SetLineWidth(2);
     if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
     // Drawing MET labels
-    if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, cutsToLabel(abcd.planecuts[iplane]));
-    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.26, cutsToLabel(abcd.planecuts[iplane]));
+    if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
+    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.26, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
   } // Loop over plane cuts
 
   //// Drawing legend and TGraphs
@@ -823,7 +799,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
     graph[indb].SetMarkerColor(ind_bcuts[indb].color);
     graph[indb].SetLineColor(ind_bcuts[indb].color); graph[indb].SetLineWidth(2);
     graph[indb].Draw("p0 same");
-    leg.AddEntry(&graph[indb], cutsToLabel(ind_bcuts[indb].cut), "p");
+    leg.AddEntry(&graph[indb], CodeToRootTex(ind_bcuts[indb].cut.Data()).c_str(), "p");
   } // Loop over TGraphs
   if(ind_bcuts.size()>1) leg.Draw();
 

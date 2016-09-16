@@ -468,9 +468,9 @@ string PlotOpt::TypeString() const{
 
   switch(stack_type_){
   default: DBG("Bad stack type: " << static_cast<int>(stack_type_));
-  case StackType::signal_overlay: out += "lumi"; break;
-  case StackType::signal_on_top: out += "lumi_sig_on_top"; break;
-  case StackType::data_norm: out += "data_norm"; break;
+  case StackType::signal_overlay: out += "lumi_nonorm"; break;
+  case StackType::signal_on_top: out += "sigontop"; break;
+  case StackType::data_norm: out += "lumi"; break;
   case StackType::lumi_shapes: out += "lumi_shapes"; break;
   case StackType::shapes: out += "shapes"; break;
   }
@@ -479,28 +479,8 @@ string PlotOpt::TypeString() const{
 
   switch(y_axis_type_){
   default: DBG("Bad y-axis type: " << static_cast<int>(y_axis_type_));
-  case YAxisType::linear: out += "linear"; break;
+  case YAxisType::linear: out += "lin"; break;
   case YAxisType::log: out += "log"; break;
-  }
-
-  out += "_";
-
-  switch(title_type_){
-  default: DBG("Bad title type: " << static_cast<int>(title_type_));
-  case TitleType::info: out += "info"; break;
-  case TitleType::preliminary: out += "preliminary"; break;
-  case TitleType::simulation: out += "simulation"; break;
-  case TitleType::supplementary: out += "supplementary"; break;
-  case TitleType::data: out += "data"; break;
-  }
-
-  out+= "_";
-
-  switch(bottom_type_){
-  default: DBG("Bad bottom type: " << static_cast<int>(bottom_type_));
-  case BottomType::off: out += "nobottom"; break;
-  case BottomType::ratio: out += "ratio"; break;
-  case BottomType::diff: out += "diff"; break;
   }
 
   return out;

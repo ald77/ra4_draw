@@ -16,6 +16,8 @@
 
 #include <algorithm>
 
+#include "core/utilities.hpp"
+
 using namespace std;
 
 /*!\brief Constructor using list of bin edges
@@ -203,10 +205,16 @@ const vector<double> & HistoDef::Bins() const{
   \return Output name specifying variable, cut, and weight
 */
 string HistoDef::Name() const{
+  string cut = "";
+  if(cut_.Name() != "1") cut = "__"+cut_.Name();
+
+  string weight = "";
+  if(weight_.Name() != "weight") weight = "__"+weight_.Name();
+
   if(tag_ == ""){
-    return var_.PlainName() + "_CUT_" + cut_.PlainName() + "_WGT_" + weight_.PlainName();
+    return CodeToPlainText(var_.Name() + cut + weight);
   }else{
-    return tag_+"_VAR_"+var_.PlainName() + "_CUT_" + cut_.PlainName() + "_WGT_" + weight_.PlainName();
+    return CodeToPlainText(tag_+"__"+var_.Name() + cut + weight);
   }
 }
 
@@ -220,11 +228,11 @@ string HistoDef::Title() const{
   bool cut = (cut_.Name() != "" && cut_.Name() != "1");
   bool weight = weight_.Name() != "weight";
   if(cut && weight){
-    return cut_.PrettyName()+" (weight="+weight_.PrettyName()+")";
+    return CodeToRootTex(cut_.Name()+" (weight="+weight_.Name()+")");
   }else if(cut){
-    return cut_.PrettyName();
+    return CodeToRootTex(cut_.Name());
   }else if(weight){
-    return "weight="+weight_.PrettyName();
+    return CodeToRootTex("weight="+weight_.Name());
   }else{
     return "";
   }

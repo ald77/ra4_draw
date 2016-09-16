@@ -10,7 +10,7 @@
 
   To produce a plot, the component histograms in HistoStack::backgrounds_,
   HistoStack::signals_, and HistoStack::datas_ must be filled (e.g., by
-  PlotMaker). Once the data is ready, a call to HistoStack::PrintPlot() will
+  PlotMaker). Once the data is ready, a call to HistoStack::Print() will
   generate the formatted plot for each style contained in
   HistoStack::plot_options_.
 
@@ -334,7 +334,6 @@ void HistoStack::Print(double luminosity,
     this_opt_.MakeSane();
     gStyle->SetColorModelPS(this_opt_.UseCMYK());
     gROOT->ForceStyle();
-
     RefreshScaledHistos();
     SetRanges();
     ApplyStyles();
@@ -437,9 +436,9 @@ void HistoStack::Print(double luminosity,
       ? "plots/"+subdir+"/"+definition_.Name()
       : "plots/"+definition_.Name();
     for(const auto &ext: this_opt_.FileExtensions()){
-      string full_name = base_name+"_OPT_"+this_opt_.TypeString()+'.'+ext;
+      string full_name = base_name+"__"+this_opt_.TypeString()+'.'+ext;
       full->Print(full_name.c_str());
-      cout << "Wrote plot to " << full_name << endl;
+      cout << "open " << full_name << endl;
     }
   }
 }

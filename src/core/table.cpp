@@ -152,7 +152,7 @@ void Table::Print(double luminosity,
   PrintFooter(file);
   file << flush;
   file.close();
-  cout << "Wrote table to " << file_name << endl;
+  cout << "pdflatex " << file_name << " &> /dev/null; #./python/texify.py tables" << endl;
 }
 
 vector<GammaParams> Table::Yield(const Process *process, double luminosity) const{
@@ -395,13 +395,13 @@ void Table::PrintPie(std::size_t irow, double luminosity) const{
   // Define piechart
   TPie pie("", "", Nbkg, &counts.at(0), &colors.at(0), &labels.at(0));
   pie.SetCircle(0.5, 0.48, 0.35);
-  pie.SetTitle(rows_.at(irow).cut_.PrettyName()+" (N="+RoundNumber(Yield_tot,1)
-	       +", t#bar{t}="+RoundNumber(Yield_tt*100,1,Yield_tot)+"%)");
+  pie.SetTitle(CodeToRootTex(rows_.at(irow).cut_.Name()+" (N="+RoundNumber(Yield_tot,1).Data()
+                             +", t#bar{t}="+RoundNumber(Yield_tt*100,1,Yield_tot).Data()+"%)").c_str());
 
   // Printing pie chart with percentages
   pie.SetLabelFormat("%perc");
   pie.Draw();
-  plot_name = "plots/pie_"+name_+"_"+(rows_.at(irow).cut_.PlainName())+"_perc_lumi"+RoundNumber(luminosity,0)+".pdf";
+  plot_name = CodeToPlainText("plots/pie_"+name_+"_"+(rows_.at(irow).cut_.Name())+"_perc_lumi"+RoundNumber(luminosity,0).Data()+".pdf");
   can.SaveAs(plot_name.c_str());
   cout<<" open "<<plot_name<<endl;
 

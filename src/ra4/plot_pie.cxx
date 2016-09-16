@@ -123,7 +123,7 @@ int main(){
  
   vector<TableRow> table_cuts;
   for(size_t icut=0; icut<cuts.size(); icut++){
-    table_cuts.push_back(TableRow(cuts2tex(cuts[icut]).Data(), cuts[icut].Data()));
+    table_cuts.push_back(TableRow("$"+CodeToLatex(cuts[icut].Data())+"$", cuts[icut].Data()));
   }
 
   PlotMaker pm;

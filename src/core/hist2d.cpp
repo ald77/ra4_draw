@@ -250,9 +250,9 @@ void Hist2D::MakeOnePlot(const string &subdir){
     ? "plots/"+subdir+"/"+Name()
     : "plots/"+Name();
   for(const auto &ext: this_opt_.FileExtensions()){
-    string full_name = base_name+"_OPT_"+this_opt_.TypeString()+'.'+ext;
+    string full_name = base_name+"__"+this_opt_.TypeString()+'.'+ext;
     c.Print(full_name.c_str());
-    cout << "Wrote plot to " << full_name << endl;
+    cout << "open " << full_name << endl;
   }
 }
 
@@ -345,10 +345,16 @@ vector<shared_ptr<TLatex> > Hist2D::GetLabels(bool bkg_is_hist) const{
 }
 
 string Hist2D::Name() const{
+  string cut = "";
+  if(cut_.Name() != "1") cut = "__"+cut_.Name();
+
+  string weight = "";
+  if(weight_.Name() != "weight") weight = "__"+weight_.Name();
+  
   if(tag_ == ""){
-    return yaxis_.var_.PlainName()+"_VS_"+xaxis_.var_.PlainName()+"_CUT_"+cut_.PlainName()+"_WGT_" + weight_.PlainName();
+    return CodeToPlainText(yaxis_.var_.Name()+"__"+xaxis_.var_.Name()+cut+weight);
   }else{
-    return tag_+"_VAR_"+yaxis_.var_.PlainName()+"_VS_"+xaxis_.var_.PlainName()+"_CUT_"+cut_.PlainName()+"_WGT_" + weight_.PlainName();
+    return CodeToPlainText(tag_+"__"+yaxis_.var_.Name()+"__"+xaxis_.var_.Name()+cut+weight);
   }
 }
 

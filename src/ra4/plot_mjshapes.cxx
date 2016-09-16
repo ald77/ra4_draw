@@ -215,21 +215,21 @@ int main(){
               procs_tmp = vector<shared_ptr<Process> >({bkg1l_lowmt, bkglveto, bkg1l_highmt});
             // histograms
             NamedFunc icut = imet && inobj && iht>500;
-            pm.Push<HistoStack>(HistoDef(iproc.first+"_"+iht.PlainName(), 
+            pm.Push<HistoStack>(HistoDef(CodeToPlainText(iproc.first+"_"+iht.Name()),
               10, 100., 850., var, xtitle, icut, "weight", {250.,400.}), procs_tmp, plot_types);
             plot_names.insert(pm.GetLast<HistoStack>()->definition_.Name()+"_OPT_"+plot_types[0].TypeString()+".pdf");
 
             if (procs_isr.find(iproc.first)!=procs_isr.end()) {
-              pm.Push<HistoStack>(HistoDef(iproc.first+"_"+iht.PlainName(), 
+              pm.Push<HistoStack>(HistoDef(CodeToPlainText(iproc.first+"_"+iht.Name()),
                 10, 0., 800., ave_toppt, "Ave. top p_{T} [GeV]", icut && var+">250", "weight"), procs_isr[iproc.first], plot_types);
               plot_names.insert(pm.GetLast<HistoStack>()->definition_.Name()+"_OPT_"+plot_types[0].TypeString()+".pdf");
-              pm.Push<HistoStack>(HistoDef(iproc.first+"_"+iht.PlainName(), 
+              pm.Push<HistoStack>(HistoDef(CodeToPlainText(iproc.first+"_"+iht.Name()),
                 10, 0., 800., "isr_tru_pt", "True ISR p_{T} [GeV]", icut && var+">250", "weight"), procs_isr[iproc.first], plot_types);
               plot_names.insert(pm.GetLast<HistoStack>()->definition_.Name()+"_OPT_"+plot_types[0].TypeString()+".pdf");
             }
             // pies
             table_cuts.push_back(TableRow("",icut));
-            pie_names.insert("pie_"+iproc.first+"_"+icut.PlainName()+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
+            pie_names.insert(CodeToPlainText("pie_"+iproc.first+"_"+icut.Name()+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf"));
             Nplots++;
           } // loop over ht options
         } // loop over nobj bins
@@ -253,8 +253,8 @@ int main(){
               if(proc == "dilep" && (Contains(nobjbins[mj_lep][inobj],"==6") || Contains(nobjbins[mj_lep][inobj],"==5"))) continue; 
               NamedFunc icut = imet && nobjbins[mj_lep][inobj] && iht>500;
               string var = mj_lep ? "mj14_original" : "mj14";
-              string iname = proc+"_"+iht.PlainName()+"_VAR_"+var+"_CUT_"+icut.PlainName() 
-                             +"_WGT_weight_OPT_"+plot_types[0].TypeString()+".pdf";
+              string iname = CodeToPlainText(proc+"_"+iht.Name()+"_VAR_"+var+"_CUT_"+icut.Name() 
+                                             +"_WGT_weight_OPT_"+plot_types[0].TypeString()+".pdf");
               if (plot_names.find(iname)!=plot_names.end()) pnames.push_back(iname);
             }
           }
@@ -278,15 +278,15 @@ int main(){
             vector<string> pnames(15,"");
             for (size_t iht(0); iht<htopt.size(); iht++){
               NamedFunc icut = imet && inobj && htopt[iht]>500;
-              string iname = proc+"_"+htopt[iht].PlainName()+"_VAR_"+var + "_CUT_" + icut.PlainName() 
-                             + "_WGT_weight_OPT_"+plot_types[0].TypeString()+".pdf";
+              string iname = CodeToPlainText(proc+"_"+htopt[iht].Name()+"_VAR_"+var + "_CUT_" + icut.Name() 
+                                             + "_WGT_weight_OPT_"+plot_types[0].TypeString()+".pdf");
               if (plot_names.find(iname)!=plot_names.end()){
-                pnames[iht] = "pie_"+proc+"_"+icut.PlainName()+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf";
+                pnames[iht] = CodeToPlainText("pie_"+proc+"_"+icut.Name()+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
                 pnames[htopt.size()+iht] = iname;
               }
               icut = icut && var+">250";
-              iname = proc+"_"+htopt[iht].PlainName()+"_VAR_isr_tru_pt_CUT_" + icut.PlainName() 
-                             + "_WGT_weight_OPT_"+plot_types[0].TypeString()+".pdf";
+              iname = CodeToPlainText(proc+"_"+htopt[iht].Name()+"_VAR_isr_tru_pt_CUT_" + icut.Name() 
+                                      + "_WGT_weight_OPT_"+plot_types[0].TypeString()+".pdf");
               if (plot_names.find(iname)!=plot_names.end()) pnames[2*htopt.size()+iht] = iname;
             }
             sm_htopt.AddSlide(pnames,5);

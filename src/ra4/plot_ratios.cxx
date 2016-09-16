@@ -117,7 +117,7 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   vector<vector<double> > vx(ngraphs), vexh(ngraphs), vexl(ngraphs);
   vector<vector<double> > vy(ngraphs), veyh(ngraphs), veyl(ngraphs);
   for(size_t ibin=0; ibin<nbins; ibin++){
-    histo.GetXaxis()->SetBinLabel(ibin+1, cutsToLabel(plotdef.bincuts[ibin]));
+    histo.GetXaxis()->SetBinLabel(ibin+1, CodeToRootTex(plotdef.bincuts[ibin].Data()).c_str());
     // xval is the x position of the first marker in the group
     double xval = ibin+1, minxb = 0.15, binw = 0;
     // If there is more than one point in the group, it starts minxb to the left of the center of the bin
@@ -177,8 +177,8 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
 
-  TString fname="plots/ratio_"+cutsToPlain(ytitle)+"_"+plotdef.name+"_"+cutsToPlain(plotdef.baseline)+".pdf";
-  can.SaveAs(fname);
+  string fname="plots/ratio_"+CodeToPlainText(ytitle.Data())+"_"+plotdef.name.Data()+"_"+CodeToPlainText(plotdef.baseline.Data())+".pdf";
+  can.SaveAs(fname.c_str());
   cout<<endl<<" open "<<fname<<endl;
 
 } // plotRatio
