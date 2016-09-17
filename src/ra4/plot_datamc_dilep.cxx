@@ -13,7 +13,7 @@
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
 #include "core/utilities.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -121,85 +121,87 @@ int main(){
       string cut2l_base = "ht>500&&met>200&&"+leps[ilep]+"&&njets>=5&&nbm<=2";
       if(ilep>3) cut2l_base = "ht>500&&met>200&&"+leps[ilep]+"&&njets>=6&&nbm>=1&&mt<=140";
 
+      string tag = sam_tag[iyr]+"_"+lep_tag[ilep];
+
       //MJ
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]",
-                                        cut2l_base+"&&met<=350","weight", {250, 400}),sams[iyr], all_plot_types);
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]",
-                                        cut2l_base+"&&met>350&&met<=500","weight", {250, 400}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met<=350", sams[iyr], all_plot_types).Tag(tag);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met>350&&met<=500", sams[iyr], all_plot_types).Tag(tag);
 
       //MJ low mt di-lepton
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]",
-                                        cut2l_base+"&&met<=350&&mt<=140","weight", {250, 400}),sams[iyr], all_plot_types);
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]",
-                                        cut2l_base+"&&met>350&&met<=500&&mt<=140","weight", {250, 400}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met<=350&&mt<=140", sams[iyr], all_plot_types).Tag(tag);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met>350&&met<=500&&mt<=140", sams[iyr], all_plot_types).Tag(tag);
 
       //MJ low mt di-lepton
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]",
-                                        cut2l_base+"&&met<=350&&mt<=140","weight", {250, 400}),sams[iyr], all_plot_types);
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]",
-                                        cut2l_base+"&&met>350&&met<=500&&mt<=140","weight", {250, 400}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met<=350&&mt<=140", sams[iyr], all_plot_types).Tag(tag);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met>350&&met<=500&&mt<=140", sams[iyr], all_plot_types).Tag(tag);
 
       //MJ high mt di-lepton
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]",
-                                        cut2l_base+"&&met<=350&&mt>140","weight", {250, 400}),sams[iyr], all_plot_types);
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]",
-                                        cut2l_base+"&&met>350&&met<=500&&mt>140","weight", {250, 400}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met<=350&&mt>140", sams[iyr], all_plot_types).Tag(tag);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met>350&&met<=500&&mt>140", sams[iyr], all_plot_types).Tag(tag);
 
       //D3 and D4
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 700., "mt", "m_{T} [GeV]",
-                                        "mj14>250&&"+cut2l_base+"&&met<=350","weight", {140.}),sams[iyr], all_plot_types);
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 700., "mt", "m_{T} [GeV]",
-                                        "mj14>250&&"+cut2l_base+"&&met>350&&met<=500","weight", {140.}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                           "mj14>250&&"+cut2l_base+"&&met<=350", sams[iyr], all_plot_types).Tag(tag);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                           "mj14>250&&"+cut2l_base+"&&met>350&&met<=500", sams[iyr], all_plot_types).Tag(tag);
       //D3
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 700., "mt", "m_{T} [GeV]",
-                                        "mj14>250&&"+cut2l_base+"&&mj14<=400&&met<=350","weight", {140.}),sams[iyr], all_plot_types);
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 700., "mt", "m_{T} [GeV]",
-                                        "mj14>250&&"+cut2l_base+"&&mj14<=400&&met>350&&met<=500","weight", {140.}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                           "mj14>250&&"+cut2l_base+"&&mj14<=400&&met<=350", sams[iyr], all_plot_types).Tag(tag);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                           "mj14>250&&"+cut2l_base+"&&mj14<=400&&met>350&&met<=500", sams[iyr], all_plot_types).Tag(tag);
       //D4
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 700., "mt", "m_{T} [GeV]",
-                                        "mj14>250&&"+cut2l_base+"&&mj14>400&&met<=350","weight", {140.}),sams[iyr], all_plot_types);
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 700., "mt", "m_{T} [GeV]",
-                                        "mj14>250&&"+cut2l_base+"&&mj14>400&&met>350&&met<=500","weight", {140.}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                           "mj14>250&&"+cut2l_base+"&&mj14>400&&met<=350", sams[iyr], all_plot_types).Tag(tag);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                           "mj14>250&&"+cut2l_base+"&&mj14>400&&met>350&&met<=500", sams[iyr], all_plot_types).Tag(tag);
 
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 12, 200., 500., "met", "MET [GeV]",
-                                        "mj14>250&&"+cut2l_base+"&&met<=500","weight", {200}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(12, 200., 500., "met", "MET [GeV]", {200.}),
+                           "mj14>250&&"+cut2l_base+"&&met<=500", sams[iyr], all_plot_types).Tag(tag);
 
       //MJ12 Plots
       ReplaceAll(cut2l_base,"mj14","mj");
 
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]",
-                                        cut2l_base+"&&met<=350","weight", {250, 400.}),sams[iyr], all_plot_types);
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]",
-                                        cut2l_base+"&&met>350&&met<=500","weight", {250, 400.}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met<=350", sams[iyr], all_plot_types).Tag(tag);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met>350&&met<=500", sams[iyr], all_plot_types).Tag(tag);
       //MJ low mt di-lepton
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]",
-                                        cut2l_base+"&&met<=350&&mt<=140","weight", {250, 400}),sams[iyr], all_plot_types);
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]",
-                                        cut2l_base+"&&met>350&&met<=500&&mt<=140","weight", {250, 400}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met<=350&&mt<=140", sams[iyr], all_plot_types).Tag(tag);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met>350&&met<=500&&mt<=140", sams[iyr], all_plot_types).Tag(tag);
       //MJ high mt di-lepton
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]",
-                                        cut2l_base+"&&met<=350&&mt>140","weight", {250, 400}),sams[iyr], all_plot_types);
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]",
-                                        cut2l_base+"&&met>350&&met<=500&&mt>140","weight", {250, 400}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met<=350&&mt>140", sams[iyr], all_plot_types).Tag(tag);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]", {250., 400.}),
+                           cut2l_base+"&&met>350&&met<=500&&mt>140", sams[iyr], all_plot_types).Tag(tag);
 
       //D3 and D4
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 700., "mt", "m_{T} [GeV]",
-                                        "mj>250&&"+cut2l_base+"&&met<=350","weight", {140.}),sams[iyr], all_plot_types);
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 700., "mt", "m_{T} [GeV]",
-                                        "mj>250&&"+cut2l_base+"&&met>350&&met<=500","weight", {140.}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                           "mj>250&&"+cut2l_base+"&&met<=350", sams[iyr], all_plot_types).Tag(tag);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                           "mj>250&&"+cut2l_base+"&&met>350&&met<=500",sams[iyr], all_plot_types).Tag(tag);
       //D3
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 700., "mt", "m_{T} [GeV]",
-                                        "mj>250&&"+cut2l_base+"&&mj<=400&&met<=350","weight", {140.}),sams[iyr], all_plot_types);
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 700., "mt", "m_{T} [GeV]",
-                                        "mj>250&&"+cut2l_base+"&&mj<=400&&met>350&&met<=500","weight", {140.}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                           "mj>250&&"+cut2l_base+"&&mj<=400&&met<=350", sams[iyr], all_plot_types).Tag(tag);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                           "mj>250&&"+cut2l_base+"&&mj<=400&&met>350&&met<=500", sams[iyr], all_plot_types).Tag(tag);
       //D4
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 700., "mt", "m_{T} [GeV]",
-                                        "mj>250&&"+cut2l_base+"&&mj>400&&met<=350","weight", {140.}),sams[iyr], all_plot_types);
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 20, 0., 700., "mt", "m_{T} [GeV]",
-                                        "mj>250&&"+cut2l_base+"&&mj>400&&met>350&&met<=500","weight", {140.}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                           "mj>250&&"+cut2l_base+"&&mj>400&&met<=350", sams[iyr], all_plot_types).Tag(tag);
+      pm[iyr].Push<Hist1D>(Axis(20, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                           "mj>250&&"+cut2l_base+"&&mj>400&&met>350&&met<=500", sams[iyr], all_plot_types).Tag(tag);
 
-      pm[iyr].Push<HistoStack>(HistoDef(sam_tag[iyr]+"_"+lep_tag[ilep], 12, 200., 500., "met", "MET [GeV]",
-                                        "mj>250&&"+cut2l_base+"&&met<=500","weight", {200}),sams[iyr], all_plot_types);
+      pm[iyr].Push<Hist1D>(Axis(12, 200., 500., "met", "MET [GeV]", {200.}),
+                           "mj>250&&"+cut2l_base+"&&met<=500", sams[iyr], all_plot_types).Tag(tag);
     }
     //    pm[iyr].MakePlots(lumi[iyr]);
   }
@@ -277,19 +279,19 @@ int main(){
     for(unsigned int ilep=0; ilep<leps_mc.size(); ilep++){
 
       string cut2l_base = "ht>500&&met>200&&"+leps_mc[ilep]+"&&njets>=5&&nbm<=2";
-
+      string tag = sam_mc_tag[iyr]+"_"+lep_mc_tag[ilep];
       //MJ
-      pm_mc[iyr].Push<HistoStack>(HistoDef(sam_mc_tag[iyr]+"_"+lep_mc_tag[ilep], 20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]",
-                                           cut2l_base+"&&met<=350","weight", {250, 400}),sams_mc[iyr], mc_plot_types);
-      pm_mc[iyr].Push<HistoStack>(HistoDef(sam_mc_tag[iyr]+"_"+lep_mc_tag[ilep], 20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]",
-                                           cut2l_base+"&&met>350&&met<=500","weight", {250, 400}),sams_mc[iyr], mc_plot_types);
+      pm_mc[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]", {250., 400.}),
+                              cut2l_base+"&&met<=350", sams_mc[iyr], mc_plot_types).Tag(tag);
+      pm_mc[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj14", "M_{J}^{1.4} [GeV]", {250., 400.}),
+                              cut2l_base+"&&met>350&&met<=500", sams_mc[iyr], mc_plot_types).Tag(tag);
 
       ReplaceAll(cut2l_base,"mj14","mj");
 
-      pm_mc[iyr].Push<HistoStack>(HistoDef(sam_mc_tag[iyr]+"_"+lep_mc_tag[ilep], 20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]",
-                                           cut2l_base+"&&met<=350","weight", {250, 400.}),sams_mc[iyr], mc_plot_types);
-      pm_mc[iyr].Push<HistoStack>(HistoDef(sam_mc_tag[iyr]+"_"+lep_mc_tag[ilep], 20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]",
-                                           cut2l_base+"&&met>350&&met<=500","weight", {250, 400.}),sams_mc[iyr], mc_plot_types);
+      pm_mc[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]", {250., 400.}),
+                              cut2l_base+"&&met<=350", sams_mc[iyr], mc_plot_types).Tag(tag);
+      pm_mc[iyr].Push<Hist1D>(Axis(20, 0., 1000., "mj", "M_{J}^{1.2} [GeV]", {250., 400.}),
+                              cut2l_base+"&&met>350&&met<=500", sams_mc[iyr], mc_plot_types).Tag(tag);
     }
     pm_mc[iyr].MakePlots(lumi[iyr]);
   }

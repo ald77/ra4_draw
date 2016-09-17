@@ -7,7 +7,7 @@
 #include "TColor.h"
 
 #include "core/baby.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 #include "core/process.hpp"
 #include "core/named_func.hpp"
 #include "core/plot_maker.hpp"
@@ -64,61 +64,63 @@ int main(){
 
   PlotMaker pm;
 
+  NamedFunc rpv_wgt("weight*w_pu_rpv/eff_trig");
+  
   // 0-lepton selection
-  pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
-                               "nleps==0","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
-                               "nleps==0","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
-                               "nleps==0","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
-                               "nleps==0","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+  pm.Push<Hist1D>(Axis(6, 0, 6, "nbm", "N_{b}"),
+                      "nleps==0", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(25, 0, 2500, "mj", "M_{J} [GeV]"),
+                      "nleps==0", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(20, 0, 20, "njets", "N_{jets}"),
+                      "nleps==0", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(40, 0, 4000, "ht", "H_{T} [GeV]"),
+                      "nleps==0", tt_sams, plot_types).Weight(rpv_wgt);
 
-  pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
-                               "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
-                               "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
-                               "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
-                               "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+  pm.Push<Hist1D>(Axis(6, 0, 6, "nbm", "N_{b}"),
+                      "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(25, 0, 2500, "mj", "M_{J} [GeV]"),
+                      "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(20, 0, 20, "njets", "N_{jets}"),
+                      "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(40, 0, 4000, "ht", "H_{T} [GeV]"),
+                      "nleps==0&&ht>1500&&njets>=4&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
 
-  pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
-                               "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
-                               "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
-                               "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
-                               "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+  pm.Push<Hist1D>(Axis(6, 0, 6, "nbm", "N_{b}"),
+                      "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(25, 0, 2500, "mj", "M_{J} [GeV]"),
+                      "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(20, 0, 20, "njets", "N_{jets}"),
+                      "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(40, 0, 4000, "ht", "H_{T} [GeV]"),
+                      "nleps==0&&ht>1500&&njets>=8&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
 
   // 1-lepton selectio
-  pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
-                               "nleps==1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
-                               "nleps==1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
-                               "nleps==1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
-                               "nleps==1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+  pm.Push<Hist1D>(Axis(6, 0, 6, "nbm", "N_{b}"),
+                      "nleps==1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(25, 0, 2500, "mj", "M_{J} [GeV]"),
+                      "nleps==1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(20, 0, 20, "njets", "N_{jets}"),
+                      "nleps==1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(40, 0, 4000, "ht", "H_{T} [GeV]"),
+                      "nleps==1", tt_sams, plot_types).Weight(rpv_wgt);
 
-  pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
-                               "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
-                               "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
-                               "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
-                               "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+  pm.Push<Hist1D>(Axis(6, 0, 6, "nbm", "N_{b}"),
+                      "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(25, 0, 2500, "mj", "M_{J} [GeV]"),
+                      "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(20, 0, 20, "njets", "N_{jets}"),
+                      "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(40, 0, 4000, "ht", "H_{T} [GeV]"),
+                      "nleps==1&&ht>1200&&njets>=4&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
 
-  pm.Push<HistoStack>(HistoDef(6, 0, 6, "nbm", "N_{b}",
-                               "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(25, 0, 2500, "mj", "M_{J} [GeV]",
-                               "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(20, 0, 20, "njets", "N_{jets}",
-                               "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
-  pm.Push<HistoStack>(HistoDef(40, 0, 4000, "ht", "H_{T} [GeV]",
-                               "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1","weight*w_pu_rpv/eff_trig", {}), tt_sams, plot_types);
+  pm.Push<Hist1D>(Axis(6, 0, 6, "nbm", "N_{b}"),
+                      "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(25, 0, 2500, "mj", "M_{J} [GeV]"),
+                      "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(20, 0, 20, "njets", "N_{jets}"),
+                      "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
+  pm.Push<Hist1D>(Axis(40, 0, 4000, "ht", "H_{T} [GeV]"),
+                      "nleps==1&&ht>1200&&njets>=8&&mj>500&&nbm>=1", tt_sams, plot_types).Weight(rpv_wgt);
 
   pm.MakePlots(lumi);
 }

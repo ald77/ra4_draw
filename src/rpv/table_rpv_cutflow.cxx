@@ -16,7 +16,6 @@
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
 #include "core/table.hpp"
-#include "core/histo_stack.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;

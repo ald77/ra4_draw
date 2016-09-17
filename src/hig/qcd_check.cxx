@@ -19,7 +19,7 @@
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
 #include "core/table.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 #include "core/event_scan.hpp"
 #include "core/utilities.hpp"
 
@@ -80,8 +80,8 @@ int main(int argc, char *argv[]){
   TString DeltaM("hig_dm < 40");
   TString LDP("!low_dphi");
 
-  pm.Push<HistoStack>(HistoDef(56,0,2800,"ht_isr_me", "H_{T}^{ISR} [GeV]", metskim, "weight", {9999.}),
-			full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(56,0,2800,"ht_isr_me", "H_{T}^{ISR} [GeV]"),
+                  metskim, full_trig_skim, all_plot_types);
 
   pm.Push<Table>("QCD_cutflow", vector<TableRow>{
 	  TableRow("$\\text{No b cut}$", "1"),

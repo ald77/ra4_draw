@@ -1,5 +1,5 @@
-#ifndef H_HIST1D
-#define H_HIST1D
+#ifndef H_HIST2D
+#define H_HIST2D
 
 #include "TH2D.h"
 #include "TGraph.h"
@@ -36,8 +36,7 @@ public:
     NamedFunc::VectorType cut_vector_, wgt_vector_, xval_vector_, yval_vector_;
   };
 
-  Hist2D(const Axis &xaxis, const Axis &yaxis,
-         const NamedFunc &cut, const NamedFunc &weight,
+  Hist2D(const Axis &xaxis, const Axis &yaxis, const NamedFunc &cut,
          const std::vector<std::shared_ptr<Process> > &processes,
          const std::vector<PlotOpt> &plot_options = {PlotOpt()});
   Hist2D(Hist2D &&) = default;
@@ -47,11 +46,14 @@ public:
   void Print(double luminosity,
              const std::string &subdir) override;
 
-  std::string Name() const;
-
   std::set<const Process*> GetProcesses() const override;
 
   FigureComponent * GetComponent(const Process *process) override;
+
+  std::string Name() const;
+
+  Hist2D & Weight(const NamedFunc &weight);
+  Hist2D & Tag(const std::string &tag);
 
   Axis xaxis_, yaxis_;
   NamedFunc cut_, weight_;

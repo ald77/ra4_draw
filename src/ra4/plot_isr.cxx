@@ -8,7 +8,7 @@
 #include "core/plot_maker.hpp"
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 #include "core/event_scan.hpp"
 #include "core/utilities.hpp"
 
@@ -233,9 +233,9 @@ int main(){
     if(CodeToPlainText(iweight.Name())=="w_ttisr_alg") iprocs = &procs_alg;
     if(do_tt1l) {//// 1l ttbar closure
       if(CodeToPlainText(iweight.Name())=="w_ttisr_alg")
-        pm.Push<HistoStack>(HistoDef("tt1l", 13, -0.5, 12.5, "njets", "Number of jets", baseline_1l, iweight), procs_1l_alg, plot_types);
+        pm.Push<Hist1D>(Axis(13, -0.5, 12.5, "njets", "Number of jets"), baseline_1l, procs_1l_alg, plot_types).Weight(iweight).Tag("tt1l");
       else
-        pm.Push<HistoStack>(HistoDef("tt1l", 13, -0.5, 12.5, "njets", "Number of jets", baseline_1l, iweight), procs_1l, plot_types);
+        pm.Push<Hist1D>(Axis(13, -0.5, 12.5, "njets", "Number of jets"), baseline_1l, procs_1l, plot_types).Weight(iweight).Tag("tt1l");
     } else {
       addSlices(pm, isr_syspt_slices, isr_syspt, nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline, iweight, *iprocs, plot_types);
       addSlices(pm, nisrjet_slices, nisrjets, isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline, iweight, *iprocs, {log_lumi});
@@ -243,29 +243,29 @@ int main(){
       addSlices(pm, isr_ht_slices, isr_ht, nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline, iweight, *iprocs, {log_lumi});
       addSlices(pm, nisrjet_slices, nisrjets, isr_syspt_bins, isr_ht, "ISR H_{T} [GeV]", baseline, iweight, *iprocs, {log_lumi});
 
-      pm.Push<HistoStack>(HistoDef(isrtype, isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline && "ht>300", iweight), *iprocs, vector<PlotOpt>({log_lumi}));
-      pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[0.], "Leading ISR jet p_{T} [GeV]", baseline && nisrjets>0., iweight), *iprocs, plot_types);
-      pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[1], "2^{nd} ISR jet p_{T} [GeV]", baseline && nisrjets>1, iweight), *iprocs, plot_types);
-      pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[2], "3^{rd} ISR jet p_{T} [GeV]", baseline && nisrjets>2, iweight), *iprocs, plot_types);
-      pm.Push<HistoStack>(HistoDef(isrtype, ptbins, isr_jetspt[3], "4^{th} ISR jet p_{T} [GeV]", baseline && nisrjets>3, iweight), *iprocs, plot_types);
+      pm.Push<Hist1D>(Axis(isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]"), baseline && "ht>300", *iprocs, vector<PlotOpt>{log_lumi}).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(ptbins, isr_jetspt[0.], "Leading ISR jet p_{T} [GeV]"), baseline && nisrjets>0., *iprocs, plot_types).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(ptbins, isr_jetspt[1], "2^{nd} ISR jet p_{T} [GeV]"), baseline && nisrjets>1, *iprocs, plot_types).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(ptbins, isr_jetspt[2], "3^{rd} ISR jet p_{T} [GeV]"), baseline && nisrjets>2, *iprocs, plot_types).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(ptbins, isr_jetspt[3], "4^{th} ISR jet p_{T} [GeV]"), baseline && nisrjets>3, *iprocs, plot_types).Weight(iweight).Tag(isrtype);
 
-      pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[0.], "Leading ISR jet p_{T} [GeV]", baseline && nisrjets20>0., iweight), *iprocs, plot_types);
-      pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[1], "2^{nd} ISR jet p_{T} [GeV]", baseline && nisrjets20>1, iweight), *iprocs, plot_types);
-      pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[2], "3^{rd} ISR jet p_{T} [GeV]", baseline && nisrjets20>2, iweight), *iprocs, plot_types);
-      pm.Push<HistoStack>(HistoDef(isrtype, ptbins_zoom, isr_jetspt20[3], "4^{th} ISR jet p_{T} [GeV]", baseline && nisrjets20>3, iweight), *iprocs, plot_types);
+      pm.Push<Hist1D>(Axis(ptbins_zoom, isr_jetspt20[0.], "Leading ISR jet p_{T} [GeV]"), baseline && nisrjets20>0., *iprocs, plot_types).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(ptbins_zoom, isr_jetspt20[1], "2^{nd} ISR jet p_{T} [GeV]"), baseline && nisrjets20>1, *iprocs, plot_types).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(ptbins_zoom, isr_jetspt20[2], "3^{rd} ISR jet p_{T} [GeV]"), baseline && nisrjets20>2, *iprocs, plot_types).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(ptbins_zoom, isr_jetspt20[3], "4^{th} ISR jet p_{T} [GeV]"), baseline && nisrjets20>3, *iprocs, plot_types).Weight(iweight).Tag(isrtype);
 
-      pm.Push<HistoStack>(HistoDef(isrtype, ptbins, max_reliso_elspt, "Leading electron p_{T} [GeV]", baseline && nreliso_els>0., iweight), *iprocs, plot_types);
-      pm.Push<HistoStack>(HistoDef(isrtype, ptbins, max_reliso_muspt, "Leading muon p_{T} [GeV]", baseline && nreliso_mus>0., iweight), *iprocs, plot_types);
+      pm.Push<Hist1D>(Axis(ptbins, max_reliso_elspt, "Leading electron p_{T} [GeV]"), baseline && nreliso_els>0., *iprocs, plot_types).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(ptbins, max_reliso_muspt, "Leading muon p_{T} [GeV]"), baseline && nreliso_mus>0., *iprocs, plot_types).Weight(iweight).Tag(isrtype);
 
-      pm.Push<HistoStack>(HistoDef(isrtype,20,0.,500., "met", "MET [GeV]", baseline, iweight), *iprocs, plot_types);
-      pm.Push<HistoStack>(HistoDef(isrtype,15,0.,1500., "ht", "H_{T} [GeV]", baseline, iweight), *iprocs, plot_types);
-      pm.Push<HistoStack>(HistoDef(isrtype,15,0.,1500., "mj14", "M_{J} [GeV]", baseline, iweight), *iprocs, plot_types);
-      pm.Push<HistoStack>(HistoDef(isrtype+"_vals",nisrjet_bins_vals, nisrjets, "ISR jet multiplicity", baseline, iweight), *iprocs, plot_vals);
-      pm.Push<HistoStack>(HistoDef(isrtype,nisrjet_bins, nisrjets50, "Number of 50 GeV ISR jets", baseline, iweight), *iprocs, plot_types);
-      pm.Push<HistoStack>(HistoDef(isrtype,nisrjet_bins, nisrjets75, "Number of 75 GeV ISR jets", baseline, iweight), *iprocs, plot_types);
+      pm.Push<Hist1D>(Axis(20,0.,500., "met", "MET [GeV]"), baseline, *iprocs, plot_types).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(15,0.,1500., "ht", "H_{T} [GeV]"), baseline, *iprocs, plot_types).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(15,0.,1500., "mj14", "M_{J} [GeV]"), baseline, *iprocs, plot_types).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(nisrjet_bins_vals, nisrjets, "ISR jet multiplicity"), baseline, *iprocs, plot_vals).Weight(iweight).Tag(isrtype+"_vals");
+      pm.Push<Hist1D>(Axis(nisrjet_bins, nisrjets50, "Number of 50 GeV ISR jets"), baseline, *iprocs, plot_types).Weight(iweight).Tag(isrtype);
+      pm.Push<Hist1D>(Axis(nisrjet_bins, nisrjets75, "Number of 75 GeV ISR jets"), baseline, *iprocs, plot_types).Weight(iweight).Tag(isrtype);
       if(isrtype=="zisr"){
-        pm.Push<HistoStack>(HistoDef(isrtype,nisrjet_bins, nisrjets, "ISR jet multiplicity", baseline && "ht>200", iweight), *iprocs, plot_types);
-        pm.Push<HistoStack>(HistoDef(isrtype,isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]", baseline && "ht>200", iweight), *iprocs, plot_types);
+        pm.Push<Hist1D>(Axis(nisrjet_bins, nisrjets, "ISR jet multiplicity"), baseline && "ht>200", *iprocs, plot_types).Weight(iweight).Tag(isrtype);
+        pm.Push<Hist1D>(Axis(isr_syspt_bins, isr_syspt, "ISR p_{T} [GeV]"), baseline && "ht>200", *iprocs, plot_types).Weight(iweight).Tag(isrtype);
       }
     } // if not wjets_tt1l
   } // Loop over weights
@@ -281,13 +281,13 @@ void addSlices(PlotMaker &pm, const vector<double> slices, NamedFunc svar,
                const vector<PlotOpt> &plot_types, int tag_digits){
 
   //add the inclusive version first
-  pm.Push<HistoStack>(HistoDef(isrtype+"_incl", xbins, xvar, xlabel, baseline, weight), proc, plot_types);
+  pm.Push<Hist1D>(Axis(xbins, xvar, xlabel), baseline, proc, plot_types).Weight(weight).Tag(isrtype+"_incl");
   for(unsigned i(0); i<slices.size(); i++){
     NamedFunc cut = baseline && svar>=slices[i];
     if (i<(slices.size()-1)) cut = cut && svar<slices[i+1];
 
     string tag = CodeToPlainText(isrtype+"_"+svar.Name()+RoundNumber(slices[i],tag_digits).Data());
-    pm.Push<HistoStack>(HistoDef(tag, xbins, xvar, xlabel, cut, weight), proc, plot_types);
+    pm.Push<Hist1D>(Axis(xbins, xvar, xlabel), cut, proc, plot_types).Weight(weight).Tag(tag);
   }
 }
 

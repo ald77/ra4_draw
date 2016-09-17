@@ -6,7 +6,7 @@
 #include "core/plot_maker.hpp"
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 #include "core/event_scan.hpp"
 #include "core/utilities.hpp"
 #include "core/functions.hpp"
@@ -91,73 +91,74 @@ int main(){
       NamedFunc med_met("mm_met"+s+">350&&mm_met"+s+"<=500");
       NamedFunc high_met("mm_met"+s+">500");
 
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   true, "weight", {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   true, "weight", {250., 400.}), procs_nolep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   low_met, "weight", {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   low_met, "weight", {250., 400.}), procs_nolep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   med_met, "weight", {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   med_met, "weight", {250., 400.}), procs_nolep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   high_met, "weight", {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   high_met, "weight", {250., 400.}), procs_nolep, plot_types);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      true, procs_lep, plot_types).Tag(tag);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      true, procs_nolep, plot_types).Tag(tag);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      low_met, procs_lep, plot_types).Tag(tag);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      low_met, procs_nolep, plot_types).Tag(tag);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      med_met, procs_lep, plot_types).Tag(tag);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      med_met, procs_nolep, plot_types).Tag(tag);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      high_met, procs_lep, plot_types).Tag(tag);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      high_met, procs_nolep, plot_types).Tag(tag);
 
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   true, "weight/(eff_trig*w_toppt)", {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   true, "weight/(eff_trig*w_toppt)", {250., 400.}), procs_nolep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   low_met, "weight/(eff_trig*w_toppt)", {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   low_met, "weight/(eff_trig*w_toppt)", {250., 400.}), procs_nolep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   med_met, "weight/(eff_trig*w_toppt)", {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   med_met, "weight/(eff_trig*w_toppt)", {250., 400.}), procs_nolep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   high_met, "weight/(eff_trig*w_toppt)", {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   high_met, "weight/(eff_trig*w_toppt)", {250., 400.}), procs_nolep, plot_types);
+      NamedFunc w_no_toppt("weight/(eff_trig*w_toppt)");
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      true, procs_lep, plot_types).Tag(tag).Weight(w_no_toppt);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      true, procs_nolep, plot_types).Tag(tag).Weight(w_no_toppt);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      low_met, procs_lep, plot_types).Tag(tag).Weight(w_no_toppt);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      low_met, procs_nolep, plot_types).Tag(tag).Weight(w_no_toppt);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      med_met, procs_lep, plot_types).Tag(tag).Weight(w_no_toppt);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      med_met, procs_nolep, plot_types).Tag(tag).Weight(w_no_toppt);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      high_met, procs_lep, plot_types).Tag(tag).Weight(w_no_toppt);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      high_met, procs_nolep, plot_types).Tag(tag).Weight(w_no_toppt);
 
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   true, isr_weight, {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   true, isr_weight, {250., 400.}), procs_nolep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   low_met, isr_weight, {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   low_met, isr_weight, {250., 400.}), procs_nolep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   med_met, isr_weight, {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   med_met, isr_weight, {250., 400.}), procs_nolep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   high_met, isr_weight, {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   high_met, isr_weight, {250., 400.}), procs_nolep, plot_types);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      true, procs_lep, plot_types).Tag(tag).Weight(isr_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      true, procs_nolep, plot_types).Tag(tag).Weight(isr_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      low_met, procs_lep, plot_types).Tag(tag).Weight(isr_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      low_met, procs_nolep, plot_types).Tag(tag).Weight(isr_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      med_met, procs_lep, plot_types).Tag(tag).Weight(isr_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      med_met, procs_nolep, plot_types).Tag(tag).Weight(isr_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      high_met, procs_lep, plot_types).Tag(tag).Weight(isr_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      high_met, procs_nolep, plot_types).Tag(tag).Weight(isr_weight);
 
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   true, full_weight, {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   true, full_weight, {250., 400.}), procs_nolep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   low_met, full_weight, {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   low_met, full_weight, {250., 400.}), procs_nolep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   med_met, full_weight, {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   med_met, full_weight, {250., 400.}), procs_nolep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]",
-				   high_met, full_weight, {250., 400.}), procs_lep, plot_types);
-      pm.Push<HistoStack>(HistoDef(tag, 30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]",
-				   high_met, full_weight, {250., 400.}), procs_nolep, plot_types);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      true, procs_lep, plot_types).Tag(tag).Weight(full_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      true, procs_nolep, plot_types).Tag(tag).Weight(full_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      low_met, procs_lep, plot_types).Tag(tag).Weight(full_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      low_met, procs_nolep, plot_types).Tag(tag).Weight(full_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      med_met, procs_lep, plot_types).Tag(tag).Weight(full_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      med_met, procs_nolep, plot_types).Tag(tag).Weight(full_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_lep"+s, "M_{J} (with lep) [GeV]", {250., 400.}),
+                      high_met, procs_lep, plot_types).Tag(tag).Weight(full_weight);
+      pm.Push<Hist1D>(Axis(30, 0., 1500., "mm_mj14_nolep"+s, "M_{J} (no lep) [GeV]", {250., 400.}),
+                      high_met, procs_nolep, plot_types).Tag(tag).Weight(full_weight);
 
       NamedFunc mc_cut = "mm_mj14_nolep"+s+">250.&&mm_mj14_lep"+s+"<=400&&mm_met"+s+"<=500&&mm_nbm"+s+"<=2&&mm_nleps"+s+"==1&&mm_ht"+s+">500&&mm_met"+s+">200&&mm_njets"+s+">=6&&mm_nbm"+s+">=1";
       auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
@@ -192,10 +193,9 @@ int main(){
 	  if(is_data) return b.mt();
 	  else return b.mm_mt()->at(scenario);
 	});
-      pm.Push<HistoStack>(HistoDef("mm"+to_string(scenario), 30, 0., 1500., mt, "m_{T} [GeV]", true,
-				   "weight", {140.}), procs,
-			  vector<PlotOpt>{log_lumi().Stack(StackType::data_norm),
-			      noinfo().Stack(StackType::data_norm)});
+      pm.Push<Hist1D>(Axis(30, 0., 1500., mt, "m_{T} [GeV]", {140.}), true, procs,
+                      vector<PlotOpt>{log_lumi().Stack(StackType::data_norm),
+                          noinfo().Stack(StackType::data_norm)}).Tag("mm"+to_string(scenario));
     }
   }
   pm.multithreaded_ = false;

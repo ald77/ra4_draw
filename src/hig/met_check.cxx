@@ -19,7 +19,7 @@
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
 #include "core/table.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 #include "core/event_scan.hpp"
 #include "core/utilities.hpp"
 
@@ -92,8 +92,8 @@ int main(int argc, char *argv[]){
   TString DeltaM("hig_dm < 40");
   TString LDP("!low_dphi");
 
-  pm.Push<HistoStack>(HistoDef(40,100,1700,"met", "E_{T}^{miss} [GeV]", metskim, "weight", {150.,250.}),
-			full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(40,100,1700,"met", "E_{T}^{miss} [GeV]", {150., 250.}),
+                  metskim, full_trig_skim, all_plot_types);
 
   pm.Push<Table>("TChiMass_cutflow", vector<TableRow>{
 	  TableRow("$MET > 100$, $\\text{2M b-tags}$, $\\text{4 or 5 jets}$, $0\\ell$", "1"),

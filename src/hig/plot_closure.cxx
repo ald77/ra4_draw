@@ -16,7 +16,7 @@
 #include "core/process.hpp"
 #include "core/plot_maker.hpp"
 #include "core/plot_opt.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -89,19 +89,18 @@ int main(){
   //// Adding plots
   PlotMaker pm;
 
-  string cuts = "nvleps==0&&met>100&&!low_dphi&&hig_drmax<2.2&&ntks==0&&njets>=4&&njets<=5";
-  pm.Push<HistoStack>(HistoDef("tt", 22,0,110,"hig_dm", "#Deltam_{jj} [GeV]", cuts, "weight", {40.}), 
-		      procs_tt, all_plot_types);
-  pm.Push<HistoStack>(HistoDef("tt", 25,0,250,"hig_am", "<m_{jj}> [GeV]", cuts, "weight", {100.,140.}), 
-		      procs_tt, all_plot_types);
-  pm.Push<HistoStack>(HistoDef("bkg", 22,0,110,"hig_dm", "#Deltam_{jj} [GeV]", cuts, "weight", {40.}), 
-  		      procs_bkg, all_plot_types);
-  pm.Push<HistoStack>(HistoDef("bkg", 25,0,250,"hig_am", "<m_{jj}> [GeV]", cuts, "weight", {100.,140.}), 
-  		      procs_bkg, all_plot_types);
+  NamedFunc cuts = "nvleps==0&&met>100&&!low_dphi&&hig_drmax<2.2&&ntks==0&&njets>=4&&njets<=5";
+  pm.Push<Hist1D>(Axis(22,0,110,"hig_dm", "#Deltam_{jj} [GeV]", {40.}),
+                  cuts, procs_tt, all_plot_types).Tag("tt");
+  pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m_{jj}> [GeV]", {100., 140.}),
+                  cuts, procs_tt, all_plot_types).Tag("tt");
+  pm.Push<Hist1D>(Axis(22,0,110,"hig_dm", "#Deltam_{jj} [GeV]", {40.}),
+                  cuts, procs_bkg, all_plot_types).Tag("bkg");
+  pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m_{jj}> [GeV]", {100., 140.}),
+                  cuts, procs_bkg, all_plot_types).Tag("bkg");
 
   pm.min_print_ = true;
   pm.MakePlots(40.);
-
 
   double seconds = (chrono::duration<double>(chrono::high_resolution_clock::now() - begTime)).count();
   TString hhmmss = HoursMinSec(seconds);

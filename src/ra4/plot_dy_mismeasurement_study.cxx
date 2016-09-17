@@ -19,7 +19,7 @@
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
 #include "core/table.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 #include "core/event_scan.hpp"
 
 using namespace std;
@@ -135,53 +135,53 @@ int main(int argc, char *argv[]){
 
   string leps[] = {"&&nels==1&&nmus==1","&&nels==2&&elel_m>60","&&nmus==2&&mumu_m>60"/*,"&&nmus==2&&mumu_m>200","&&nels==2&&elel_m>200","&&nels==1&&nmus==1"*/};
 
-  pm.Push<HistoStack>(HistoDef(50,0,500, "elel_m", "m_{el el} [GeV]", "nels==2&&ht>200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", "weight", {60}), full_trig_skim, norms);
-  pm.Push<HistoStack>(HistoDef(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", "nmus==2&&ht>200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", "weight", {60}), full_trig_skim, norms);
+  pm.Push<Hist1D>(Axis(50,0,500, "elel_m", "m_{el el} [GeV]", {60.}), "nels==2&&ht>200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", full_trig_skim, norms);
+  pm.Push<Hist1D>(Axis(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", {60.}), "nmus==2&&ht>200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", full_trig_skim, norms);
 
   for(unsigned int ilep=0;ilep<1;ilep++){
-    pm.Push<HistoStack>(HistoDef(30,0,600, "leps_pt[0]", "Leading lepton p_{T}","nleps==2&&ht>200&&nbl==0&&njets<=2&&met<500"+leps[ilep], "weight", {120}), full_trig_skim, norms);
-    pm.Push<HistoStack>(HistoDef(20,0,1000, "ht", "H_{T}","nleps==2&&nbl==0&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], "weight", {200}), full_trig_skim, norms);
-    pm.Push<HistoStack>(HistoDef(5,-0.5,4.5, "nbl", "N_{b, loose}","nleps==2&&ht>200&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], "weight", {0.5}), full_trig_skim, norms);
-    pm.Push<HistoStack>(HistoDef(9,-0.5,8.5, "njets", "N_{jets}","nleps==2&&ht>200&&nbl==0&&met<500&&leps_pt[0]>120"+leps[ilep], "weight", {2.5}), full_trig_skim, norms);
+    pm.Push<Hist1D>(Axis(30,0,600, "leps_pt[0]", "Leading lepton p_{T}", {120.}), "nleps==2&&ht>200&&nbl==0&&njets<=2&&met<500"+leps[ilep], full_trig_skim, norms);
+    pm.Push<Hist1D>(Axis(20,0,1000, "ht", "H_{T}", {200.}), "nleps==2&&nbl==0&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], full_trig_skim, norms);
+    pm.Push<Hist1D>(Axis(5,-0.5,4.5, "nbl", "N_{b, loose}", {0.5}), "nleps==2&&ht>200&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], full_trig_skim, norms);
+    pm.Push<Hist1D>(Axis(9,-0.5,8.5, "njets", "N_{jets}", {2.5}), "nleps==2&&ht>200&&nbl==0&&met<500&&leps_pt[0]>120"+leps[ilep], full_trig_skim, norms);
   }
 
-  pm.Push<HistoStack>(HistoDef(50,0,500, "elel_m", "m_{el el} [GeV]", "nels==2&&ht<200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", "weight", {60}), full_trig_skim, norms);
-  pm.Push<HistoStack>(HistoDef(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", "nmus==2&&ht<200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", "weight", {60}), full_trig_skim, norms);
+  pm.Push<Hist1D>(Axis(50,0,500, "elel_m", "m_{el el} [GeV]", {60.}), "nels==2&&ht<200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", full_trig_skim, norms);
+  pm.Push<Hist1D>(Axis(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", {60.}), "nmus==2&&ht<200&&njets<=2&&nbl==0&&met<500&&leps_pt[0]>120", full_trig_skim, norms);
 
   for(unsigned int ilep=0;ilep<2;ilep++){
-    pm.Push<HistoStack>(HistoDef(30,0,600, "leps_pt[0]", "Leading lepton p_{T}","nleps==2&&ht<200&&nbl==0&&njets<=2&&met<500"+leps[ilep], "weight", {120}), full_trig_skim, norms);
-    pm.Push<HistoStack>(HistoDef(20,0,1000, "ht", "H_{T}","nleps==2&&nbl==0&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], "weight", {200}), full_trig_skim, norms);
-    pm.Push<HistoStack>(HistoDef(5,-0.5,4.5, "nbl", "N_{b, loose}","nleps==2&&ht<200&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], "weight", {0.5}), full_trig_skim, norms);
-    pm.Push<HistoStack>(HistoDef(9,-0.5,8.5, "njets", "N_{jets}","nleps==2&&ht<200&&nbl==0&&met<500&&leps_pt[0]>120"+leps[ilep], "weight", {2.5}), full_trig_skim, norms);
+    pm.Push<Hist1D>(Axis(30,0,600, "leps_pt[0]", "Leading lepton p_{T}", {120.}), "nleps==2&&ht<200&&nbl==0&&njets<=2&&met<500"+leps[ilep], full_trig_skim, norms);
+    pm.Push<Hist1D>(Axis(20,0,1000, "ht", "H_{T}",{200.}),"nleps==2&&nbl==0&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], full_trig_skim, norms);
+    pm.Push<Hist1D>(Axis(5,-0.5,4.5, "nbl", "N_{b, loose}",{0.5}),"nleps==2&&ht<200&&njets<=2&&met<500&&leps_pt[0]>120"+leps[ilep], full_trig_skim, norms);
+    pm.Push<Hist1D>(Axis(9,-0.5,8.5, "njets", "N_{jets}",{2.5}),"nleps==2&&ht<200&&nbl==0&&met<500&&leps_pt[0]>120"+leps[ilep], full_trig_skim, norms);
   }
 
   for(unsigned int isel=0;isel<2;isel++){
     for(unsigned int ilep=0;ilep<2;ilep++){
-      pm.Push<HistoStack>(HistoDef(8,0,800, "mj14", "M_{J} [GeV]", selections[isel]+leps[ilep], "weight", {250,400}), full_trig_skim, norms);
-      pm.Push<HistoStack>(HistoDef(10,0,500, "met", "MET [GeV]", selections[isel]+leps[ilep], "weight", {350}), full_trig_skim, norms);
-      pm.Push<HistoStack>(HistoDef(20,0,1000, "leps_pt[0]", "Leading lepton p_{T} [GeV]", selections[isel]+leps[ilep], "weight", {20}), full_trig_skim, norms);
-      pm.Push<HistoStack>(HistoDef(25,0,500, "mt", "m_{T} [GeV]", selections[isel]+leps[ilep], "weight", {140}), full_trig_skim, norms);
-      pm.Push<HistoStack>(HistoDef(20, 0., pi, min_dphi_lmet, "Min. #Delta#phi(l,MET)", selections[isel]+leps[ilep]),  full_trig_skim, norms);
-      pm.Push<HistoStack>(HistoDef(20, 0., pi, max_dphi_lmet, "Max. #Delta#phi(l,MET)", selections[isel]+leps[ilep]),  full_trig_skim, norms);
-      //pm.Push<HistoStack>(HistoDef(20,0,40, "npv", "N_{PV}", selections[isel]+leps[ilep], "weight", {-1}), full_trig_skim, norms);
-      if(ilep==1) pm.Push<HistoStack>(HistoDef(20,0,1000, "elel_m", "m_{el el} [GeV]", selections[isel]+leps[ilep], "weight", {90}), full_trig_skim, norms);
-      if(ilep==0) pm.Push<HistoStack>(HistoDef(20,0,1000, "elmu_m", "m_{el mu} [GeV]", selections[isel]+leps[ilep], "weight", {90}), full_trig_skim, norms);
-      if(ilep==2) pm.Push<HistoStack>(HistoDef(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", selections[isel]+leps[ilep], "weight", {90}), full_trig_skim, norms);
+      pm.Push<Hist1D>(Axis(8,0,800, "mj14", "M_{J} [GeV]", {250.,400.}), selections[isel]+leps[ilep], full_trig_skim, norms);
+      pm.Push<Hist1D>(Axis(10,0,500, "met", "MET [GeV]", {350.}), selections[isel]+leps[ilep], full_trig_skim, norms);
+      pm.Push<Hist1D>(Axis(20,0,1000, "leps_pt[0]", "Leading lepton p_{T} [GeV]", {20.}), selections[isel]+leps[ilep], full_trig_skim, norms);
+      pm.Push<Hist1D>(Axis(25,0,500, "mt", "m_{T} [GeV]", {140.}), selections[isel]+leps[ilep], full_trig_skim, norms);
+      pm.Push<Hist1D>(Axis(20, 0., pi, min_dphi_lmet, "Min. #Delta#phi(l,MET)"), selections[isel]+leps[ilep], full_trig_skim, norms);
+      pm.Push<Hist1D>(Axis(20, 0., pi, max_dphi_lmet, "Max. #Delta#phi(l,MET)"), selections[isel]+leps[ilep], full_trig_skim, norms);
+      //pm.Push<Hist1D>(Axis(20,0,40, "npv", "N_{PV}", selections[isel]+leps[ilep]), full_trig_skim, norms);
+      if(ilep==1) pm.Push<Hist1D>(Axis(20,0,1000, "elel_m", "m_{el el} [GeV]", {90.}), selections[isel]+leps[ilep], full_trig_skim, norms);
+      if(ilep==0) pm.Push<Hist1D>(Axis(20,0,1000, "elmu_m", "m_{el mu} [GeV]", {90.}), selections[isel]+leps[ilep], full_trig_skim, norms);
+      if(ilep==2) pm.Push<Hist1D>(Axis(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", {90.}), selections[isel]+leps[ilep], full_trig_skim, norms);
     }
   }
 
   PlotMaker pm_data;
   for(unsigned int isel=0;isel<2;isel++){
-    pm_data.Push<HistoStack>(HistoDef(10,0,500, "mj14", "MJ 1.4 with leptons [GeV]", selections[isel], "weight", {350}), ee_vs_mumu, norms);
-    pm_data.Push<HistoStack>(HistoDef(10,0,500, "met", "MET [GeV]", selections[isel], "weight", {350}), ee_vs_mumu, norms);
-    pm_data.Push<HistoStack>(HistoDef(20,0,1000, "leps_pt[0]", "Leading lepton p_{T} [GeV]", selections[isel], "weight", {20}), ee_vs_mumu, norms);
-    pm_data.Push<HistoStack>(HistoDef(25,0,500, "mt", "m_{T} [GeV]", selections[isel], "weight", {140}), ee_vs_mumu, norms);
-    pm_data.Push<HistoStack>(HistoDef(20, 0., pi, min_dphi_lmet, "Min. #Delta#phi(l,MET)", selections[isel]), ee_vs_mumu, norms);
-    pm_data.Push<HistoStack>(HistoDef(20, 0., pi, max_dphi_lmet, "Max. #Delta#phi(l,MET)", selections[isel]), ee_vs_mumu, norms);
+    pm_data.Push<Hist1D>(Axis(10,0,500, "mj14", "MJ 1.4 with leptons [GeV]", {350.}), selections[isel], ee_vs_mumu, norms);
+    pm_data.Push<Hist1D>(Axis(10,0,500, "met", "MET [GeV]", {350.}), selections[isel], ee_vs_mumu, norms);
+    pm_data.Push<Hist1D>(Axis(20,0,1000, "leps_pt[0]", "Leading lepton p_{T} [GeV]", {20.}), selections[isel], ee_vs_mumu, norms);
+    pm_data.Push<Hist1D>(Axis(25,0,500, "mt", "m_{T} [GeV]", {140.}), selections[isel], ee_vs_mumu, norms);
+    pm_data.Push<Hist1D>(Axis(20, 0., pi, min_dphi_lmet, "Min. #Delta#phi(l,MET)"), selections[isel], ee_vs_mumu, norms);
+    pm_data.Push<Hist1D>(Axis(20, 0., pi, max_dphi_lmet, "Max. #Delta#phi(l,MET)"), selections[isel], ee_vs_mumu, norms);
     // if(ilep==0)
-    pm_data.Push<HistoStack>(HistoDef(20,0,1000, "elel_m+mumu_m+999", "m_{lep lep} [GeV]", selections[isel], "weight", {90}), ee_vs_mumu, norms);
-    // if(ilep==1) pm.Push<HistoStack>(HistoDef(20,0,1000, "elmu_m", "m_{el mu} [GeV]", selections[isel]+leps[ilep], "weight", {90}), ee_vs_mumu, shapes);
-    // if(ilep==2) pm.Push<HistoStack>(HistoDef(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", selections[isel]+leps[ilep], "weight", {90}), ee_vs_mumu, shapes);
+    pm_data.Push<Hist1D>(Axis(20,0,1000, "elel_m+mumu_m+999", "m_{lep lep} [GeV]", {90.}), selections[isel], ee_vs_mumu, norms);
+    // if(ilep==1) pm.Push<Hist1D>(Axis(20,0,1000, "elmu_m", "m_{el mu} [GeV]", {90.}), selections[isel]+leps[ilep], ee_vs_mumu, shapes);
+    // if(ilep==2) pm.Push<Hist1D>(Axis(20,0,1000, "mumu_m", "m_{mu mu} [GeV]", {90.}), selections[isel]+leps[ilep], ee_vs_mumu, shapes);
 
   }
 

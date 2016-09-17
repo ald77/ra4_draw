@@ -7,7 +7,7 @@
 #include "core/utilities.hpp"
 #include "core/process.hpp"
 #include "core/plot_maker.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 #include "core/palette.hpp"
 #include "core/functions.hpp"
 
@@ -67,19 +67,19 @@ int main(){
   vector<shared_ptr<Process> > procs = {data, zjets, tt1l, tt2l, ttv, other};
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
   log_lumi.Title(TitleType::info)
-    .Bottom(BottomType::ratio)
-    .YAxis(YAxisType::log)
-    .Stack(StackType::data_norm);
+                                      .Bottom(BottomType::ratio)
+                                      .YAxis(YAxisType::log)
+                                      .Stack(StackType::data_norm);
   vector<PlotOpt> plot_types = {log_lumi};
 
   PlotMaker pm;
-  pm.Push<HistoStack>(HistoDef("orig", 24, 0., 600, "mj14", "M_{J} (with lep) [GeV]",
-                               true, "weight", {250., 400.}), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("orig", 24, 0., 600, "mj14", "M_{J} (with lep) [GeV]",
-                               true, "weight/(eff_trig*w_toppt)", {250., 400.}), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("orig", 24, 0., 600, "mj14", "M_{J} (with lep) [GeV]",
-                               true, isr_weight, {250., 400.}), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("orig", 24, 0., 600, "mj14", "M_{J} (with lep) [GeV]",
-                               true, full_weight, {250., 400.}), procs, plot_types);
+  pm.Push<Hist1D>(Axis(24, 0., 600, "mj14", "M_{J} (with lep) [GeV]", {250., 400.}),
+                  true, procs, plot_types).Tag("orig");
+  pm.Push<Hist1D>(Axis(24, 0., 600, "mj14", "M_{J} (with lep) [GeV]", {250., 400.}),
+                  true, procs, plot_types).Tag("orig").Weight("weight/eff_trig*w_toppt");
+  pm.Push<Hist1D>(Axis(24, 0., 600, "mj14", "M_{J} (with lep) [GeV]", {250., 400.}),
+                  true, procs, plot_types).Tag("orig").Weight(isr_weight);
+  pm.Push<Hist1D>(Axis(24, 0., 600, "mj14", "M_{J} (with lep) [GeV]", {250., 400.}),
+                  true, procs, plot_types).Tag("orig").Weight(full_weight);
   pm.MakePlots(2.6, "reweight");
 }

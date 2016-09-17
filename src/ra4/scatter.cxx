@@ -95,10 +95,10 @@ int main(int argc, char *argv[]){
       NamedFunc cut = baseline && met_bin && nbm_bin;
       pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", {250., 400.}),
                       Axis(25, 0., 700., "mt", "m_{T} [GeV]", {140.}),
-                      cut, weight, all_procs, bkg_hist);
+                      cut, all_procs, bkg_hist);
       pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", {250., 400.}),
                       Axis(25, 0., 700., "mt", "m_{T} [GeV]", {140.}),
-                      cut, weight, tt_sig, bkg_pts);
+                      cut, tt_sig, bkg_pts);
     }
   }
 

@@ -93,15 +93,14 @@ void Hist2D::SingleHist2D::RecordEvent(const Baby &baby){
   }
 }
 
-Hist2D::Hist2D(const Axis &xaxis, const Axis &yaxis,
-               const NamedFunc &cut, const NamedFunc &weight,
+Hist2D::Hist2D(const Axis &xaxis, const Axis &yaxis, const NamedFunc &cut,
                const std::vector<std::shared_ptr<Process> > &processes,
                const std::vector<PlotOpt> &plot_options):
   Figure(),
   xaxis_(xaxis),
   yaxis_(yaxis),
   cut_(cut),
-  weight_(weight),
+  weight_("weight"),
   tag_(""),
   plot_options_(plot_options),
   backgrounds_(),
@@ -356,6 +355,16 @@ string Hist2D::Name() const{
   }else{
     return CodeToPlainText(tag_+"__"+yaxis_.var_.Name()+"__"+xaxis_.var_.Name()+cut+weight);
   }
+}
+
+Hist2D & Hist2D::Weight(const NamedFunc &weight){
+  weight_ = weight;
+  return *this;
+}
+
+Hist2D & Hist2D::Tag(const std::string &tag){
+  tag_ = tag;
+  return *this;
 }
 
 void Hist2D::AddEntry(TLegend &l, const SingleHist2D &h, const TGraph &g) const{

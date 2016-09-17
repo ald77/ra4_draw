@@ -16,7 +16,7 @@
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
 #include "core/table.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 #include "core/utilities.hpp"
 
 using namespace std;
@@ -95,31 +95,31 @@ int main(int argc, char *argv[]){
   int nbins(static_cast<int>((maxx-minx)/10));
 
   minx = 0; maxx = 800; nbins = static_cast<int>((maxx-minx)/25);
-  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "isr_tru_pt", "True ISR p_{T} [GeV]",
-                               "(ntrutaush+ntrutausl)==0", "weight"), proc_isrpt, plot_types);
+  pm.Push<Hist1D>(Axis(nbins, minx, maxx, "isr_tru_pt", "True ISR p_{T} [GeV]"),
+                  "(ntrutaush+ntrutausl)==0", proc_isrpt, plot_types);
 
   minx = -0.5; maxx = 7.5; nbins = static_cast<int>((maxx-minx)/1);
-  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "nisr", "Number of ISR jets",
-                               "1==1", "1"), proc_isrpt, plot_types);
+  pm.Push<Hist1D>(Axis(nbins, minx, maxx, "nisr", "Number of ISR jets"),
+                  true, proc_isrpt, plot_types).Weight(1.);
 
   minx = -0.5; maxx = 7.5; nbins = static_cast<int>((maxx-minx)/1);
-  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "nisr", "Number of ISR jets",
-                               "(ntrutaush+ntrutausl)==0", "1"), proc_isrpt_nolep, plot_types);
+  pm.Push<Hist1D>(Axis(nbins, minx, maxx, "nisr", "Number of ISR jets"),
+                  "(ntrutaush+ntrutausl)==0", proc_isrpt_nolep, plot_types).Weight(1.);
 
   minx = -0.5; maxx = 7.5; nbins = static_cast<int>((maxx-minx)/1);
-  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "nisr", "Number of ISR jets",
-                               "ntruleps==0", "1"), proc_isrpt_nolep, plot_types);
+  pm.Push<Hist1D>(Axis(nbins, minx, maxx, "nisr", "Number of ISR jets"),
+                  "ntruleps==0", proc_isrpt_nolep, plot_types).Weight(1.);
 
   minx = -2.5; maxx =2.5; nbins = static_cast<int>((maxx-minx)/1);
-  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "nisr-(njets-2)", "true - reco ISR multiplicity",
-                               "nbm==2&&nleps==2", "1"), tt_procs, plot_types);
+  pm.Push<Hist1D>(Axis(nbins, minx, maxx, "nisr-(njets-2)", "true - reco ISR multiplicity"),
+                  "nbm==2&&nleps==2", tt_procs, plot_types).Weight(1.);
   minx = -2; maxx = 2; nbins = static_cast<int>((maxx-minx)/0.1);
-  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "(jetsys_nob_pt-isr_tru_pt)/isr_tru_pt", "(Reco-True)/True ISR p_{T} [GeV]",
-                               "nbm>=2", "weight"), tt_procs, plot_types);
+  pm.Push<Hist1D>(Axis(nbins, minx, maxx, "(jetsys_nob_pt-isr_tru_pt)/isr_tru_pt", "(Reco-True)/True ISR p_{T} [GeV]"),
+                  "nbm>=2", tt_procs, plot_types);
 
   minx = -300; maxx = 200; nbins = static_cast<int>((maxx-minx)/10);
-  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "jetsys_nob_pt-isr_tru_pt", "Reco-True ISR p_{T} [GeV]",
-                               "nbm>=2", "weight"), tt_procs, plot_types);
+  pm.Push<Hist1D>(Axis(nbins, minx, maxx, "jetsys_nob_pt-isr_tru_pt", "Reco-True ISR p_{T} [GeV]"),
+                  "nbm>=2", tt_procs, plot_types);
 
   if(single_thread || verbose) pm.multithreaded_ = false;
   pm.MakePlots(lumi);

@@ -12,7 +12,7 @@
 #include "core/plot_maker.hpp"
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -58,12 +58,10 @@ int main(){
                                     log_lumi_info, lin_lumi_info, log_shapes_info, lin_shapes_info};
 
   PlotMaker pm;
-  pm.Push<HistoStack>(HistoDef(30, 0., 1500., "mj", "M_{J}^{R=1.2} [GeV]",
-                               "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {250., 400.}),
-                      full_trig_skim, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(30, 0., 1500., "mj14", "M_{J}^{R=1.4} [GeV]",
-                               "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", "weight", {250., 400.}),
-                      full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(30, 0., 1500., "mj", "M_{J}^{R=1.2} [GeV]", {250., 400.}),
+                  "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(30, 0., 1500., "mj14", "M_{J}^{R=1.4} [GeV]", {250., 400.}),
+                  "nleps==1&&ht>500&&met>200&&njets>=6&&nbm>=1", full_trig_skim, all_plot_types);
 
   pm.MakePlots(lumi);
 }

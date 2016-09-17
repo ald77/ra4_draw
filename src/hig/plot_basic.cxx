@@ -19,7 +19,7 @@
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
 #include "core/table.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 #include "core/event_scan.hpp"
 #include "core/utilities.hpp"
 
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]){
     {trig_skim_mc+"*_TTJets*Lept*.root", trig_skim_mc+"*_TTJets_HT*.root"}, "stitch");
   auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
     {trig_skim_mc+"*_WJetsToLNu*.root"});
-//  auto znunu = Process::MakeShared<Baby_full>("Z#rightarrow#nu#nu", Process::Type::background, colors("znunu"),
+  //  auto znunu = Process::MakeShared<Baby_full>("Z#rightarrow#nu#nu", Process::Type::background, colors("znunu"),
   //  {trig_skim_mc+"*ZJetsToNuNu_HT*.root"}); 
   auto wt = Process::MakeShared<Baby_full>("W+top", Process::Type::background, kRed+3,
     {trig_skim_mc+"*ST_tW*.root"});
@@ -81,63 +81,62 @@ int main(int argc, char *argv[]){
 
   PlotMaker pm;
 
-  vector<TString> nbcuts;
+  vector<NamedFunc> nbcuts;
   nbcuts.push_back(" nbt >= 2 && nbl <= 3");
   nbcuts.push_back(" nbt >= 2 && nbl >= 4");
-  TString metskim("njets>=4&&njets<=5&&met>100&&nvleps==0");
-  TString trkskim("njets>=4&&njets<=5&&met>250&&nvleps==0");
-  TString skim("njets>=4&&njets<=5&&met>250&&nvleps==0&&ntks==0");
-  TString A("&&");
-  TString DeltaR("hig_drmax < 2.2");
-  TString AverageM("hig_am > 100 && hig_am < 140");
-  TString DeltaM("hig_dm < 40");
-  TString LDP("!low_dphi");
+  NamedFunc metskim("njets>=4&&njets<=5&&met>100&&nvleps==0");
+  NamedFunc trkskim("njets>=4&&njets<=5&&met>250&&nvleps==0");
+  NamedFunc skim("njets>=4&&njets<=5&&met>250&&nvleps==0&&ntks==0");
+  NamedFunc DeltaR("hig_drmax < 2.2");
+  NamedFunc AverageM("hig_am > 100 && hig_am < 140");
+  NamedFunc DeltaM("hig_dm < 40");
+  NamedFunc LDP("!low_dphi");
 
-  pm.Push<HistoStack>(HistoDef(7,-0.5,6.5,"nbl", "N_{b-jet}^{L}", skim+A+DeltaR+A+AverageM+A+DeltaM+A+LDP, "weight", {100.}),
-                        full_trig_skim, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(7,-0.5,6.5,"nbm", "N_{b-jet}^{M}", skim+A+DeltaR+A+AverageM+A+DeltaM+A+LDP, "weight", {100.}),
-                        full_trig_skim, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(7,-0.5,6.5,"nbt", "N_{b-jet}^{T}", skim+A+DeltaR+A+AverageM+A+DeltaM+A+LDP, "weight", {100.}),
-                        full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(7,-0.5,6.5,"nbl", "N_{b-jet}^{L}", {100.}),
+                  skim&&DeltaR&&AverageM&&DeltaM&&LDP, full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(7,-0.5,6.5,"nbm", "N_{b-jet}^{M}", {100.}),
+                  skim&&DeltaR&&AverageM&&DeltaM&&LDP, full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(7,-0.5,6.5,"nbt", "N_{b-jet}^{T}", {100.}),
+                  skim&&DeltaR&&AverageM&&DeltaM&&LDP, full_trig_skim, all_plot_types);
 
   for(auto inb: nbcuts) {
-	pm.Push<HistoStack>(HistoDef(20,100,600,"met", "E_{T}^{miss} [GeV]", inb+A+metskim+A+DeltaR+A+AverageM+A+DeltaM+A+LDP, "weight", {150.,250.}),
-			full_trig_skim, all_plot_types);
-	pm.Push<HistoStack>(HistoDef(32,0,160,"hig_dm", "#Deltam [GeV]", inb+A+skim+A+DeltaR+A+AverageM+A+LDP, "weight", {40.}), 
-                        full_trig_skim, all_plot_types);
-        pm.Push<HistoStack>(HistoDef(25,0,250,"hig_am", "<m> [GeV]", inb+A+skim+A+DeltaR+A+DeltaM+A+LDP, "weight", {100.,140.}), 
-                        full_trig_skim, all_plot_types);
-        pm.Push<HistoStack>(HistoDef(20,0,4,"hig_drmax", "#DeltaR_{max}", inb+A+skim+A+AverageM+A+DeltaM+A+LDP, "weight", {2.2}), 
-                        full_trig_skim, all_plot_types);
-	pm.Push<HistoStack>(HistoDef(28,0,1400,"ht", "H_{T} [GeV]", inb+A+skim+A+DeltaR+A+AverageM+A+DeltaM+A+LDP, "weight", {9999.}),
-                        full_trig_skim, all_plot_types);
-        pm.Push<HistoStack>(HistoDef(5,2.5,7.5,"njets", "N_{jet}", inb+A+skim+A+DeltaR+A+AverageM+A+DeltaM+A+LDP, "weight", {3.5,5.5}),
-                        full_trig_skim, all_plot_types);
-        pm.Push<HistoStack>(HistoDef(5,-.5,4.5,"ntks", "N_{track}", inb+A+trkskim+A+DeltaR+A+AverageM+A+DeltaM+A+LDP, "weight", {.5}),
-                        full_trig_skim, all_plot_types);
-        pm.Push<HistoStack>(HistoDef(32,0,3.2,"dphi2", "#Delta#phi_{2}", inb+A+skim+A+DeltaR+A+AverageM+A+DeltaM, "weight", {.5}),
-                        full_trig_skim, all_plot_types);
-        pm.Push<HistoStack>(HistoDef(32,0,3.2,"dphi3", "#Delta#phi_{3}", inb+A+skim+A+DeltaR+A+AverageM+A+DeltaM, "weight", {.3}),
-                        full_trig_skim, all_plot_types);
-        pm.Push<HistoStack>(HistoDef(32,0,3.2,"dphi4", "#Delta#phi_{4}", inb+A+skim+A+DeltaR+A+AverageM+A+DeltaM, "weight", {.3}),
-                        full_trig_skim, all_plot_types);
-	pm.Push<HistoStack>(HistoDef(30,0,600,"jets_pt[0]", "Jet 1 p_{T} [GeV]", inb+A+skim+A+DeltaR+A+AverageM+A+DeltaM+A+LDP, "weight", {50.}),
-                        full_trig_skim, all_plot_types);
-        pm.Push<HistoStack>(HistoDef(35,0,350,"jets_pt[1]", "Jet 2 p_{T} [GeV]", inb+A+skim+A+DeltaR+A+AverageM+A+DeltaM+A+LDP, "weight", {50.}),
-                        full_trig_skim, all_plot_types);
-        pm.Push<HistoStack>(HistoDef(25,0,250,"jets_pt[2]", "Jet 3 p_{T} [GeV]", inb+A+skim+A+DeltaR+A+AverageM+A+DeltaM+A+LDP, "weight", {900.}),
-                        full_trig_skim, all_plot_types);
-        pm.Push<HistoStack>(HistoDef(20,0,200,"jets_pt[3]", "Jet 4 p_{T} [GeV]", inb+A+skim+A+DeltaR+A+AverageM+A+DeltaM+A+LDP, "weight", {900.}),
-                        full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(20,100,600,"met", "E_{T}^{miss} [GeV]", {150., 250.}),
+                    inb&&metskim&&DeltaR&&AverageM&&DeltaM&&LDP, full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(32,0,160,"hig_dm", "#Deltam [GeV]", {40.}),
+                    inb&&skim&&DeltaR&&AverageM&&LDP, full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m> [GeV]", {100., 140.}),
+                    inb&&skim&&DeltaR&&DeltaM&&LDP, full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(20,0,4,"hig_drmax", "#DeltaR_{max}", {2.2}),
+                    inb&&skim&&AverageM&&DeltaM&&LDP, full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(28,0,1400,"ht", "H_{T} [GeV]"),
+                    inb&&skim&&DeltaR&&AverageM&&DeltaM&&LDP, full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(5,2.5,7.5,"njets", "N_{jet}", {3.5, 5.5}),
+                    inb&&skim&&DeltaR&&AverageM&&DeltaM&&LDP, full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(5,-.5,4.5,"ntks", "N_{track}", {0.5}),
+                    inb&&trkskim&&DeltaR&&AverageM&&DeltaM&&LDP, full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(32,0,3.2,"dphi2", "#Delta#phi_{2}", {0.5}),
+                    inb&&skim&&DeltaR&&AverageM&&DeltaM, full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(32,0,3.2,"dphi3", "#Delta#phi_{3}", {0.3}),
+                    inb&&skim&&DeltaR&&AverageM&&DeltaM, full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(32,0,3.2,"dphi4", "#Delta#phi_{4}", {0.3}),
+                    inb&&skim&&DeltaR&&AverageM&&DeltaM, full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(30,0,600,"jets_pt[0]", "Jet 1 p_{T} [GeV]", {50.}),
+                    inb&&skim&&DeltaR&&AverageM&&DeltaM&&LDP, full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(35,0,350,"jets_pt[1]", "Jet 2 p_{T} [GeV]", {50.}),
+                    inb&&skim&&DeltaR&&AverageM&&DeltaM&&LDP, full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(25,0,250,"jets_pt[2]", "Jet 3 p_{T} [GeV]"),
+                    inb&&skim&&DeltaR&&AverageM&&DeltaM&&LDP, full_trig_skim, all_plot_types);
+    pm.Push<Hist1D>(Axis(20,0,200,"jets_pt[3]", "Jet 4 p_{T} [GeV]"),
+                    inb&&skim&&DeltaR&&AverageM&&DeltaM&&LDP, full_trig_skim, all_plot_types);
   }
 
   pm.Push<Table>("cutflow", vector<TableRow>{
-	  TableRow("$MET > 100$, $\\text{2M b-tags}$, $\\text{4 or 5 jets}$, $0\\ell$", "1"),
-	  TableRow("$\\Delta\\phi_{\\text{min}}$", LDP),
-	  TableRow("$\\Delta m < 40$", DeltaM+A+LDP,1,0),
-	  TableRow("$\\left< m \\right> \\in (100,140)$", AverageM+A+LDP),
-	  TableRow("$\\Delta R_{\\text{max}} < 2.2$", DeltaR+A+LDP)
-	  },full_trig_skim,0);
+      TableRow("$MET > 100$, $\\text{2M b-tags}$, $\\text{4 or 5 jets}$, $0\\ell$", "1"),
+        TableRow("$\\Delta\\phi_{\\text{min}}$", LDP),
+        TableRow("$\\Delta m < 40$", DeltaM&&LDP,1,0),
+        TableRow("$\\left< m \\right> \\in (100,140)$", AverageM&&LDP),
+        TableRow("$\\Delta R_{\\text{max}} < 2.2$", DeltaR&&LDP)
+        },full_trig_skim,0);
 
   if(single_thread) pm.multithreaded_ = false;
   pm.min_print_ = true;

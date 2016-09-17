@@ -12,7 +12,7 @@
 #include "core/plot_maker.hpp"
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -123,30 +123,30 @@ int main(){
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info);
   vector<PlotOpt> all_plot_types = {log_lumi_info, lin_lumi_info};
 
-  string lowmtcut = "ht>500&&met>200&&mt<140";
-  string lowmjcut = "ht>500&&met>200&&mj14<400";
+  NamedFunc lowmtcut = "ht>500&&met>200&&mt<140";
+  NamedFunc lowmjcut = "ht>500&&met>200&&mj14<400";
   PlotMaker pm;
 
   for(int ilep=0; ilep<3; ilep++){
-    string lepcut;
+    NamedFunc lepcut(true);
     if(ilep==0)  lepcut="nels==1&&nmus==0";
     if(ilep==1)  lepcut="nels==0&&nmus==1";
     if(ilep==2)  lepcut="nleps==1";
 
     for(int inveto=0; inveto<2; inveto++){
-      string nvetocut;
+      NamedFunc nvetocut(true);
       if(inveto==0)  nvetocut="nveto==0";
       if(inveto==1)  nvetocut="1";
       if(inveto==1)  continue;
 
       for(int injets=0; injets<2; injets++){
-        string njetscut;
+        NamedFunc njetscut(true);
         if(injets==0)  njetscut="njets>=5";
         if(injets==1)  njetscut="njets>=6";
         if(injets==0)  continue;
 
         for(int inb=0; inb<2; inb++){
-          string nbcut;
+          NamedFunc nbcut(true);
           if(inb==0)  nbcut="nbm>=1";
           if(inb==1)  nbcut="nbm>=2";
           if(inb==1)  continue;
@@ -154,135 +154,134 @@ int main(){
           //
           // event-level variables except ones related to fatjet
           //
-          pm.Push<HistoStack>(HistoDef(15, 500, 2000., "ht", "H_{T} [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {500.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, 200, 700., "met", "E_{T}^{miss} [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {200., 350., 500.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, 200, 700., "met", "E_{T}^{miss} [GeV]",
-                                       lepcut+"&&"+lowmjcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {200., 350., 500.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(16, -0.5, 15.5, "njets", "N_{jets}",
-                                       lepcut+"&&"+lowmtcut+"&&"+nbcut+"&&"+nvetocut, "weight", {5.5, 8.5}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(7, -0.5, 6.5, "nbm", "N_{b}",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nvetocut, "weight", {0.5, 1.5, 2.5}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(14, 0., 280., "mt", "m_{T} [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {140.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(14, 0., 280., "mt", "m_{T} [GeV]",
-                                       lepcut+"&&"+lowmjcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {140.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(14, 0., 280., "mt", "m_{T} [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&nbm==0"+"&&"+nvetocut, "weight", {140.}),
-                              full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(15, 500, 2000., "ht", "H_{T} [GeV]", {500.}),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, 200, 700., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, 200, 700., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+                          lepcut&&lowmjcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(16, -0.5, 15.5, "njets", "N_{jets}", {5.5, 8.5}),
+                          lepcut&&lowmtcut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbm", "N_{b}", {0.5, 1.5, 2.5}),
+                          lepcut&&lowmtcut&&njetscut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(14, 0., 280., "mt", "m_{T} [GeV]", {140.}),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(14, 0., 280., "mt", "m_{T} [GeV]", {140.}),
+                          lepcut&&lowmjcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(14, 0., 280., "mt", "m_{T} [GeV]", {140.}),
+                          lepcut&&lowmtcut&&njetscut+"&&nbm==0"&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
 
           if(ilep==0){
             // only barrel or endcap electron
-            pm.Push<HistoStack>(HistoDef(10, 200, 700., "met", "E_{T}^{miss} [GeV]",
-                                         lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(leps_eta[0]<1.479&&leps_eta[0]>-1.479)", "weight", {200., 350., 500.}),
-                                full_trig_skim_1l, all_plot_types);
-            pm.Push<HistoStack>(HistoDef(10, 200, 700., "met", "E_{T}^{miss} [GeV]",
-                                         lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(leps_eta[0]>1.479||leps_eta[0]<-1.479)", "weight", {200., 350., 500.}),
-                                full_trig_skim_1l, all_plot_types);
+            pm.Push<Hist1D>(Axis(10, 200, 700., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+                            lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut&&"leps_eta[0]<1.479&&leps_eta[0]>-1.479",
+                            full_trig_skim_1l, all_plot_types);
+            pm.Push<Hist1D>(Axis(10, 200, 700., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+                            lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut&&"leps_eta[0]>1.479||leps_eta[0]<-1.479",
+                            full_trig_skim_1l, all_plot_types);
           }
 
           //
           // leptons
           //
           if(ilep==0){// electron
-            pm.Push<HistoStack>(HistoDef(10, 0, 200., "leps_pt[0]", "p_{T}(electron) [GeV]",
-                                         lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                                full_trig_skim_1l, all_plot_types);
-            pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "leps_eta[0]", "#eta(electron) [GeV]",
-                                         lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                                full_trig_skim_1l, all_plot_types);
+            pm.Push<Hist1D>(Axis(10, 0, 200., "leps_pt[0]", "p_{T}(electron) [GeV]"),
+                            lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                            full_trig_skim_1l, all_plot_types);
+            pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "leps_eta[0]", "#eta(electron) [GeV]"),
+                            lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                            full_trig_skim_1l, all_plot_types);
           }else if(ilep==1){// muon
-            pm.Push<HistoStack>(HistoDef(10, 0, 200., "leps_pt[0]", "p_{T}(muon) [GeV]",
-                                         lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                                full_trig_skim_1l, all_plot_types);
-            pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "leps_eta[0]", "#eta(muon) [GeV]",
-                                         lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                                full_trig_skim_1l, all_plot_types);
+            pm.Push<Hist1D>(Axis(10, 0, 200., "leps_pt[0]", "p_{T}(muon) [GeV]"),
+                            lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                            full_trig_skim_1l, all_plot_types);
+            pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "leps_eta[0]", "#eta(muon) [GeV]"),
+                            lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                            full_trig_skim_1l, all_plot_types);
           }else if(ilep==2){  // electron or muon
-            pm.Push<HistoStack>(HistoDef(10, 0, 200., "leps_pt[0]", "p_{T}(lepton) [GeV]",
-                                         lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                                full_trig_skim_1l, all_plot_types);
-            pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "leps_eta[0]", "#eta(lepton) [GeV]",
-                                         lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                                full_trig_skim_1l, all_plot_types);
+            pm.Push<Hist1D>(Axis(10, 0, 200., "leps_pt[0]", "p_{T}(lepton) [GeV]"),
+                            lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                            full_trig_skim_1l, all_plot_types);
+            pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "leps_eta[0]", "#eta(lepton) [GeV]"),
+                            lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                            full_trig_skim_1l, all_plot_types);
           }
 
           //
           // jets
           //
-          pm.Push<HistoStack>(HistoDef(10, 30, 630., "jets_pt[0]", "p_{T}(leading jet) [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep[0])", "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "jets_eta[0]", "#eta(leading jet) [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep[0])", "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, 0, 200., "jets_m[0]", "mass(leading jet) [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep[0])", "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, 30, 630., "jets_pt", "p_{T}(jet) [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep)", "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "jets_eta", "#eta(jet) [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep)", "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, 0, 200., "jets_m", "m(jet) [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&(!jets_islep)", "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, 30, 630., "jets_pt[0]", "p_{T}(leading jet) [GeV]"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut&&"!jets_islep[0]",
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "jets_eta[0]", "#eta(leading jet) [GeV]"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut&&"!jets_islep[0]",
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, 0, 200., "jets_m[0]", "mass(leading jet) [GeV]"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut&&"!jets_islep[0]",
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, 30, 630., "jets_pt", "p_{T}(jet) [GeV]"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut&&"!jets_islep",
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "jets_eta", "#eta(jet) [GeV]"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut&&"!jets_islep",
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, 0, 200., "jets_m", "m(jet) [GeV]"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut&&"!jets_islep",
+                          full_trig_skim_1l, all_plot_types);
 
           //
           // fatjets
           //
-          pm.Push<HistoStack>(HistoDef(10, 0, 1000., "fjets14_pt[0]", "p_{T}(J1) [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&leps_pt[0]>160", "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut+"&&leps_pt[0]<=160", "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "fjets14_eta[0]", "#eta(J1)",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(7, 0.5, 7.5, "fjets14_nconst[0]", "N_{constituents}(J1)",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, 0, 1000., "fjets14_pt", "p_{T}(J) [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, 0, 500., "fjets14_m", "m_{J} [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(10, -2.5, 2.5, "fjets14_eta", "#eta(J)",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(7, 0.5, 7.5, "fjets14_nconst", "N_{constituents}(J)",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, 0, 1000., "fjets14_pt[0]", "p_{T}(J1) [GeV]"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut&&"leps_pt[0]>160",
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut&&"leps_pt[0]<=160",
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "fjets14_eta[0]", "#eta(J1)"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "fjets14_nconst[0]", "N_{constituents}(J1)"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, 0, 1000., "fjets14_pt", "p_{T}(J) [GeV]"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, 0, 500., "fjets14_m", "m_{J} [GeV]"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "fjets14_eta", "#eta(J)"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "fjets14_nconst", "N_{constituents}(J)"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
 
-          pm.Push<HistoStack>(HistoDef(20, 0, 400., "fjets14_m[0]", "m_{J1} [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&njets<=5&&nbm>=1", "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(20, 0, 400., "fjets14_m[0]", "m_{J1} [GeV]"),
+                          lepcut&&lowmtcut&&"njets<=5&&nbm>=1",
+                          full_trig_skim_1l, all_plot_types);
 
           // event-level variables related to fatjet
-          pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj14", "M_{J} [GeV]",
-                                       //
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {400.}),
-                              full_trig_skim_1l, all_plot_types);
-          pm.Push<HistoStack>(HistoDef(7, 0.5, 7.5, "nfjets14", "N_{J} [GeV]",
-                                       lepcut+"&&"+lowmtcut+"&&"+njetscut+"&&"+nbcut+"&&"+nvetocut, "weight", {999.}),
-                              full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(15, 0., 1500., "mj14", "M_{J} [GeV]", {400.}),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "nfjets14", "N_{J} [GeV]"),
+                          lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
+                          full_trig_skim_1l, all_plot_types);
 
         } //for(int inb=0; inb<2; inb++)
       } //for(int injets=0; injets<2; injets++)
@@ -292,26 +291,26 @@ int main(){
   //
   // 0-lepton events
   //
-  pm.Push<HistoStack>(HistoDef(30, 0., 1500., "mj14", "M_{J} [GeV]",
-                               "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5", "weight", {400.}),
-                      full_trig_skim_0l, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(30, 0., 500., "fjets14_m", "m_{J} [GeV] [GeV]",
-                               "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5", "weight", {400.}),
-                      full_trig_skim_0l, all_plot_types);
+  pm.Push<Hist1D>(Axis(30, 0., 1500., "mj14", "M_{J} [GeV]", {400.}),
+                  "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5",
+                  full_trig_skim_0l, all_plot_types);
+  pm.Push<Hist1D>(Axis(30, 0., 500., "fjets14_m", "m_{J} [GeV] [GeV]", {400.}),
+                  "nleps==0&&met<50&&ht>1000&&njets>=4&&njets<=5",
+                  full_trig_skim_0l, all_plot_types);
 
-  pm.Push<HistoStack>(HistoDef(30, 0., 1500., "mj14", "M_{J} [GeV]",
-                               "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8", "weight", {400.}),
-                      full_trig_skim_0l, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(30, 0., 500., "fjets14_m", "m_{J} [GeV]",
-                               "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8", "weight", {400.}),
-                      full_trig_skim_0l, all_plot_types);
+  pm.Push<Hist1D>(Axis(30, 0., 1500., "mj14", "M_{J} [GeV]", {400.}),
+                  "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8",
+                  full_trig_skim_0l, all_plot_types);
+  pm.Push<Hist1D>(Axis(30, 0., 500., "fjets14_m", "m_{J} [GeV]", {400.}),
+                  "nleps==0&&met<50&&ht>1000&&njets>=6&&njets<=8",
+                  full_trig_skim_0l, all_plot_types);
 
-  pm.Push<HistoStack>(HistoDef(30, 0., 1500., "mj14", "M_{J} [GeV]",
-                               "nleps==0&&met<50&&ht>1000&&njets>=9", "weight", {400.}),
-                      full_trig_skim_0l, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(30, 0., 500., "fjets14_m", "m_{J} [GeV]",
-                               "nleps==0&&met<50&&ht>1000&&njets>=9", "weight", {400.}),
-                      full_trig_skim_0l, all_plot_types);
+  pm.Push<Hist1D>(Axis(30, 0., 1500., "mj14", "M_{J} [GeV]", {400.}),
+                  "nleps==0&&met<50&&ht>1000&&njets>=9",
+                  full_trig_skim_0l, all_plot_types);
+  pm.Push<Hist1D>(Axis(30, 0., 500., "fjets14_m", "m_{J} [GeV]", {400.}),
+                  "nleps==0&&met<50&&ht>1000&&njets>=9",
+                  full_trig_skim_0l, all_plot_types);
 
   //
   // di-lepton events
@@ -319,31 +318,31 @@ int main(){
   string mll="(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))";
   string mllcut="(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))>80&&(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))<100";
   // ttbar
-  pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj14", "M_{J} [GeV]",
-                               "nels==1&&nmus==1&&ht>300&&met>100&&njets>=2&&njets<=3&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "weight", {400.}),
-                      full_trig_skim_2l, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(15, 0., 500., "fjets14_m", "m_{J} [GeV]",
-                               "nels==1&&nmus==1&&ht>300&&met>100&&njets>=2&&njets<=3&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "weight", {400.}),
-                      full_trig_skim_2l, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj14", "M_{J} [GeV]",
-                               "nels==1&&nmus==1&&ht>300&&met>100&&njets>=4&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "weight", {400.}),
-                      full_trig_skim_2l, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(15, 0., 500., "fjets14_m", "m_{J} [GeV]",
-                               "nels==1&&nmus==1&&ht>300&&met>100&&njets>=4&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "weight", {400.}),
-                      full_trig_skim_2l, all_plot_types);
+  pm.Push<Hist1D>(Axis(15, 0., 1500., "mj14", "M_{J} [GeV]", {400.}),
+                  "nels==1&&nmus==1&&ht>300&&met>100&&njets>=2&&njets<=3&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))",
+                  full_trig_skim_2l, all_plot_types);
+  pm.Push<Hist1D>(Axis(15, 0., 500., "fjets14_m", "m_{J} [GeV]", {400.}),
+                  "nels==1&&nmus==1&&ht>300&&met>100&&njets>=2&&njets<=3&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))",
+                  full_trig_skim_2l, all_plot_types);
+  pm.Push<Hist1D>(Axis(15, 0., 1500., "mj14", "M_{J} [GeV]", {400.}),
+                  "nels==1&&nmus==1&&ht>300&&met>100&&njets>=4&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))",
+                  full_trig_skim_2l, all_plot_types);
+  pm.Push<Hist1D>(Axis(15, 0., 500., "fjets14_m", "m_{J} [GeV]", {400.}),
+                  "nels==1&&nmus==1&&ht>300&&met>100&&njets>=4&&met<400&&nbm<3&&nbm>=1&&((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))",
+                  full_trig_skim_2l, all_plot_types);
   // DY
-  pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj14", "M_{J} [GeV]",
-                               "(nmus>=2||nels>=2)&&ht>350&&njets>=2&&njets<=3&&"+mllcut, "weight", {400.}),
-                      full_trig_skim_2l, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(15, 0., 500., "fjets14_m", "m_{J} [GeV]",
-                               "(nmus>=2||nels>=2)&&ht>350&&njets>=2&&njets<=3&&"+mllcut, "weight", {400.}),
-                      full_trig_skim_2l, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(15, 0., 1500., "mj14", "M_{J} [GeV]",
-                               "(nmus>=2||nels>=2)&&ht>350&&njets>=4&&"+mllcut, "weight", {400.}),
-                      full_trig_skim_2l, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(15, 0., 500., "fjets14_m", "m_{J} [GeV]",
-                               "(nmus>=2||nels>=2)&&ht>350&&njets>=4&&"+mllcut, "weight", {400.}),
-                      full_trig_skim_2l, all_plot_types);
+  pm.Push<Hist1D>(Axis(15, 0., 1500., "mj14", "M_{J} [GeV]", {400.}),
+                  "(nmus>=2||nels>=2)&&ht>350&&njets>=2&&njets<=3"&&mllcut,
+                  full_trig_skim_2l, all_plot_types);
+  pm.Push<Hist1D>(Axis(15, 0., 500., "fjets14_m", "m_{J} [GeV]", {400.}),
+                  "(nmus>=2||nels>=2)&&ht>350&&njets>=2&&njets<=3"&&mllcut,
+                  full_trig_skim_2l, all_plot_types);
+  pm.Push<Hist1D>(Axis(15, 0., 1500., "mj14", "M_{J} [GeV]", {400.}),
+                  "(nmus>=2||nels>=2)&&ht>350&&njets>=4"&&mllcut,
+                  full_trig_skim_2l, all_plot_types);
+  pm.Push<Hist1D>(Axis(15, 0., 500., "fjets14_m", "m_{J} [GeV]", {400.}),
+                  "(nmus>=2||nels>=2)&&ht>350&&njets>=4"&&mllcut,
+                  full_trig_skim_2l, all_plot_types);
 
   pm.MakePlots(lumi);
 

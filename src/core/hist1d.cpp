@@ -1,34 +1,34 @@
-/*! \class HistoStack
+/*! \class Hist1D
 
   \brief A full 1D plot with stacked/overlayed histograms
 
-  HistoStack contains all the information necessary to produce a single 1D plot
+  Hist1D contains all the information necessary to produce a single 1D plot
   containing a combination of background MC, signal MC, and data histograms. The
   content and style of the plot are maintained (mostly) independently, so that
   once the histograms have been filled with data, redrawing with multiple styles
   has minimal overhead.
 
-  To produce a plot, the component histograms in HistoStack::backgrounds_,
-  HistoStack::signals_, and HistoStack::datas_ must be filled (e.g., by
-  PlotMaker). Once the data is ready, a call to HistoStack::Print() will
+  To produce a plot, the component histograms in Hist1D::backgrounds_,
+  Hist1D::signals_, and Hist1D::datas_ must be filled (e.g., by
+  PlotMaker). Once the data is ready, a call to Hist1D::Print() will
   generate the formatted plot for each style contained in
-  HistoStack::plot_options_.
+  Hist1D::plot_options_.
 
 */
 
-/*! \class HistoStack::SingleHist
+/*! \class Hist1D::SingleHist1D
 
   \brief Container for a TH1D associated with a single Process
 
-  HistoStack::SingleHist is mostly a "dumb" container used by HistoStack for
+  Hist1D::SingleHist1D is mostly a "dumb" container used by Hist1D for
   convenience. It contains a pointer to a single Process and a TH1D.
 
   Until I have a more elegant solution, it also contains a second TH1D which is
-  (ab)used by HistoStack to draw the stacked and luminosity scaled histogram
+  (ab)used by Hist1D to draw the stacked and luminosity scaled histogram
   without disturbing the data in the main TH1D.
 */
 
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 
 #include <cmath>
 
@@ -70,7 +70,7 @@ namespace{
     \param[in,out] draw_opt Option string used by TH1D to draw
     histogram. Changed to "hist same" after first histogram is drawn
   */
-  void DrawAll(const vector<unique_ptr<HistoStack::SingleHist> > &hists,
+  void DrawAll(const vector<unique_ptr<Hist1D::SingleHist1D> > &hists,
                string &draw_opt, bool reversed = false){
     if(!reversed){
       for(auto &hist: hists){
@@ -127,7 +127,7 @@ namespace{
   }
 }
 
-TH1D HistoStack::blank_ = TH1D();
+TH1D Hist1D::blank_ = TH1D();
 
 /*!\brief Standard constructor
 
@@ -135,13 +135,13 @@ TH1D HistoStack::blank_ = TH1D();
 
   \param[in] hist A fully styled, and typically unfilled histogram to start from
 */
-HistoStack::SingleHist::SingleHist(const HistoStack &figure,
+Hist1D::SingleHist1D::SingleHist1D(const Hist1D &figure,
                                    const std::shared_ptr<Process> &process,
                                    const TH1D &hist):
   FigureComponent(figure, process),
   raw_hist_(hist),
   scaled_hist_(),
-  proc_and_hist_cut_(figure.definition_.cut_ && process->cut_),
+  proc_and_hist_cut_(figure.cut_ && process->cut_),
   cut_vector_(),
   wgt_vector_(),
   val_vector_(){
@@ -149,8 +149,8 @@ HistoStack::SingleHist::SingleHist(const HistoStack &figure,
   scaled_hist_.Sumw2();
 }
 
-void HistoStack::SingleHist::RecordEvent(const Baby &baby){
-  const HistoStack& stack = static_cast<const HistoStack&>(figure_);
+void Hist1D::SingleHist1D::RecordEvent(const Baby &baby){
+  const Hist1D& stack = static_cast<const Hist1D&>(figure_);
   size_t min_vec_size;
   bool have_vec = false;
 
@@ -164,7 +164,7 @@ void HistoStack::SingleHist::RecordEvent(const Baby &baby){
     min_vec_size = cut_vector_.size();
   }
 
-  const NamedFunc &wgt = stack.definition_.weight_;
+  const NamedFunc &wgt = stack.weight_;
   NamedFunc::ScalarType wgt_scalar = 0.;
   if(wgt.IsScalar()){
     wgt_scalar = wgt.GetScalar(baby);
@@ -176,7 +176,7 @@ void HistoStack::SingleHist::RecordEvent(const Baby &baby){
     }
   }
 
-  const NamedFunc &val = stack.definition_.var_;
+  const NamedFunc &val = stack.xaxis_.var_;
   NamedFunc::ScalarType val_scalar = 0.;
   if(val.IsScalar()){
     val_scalar = val.GetScalar(baby);
@@ -212,9 +212,9 @@ void HistoStack::SingleHist::RecordEvent(const Baby &baby){
 
   \return Histogram maximum
 */
-double HistoStack::SingleHist::GetMax(double max_bound,
-                                      bool include_error_bar,
-                                      bool include_overflow) const{
+double Hist1D::SingleHist1D::GetMax(double max_bound,
+                                    bool include_error_bar,
+                                    bool include_overflow) const{
   int start_bin = include_overflow ? 0 : 1;
   int end_bin = include_overflow ? (scaled_hist_.GetNbinsX()+1) : scaled_hist_.GetNbinsX();
   double the_max = -numeric_limits<double>::infinity();
@@ -243,9 +243,9 @@ double HistoStack::SingleHist::GetMax(double max_bound,
 
   \return Histogram minimum
 */
-double HistoStack::SingleHist::GetMin(double min_bound,
-                                      bool include_error_bar,
-                                      bool include_overflow) const{
+double Hist1D::SingleHist1D::GetMin(double min_bound,
+                                    bool include_error_bar,
+                                    bool include_overflow) const{
   int start_bin = include_overflow ? 0 : 1;
   int end_bin = include_overflow ? scaled_hist_.GetNbinsX() : (scaled_hist_.GetNbinsX()+1);
   double the_min = numeric_limits<double>::infinity();
@@ -270,26 +270,34 @@ double HistoStack::SingleHist::GetMin(double min_bound,
 
   \param[in] plot_options Styles with which to draw plot
 */
-HistoStack::HistoStack(const HistoDef &definition,
-                       const std::vector<std::shared_ptr<Process> > &processes,
-                       const std::vector<PlotOpt> &plot_options):
+Hist1D::Hist1D(const Axis &xaxis, const NamedFunc &cut,
+               const std::vector<std::shared_ptr<Process> > &processes,
+               const std::vector<PlotOpt> &plot_options):
   Figure(),
-  definition_(definition),
+  xaxis_(xaxis),
+  cut_(cut),
+  weight_("weight"),
+  tag_(""),
+  ratio_numerator_(""),
+  ratio_denominator_(""),
   plot_options_(plot_options),
+  backgrounds_(),
+  signals_(),
+  datas_(),
   this_opt_(PlotOpt()),
   luminosity_(),
   mc_scale_(),
   mc_scale_error_(){
   if(plot_options_.size() > 0) this_opt_ = plot_options_.front();
 
-  string x_title = definition.x_title_;
-  if(definition.units_ != "") x_title += " ["+definition.units_+"]";
+  string x_title = xaxis_.title_;
+  if(xaxis_.units_ != "") x_title += " ["+xaxis_.units_+"]";
 
-  TH1D empty("", (";"+x_title+";").c_str(), definition.Nbins(), &definition.Bins().at(0));
+  TH1D empty("", (";"+x_title+";").c_str(), xaxis_.Nbins(), &xaxis_.Bins().at(0));
   empty.SetStats(false);
   empty.Sumw2(true);
   for(const auto &process: processes){
-    unique_ptr<SingleHist> hist(new SingleHist(*this, process, empty));
+    unique_ptr<SingleHist1D> hist(new SingleHist1D(*this, process, empty));
     hist->raw_hist_.SetFillColor(process->GetFillColor());
     hist->raw_hist_.SetFillStyle(process->GetFillStyle());
     hist->raw_hist_.SetLineColor(process->GetLineColor());
@@ -326,8 +334,8 @@ HistoStack::HistoStack(const HistoDef &definition,
 
   \param[in] luminosity The integrated luminosity with which to draw the plot
 */
-void HistoStack::Print(double luminosity,
-                       const string &subdir){
+void Hist1D::Print(double luminosity,
+                   const string &subdir){
   luminosity_ = luminosity;
   for(const auto &opt: plot_options_){
     this_opt_ = opt;
@@ -416,7 +424,7 @@ void HistoStack::Print(double luminosity,
 				     hmc->GetBinContent(hmc->GetMaximumBin())))+1.);
 	//// Digits for error are calculated with the sqrt, and added 2 to print with one decimal
 	int edigits = floor(log10(sqrt(max(hdata->GetMaximum(), hmc->GetMaximum())))+1.)+2;
-	cout<<endl<<"Printing values for "<<definition_.Name()<<". Data/MC = "
+	cout<<endl<<"Printing values for "<<Name()<<". Data/MC = "
 	    <<RoundNumber(hdata->Integral(), 2,hmc->Integral()) <<endl;
 	for(int bin=1; bin<=hdata->GetNbinsX(); bin++){
 	  cout<<"Bin "<<setw(5)<<hdata->GetBinLowEdge(bin)<<","<<setw(5)<<hdata->GetBinLowEdge(bin+1)<<": Data = ";
@@ -433,8 +441,8 @@ void HistoStack::Print(double luminosity,
 
     if(subdir != "") mkdir(("plots/"+subdir).c_str(), 0777);
     string base_name = subdir != ""
-      ? "plots/"+subdir+"/"+definition_.Name()
-      : "plots/"+definition_.Name();
+      ? "plots/"+subdir+"/"+Name()
+      : "plots/"+Name();
     for(const auto &ext: this_opt_.FileExtensions()){
       string full_name = base_name+"__"+this_opt_.TypeString()+'.'+ext;
       full->Print(full_name.c_str());
@@ -443,7 +451,7 @@ void HistoStack::Print(double luminosity,
   }
 }
 
-set<const Process*> HistoStack::GetProcesses() const{
+set<const Process*> Hist1D::GetProcesses() const{
   set<const Process*> processes;
   for(const auto &proc: backgrounds_){
     processes.insert(proc->process_.get());
@@ -457,7 +465,7 @@ set<const Process*> HistoStack::GetProcesses() const{
   return processes;
 }
 
-Figure::FigureComponent * HistoStack::GetComponent(const Process *process){
+Figure::FigureComponent * Hist1D::GetComponent(const Process *process){
   const auto &component_list = GetComponentList(process);
   for(const auto &component: component_list){
     if(component->process_.get() == process){
@@ -468,14 +476,59 @@ Figure::FigureComponent * HistoStack::GetComponent(const Process *process){
   return nullptr;
 }
 
+string Hist1D::Name() const{
+  string cut = "";
+  if(cut_.Name() != "1") cut = "__"+cut_.Name();
+
+  string weight = "";
+  if(weight_.Name() != "weight") weight = "__"+weight_.Name();
+  
+  if(tag_ == ""){
+    return CodeToPlainText(xaxis_.var_.Name()+cut+weight);
+  }else{
+    return CodeToPlainText(tag_+"__"+xaxis_.var_.Name()+cut+weight);
+  }
+}
+
+string Hist1D::Title() const{
+  bool cut = (cut_.Name() != "" && cut_.Name() != "1");
+  bool weight = weight_.Name() != "weight";
+  if(cut && weight){
+    return CodeToRootTex(cut_.Name())+" (weight="+CodeToRootTex(weight_.Name())+")";
+  }else if(cut){
+    return CodeToRootTex(cut_.Name());
+  }else if(weight){
+    return CodeToRootTex("weight="+weight_.Name());
+  }else{
+    return "";
+  }
+}
+
+Hist1D & Hist1D::Weight(const NamedFunc &weight){
+  weight_ = weight;
+  return *this;
+}
+
+Hist1D & Hist1D::Tag(const string &tag){
+  tag_ = tag;
+  return *this;
+}
+
+Hist1D & Hist1D::RatioTitle(const string &numerator,
+                            const string &denominator){
+  ratio_numerator_ = numerator;
+  ratio_denominator_ = denominator;
+  return *this;
+}
+
 /*!\brief Generates stacked and scaled histograms from unstacked and unscaled
   ones
 
-  Sets bin contents for all required HistoStack::SingleHist::scaled_hist_ to the
-  appropriate values using the HistoStack::SingleHist::raw_hist_ containing the
+  Sets bin contents for all required Hist1D::SingleHist1D::scaled_hist_ to the
+  appropriate values using the Hist1D::SingleHist1D::raw_hist_ containing the
   unstacked contents at 1 fb^{-1}
 */
-void HistoStack::RefreshScaledHistos(){
+void Hist1D::RefreshScaledHistos(){
   InitializeHistos();
   MergeOverflow();
   ScaleHistos();
@@ -483,10 +536,10 @@ void HistoStack::RefreshScaledHistos(){
   NormalizeHistos();
 }
 
-/*!\brief Sets all HistoStack::SingleHist::scaled_hist_ to corresponding
-  HistoStack::SingleHist::raw_hist_
+/*!\brief Sets all Hist1D::SingleHist1D::scaled_hist_ to corresponding
+  Hist1D::SingleHist1D::raw_hist_
 */
-void HistoStack::InitializeHistos() const{
+void Hist1D::InitializeHistos() const{
   for(auto &hist: backgrounds_){
     hist->scaled_hist_ = hist->raw_hist_;
     hist->scaled_hist_.SetName(("bkg_"+hist->process_->name_+"_"+counter()).c_str());
@@ -503,7 +556,7 @@ void HistoStack::InitializeHistos() const{
 
 /*!\brief Moves overflow (underflow) contents into last (first) visible bin
  */
-void HistoStack::MergeOverflow() const{
+void Hist1D::MergeOverflow() const{
   bool underflow = false, overflow = false;
   switch(this_opt_.Overflow()){
   default:
@@ -538,7 +591,7 @@ void HistoStack::MergeOverflow() const{
 
 /*!\brief Scales histograms to required luminosity
  */
-void HistoStack::ScaleHistos() const{
+void Hist1D::ScaleHistos() const{
   for(auto &hist: backgrounds_){
     AdjustDensityForBinWidth(hist->scaled_hist_);
     hist->scaled_hist_.Scale(luminosity_);
@@ -554,7 +607,7 @@ void HistoStack::ScaleHistos() const{
 
 /*!\brief Stacks histograms if necessary for current plot style
  */
-void HistoStack::StackHistos() const{
+void Hist1D::StackHistos() const{
   if(this_opt_.Stack() == StackType::signal_overlay
      || this_opt_.Stack() == StackType::signal_on_top
      || this_opt_.Stack() == StackType::data_norm){
@@ -572,12 +625,12 @@ void HistoStack::StackHistos() const{
 /*!\brief Normalize histograms to data or 100%*(bin width) if needed for current
   style
 */
-void HistoStack::NormalizeHistos() const{
+void Hist1D::NormalizeHistos() const{
   mc_scale_ = 1.;
   mc_scale_error_ = 1.;
   if(this_opt_.Stack() == StackType::data_norm){
     if(datas_.size() == 0 || backgrounds_.size() == 0) return;
-    int nbins = definition_.Nbins();
+    int nbins = xaxis_.Nbins();
     double data_error, mc_error;
     double data_norm = datas_.front()->scaled_hist_.IntegralAndError(0, nbins+1, data_error, "width");
     double mc_norm = backgrounds_.front()->scaled_hist_.IntegralAndError(0, nbins+1, mc_error, "width");
@@ -607,7 +660,7 @@ void HistoStack::NormalizeHistos() const{
 
 /*!\brief Set y-axis plotting range
  */
-void HistoStack::SetRanges() const{
+void Hist1D::SetRanges() const{
   double the_min = GetMinDraw();
   double the_max = GetMaxDraw();
 
@@ -642,7 +695,7 @@ void HistoStack::SetRanges() const{
 
 /*!\brief Set label styles and title for all histograms
  */
-void HistoStack::ApplyStyles() const{
+void Hist1D::ApplyStyles() const{
   for(auto &hist: backgrounds_){
     StyleHisto(hist->scaled_hist_);
   }
@@ -658,7 +711,7 @@ void HistoStack::ApplyStyles() const{
 
   \param[in,out] h Histogram to be adjusted
 */
-void HistoStack::StyleHisto(TH1D &h) const{
+void Hist1D::StyleHisto(TH1D &h) const{
   h.GetXaxis()->SetTitleOffset(this_opt_.XTitleOffset());
   h.GetYaxis()->SetTitleOffset(this_opt_.YTitleOffset());
   h.SetNdivisions(this_opt_.NDivisions(), "xyz");
@@ -667,7 +720,7 @@ void HistoStack::StyleHisto(TH1D &h) const{
   h.SetLabelFont(this_opt_.Font(), "xyz");
   h.SetTitleFont(this_opt_.Font(), "xyz");
   
-  double bin_width = (definition_.Bins().back()-definition_.Bins().front())/(definition_.Nbins());
+  double bin_width = xaxis_.AvgBinWidth();
   
   ostringstream title;
   switch(this_opt_.Stack()){
@@ -677,24 +730,24 @@ void HistoStack::StyleHisto(TH1D &h) const{
   case StackType::signal_on_top:
   case StackType::data_norm:
   case StackType::lumi_shapes:
-    if(definition_.units_ == "" && bin_width == 1){
+    if(xaxis_.units_ == "" && bin_width == 1){
       title << "Entries";    
       break;
     }
     else{
       title << "Entries/(" << bin_width;
-      if(definition_.units_ != "") title << " " << definition_.units_;
+      if(xaxis_.units_ != "") title << " " << xaxis_.units_;
       title << ")";
       break;
     }
   case StackType::shapes:
-    if(definition_.units_ == "" && bin_width == 1){
+    if(xaxis_.units_ == "" && bin_width == 1){
       title << "% entries";
       break;
     }
     else{
       title << "% entries/(" << bin_width;
-      if(definition_.units_ != "") title << " " << definition_.units_;
+      if(xaxis_.units_ != "") title << " " << xaxis_.units_;
       title << ")";
       break;
     }
@@ -705,7 +758,7 @@ void HistoStack::StyleHisto(TH1D &h) const{
 
 /*!\brief Make histograms a hollow line for unstacked styles
  */
-void HistoStack::AdjustFillStyles() const{
+void Hist1D::AdjustFillStyles() const{
   if(this_opt_.BackgroundsStacked()) return;
 
   for(auto &bkg: backgrounds_){
@@ -728,9 +781,9 @@ void HistoStack::AdjustFillStyles() const{
 
   \param[out] bottom Pad for bottom plot (e.g. ratio plot)
 */
-void HistoStack::GetPads(unique_ptr<TCanvas> &c,
-                         unique_ptr<TPad> &top,
-                         unique_ptr<TPad> &bottom) const{
+void Hist1D::GetPads(unique_ptr<TCanvas> &c,
+                     unique_ptr<TPad> &top,
+                     unique_ptr<TPad> &bottom) const{
   c.reset(new TCanvas(("canvas_"+counter()).c_str(), "canvas", this_opt_.CanvasWidth(),
                       this_opt_.CanvasHeight()));
   c->cd();
@@ -767,7 +820,7 @@ void HistoStack::GetPads(unique_ptr<TCanvas> &c,
   \param[in,out] bottom_plots Ratio or other bottom-half plots whose title
   offsets also need to be adjusted
 */
-void HistoStack::FixYAxis(vector<TH1D> &bottom_plots) const{
+void Hist1D::FixYAxis(vector<TH1D> &bottom_plots) const{
   double offset = this_opt_.YTitleOffset();
   if(this_opt_.YAxis() == YAxisType::log){
     offset = 1.5;
@@ -779,7 +832,7 @@ void HistoStack::FixYAxis(vector<TH1D> &bottom_plots) const{
     //Scale offset by good empirical numbers
     offset = 0.6+0.25*digits;
   
-}
+  }
   for(auto &hist: backgrounds_){
     hist->scaled_hist_.SetTitleOffset(offset, "y");
   }
@@ -790,7 +843,7 @@ void HistoStack::FixYAxis(vector<TH1D> &bottom_plots) const{
     hist->scaled_hist_.SetTitleOffset(offset, "y");
   }
   for(auto &hist: bottom_plots){
-    if(datas_.size()>0)hist.SetTitleOffset(offset, "y");
+    if(this_opt_.Bottom() != BottomType::ratio) hist.SetTitleOffset(offset, "y");
   }
 }
 
@@ -801,16 +854,16 @@ void HistoStack::FixYAxis(vector<TH1D> &bottom_plots) const{
 
   \return List of text items to be printed in title region of plot
 */
-vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts() const{
+vector<shared_ptr<TLatex> > Hist1D::GetTitleTexts() const{
   vector<shared_ptr<TLatex> > out;
   double left = this_opt_.LeftMargin();
   double right = 1.-this_opt_.RightMargin();
   double bottom = 1.-this_opt_.TopMargin();
   double top = 1.;
   if(this_opt_.Title() == TitleType::info){
-    if(definition_.Title() != ""){
+    if(Title() != ""){
       out.push_back(make_shared<TLatex>(0.5*(left+right), 0.5*(bottom+top),
-                                        definition_.Title().c_str()));
+                                        Title().c_str()));
       out.back()->SetNDC();
       out.back()->SetTextAlign(22);
       out.back()->SetTextFont(this_opt_.Font());
@@ -861,10 +914,10 @@ vector<shared_ptr<TLatex> > HistoStack::GetTitleTexts() const{
 
   \return Graph representing the MC background error band
 */
-TGraphAsymmErrors HistoStack::GetBackgroundError() const{
+TGraphAsymmErrors Hist1D::GetBackgroundError() const{
   TGraphAsymmErrors g;
   if(backgrounds_.size() == 0){
-    TH1D h("", "", definition_.Nbins(), &definition_.Bins().at(0));
+    TH1D h("", "", xaxis_.Nbins(), &xaxis_.Bins().at(0));
     g = TGraphAsymmErrors(&h);
   }else{
     g = TGraphAsymmErrors(&(backgrounds_.front()->scaled_hist_));
@@ -886,7 +939,7 @@ TGraphAsymmErrors HistoStack::GetBackgroundError() const{
   \return Lines at x-coordinate of cut value and y-coordinates running from
   bottom of plot to bottom of legend
 */
-vector<TLine> HistoStack::GetCutLines(double y_min, double y_max, bool adjust_bottom) const{
+vector<TLine> Hist1D::GetCutLines(double y_min, double y_max, bool adjust_bottom) const{
   double bottom = y_min;
   if(adjust_bottom){
     switch(this_opt_.YAxis()){
@@ -896,8 +949,8 @@ vector<TLine> HistoStack::GetCutLines(double y_min, double y_max, bool adjust_bo
     case YAxisType::log:    bottom = y_min > this_opt_.LogMinimum() ? y_min : this_opt_.LogMinimum(); break;
     }
   }
-  vector<TLine> out(definition_.cut_vals_.size());
-  for(double cut: definition_.cut_vals_){
+  vector<TLine> out(xaxis_.cut_vals_.size());
+  for(double cut: xaxis_.cut_vals_){
     out.emplace_back(cut, bottom, cut, y_max);
     out.back().SetNDC(false);
     out.back().SetLineStyle(2);
@@ -917,7 +970,7 @@ vector<TLine> HistoStack::GetCutLines(double y_min, double y_max, bool adjust_bo
   \return Set of plots to be drawn on lower pad. These may be ratio plots or
   something else depending on the current plot style
 */
-std::vector<TH1D> HistoStack::GetBottomPlots(double &the_min, double &the_max) const{
+std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const{
   if(this_opt_.Bottom() == BottomType::off) return vector<TH1D>();
 
   TH1D denom;
@@ -1015,13 +1068,19 @@ std::vector<TH1D> HistoStack::GetBottomPlots(double &the_min, double &the_max) c
     the_min = this_opt_.RatioMinimum();
     the_max = this_opt_.RatioMaximum();
     for(auto &h: out){
-      if(datas_.size() != 0) h.GetYaxis()->SetTitle("Data/MC");
-      else {
-        string label = "#frac{MC}{"+backgrounds_.front()->process_->name_+"}";
-        h.GetYaxis()->SetTitle(label.c_str());
-        h.SetTitleSize(h.GetTitleSize("y")/1.5,"y");
-        h.SetTitleOffset(2.1,"y");
+      string num = ratio_numerator_;
+      string den = ratio_denominator_;
+      if(datas_.size() != 0){
+        if(num == "") num = "Data";
+        if(den == "") den = "MC";
+      }else{
+        if(num == "") num = "MC";
+        if(den == "") den = backgrounds_.front()->process_->name_;
       }
+      h.GetYaxis()->CenterTitle();
+      h.GetYaxis()->SetTitle(("#frac{"+num+"}{"+den+"}").c_str());
+      h.SetTitleSize(h.GetTitleSize("y")/1.25,"y");
+      h.SetTitleOffset(h.GetTitleOffset("y")/1.25, "y");
       h.SetMinimum(the_min);
       h.SetMaximum(the_max);
     }
@@ -1031,8 +1090,9 @@ std::vector<TH1D> HistoStack::GetBottomPlots(double &the_min, double &the_max) c
       //else h.GetYaxis()->SetTitle(backgrounds_.front()->process_->name_.c_str());
       h.SetMinimum(the_min);
       h.SetMaximum(the_max);
+      h.GetYaxis()->CenterTitle();
     }
-}
+  }
   return out;
 }
 
@@ -1042,9 +1102,9 @@ std::vector<TH1D> HistoStack::GetBottomPlots(double &the_min, double &the_max) c
 
   \return Line at appropriate height depending on plot style
 */
-TLine HistoStack::GetBottomHorizontal() const{
-  double left = definition_.Bins().front();
-  double right = definition_.Bins().back();
+TLine Hist1D::GetBottomHorizontal() const{
+  double left = xaxis_.Bins().front();
+  double right = xaxis_.Bins().back();
   double y;
   switch(this_opt_.Bottom()){
   case BottomType::ratio: y = 1.; break;
@@ -1065,7 +1125,7 @@ TLine HistoStack::GetBottomHorizontal() const{
 
 /*!Remove x-axis labels and title from plots in top pad if necessary
  */
-void HistoStack::StripTopPlotLabels() const{
+void Hist1D::StripTopPlotLabels() const{
   if(this_opt_.Bottom() == BottomType::off) return;
   for(auto &hist: backgrounds_){
     StripXLabels(hist->scaled_hist_);
@@ -1087,7 +1147,7 @@ void HistoStack::StripTopPlotLabels() const{
   \return The highest drawn point below max_bound across all component
   histograms
 */
-double HistoStack::GetMaxDraw(double max_bound) const{
+double Hist1D::GetMaxDraw(double max_bound) const{
   double the_max = -numeric_limits<double>::infinity();
   for(const auto &hist: backgrounds_){
     double this_max = hist->GetMax(max_bound, this_opt_.ShowBackgroundError());
@@ -1118,7 +1178,7 @@ double HistoStack::GetMaxDraw(double max_bound) const{
   \return The lowest drawn point greater than min_bound across all component
   histograms
 */
-double HistoStack::GetMinDraw(double min_bound) const{
+double Hist1D::GetMinDraw(double min_bound) const{
   double the_min = numeric_limits<double>::infinity();
   for(const auto &hist: backgrounds_){
     double this_min = hist->GetMin(min_bound, this_opt_.ShowBackgroundError());
@@ -1145,12 +1205,12 @@ double HistoStack::GetMinDraw(double min_bound) const{
 
   Legends are filled down-columns first, then across rows. Data samples are
   added first, then signals, then backgrounds, with the order within each group
-  preserved from HistoStack::HistoStack()
+  preserved from Hist1D::Hist1D()
 
   \return Legends with all processes and possibly MC normalization if plot style
   requires it
 */
-vector<shared_ptr<TLegend> > HistoStack::GetLegends(){
+vector<shared_ptr<TLegend> > Hist1D::GetLegends(){
   size_t n_entries = datas_.size() + signals_.size() + backgrounds_.size();
   if(this_opt_.DisplayLumiEntry()) ++n_entries;
   size_t n_columns = min(n_entries, static_cast<size_t>(this_opt_.LegendColumns()));
@@ -1207,11 +1267,11 @@ vector<shared_ptr<TLegend> > HistoStack::GetLegends(){
 
   \param[in,out] entries_added Entries already in legend
 */
-void HistoStack::AddEntries(vector<shared_ptr<TLegend> > &legends,
-                            const vector<unique_ptr<SingleHist> > &hists,
-                            const string &style,
-                            size_t n_entries,
-                            size_t &entries_added) const{
+void Hist1D::AddEntries(vector<shared_ptr<TLegend> > &legends,
+                        const vector<unique_ptr<SingleHist1D> > &hists,
+                        const string &style,
+                        size_t n_entries,
+                        size_t &entries_added) const{
   for(auto h = hists.cbegin(); h != hists.cend(); ++h){
     size_t legend_index = GetLegendIndex(entries_added, n_entries, legends.size());
     TLegend &legend = *legends.at(legend_index);
@@ -1265,7 +1325,7 @@ void HistoStack::AddEntries(vector<shared_ptr<TLegend> > &legends,
   \return Factor by which the upper bound of the top plot's y-axis needs to be
   expanded to make room for the legend
 */
-double HistoStack::GetLegendRatio() const{
+double Hist1D::GetLegendRatio() const{
   size_t num_plots = backgrounds_.size() + signals_.size() + datas_.size();
   if(this_opt_.DisplayLumiEntry()) ++num_plots;
   double legend_height = this_opt_.TrueLegendHeight(num_plots);
@@ -1282,11 +1342,11 @@ double HistoStack::GetLegendRatio() const{
 
   Possibly varying bin widths are accounted for.
 
-  \param[in] h Iterator to histogram in one of HistoStack::datas_,
-  HistoStack::signals_, HistoStack::backgrounds_ for which total yield will be
+  \param[in] h Iterator to histogram in one of Hist1D::datas_,
+  Hist1D::signals_, Hist1D::backgrounds_ for which total yield will be
   found
 */
-double HistoStack::GetYield(std::vector<std::unique_ptr<SingleHist> >::const_iterator h) const{
+double Hist1D::GetYield(std::vector<std::unique_ptr<SingleHist1D> >::const_iterator h) const{
   TH1D hist = (*h)->scaled_hist_;
 
   //Subtract underlying histogram
@@ -1310,10 +1370,10 @@ double HistoStack::GetYield(std::vector<std::unique_ptr<SingleHist> >::const_ite
 
   Possibly varying bin widths are accounted for.
 
-  \param[in] h Iterator to histogram in one of HistoStack::datas_,
-  HistoStack::signals_, HistoStack::backgrounds_ for which mean will be found
+  \param[in] h Iterator to histogram in one of Hist1D::datas_,
+  Hist1D::signals_, Hist1D::backgrounds_ for which mean will be found
 */
-double HistoStack::GetMean(std::vector<std::unique_ptr<SingleHist> >::const_iterator h) const{
+double Hist1D::GetMean(std::vector<std::unique_ptr<SingleHist1D> >::const_iterator h) const{
   TH1D hist = (*h)->scaled_hist_;
 
   //Subtract underlying histogram
@@ -1335,7 +1395,7 @@ double HistoStack::GetMean(std::vector<std::unique_ptr<SingleHist> >::const_iter
   \param[in] in_pixels If true, measure dimensions in pixels. If false, measure
   in NDC.
 */
-void HistoStack::GetTitleSize(double &width, double &height, bool in_pixels) const{
+void Hist1D::GetTitleSize(double &width, double &height, bool in_pixels) const{
   width = 1.-this_opt_.LeftMargin()-this_opt_.RightMargin();
   height = this_opt_.TopMargin();
   if(in_pixels){
@@ -1344,7 +1404,7 @@ void HistoStack::GetTitleSize(double &width, double &height, bool in_pixels) con
   }
 }
 
-const vector<unique_ptr<HistoStack::SingleHist> >& HistoStack::GetComponentList(const Process *process){
+const vector<unique_ptr<Hist1D::SingleHist1D> >& Hist1D::GetComponentList(const Process *process){
   switch(process->type_){
   case Process::Type::data:
     return datas_;

@@ -19,8 +19,8 @@
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
 #include "core/table.hpp"
-#include "core/histo_stack.hpp"
 #include "core/event_scan.hpp"
+#include "core/hist1d.hpp"
 #include "core/hist2d.hpp"
 #include "core/utilities.hpp"
 
@@ -107,30 +107,23 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> bkg_pts = {style2D().Stack(StackType::lumi_shapes).Title(TitleType::info)};
   
   PlotMaker pm;
-  pm.Push<HistoStack>(HistoDef(7, -0.5, 6.5, "nleps", "Num. Leptons",
-                               "st>500&&met>200&&njets>=6&&nbm>=1", "weight", {0.5, 1.5}),
-                      full_trig_skim, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(40, 0, 2000., "st", "S_{T} [GeV]",
-                               "nleps==1&&met>200&&njets>=6&&nbm>=1", "weight", {500.}),
-                      full_trig_skim, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(40, 0, 1000., "met", "MET [GeV]",
-                               "nleps==1&&st>500&&njets>=6&&nbm>=1", "weight", {200., 400.}),
-                      full_trig_skim, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(16, -0.5, 15.5, "njets", "Num. AK4 Jets",
-                               "nleps==1&&st>500&&met>200&&nbm>=1", "weight", {5.5, 8.5}),
-                      full_trig_skim, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(11, -0.5, 10.5, "nbm", "Num. b-Tagged Jets",
-                               "nleps==1&&st>500&&met>200&&njets>=6", "weight", {0.5, 1.5, 2.5}),
-                      full_trig_skim, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(24, 0., 1200., "mj14", "M_{J} [GeV]",
-                               "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1", "weight", {250., 400.}),
-                      full_trig_skim, all_plot_types);
-  pm.Push<HistoStack>(HistoDef(12, 0., 420., "mt", "m_{T} [GeV]",
-                               "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1", "weight", {140.}),
-                      full_trig_skim, all_plot_types);
-  pm.Push<HistoStack>(HistoDef("sometag", 15, 0., 1500., "mj08", "M_{J}^{0.8} [GeV]",
-                               "nleps==1&&st>500&&met>200", "weight", {400.}),
-                      full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nleps", "Num. Leptons", {0.5, 1.5}),
+                  "st>500&&met>200&&njets>=6&&nbm>=1", full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(40, 0, 2000., "st", "S_{T} [GeV]", {500.}),
+                  "nleps==1&&met>200&&njets>=6&&nbm>=1", full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(40, 0, 1000., "met", "MET [GeV]", {200., 400.}),
+                  "nleps==1&&st>500&&njets>=6&&nbm>=1", full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(16, -0.5, 15.5, "njets", "Num. AK4 Jets", {5.5, 8.5}),
+                  "nleps==1&&st>500&&met>200&&nbm>=1", full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(11, -0.5, 10.5, "nbm", "Num. b-Tagged Jets", {0.5, 1.5, 2.5}),
+                  "nleps==1&&st>500&&met>200&&njets>=6", full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(24, 0., 1200., "mj14", "M_{J} [GeV]", {250., 400.}),
+                  "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1", full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(12, 0., 420., "mt", "m_{T} [GeV]", {140.}),
+                  "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1", full_trig_skim, all_plot_types);
+  pm.Push<Hist1D>(Axis(15, 0., 1500., "mj14", "M_{J} [GeV]", {400.}),
+                  "nleps==1&&st>500&&met>200", full_trig_skim, all_plot_types)
+    .Tag("changing_tags_and_weights").Weight("1.2345*weight").RatioTitle("Numerator","Denominator");
   Table & cutflow = pm.Push<Table>("cutflow", vector<TableRow>{
       TableRow("Baseline"),
         TableRow("No Selection", "1"),
@@ -149,11 +142,11 @@ int main(int argc, char *argv[]){
   pm.Push<EventScan>("scan", true, vector<NamedFunc>{"weight", "met"}, vector<shared_ptr<Process> >{tt1l});
   pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", {250., 400.}),
                   Axis(25, 0., 700., "mt", "m_{T} [GeV]", {140.}),
-                  "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1", "weight",
+                  "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1",
                   full_trig_skim, bkg_hist);
   pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", {250., 400.}),
                   Axis(25, 0., 700., "mt", "m_{T} [GeV]", {140.}),
-                  "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1", "weight",
+                  "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1",
                   vector<shared_ptr<Process> >{tt1l, tt2l, t1tttt_nc}, bkg_pts);
 
   if(single_thread) pm.multithreaded_ = false;

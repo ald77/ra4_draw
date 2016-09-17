@@ -1,5 +1,5 @@
-#ifndef H_HISTO_STACK
-#define H_HISTO_STACK
+#ifndef H_HIST1D
+#define H_HIST1D
 
 #include <vector>
 #include <utility>
@@ -17,17 +17,17 @@
 
 #include "core/figure.hpp"
 #include "core/process.hpp"
-#include "core/histo_def.hpp"
+#include "core/axis.hpp"
 #include "core/plot_opt.hpp"
 
-class HistoStack final: public Figure{
+class Hist1D final: public Figure{
 public:
-  class SingleHist final: public Figure::FigureComponent{
+  class SingleHist1D final: public Figure::FigureComponent{
   public:
-    SingleHist(const HistoStack &stack,
+    SingleHist1D(const Hist1D &stack,
                const std::shared_ptr<Process> &process,
                const TH1D &hist);
-    ~SingleHist() = default;
+    ~SingleHist1D() = default;
 
     TH1D raw_hist_;//!<Histogram storing distribution before stacking and luminosity weighting
     mutable TH1D scaled_hist_;//!<Kludge. Mutable storage of scaled and stacked histogram
@@ -42,22 +42,22 @@ public:
                   bool include_overflow = false) const;
 
   private:
-    SingleHist() = delete;
-    SingleHist(const SingleHist &) = delete;
-    SingleHist& operator=(const SingleHist &) = delete;
-    SingleHist(SingleHist &&) = delete;
-    SingleHist& operator=(SingleHist &&) = delete;
+    SingleHist1D() = delete;
+    SingleHist1D(const SingleHist1D &) = delete;
+    SingleHist1D& operator=(const SingleHist1D &) = delete;
+    SingleHist1D(SingleHist1D &&) = delete;
+    SingleHist1D& operator=(SingleHist1D &&) = delete;
 
     NamedFunc proc_and_hist_cut_;
     NamedFunc::VectorType cut_vector_, wgt_vector_, val_vector_;
   };
 
-  HistoStack(const HistoDef &definition,
+  Hist1D(const Axis &xaxis, const NamedFunc &cut,
              const std::vector<std::shared_ptr<Process> > &processes,
              const std::vector<PlotOpt> &plot_options = {PlotOpt()});
-  HistoStack(HistoStack &&) = default;
-  HistoStack& operator=(HistoStack &&) = default;
-  ~HistoStack() = default;
+  Hist1D(Hist1D &&) = default;
+  Hist1D& operator=(Hist1D &&) = default;
+  ~Hist1D() = default;
 
   void Print(double luminosity,
              const std::string &subdir) final;
@@ -66,13 +66,26 @@ public:
 
   FigureComponent * GetComponent(const Process *process) final;
 
-  HistoDef definition_;//!<Specification of content: plotted variable, binning, etc.
+  std::string Name() const;
+  std::string Title() const;
+
+  Hist1D & Weight(const NamedFunc &weight);
+  Hist1D & Tag(const std::string &tag);
+  Hist1D & RatioTitle(const std::string &numerator,
+                      const std::string &denominator);
+
+  Axis xaxis_;//!<Specification of content: plotted variable, binning, etc.
+  NamedFunc cut_;//!<Event selection
+  NamedFunc weight_;//!<Event weight
+  std::string tag_;//!<Filename tag to identify plot
+  std::string ratio_numerator_;//!<Label for numerator in ratio plot
+  std::string ratio_denominator_;//!<Label for denominator in ratio plot
   std::vector<PlotOpt> plot_options_;//!<Styles with which to draw plot
 
 private:
-  std::vector<std::unique_ptr<SingleHist> > backgrounds_;//!<Background components of the figure
-  std::vector<std::unique_ptr<SingleHist> > signals_;//!<Signal components of the figure
-  std::vector<std::unique_ptr<SingleHist> > datas_;//!<Data components of the figure
+  std::vector<std::unique_ptr<SingleHist1D> > backgrounds_;//!<Background components of the figure
+  std::vector<std::unique_ptr<SingleHist1D> > signals_;//!<Signal components of the figure
+  std::vector<std::unique_ptr<SingleHist1D> > datas_;//!<Data components of the figure
 
   mutable PlotOpt this_opt_;//!<Plot style currently being drawn
   mutable double luminosity_;//!<Luminosity currently being drawn
@@ -80,9 +93,9 @@ private:
   mutable double mc_scale_error_;//!<data/MC normalization uncertainty
   static TH1D blank_;//<!Blank histogram for creating dummy legend entries
 
-  HistoStack(const HistoStack &) = delete;
-  HistoStack& operator=(const HistoStack &) = delete;
-  HistoStack() = delete;
+  Hist1D(const Hist1D &) = delete;
+  Hist1D& operator=(const Hist1D &) = delete;
+  Hist1D() = delete;
 
   void RefreshScaledHistos();
   void InitializeHistos() const;
@@ -116,18 +129,18 @@ private:
 
   std::vector<std::shared_ptr<TLegend> > GetLegends();
   void AddEntries(std::vector<std::shared_ptr<TLegend> > &legends,
-                  const std::vector<std::unique_ptr<SingleHist> > &hists,
+                  const std::vector<std::unique_ptr<SingleHist1D> > &hists,
                   const std::string &style,
                   std::size_t n_entries,
                   std::size_t &entries_added) const;
   double GetLegendRatio() const;
 
-  double GetYield(std::vector<std::unique_ptr<SingleHist> >::const_iterator h) const;
-  double GetMean(std::vector<std::unique_ptr<SingleHist> >::const_iterator h) const;
+  double GetYield(std::vector<std::unique_ptr<SingleHist1D> >::const_iterator h) const;
+  double GetMean(std::vector<std::unique_ptr<SingleHist1D> >::const_iterator h) const;
 
   void GetTitleSize(double &width, double &height, bool in_pixels) const;
 
-  const std::vector<std::unique_ptr<SingleHist> >& GetComponentList(const Process *process);
+  const std::vector<std::unique_ptr<SingleHist1D> >& GetComponentList(const Process *process);
 };
 
 #endif

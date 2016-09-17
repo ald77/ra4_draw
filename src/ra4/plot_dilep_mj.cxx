@@ -16,7 +16,7 @@
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
 #include "core/table.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 #include "core/utilities.hpp"
 
 using namespace std;
@@ -126,58 +126,45 @@ int main(int argc, char *argv[]){
   if(do_rc) mjname = "M_{J}^{no lep}";
 
   /////////// 1 lepton
-  pm_2015.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                                    "met>200&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=3", "weight",
-                                    {250., 400.}),procs_2015, plot_types);
+  Axis mj_axis(nbins, minx, maxx, "mj14", mjname+" [GeV]", {250., 400.});
+  pm_2015.Push<Hist1D>(mj_axis, "met>200&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=3",
+                       procs_2015, plot_types);
   if(!do_rc){
-    pm_2015.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                                      "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=5", "weight",
-                                      {250., 400.}),procs_2015, plot_types);
-    pm_2015.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                                      "met>200&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=6", "weight",
-                                      {250., 400.}),procs_2015, plot_types);
+    pm_2015.Push<Hist1D>(mj_axis, "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=5",
+                         procs_2015, plot_types);
+    pm_2015.Push<Hist1D>(mj_axis, "met>200&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=6",
+                         procs_2015, plot_types);
   }
-  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                               "met>150&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=3", "weight",
-                               {250., 400.}),lowmet_procs, plot_types);
+  pm.Push<Hist1D>(mj_axis, "met>150&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=3",
+                  lowmet_procs, plot_types);
   if(!do_rc){
-    pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                                 "met>150&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=5", "weight",
-                                 {250., 400.}),lowmet_procs, plot_types);
-    pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                                 "met>150&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=6", "weight",
-                                 {250., 400.}),lowmet_procs, plot_types);
+    pm.Push<Hist1D>(mj_axis, "met>150&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=5",
+                    lowmet_procs, plot_types);
+    pm.Push<Hist1D>(mj_axis, "met>150&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=6",
+                    lowmet_procs, plot_types);
   }
 
   /////////// 2 leptons
-  pm_2015.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                                    "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=3", "weight",
-                                    {250., 400.}),procs_2015, plot_types);
+  pm_2015.Push<Hist1D>(mj_axis, "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=3",
+                       procs_2015, plot_types);
   if(!do_rc){
-    pm_2015.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                                      "met>200&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=5", "weight",
-                                      {250., 400.}),procs_2015, plot_types);
-    pm_2015.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                                      "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=6", "weight",
-                                      {250., 400.}),procs_2015, plot_types);
+    pm_2015.Push<Hist1D>(mj_axis, "met>200&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=5",
+                         procs_2015, plot_types);
+    pm_2015.Push<Hist1D>(mj_axis, "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=6",
+                         procs_2015, plot_types);
   }
 
-  pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                               "met>150&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=3", "weight",
-                               {250., 400.}),lowmet_procs, plot_types);
+  pm.Push<Hist1D>(mj_axis, "met>150&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=3",
+                  lowmet_procs, plot_types);
   if(!do_rc){
-    pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                                 "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets==3", "weight",
-                                 {250., 400.}),lowmet_procs, plot_types);
-    pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                                 "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets==4", "weight",
-                                 {250., 400.}),lowmet_procs, plot_types);
-    pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                                 "met>150&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=5", "weight",
-                                 {250., 400.}),lowmet_procs, plot_types);
-    pm.Push<HistoStack>(HistoDef(nbins, minx, maxx, "mj14", mjname+" [GeV]",
-                                 "met>150&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=6", "weight",
-                                 {250., 400.}),lowmet_procs, plot_types);
+    pm.Push<Hist1D>(mj_axis, "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets==3",
+                    lowmet_procs, plot_types);
+    pm.Push<Hist1D>(mj_axis, "met>200&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets==4",
+                    lowmet_procs, plot_types);
+    pm.Push<Hist1D>(mj_axis, "met>150&&met<500 && mt<=140 && nleps==1 && nbm>=1 && njets>=5",
+                    lowmet_procs, plot_types);
+    pm.Push<Hist1D>(mj_axis, "met>150&&met<500 && nels==1 && nmus==1 && nbm<=2 && njets>=6",
+                    lowmet_procs, plot_types);
   }
 
   if(single_thread) pm.multithreaded_ = false;

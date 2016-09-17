@@ -19,7 +19,7 @@
 #include "core/process.hpp"
 #include "core/plot_maker.hpp"
 #include "core/event_scan.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 #include "core/palette.hpp"
 
 using namespace std;
@@ -664,75 +664,75 @@ int main(){
   NamedFunc is_transfer_nolep("is_transfer_nolep", IsTransferNoLep);
 
   PlotMaker pm;
-  pm.Push<HistoStack>(HistoDef("transfer", 5, -0.5, 4.5, "ntruleps", "True Num. Leptons",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 5, -0.5, 4.5, "mm_nleps[0]", "Correct Num. Leptons",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 5, -0.5, 4.5, "mm_nleps[2]", "Mismeasured Num. Leptons",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 2000., "mm_ht[0]", "Correct H_{T} [GeV]",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 2000., "mm_ht[2]", "Mismeasured H_{T} [GeV]",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 15, 0., 1500., "mm_met[0]", "Correct MET [GeV]",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 15, 0., 1500., "mm_met[2]", "Mismeasured MET [GeV]",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 16, -0.5, 15.5, "mm_njets[0]", "Correct N_{jets}",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 16, -0.5, 15.5, "mm_njets[2]", "Mismeasured N_{jets}",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 7, -0.5, 6.5, "mm_nbm[0]", "Correct N_{b}",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 7, -0.5, 6.5, "mm_nbm[2]", "Mismeasured N_{b}",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 10, 0., 700., "mm_mt[0]", "Correct m_{T} [GeV]",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 10, 0., 700., "mm_mt[2]", "Mismeasured m_{T} [GeV]",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_lep[0]", "Correct M_{J} (with lep) [GeV]",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_lep[2]", "Mismeasured M_{J} (with lep) [GeV]",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_nolep[0]", "Correct M_{J} (no lep) [GeV]",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_nolep[2]", "Mismeasured M_{J} (no lep) [GeV]",
-                               is_transfer_lep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 5, -0.5, 4.5, "ntruleps", "True Num. Leptons",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 5, -0.5, 4.5, "mm_nleps[0]", "Correct Num. Leptons",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 5, -0.5, 4.5, "mm_nleps[2]", "Mismeasured Num. Leptons",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 2000., "mm_ht[0]", "Correct H_{T} [GeV]",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 2000., "mm_ht[2]", "Mismeasured H_{T} [GeV]",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 15, 0., 1500., "mm_met[0]", "Correct MET [GeV]",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 15, 0., 1500., "mm_met[2]", "Mismeasured MET [GeV]",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 16, -0.5, 15.5, "mm_njets[0]", "Correct N_{jets}",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 16, -0.5, 15.5, "mm_njets[2]", "Mismeasured N_{jets}",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 7, -0.5, 6.5, "mm_nbm[0]", "Correct N_{b}",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 7, -0.5, 6.5, "mm_nbm[2]", "Mismeasured N_{b}",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 10, 0., 700., "mm_mt[0]", "Correct m_{T} [GeV]",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 10, 0., 700., "mm_mt[2]", "Mismeasured m_{T} [GeV]",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_lep[0]", "Correct M_{J} (with lep) [GeV]",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_lep[2]", "Mismeasured M_{J} (with lep) [GeV]",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_nolep[0]", "Correct M_{J} (no lep) [GeV]",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_nolep[2]", "Mismeasured M_{J} (no lep) [GeV]",
-                               is_transfer_nolep), procs, plot_types);
-  pm.Push<HistoStack>(HistoDef("transfer", 20, 0., 1000., "mm_mj14_nolep[2]", "Mismeasured M_{J} (no lep) [GeV]",
-                               is_transfer_nolep), procs, plot_types);
+  pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "ntruleps", "True Num. Leptons"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "mm_nleps[0]", "Correct Num. Leptons"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "mm_nleps[2]", "Mismeasured Num. Leptons"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(20, 0., 2000., "mm_ht[0]", "Correct H_{T} [GeV]"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(20, 0., 2000., "mm_ht[2]", "Mismeasured H_{T} [GeV]"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(15, 0., 1500., "mm_met[0]", "Correct MET [GeV]"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(15, 0., 1500., "mm_met[2]", "Mismeasured MET [GeV]"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(16, -0.5, 15.5, "mm_njets[0]", "Correct N_{jets}"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(16, -0.5, 15.5, "mm_njets[2]", "Mismeasured N_{jets}"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "mm_nbm[0]", "Correct N_{b}"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "mm_nbm[2]", "Mismeasured N_{b}"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(10, 0., 700., "mm_mt[0]", "Correct m_{T} [GeV]"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(10, 0., 700., "mm_mt[2]", "Mismeasured m_{T} [GeV]"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(20, 0., 1000., "mm_mj14_lep[0]", "Correct M_{J} (with lep) [GeV]"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(20, 0., 1000., "mm_mj14_lep[2]", "Mismeasured M_{J} (with lep) [GeV]"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(20, 0., 1000., "mm_mj14_nolep[0]", "Correct M_{J} (no lep) [GeV]"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(20, 0., 1000., "mm_mj14_nolep[2]", "Mismeasured M_{J} (no lep) [GeV]"),
+                  is_transfer_lep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "ntruleps", "True Num. Leptons"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "mm_nleps[0]", "Correct Num. Leptons"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "mm_nleps[2]", "Mismeasured Num. Leptons"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(20, 0., 2000., "mm_ht[0]", "Correct H_{T} [GeV]"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(20, 0., 2000., "mm_ht[2]", "Mismeasured H_{T} [GeV]"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(15, 0., 1500., "mm_met[0]", "Correct MET [GeV]"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(15, 0., 1500., "mm_met[2]", "Mismeasured MET [GeV]"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(16, -0.5, 15.5, "mm_njets[0]", "Correct N_{jets}"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(16, -0.5, 15.5, "mm_njets[2]", "Mismeasured N_{jets}"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "mm_nbm[0]", "Correct N_{b}"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "mm_nbm[2]", "Mismeasured N_{b}"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(10, 0., 700., "mm_mt[0]", "Correct m_{T} [GeV]"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(10, 0., 700., "mm_mt[2]", "Mismeasured m_{T} [GeV]"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(20, 0., 1000., "mm_mj14_lep[0]", "Correct M_{J} (with lep) [GeV]"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(20, 0., 1000., "mm_mj14_lep[2]", "Mismeasured M_{J} (with lep) [GeV]"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(20, 0., 1000., "mm_mj14_nolep[0]", "Correct M_{J} (no lep) [GeV]"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(20, 0., 1000., "mm_mj14_nolep[2]", "Mismeasured M_{J} (no lep) [GeV]"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
+  pm.Push<Hist1D>(Axis(20, 0., 1000., "mm_mj14_nolep[2]", "Mismeasured M_{J} (no lep) [GeV]"),
+                  is_transfer_nolep, procs, plot_types).Tag("transfer");
   pm.MakePlots(2.6);
 }

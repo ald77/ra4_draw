@@ -8,7 +8,7 @@
 #include "core/plot_maker.hpp"
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
-#include "core/histo_stack.hpp"
+#include "core/hist1d.hpp"
 #include "core/event_scan.hpp"
 #include "core/utilities.hpp"
 #include "core/table.hpp"
@@ -48,13 +48,13 @@ int main(){
   set<string> files_wjets({folder_mc+"*_WJetsToLNu*.root"});
   set<string> files_st({folder_mc+"*_ST_*.root"});
   set<string> files_other({
-    folder_mc+"*DYJetsToLL*.root", folder_mc+"*_QCD_HT*.root", 
-    folder_mc+"*_ZJet*.root", folder_mc+"*_WWTo*.root", 
-    folder_mc+"*ggZH_HToBB*.root", folder_mc+"*ttHJetTobb*.root",
-    folder_mc+"*_TTGJets*.root", folder_mc+"*_TTTT_*.root", 
-    folder_mc+"*_TTWJets*.root", folder_mc+"*_TTZTo*.root",
-    folder_mc+"*_WH_HToBB*.root", folder_mc+"*_WZTo*.root",
-    folder_mc+"*_ZH_HToBB*.root", folder_mc+"_ZZ_*.root"});
+      folder_mc+"*DYJetsToLL*.root", folder_mc+"*_QCD_HT*.root", 
+        folder_mc+"*_ZJet*.root", folder_mc+"*_WWTo*.root", 
+        folder_mc+"*ggZH_HToBB*.root", folder_mc+"*ttHJetTobb*.root",
+        folder_mc+"*_TTGJets*.root", folder_mc+"*_TTTT_*.root", 
+        folder_mc+"*_TTWJets*.root", folder_mc+"*_TTZTo*.root",
+        folder_mc+"*_WH_HToBB*.root", folder_mc+"*_WZTo*.root",
+        folder_mc+"*_ZH_HToBB*.root", folder_mc+"_ZZ_*.root"});
   
   set<string> files_nontt(files_other);
   files_nontt.insert(files_wjets.begin(), files_wjets.end());
@@ -65,10 +65,10 @@ int main(){
 
   PlotOpt log_shapes("txt/plot_styles.txt", "CMSPaper");
   log_shapes.Title(TitleType::info)
-  .Bottom(BottomType::ratio)
-  .YAxis(YAxisType::log)
-  .Stack(StackType::shapes)
-  .RatioMaximum(2.4);
+    .Bottom(BottomType::ratio)
+    .YAxis(YAxisType::log)
+    .Stack(StackType::shapes)
+    .RatioMaximum(2.4);
   PlotOpt lin_shapes = log_shapes().YAxis(YAxisType::linear);
   vector<PlotOpt> plot_types = {lin_shapes};
 
@@ -77,48 +77,48 @@ int main(){
   NamedFunc baseline_lveto = "stitch && nleps==1 && nveto==1 && nbm>=1 && mt>140";
 
   auto tt1l_lowmt = Process::MakeShared<Baby_full>("t#bar{t}(1l), m_{T} #leq 140", 
-    Process::Type::background, colors("tt_1l"), files_tt, baseline_1l && "ntruleps>=1 && mt<=140");
+                                                   Process::Type::background, colors("tt_1l"), files_tt, baseline_1l && "ntruleps>=1 && mt<=140");
   tt1l_lowmt->SetLineStyle(2);
   auto tt1l_highmt = Process::MakeShared<Baby_full>("t#bar{t}(1l), m_{T} > 140", 
-    Process::Type::background, colors("tt_1l"), files_tt, baseline_1l && "ntruleps>=1 && mt>140");
+                                                    Process::Type::background, colors("tt_1l"), files_tt, baseline_1l && "ntruleps>=1 && mt>140");
   auto tt2l = Process::MakeShared<Baby_full>("t#bar{t}(2l)", 
-    Process::Type::background, kGreen+2, files_tt, baseline_2l && "ntruleps>=1");
+                                             Process::Type::background, kGreen+2, files_tt, baseline_2l && "ntruleps>=1");
   auto ttlveto = Process::MakeShared<Baby_full>("t#bar{t}(lv), m_{T} > 140", 
-    Process::Type::background, kOrange+1, files_tt, baseline_lveto && "ntruleps>=1");
+                                                Process::Type::background, kOrange+1, files_tt, baseline_lveto && "ntruleps>=1");
 
   auto tt1l_highmt_2trul = Process::MakeShared<Baby_full>("t#bar{t}(1l), m_{T} > 140, tru: 2l", 
-    Process::Type::background, colors("tt_2l"), files_tt,
-    baseline_1l && "ntruleps>=1 && ntruels+ntrumus+ntrutausl==2 && mt>140");
+                                                          Process::Type::background, colors("tt_2l"), files_tt,
+                                                          baseline_1l && "ntruleps>=1 && ntruels+ntrumus+ntrutausl==2 && mt>140");
   auto tt1l_highmt_1trul_1trutauh = Process::MakeShared<Baby_full>("t#bar{t}(1l), m_{T} > 140, tru: l#tau_{h}", 
-    Process::Type::background, kBlue-6, files_tt,
-    baseline_1l && "ntruleps>=1 && ntruels+ntrumus+ntrutausl==1 && ntrutaush==1 && mt>140");
+                                                                   Process::Type::background, kBlue-6, files_tt,
+                                                                   baseline_1l && "ntruleps>=1 && ntruels+ntrumus+ntrutausl==1 && ntrutaush==1 && mt>140");
   auto tt1l_highmt_1trul = Process::MakeShared<Baby_full>("t#bar{t}(1l), m_{T} > 140, tru: 1l", 
-    Process::Type::background, kTeal-6, files_tt,
-    baseline_1l && "ntruleps>=1 && ntruels+ntrumus+ntrutausl==1 && ntrutaush==0 && mt>140");
+                                                          Process::Type::background, kTeal-6, files_tt,
+                                                          baseline_1l && "ntruleps>=1 && ntruels+ntrumus+ntrutausl==1 && ntrutaush==0 && mt>140");
 
   auto bkg1l_lowmt = Process::MakeShared<Baby_full>("Tot. bkgd (1l), m_{T}#leq140", 
-    Process::Type::background, kGray+3, files_all, baseline_1l && "mt<=140");
+                                                    Process::Type::background, kGray+3, files_all, baseline_1l && "mt<=140");
   bkg1l_lowmt->SetLineStyle(2);
   auto bkg1l_highmt = Process::MakeShared<Baby_full>("Tot. bkgd (1l), m_{T}>140", 
-    Process::Type::background, kGray+3, files_all, baseline_1l && "mt>140");
+                                                     Process::Type::background, kGray+3, files_all, baseline_1l && "mt>140");
   auto bkg2l = Process::MakeShared<Baby_full>("Tot. bkgd (2l)", 
-    Process::Type::background, kGreen-5, files_all, baseline_2l);
+                                              Process::Type::background, kGreen-5, files_all, baseline_2l);
   auto bkglveto = Process::MakeShared<Baby_full>("Tot. bkgd (lv), m_{T} > 140", 
-    Process::Type::background, kOrange+1, files_all, baseline_lveto);
+                                                 Process::Type::background, kOrange+1, files_all, baseline_lveto);
 
   auto wjets1l_lowmt = Process::MakeShared<Baby_full>("W+jets (1l), m_{T}#leq140", 
-    Process::Type::background, colors("wjets"), files_wjets, baseline_1l && "mt<=140");
+                                                      Process::Type::background, colors("wjets"), files_wjets, baseline_1l && "mt<=140");
   // wjets1l_lowmt->SetLineStyle(2);
   auto st1l_lowmt = Process::MakeShared<Baby_full>("Single t (1l), m_{T}#leq140", 
-    Process::Type::background, colors("single_t"), files_st, baseline_1l && "mt<=140");
+                                                   Process::Type::background, colors("single_t"), files_st, baseline_1l && "mt<=140");
   // st1l_lowmt->SetLineStyle(2);
   auto other1l_lowmt = Process::MakeShared<Baby_full>("Other (1l), m_{T}#leq140", 
-    Process::Type::background, colors("other"), files_other, baseline_1l && "mt<=140");
+                                                      Process::Type::background, colors("other"), files_other, baseline_1l && "mt<=140");
   // other1l_lowmt->SetLineStyle(2);
   auto nontt2l = Process::MakeShared<Baby_full>("Non-t#bar{t} (2l)", 
-    Process::Type::background, colors("other"), files_nontt, baseline_2l);
+                                                Process::Type::background, colors("other"), files_nontt, baseline_2l);
   auto nontt1l_highmt = Process::MakeShared<Baby_full>("Non-t#bar{t} (1l), m_{T}>140", 
-    Process::Type::background, colors("other"), files_nontt, baseline_1l && "mt>140");
+                                                       Process::Type::background, colors("other"), files_nontt, baseline_1l && "mt>140");
 
   map<string, vector<shared_ptr<Process> > > procs, procs_pie, procs_isr;
   // compare the shapes of the low-mT components: tt, st, w, other
@@ -126,11 +126,11 @@ int main(){
   procs_pie["lowmt"] = vector<shared_ptr<Process> >({tt1l_lowmt, other1l_lowmt, st1l_lowmt, wjets1l_lowmt});
   // compare the tt@low-mT shape to the high-mT components: tru 2l, tru 1l+tauh, non-tt 
   procs["highmt"] = vector<shared_ptr<Process> >({tt1l_lowmt, tt1l_highmt_2trul, 
-                                                  tt1l_highmt_1trul_1trutauh, tt1l_highmt_1trul, nontt1l_highmt});
+        tt1l_highmt_1trul_1trutauh, tt1l_highmt_1trul, nontt1l_highmt});
   procs_isr["highmt"] = vector<shared_ptr<Process> >({tt1l_lowmt, tt1l_highmt_2trul, 
-                                                  tt1l_highmt_1trul_1trutauh, tt1l_highmt_1trul});
+        tt1l_highmt_1trul_1trutauh, tt1l_highmt_1trul});
   procs_pie["highmt"] = vector<shared_ptr<Process> >({tt1l_highmt_2trul, 
-                                                  tt1l_highmt_1trul_1trutauh, tt1l_highmt_1trul, nontt1l_highmt});
+        tt1l_highmt_1trul_1trutauh, tt1l_highmt_1trul, nontt1l_highmt});
   // compare the tt@low-mT shape to the dilepton test pieces: tt 2l, non-tt 2l and lveto
   procs["dilep"] = vector<shared_ptr<Process> >({tt1l_lowmt, nontt2l, ttlveto, tt2l});
   procs_isr["dilep"] = vector<shared_ptr<Process> >({tt1l_lowmt, ttlveto, tt2l});
@@ -143,26 +143,26 @@ int main(){
   if (do_htopts) {
     htopt.push_back(NamedFunc("ht"));
     htopt.push_back(NamedFunc("st", [](const Baby &b) -> NamedFunc::ScalarType{
-      float st = b.ht();
-      for (const auto &pt: *(b.leps_pt())) st += pt; 
-      return st;
-    }));
+          float st = b.ht();
+          for (const auto &pt: *(b.leps_pt())) st += pt; 
+          return st;
+        }));
     htopt.push_back(NamedFunc("ht1l_stmin2l", [](const Baby &b) -> NamedFunc::ScalarType{
-      float ht_proxy = b.ht();
-      if (b.nleps()==2) ht_proxy =  b.ht()+b.leps_pt()->at(1);
-      return ht_proxy;
-    }));
+          float ht_proxy = b.ht();
+          if (b.nleps()==2) ht_proxy =  b.ht()+b.leps_pt()->at(1);
+          return ht_proxy;
+        }));
     htopt.push_back(NamedFunc("ht1l_stave2l", [](const Baby &b) -> NamedFunc::ScalarType{
-      float ht_proxy = b.ht();
-      if (b.nleps()==2) ht_proxy =  b.ht()+(b.leps_pt()->at(0)+b.leps_pt()->at(1))/2.;
-      return ht_proxy;
-    }));
+          float ht_proxy = b.ht();
+          if (b.nleps()==2) ht_proxy =  b.ht()+(b.leps_pt()->at(0)+b.leps_pt()->at(1))/2.;
+          return ht_proxy;
+        }));
   }
   htopt.push_back(NamedFunc("ht1l_stmax2l", [](const Baby &b) -> NamedFunc::ScalarType{
-    float ht_proxy = b.ht();
-    if (b.nleps()==2) ht_proxy =  b.ht()+b.leps_pt()->at(0);
-    return ht_proxy;
-  }));
+        float ht_proxy = b.ht();
+        if (b.nleps()==2) ht_proxy =  b.ht()+b.leps_pt()->at(0);
+        return ht_proxy;
+      }));
 
   vector<NamedFunc> metbins;
   if (do_met150) metbins.push_back(NamedFunc("met>150&&met<=200"));
@@ -175,12 +175,12 @@ int main(){
   } 
 
   NamedFunc ave_toppt("ave_toppt",[](const Baby &b) -> NamedFunc::ScalarType{
-    float toppt = 0;
-    for (size_t imc(0); imc<b.mc_pt()->size(); imc++){
-      if (fabs(b.mc_id()->at(imc))==6 && b.mc_status()->at(imc)==62) toppt += b.mc_pt()->at(imc);
-    }
-    return toppt/2.;
-  });
+      float toppt = 0;
+      for (size_t imc(0); imc<b.mc_pt()->size(); imc++){
+        if (fabs(b.mc_id()->at(imc))==6 && b.mc_status()->at(imc)==62) toppt += b.mc_pt()->at(imc);
+      }
+      return toppt/2.;
+    });
 
   map<bool, vector<string> > nobjbins;
   // with leptons clustered
@@ -215,17 +215,17 @@ int main(){
               procs_tmp = vector<shared_ptr<Process> >({bkg1l_lowmt, bkglveto, bkg1l_highmt});
             // histograms
             NamedFunc icut = imet && inobj && iht>500;
-            pm.Push<HistoStack>(HistoDef(CodeToPlainText(iproc.first+"_"+iht.Name()),
-              10, 100., 850., var, xtitle, icut, "weight", {250.,400.}), procs_tmp, plot_types);
-            plot_names.insert(pm.GetLast<HistoStack>()->definition_.Name()+"_OPT_"+plot_types[0].TypeString()+".pdf");
+            pm.Push<Hist1D>(Axis(10, 100., 850., var, xtitle, {250., 400.}),
+                            icut, procs_tmp, plot_types).Tag(CodeToPlainText(iproc.first+"_"+iht.Name()));
+            plot_names.insert(pm.GetLast<Hist1D>()->Name()+"_OPT_"+plot_types[0].TypeString()+".pdf");
 
             if (procs_isr.find(iproc.first)!=procs_isr.end()) {
-              pm.Push<HistoStack>(HistoDef(CodeToPlainText(iproc.first+"_"+iht.Name()),
-                10, 0., 800., ave_toppt, "Ave. top p_{T} [GeV]", icut && var+">250", "weight"), procs_isr[iproc.first], plot_types);
-              plot_names.insert(pm.GetLast<HistoStack>()->definition_.Name()+"_OPT_"+plot_types[0].TypeString()+".pdf");
-              pm.Push<HistoStack>(HistoDef(CodeToPlainText(iproc.first+"_"+iht.Name()),
-                10, 0., 800., "isr_tru_pt", "True ISR p_{T} [GeV]", icut && var+">250", "weight"), procs_isr[iproc.first], plot_types);
-              plot_names.insert(pm.GetLast<HistoStack>()->definition_.Name()+"_OPT_"+plot_types[0].TypeString()+".pdf");
+              pm.Push<Hist1D>(Axis(10, 0., 800., ave_toppt, "Ave. top p_{T} [GeV]"),
+                              icut && var+">250", procs_isr[iproc.first], plot_types).Tag(CodeToPlainText(iproc.first+"_"+iht.Name()));
+              plot_names.insert(pm.GetLast<Hist1D>()->Name()+"_OPT_"+plot_types[0].TypeString()+".pdf");
+              pm.Push<Hist1D>(Axis(10, 0., 800., "isr_tru_pt", "True ISR p_{T} [GeV]"),
+                              icut && var+">250", procs_isr[iproc.first], plot_types).Tag(CodeToPlainText(iproc.first+"_"+iht.Name()));
+              plot_names.insert(pm.GetLast<Hist1D>()->Name()+"_OPT_"+plot_types[0].TypeString()+".pdf");
             }
             // pies
             table_cuts.push_back(TableRow("",icut));
