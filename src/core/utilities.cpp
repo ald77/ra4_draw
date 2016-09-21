@@ -114,12 +114,15 @@ string CodeToPlainText(string code){
 }
 
 string CodeToRootTex(string code){
+  ReplaceAll(code, " ", "");
+
   ReplaceAll(code, "ht1l_stmin2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,min}");
   ReplaceAll(code, "ht1l_stmax2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,max}");
   ReplaceAll(code, "ht1l_stave2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,ave}");
   ReplaceAll(code, "st", "S_{T}");
 
   ReplaceAll(code, "met>150&&met<=200", "150<met<=200");
+  ReplaceAll(code, "met>200&&met<=300", "200<met<=300");
   ReplaceAll(code, "met>200&&met<=350", "200<met<=350");
   ReplaceAll(code, "met>350&&met<=500", "350<met<=500");
   ReplaceAll(code, "njets>=5&&njets<=7", "5<=njets<=7");

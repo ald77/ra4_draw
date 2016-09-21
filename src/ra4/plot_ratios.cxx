@@ -77,7 +77,7 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
       // Throwing toys to find ratios and uncertainties
       val = calcKappa(entries, weights, powers, valdown, valup);
       if(valdown<0) valdown = 0;
-      ratios[igraph].push_back(vector<float>({val, valup, valdown}));
+      ratios[igraph].push_back(vector<float>({val, valdown, valup}));
       if(maxr < val+valup) maxr = val+valup;
       if(minr > val-valdown) minr = val-valdown;
     } // Loop over bins
