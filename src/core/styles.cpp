@@ -10,6 +10,8 @@ void setPlotStyle(PlotOpt opts){
   gStyle->SetOptStat(0);              // No Stats box
   gStyle->SetPadTickX(1);             // Ticks at the right
   gStyle->SetPadTickY(1);             // Ticks at the top
+  gStyle->SetCanvasDefW(opts.CanvasWidth());
+  gStyle->SetCanvasDefH(opts.CanvasHeight());
 
   //// Pad
   gStyle->SetPadRightMargin (opts.RightMargin());    

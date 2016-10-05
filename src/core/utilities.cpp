@@ -121,6 +121,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "ht1l_stave2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,ave}");
   ReplaceAll(code, "st", "S_{T}");
 
+  ReplaceAll(code, "met>100&&met<=150", "100<met<=150");
   ReplaceAll(code, "met>150&&met<=200", "150<met<=200");
   ReplaceAll(code, "met>200&&met<=300", "200<met<=300");
   ReplaceAll(code, "met>200&&met<=350", "200<met<=350");

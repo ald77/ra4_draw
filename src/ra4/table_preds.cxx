@@ -99,6 +99,10 @@ int main(int argc, char *argv[]){
   string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/");
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_stdnj5/");
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_stdnj5/");
+  if(skim.Contains("met100")) {
+    foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/";
+    ntupletag="";
+  }
 
   // Old 2015 data
   if(skim.Contains("2015")){
@@ -117,6 +121,7 @@ int main(int argc, char *argv[]){
   // Cuts in baseline speed up the yield finding
   string baseline_s = "mj14>250 && nleps>=1 && met>150 && njets>=5";
   if(skim.Contains("mj12")) ReplaceAll(baseline_s, "mj14","mj");
+  if(skim.Contains("met100")) ReplaceAll(baseline_s, "150","100");
 
   NamedFunc baseline=baseline_s;
   if(do_ht) baseline = baseline && "ht>500";
@@ -207,15 +212,17 @@ int main(int argc, char *argv[]){
   // baseline defined above
 
   ////// MET cuts
-  TString c_vlowmet = "met>150 && met<=200";
-  TString c_lowmet  = "met>200 && met<=350";
-  TString c_midmet  = "met>350 && met<=500";
-  TString c_higmet  = "met>500";
+  TString c_vvlowmet = "met>100 && met<=150";
+  TString c_vlowmet  = "met>150 && met<=200";
+  TString c_lowmet   = "met>200 && met<=350";
+  TString c_midmet   = "met>350 && met<=500";
+  TString c_higmet   = "met>500";
 
   ////// Nb cuts
-  TString c_lownb = "nbm==1";
-  TString c_midnb = "nbm==2";
-  TString c_hignb = "nbm>=3";
+  TString c_vlownb = "nbm==0";
+  TString c_lownb  = "nbm==1";
+  TString c_midnb  = "nbm==2";
+  TString c_hignb  = "nbm>=3";
 
   ////// Njets cuts
   TString c_vlownj = "njets>=4 && njets<=5";
@@ -346,10 +353,24 @@ int main(int argc, char *argv[]){
 	metcuts = vector<TString>{c_vlowmet, c_lowmet, c_midmet, c_higmet};
 	caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
       } // allmetsignal
+      if(method.Contains("met100")) {
+	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
+	bincuts = vector<TString>{c_lownb+" && "+c_lownj, c_lownb+" && "+c_hignj,
+				  c_midnb+" && "+c_lownj, c_midnb+" && "+c_hignj,
+				  c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj};
+	caption = "Signal search regions plus $100<\\met\\leq200$ GeV";
+      } // allmetsignal
+      if(method.Contains("nb0")) {
+	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
+	bincuts = vector<TString>{"nbm==0&&njets>=6"};
+	basecuts = "nleps==1 && nveto==0";
+	caption = "Signal search regions plus $100<\\met\\leq200$ GeV for $\\Nb==0$";
+      } // allmetsignal
       if(method.Contains("onemet")) {
 	metcuts = vector<TString>{"met>200"};
 	caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
       } // allmetsignal
+      if(method.Contains("onebin")) bincuts = vector<TString>{"njets>=6&&nbm>=1"};
     } // signal
 
 
@@ -358,7 +379,13 @@ int main(int argc, char *argv[]){
       //if(only_mc) metcuts.push_back(c_higmet);
       bincuts = vector<TString>{c_lownb+" && "+c_nj5, c_midnb+" && "+c_nj5, c_hignb+" && "+c_nj5};
       caption = "Validation regions with $1\\ell, \\njets=5$";
-    }
+      if(method.Contains("met100")) {
+	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
+	caption = "Validation regions with $1\\ell, \\njets=5$, $100<\\met\\leq200$ GeV";
+      } // allmetsignal
+      if(method.Contains("onebin")) bincuts = vector<TString>{"njets==5&&nbm>=1"};
+     }
+
     ////// Aggregate regions (single lepton). The nbm, njets integration in R1/R3 is done in abcd_method
     if(method.Contains("agg_himet")) {
       metcuts = vector<TString>{"met>500"};
@@ -656,10 +683,15 @@ TString Zbi(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg){
 void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
 
   bool label_up = false; //// Putting the MET labels at the bottom
+  double markerSize = 1.1;
 
   //// Setting plot style
   PlotOpt opts("txt/plot_styles.txt", "Kappa");
   if(label_up) opts.BottomMargin(0.11);
+  if(kappas.size() >= 4) {
+    opts.CanvasWidth(1300);
+    markerSize = 1.5;
+  }
   setPlotStyle(opts);
 
   struct kmarker{
@@ -668,11 +700,13 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
     int style;
     vector<float> kappa;
   };
-  //// k_ordered has all the kappas group in sets of nb cuts (typically, in bins of njets)
+  //// k_ordered has all the kappas grouped in sets of nb cuts (typically, in bins of njets)
   vector<vector<vector<kmarker> > > k_ordered;
   vector<kmarker> ind_bcuts; // nb cuts actually used in the plot
   vector<float> zz; // Zero length vector for the kmarker constructor
-  vector<kmarker> bcuts({{"nbm==1",4,20,zz}, {"nbm==2",2,21,zz}, {"nbm>=3",kGreen+3,22,zz}, {"nbm>=2",kMagenta+2,23,zz}});
+  vector<kmarker> bcuts({{"nbm==1",4,20,zz}, {"nbm==2",2,21,zz}, {"nbm>=3",kGreen+3,22,zz}, 
+								   {"nbm==0",kMagenta+2,23,zz}, 
+								   {"nbl==0",kMagenta+2,23,zz}});
 
   int nbins = 0; // Total number of njets bins (used in the base histo)
   for(size_t iplane=0; iplane < kappas.size(); iplane++) {
@@ -766,8 +800,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
             vexl[indb].push_back(0);
             vexh[indb].push_back(0);
             vy[indb].push_back(k_ordered[iplane][ibin][ib].kappa[0]);
-            veyl[indb].push_back(k_ordered[iplane][ibin][ib].kappa[1]);
-            veyh[indb].push_back(k_ordered[iplane][ibin][ib].kappa[2]);
+            veyh[indb].push_back(k_ordered[iplane][ibin][ib].kappa[1]);
+            veyl[indb].push_back(k_ordered[iplane][ibin][ib].kappa[2]);
           }
         } // Loop over nb cuts in ordered TGraphs
       } // Loop over nb cuts in kappa plot
@@ -795,7 +829,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   for(size_t indb=0; indb<ind_bcuts.size(); indb++){
     graph[indb] = TGraphAsymmErrors(vx[indb].size(), &(vx[indb][0]), &(vy[indb][0]),
                                     &(vexl[indb][0]), &(vexh[indb][0]), &(veyl[indb][0]), &(veyh[indb][0]));
-    graph[indb].SetMarkerStyle(ind_bcuts[indb].style); graph[indb].SetMarkerSize(1.1);
+    graph[indb].SetMarkerStyle(ind_bcuts[indb].style); graph[indb].SetMarkerSize(markerSize);
     graph[indb].SetMarkerColor(ind_bcuts[indb].color);
     graph[indb].SetLineColor(ind_bcuts[indb].color); graph[indb].SetLineWidth(2);
     graph[indb].Draw("p0 same");

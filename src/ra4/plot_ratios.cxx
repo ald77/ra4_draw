@@ -28,6 +28,7 @@
 #include "core/table.hpp"
 #include "core/styles.hpp"
 #include "core/plot_opt.hpp"
+#include "core/functions.hpp"
 
 using namespace std;
 
@@ -45,6 +46,16 @@ namespace{
     vector<TString> bincuts;
   };
 }
+
+NamedFunc offshellw("offshellw",[](const Baby &b) -> NamedFunc::ScalarType{
+    for (unsigned i(0); i<b.mc_pt()->size(); i++){
+      if (abs(b.mc_id()->at(i))!=24) continue;
+      if (b.mc_mass()->at(i) > 140.) {
+        return 1;
+      }
+    }
+    return 0;
+  });
 
 void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotdef,
 	       vector<vector<vector<int> > > &indices, vector<TString> &leglabels){
@@ -93,7 +104,7 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   if(indices[0].size()==4){
     size_t ind0=indices[0][0][1], ind1=indices[0][1][1];
     size_t ind2=indices[0][2][1], ind3=indices[0][3][1];
-    if((ind0==r4&&ind1==r3&&ind2==r2&&ind3==r1)) ytitle = "R(M_{J}^{high}) / R[M_{J}^{low}(t#bar{t}1l)]";
+    if((ind0==r4&&ind1==r3&&ind2==r2&&ind3==r1)) ytitle = "R(M_{J}^{high}) / R[M_{J}^{low}(bkg)]";
   }
   //// Setting plot style
   PlotOpt opts("txt/plot_styles.txt", "Ratio");
@@ -105,6 +116,7 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   TLatex label; label.SetTextSize(0.05); label.SetTextFont(42); label.SetTextAlign(23);
 
   float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = maxr*1.2;
+  if(maxy>5) maxy = 5;
   TH1D histo("histo", "", nbins, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
@@ -147,7 +159,8 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   leg.SetNColumns(ngraphs);
 
   Palette colors("txt/colors.txt", "default");
-  vector<int> mcolors({4, 2, kGreen+3, kMagenta+2});
+  //vector<int> mcolors({kRed, kGreen+1, 4, kMagenta+2});
+  vector<int> mcolors({kRed, kGreen-3, kCyan-3, 1});
   vector<int> styles({20, 21, 22, 23});
   TGraphAsymmErrors graph[20]; // There's problems with vectors of TGraphs, so using an array
   for(size_t igraph=0; igraph<ngraphs; igraph++){
@@ -203,15 +216,16 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string ntupletag="nleps1met200nj5";
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_06_14/mc/merged_met150_and_nleps1met200nj5/");
+  string ntupletag="";
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
   if(skim.Contains("met150")) ntupletag="_met150";
   if(skim.Contains("both")) ntupletag="";
 
   Palette colors("txt/colors.txt", "default");
 
   // Cuts in baseline speed up the yield finding
-  string baseline = "pass && stitch && mj14>250 && nleps==1 && nveto==0 && ht>500 && met>150 && njets>=5 && nbm>=1";
+  string baseline="";
+  NamedFunc baselinef = "pass && stitch && mj14>250 && nleps==1 && nveto==0 && st>500 && met>100 && njets>=5 && nbm>=1";
 
   // // For syncing
   // auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
@@ -221,34 +235,94 @@ int main(int argc, char *argv[]){
   //   {foldermc+"*_TTJets*DiLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
   //   baseline);
 
-  auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets*SingleLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
-    baseline+" && stitch && ntruleps==1");
-  auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
-    {foldermc+"*_TTJets*DiLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
-    baseline+" && stitch && ntruleps==2");
+  set<string> allfiles = {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root",
+    foldermc+"*_WJetsToLNu*"+ntupletag+"*.root",
+    foldermc+"*_ST_*"+ntupletag+"*.root",
+    foldermc+"*_TTW*"+ntupletag+"*.root", foldermc+"*_TTZ*"+ntupletag+"*.root",
+    foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_TTTT*"+ntupletag+"*.root",
+    foldermc+"*QCD_HT*Inf_Tune*"+ntupletag+"*.root", 
+    foldermc+"*QCD_HT*0_Tune*"+ntupletag+"*.root",foldermc+"*DYJetsToLL*"+ntupletag+"*.root",
+    foldermc+"*_ZJet*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
+    foldermc+"*_WH_HToBB*"+ntupletag+"*.root",foldermc+"*_ZH_HToBB*"+ntupletag+"*.root",
+    foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",
+    foldermc+"*_ZZ_*"+ntupletag+"*.root"
+  };
 
-  auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    {foldermc+"*_WJetsToLNu*"+ntupletag+"*.root",foldermc+"*_ST_*"+ntupletag+"*.root",
-        foldermc+"*_TTW*"+ntupletag+"*.root",foldermc+"*_TTZ*"+ntupletag+"*.root",
-        foldermc+"*DYJetsToLL*"+ntupletag+"*.root",foldermc+"*QCD_HT*"+ntupletag+"*.root",
-        foldermc+"*_ZJet*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
-        foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_TTTT*"+ntupletag+"*.root",
-        foldermc+"*_WH_HToBB*"+ntupletag+"*.root",foldermc+"*_ZH_HToBB*"+ntupletag+"*.root",
-        foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",foldermc+"*_ZZ_*"+ntupletag+"*.root"},
-    baseline+" && stitch");
+  set<string> nottfiles = {foldermc+"*_WJetsToLNu*"+ntupletag+"*.root",
+    foldermc+"*_ST_*"+ntupletag+"*.root",
+    foldermc+"*_TTW*"+ntupletag+"*.root", foldermc+"*_TTZ*"+ntupletag+"*.root",
+    foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_TTTT*"+ntupletag+"*.root",
+    foldermc+"*QCD_HT*Inf_Tune*"+ntupletag+"*.root", 
+    foldermc+"*QCD_HT*0_Tune*"+ntupletag+"*.root",foldermc+"*DYJetsToLL*"+ntupletag+"*.root",
+    foldermc+"*_ZJet*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
+    foldermc+"*_WH_HToBB*"+ntupletag+"*.root",foldermc+"*_ZH_HToBB*"+ntupletag+"*.root",
+    foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",
+    foldermc+"*_ZZ_*"+ntupletag+"*.root"
+  };
+
+  set<string> nowfiles = {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root",
+    foldermc+"*_ST_*"+ntupletag+"*.root",
+    foldermc+"*_TTW*"+ntupletag+"*.root", foldermc+"*_TTZ*"+ntupletag+"*.root",
+    foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_TTTT*"+ntupletag+"*.root",
+    foldermc+"*QCD_HT*Inf_Tune*"+ntupletag+"*.root", 
+    foldermc+"*QCD_HT*0_Tune*"+ntupletag+"*.root",foldermc+"*DYJetsToLL*"+ntupletag+"*.root",
+    foldermc+"*_ZJet*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
+    foldermc+"*_WH_HToBB*"+ntupletag+"*.root",foldermc+"*_ZH_HToBB*"+ntupletag+"*.root",
+    foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",
+    foldermc+"*_ZZ_*"+ntupletag+"*.root"
+  };
+
+  set<string> ttfiles = {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"};
+  set<string> wfiles = {foldermc+"*_WJetsToLNu*"+ntupletag+"*.root"};
+  //allfiles = ttfiles;
+
+  //// Contributions
+  auto proc_tt1l = Process::MakeShared<Baby_full>("1lbad", Process::Type::background, kRed,
+  						  allfiles, baselinef && "stitch && ntruleps<=1");
+  auto proc_other = Process::MakeShared<Baby_full>("1lgood", Process::Type::background, kGreen-3,
+  						   allfiles, baselinef && "stitch && ntruleps<=1 && mt_tru>140 && 0");
+  auto proc_tt2l = Process::MakeShared<Baby_full>("2l", Process::Type::background, kCyan-3,
+  						  allfiles, baselinef && "stitch && ntruleps>=2");
+
+  // //// Contributions
+  // auto proc_tt1l = Process::MakeShared<Baby_full>("1lbad", Process::Type::background, kRed,
+  // 						  allfiles, baselinef && "stitch && ntruleps<=1 && mt_tru<=140");
+  // auto proc_other = Process::MakeShared<Baby_full>("1lgood", Process::Type::background, kGreen-3,
+  // 						   allfiles, baselinef && "stitch && ntruleps<=1 && mt_tru>140");
+  // auto proc_tt2l = Process::MakeShared<Baby_full>("2l", Process::Type::background, kCyan-3,
+  // 						  allfiles, baselinef && "stitch && ntruleps>=2");
+
+
+  // //// Contributions
+  // auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
+  //   {foldermc+"*_TTJets*SingleLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
+  //   baselinef && "stitch && ntruleps==1");
+  // auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
+  //   {foldermc+"*_TTJets*DiLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
+  //   baselinef && "stitch && ntruleps==2");
+
+  // auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
+  //   {foldermc+"*_WJetsToLNu*"+ntupletag+"*.root",foldermc+"*_ST_*"+ntupletag+"*.root",
+  //       foldermc+"*_TTW*"+ntupletag+"*.root",foldermc+"*_TTZ*"+ntupletag+"*.root",
+  //       foldermc+"*DYJetsToLL*"+ntupletag+"*.root",foldermc+"*QCD_HT*Inf_Tune*"+ntupletag+"*.root", 
+  // 	foldermc+"*QCD_HT*0_Tune*"+ntupletag+"*.root",
+  //       foldermc+"*_ZJet*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
+  //       foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_TTTT*"+ntupletag+"*.root",
+  //       foldermc+"*_WH_HToBB*"+ntupletag+"*.root",foldermc+"*_ZH_HToBB*"+ntupletag+"*.root",
+  //       foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",foldermc+"*_ZZ_*"+ntupletag+"*.root"},
+  //   baselinef && "stitch");
 
   // //// Use these processes to make quick plots
   // auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
   //   {foldermc+"*_TTJets_Tune*.root"},
-  //   baseline+" && ntruleps==1");
+  //   baselinef && "ntruleps==1");
   // auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
   //   {foldermc+"*_TTJets_Tune*.root"},
-  //   baseline+" && ntruleps==2");
+  //   baselinef && "ntruleps==2");
 
   // auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
   //   {foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root"},
-  //   baseline+" && stitch");
+  //   baselinef && "stitch");
 
   vector<shared_ptr<Process> > all_procs = {proc_tt1l, proc_tt2l, proc_other};
 
@@ -258,7 +332,7 @@ int main(int argc, char *argv[]){
 
   // Makes a plot for each vector in plotcuts
   vector<oneplot> plotcuts({{"njets", "met>200", {"njets==5", "njets==6", "njets==7", "njets==8", "njets>=9"}},
-	{"met", "njets>=6", {"met>150 && met<=200","met>200 && met<=350","met>350 && met<=500","met>500"}}});
+	{"met", "njets==5", {"met>100 && met<=150","met>150 && met<=200","met>200 && met<=350","met>350&&met<=500","met>500"}}});
   vector<TString> abcdcuts = {"mt<=140 && mj14<=400", "mt<=140 && mj14>400",
 			      "mt>140  && mj14<=400", "mt>140  && mj14>400"};
   size_t Nabcd = abcdcuts.size();
@@ -307,18 +381,24 @@ int main(int argc, char *argv[]){
 	  {{tt2l, r4, 1}, {tt1l, r2, -1}},
 	    {{bkg, r3, 1}, {bkg, r1, -1}},
 	      {{bkg, r4, 1}, {bkg, r2, -1}}
-      });
+});
     vector<TString> leglabels({"tt: M_{J}<400", "tt: M_{J}>400", "bkg: M_{J}<400", "bkg: M_{J}>400"});
     plotRatio(allyields, plotcuts[iplot], indices, leglabels);
 
     //// RMJ/RMJ
     indices = vector<vector<vector<int> > >({
-	{{tt2l, r4, 1}, {tt2l, r3, -1}, {tt1l, r2, -1}, {tt1l, r1, 1}},
-	  {{tt1l, r4, 1}, {tt1l, r3, -1}, {tt1l, r2, -1}, {tt1l, r1, 1}},
-	    {{other, r4, 1}, {other, r3, -1}, {tt1l, r2, -1}, {tt1l, r1, 1}},
-	      {{bkg, r4, 1}, {bkg, r3, -1}, {tt1l, r2, -1}, {tt1l, r1, 1}}
+  {{tt1l, r4, 1}, {tt1l, r3, -1}, {bkg, r2, -1}, {bkg, r1, 1}},
+    //  {{other, r4, 1}, {other, r3, -1}, {bkg, r2, -1}, {bkg, r1, 1}},
+      {{tt2l, r4, 1}, {tt2l, r3, -1}, {bkg, r2, -1}, {bkg, r1, 1}},
+  	{{bkg, r4, 1}, {bkg, r3, -1}, {bkg, r2, -1}, {bkg, r1, 1}}
+ //   {{tt1l, r4, 1}, {tt1l, r3, -1}, {tt1l, r2, -1}, {tt1l, r1, 1}},
+//     {{other, r4, 1}, {other, r3, -1}, {tt1l, r2, -1}, {tt1l, r1, 1}},
+//       {{tt2l, r4, 1}, {tt2l, r3, -1}, {tt1l, r2, -1}, {tt1l, r1, 1}},
+// 	{{bkg, r4, 1}, {bkg, r3, -1}, {tt1l, r2, -1}, {tt1l, r1, 1}}
       });
-    leglabels = vector<TString>({"t#bar{t} (2l)", "t#bar{t} (1l)", "Other", "All bkg."});
+    //leglabels = vector<TString>({"1l m^{true}_{T}#leq140", "1l m^{true}_{T}>140", "2l", "All bkg."});
+    // leglabels = vector<TString>({"t#bar{t} 1l", "Other", "t#bar{t} 2l", "All bkg."});
+    leglabels = vector<TString>({"0-1l", "2l", "All bkg."});
     plotRatio(allyields, plotcuts[iplot], indices, leglabels);
 
 
