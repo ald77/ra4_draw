@@ -159,6 +159,19 @@ namespace Functions{
       return maxr;
     });
 
+  const NamedFunc offshellw("offshellw",[](const Baby &b) -> NamedFunc::ScalarType{
+      for (unsigned i(0); i<b.mc_pt()->size(); i++){
+	if (abs(b.mc_id()->at(i))!=24) continue;
+	if (b.mc_mass()->at(i) > 140.) {
+	  return 1;
+	}
+      }
+      return 0;
+    });
+
+
+  
+
   bool IsGoodJet(const Baby &b, size_t ijet){
     return ijet<b.jets_pt()->size()
       && b.jets_pt()->at(ijet) > 30.
@@ -255,6 +268,8 @@ namespace Functions{
 
     return Nisr;
   }
+
+  
 
   void DileptonAngles(const Baby &b,
                       NamedFunc::ScalarType &eta1, NamedFunc::ScalarType &phi1,

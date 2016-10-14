@@ -28,6 +28,7 @@ public:
   std::string name_;
   Type type_;
   NamedFunc cut_;
+  int color_;
 
   std::set<Baby*> Babies() const;
 
@@ -68,7 +69,8 @@ Process::Process(BabyType * /*dummy_baby*/,
   TAttMarker(color, 20, 1.2),
   name_(name),
   type_(type),
-  cut_(cut){
+  cut_(cut),
+  color_(color){
   std::lock_guard<std::mutex> lock(mutex_);
   for(const auto &file: files){
     const auto &full_files = Glob(file);
