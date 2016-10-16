@@ -156,7 +156,6 @@ void Table::Print(double luminosity,
 }
 
 vector<GammaParams> Table::Yield(const Process *process, double luminosity) const{
-  if(process->type_ == Process::Type::data) luminosity = 1.;
   const auto &component_list = GetComponentList(process);
   const TableColumn *col = nullptr;
   for(const auto &component: component_list){

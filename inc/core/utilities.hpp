@@ -10,6 +10,7 @@
 #include <mutex>
 #include <set>
 #include <numeric>
+#include <algorithm>
 
 #include "TH1D.h"
 #include "TRandom3.h"

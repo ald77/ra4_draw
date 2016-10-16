@@ -12,6 +12,7 @@
 #include "TCanvas.h"
 #include "TLatex.h"
 #include "TLegend.h"
+#include "TColor.h"
 
 #include "core/named_func.hpp"
 
