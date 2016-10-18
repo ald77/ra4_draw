@@ -8,6 +8,7 @@
 #include <ctime>
 #include <iomanip>  // setw
 #include <chrono>
+#include <string>
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -32,6 +33,8 @@
 #include "core/abcd_method.hpp"
 #include "core/styles.hpp"
 #include "core/plot_opt.hpp"
+#include "core/config_parser.hpp"
+#include "core/functions.hpp"
 
 using namespace std;
 
@@ -49,9 +52,13 @@ namespace{
   TString json = "2p6";
   TString only_method = "";
   TString mc_lumi = "";
-  int mm_ind=2;
+  string sys_wgts_file = "txt/sys_weights.cfg";
+  string mm_scen = "";
   float lumi=35.;
+  bool quick_test = false;
 }
+
+string GetScenario(const string &method);
 
 TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                    vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds);
@@ -73,21 +80,6 @@ const NamedFunc st("st", [](const Baby &b) -> NamedFunc::ScalarType{
     for (const auto &pt: *(b.leps_pt())) stvar += pt; 
     return stvar;
   });
-NamedFunc::ScalarType wmm_1(const Baby &b){ 
-  float weight = b.weight()*b.eff_trig();
-  if(b.ntruleps()<=1 && b.mt()>140 && b.mt_tru()<=140 
-     && !(b.type()==5000||b.type()==13000||b.type()==15000||b.type()==16000))
-    return weight*2;
-  else return weight;
-}
-
-NamedFunc::ScalarType wmm_2(const Baby &b){ 
-  float weight = b.weight()*b.eff_trig();
-  if(b.ntruleps()<=1 && b.mt()>140 && b.mj14()>400 && b.mt_tru()<=140 
-     && !(b.type()==5000||b.type()==13000||b.type()==15000||b.type()==16000))
-    return weight*2;
-  else return weight;
-}
 
 int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
@@ -109,15 +101,27 @@ int main(int argc, char *argv[]){
   //   else ntupletag = "_metG200";
   // }
 
-  if(mm_ind>0) {
-    cout<<"=========== Doing mis-measurement scenario "<<mm_ind<<endl<<endl;
+  if(mm_scen == ""){
+    cout << " ======== Doing all mis-measurement scenarios ======== \n" << endl;
+  }else if(mm_scen == "no_mismeasurement" || mm_scen == "data" || mm_scen == "off" || mm_scen == "mc_as_data"){
+    cout << " ======== No mismeasurement applied ======== \n" << endl;
+    if(mm_scen == "mc_as_data") only_mc = true;
+  }else{
+    cout << " ======== Doing mis-measurement scenario " << mm_scen << " ======== \n" << endl;
     only_mc = true;
   }
-  vector<NamedFunc> weights;
-  weights.push_back(NamedFunc("def",   [](const Baby &b) -> NamedFunc::ScalarType{return b.weight()*b.eff_trig();}));
-  weights.push_back(NamedFunc("wmm_1", [](const Baby &b) -> NamedFunc::ScalarType{return wmm_1(b);}));
-  weights.push_back(NamedFunc("wmm_2", [](const Baby &b) -> NamedFunc::ScalarType{return wmm_2(b);}));
 
+  vector<string> scenarios = ConfigParser::GetOptSets(sys_wgts_file);
+  NamedFunc w = "weight*eff_trig";
+  map<string, NamedFunc> weights;
+  weights.emplace("no_mismeasurement", w);
+  if(mm_scen == ""){
+    for(const auto &scen: scenarios){
+      weights.emplace(scen, w*Functions::MismeasurementWeight(sys_wgts_file, scen));
+    }
+  }else if(mm_scen != "no_mismeasurement"){
+    weights.emplace(mm_scen, w*Functions::MismeasurementWeight(sys_wgts_file, mm_scen));
+  }
 
   //// Capybara
   string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
@@ -219,8 +223,8 @@ int main(int argc, char *argv[]){
   set<string> names_data({folderdata+"*"+ntupletag+"*.root"});
   if(only_mc){
     names_data = names_allmc;
-    //names_data = set<string>({foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"});
-    trigs = "stitch";
+    if(quick_test) names_data = set<string>({foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"});
+    trigs = quick_test ? "1" : "stitch";
   }
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     names_data,baseline && trigs && "pass");
@@ -229,8 +233,9 @@ int main(int argc, char *argv[]){
   auto proc_bkg = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"}, baseline && " pass");
 
-  vector<shared_ptr<Process> > all_procs = {proc_tt1l, proc_tt2l, proc_other};
-  //vector<shared_ptr<Process> > all_procs = {proc_bkg};
+  vector<shared_ptr<Process> > all_procs;
+  if(!quick_test) all_procs = vector<shared_ptr<Process> >{proc_tt1l, proc_tt2l, proc_other};
+  else all_procs = vector<shared_ptr<Process> >{proc_bkg};
   if (do_signal){
     all_procs.push_back(proc_t1nc);
     all_procs.push_back(proc_t1c);
@@ -314,8 +319,18 @@ int main(int argc, char *argv[]){
     }
   }
 
+  vector<TString> methods_tmp = methods;
+  methods.clear();
+  for(const auto &scenario: scenarios){
+    for(const auto &method: methods_tmp){
+      methods.push_back(method+"_scen_"+scenario.c_str());
+    }
+  }
+
   for(size_t iabcd=0; iabcd<methods.size(); iabcd++) {
     TString method = methods[iabcd];
+    mm_scen = GetScenario(method.Data());
+
     TString basecuts = "", caption = "", abcd_title;
     doVBincuts = false;
 
@@ -492,13 +507,13 @@ int main(int argc, char *argv[]){
     vector<TableRow> table_cuts, table_cuts_mm;
     for(size_t icut=0; icut < abcds.back().allcuts.size(); icut++){
       table_cuts.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data(),
-				    0,0,weights[0]));
+				    0,0,weights.at("no_mismeasurement")));
       table_cuts_mm.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data(),
-				       0,0,weights[mm_ind]));
+				       0,0,weights.at(mm_scen)));
     }
     TString tname = "preds"; tname += iabcd;
     pm.Push<Table>(tname.Data(),  table_cuts, all_procs, true, false);
-    tname += mm_ind;
+    tname += mm_scen;
     if(only_mc) pm.Push<Table>(tname.Data(),  table_cuts_mm, all_procs, true, false);
   } // Loop over ABCD methods
 
@@ -514,6 +529,7 @@ int main(int argc, char *argv[]){
   ////////////////////////// Calculating preds/kappas and printing table //////////////////////////////////////
   vector<TString> tablenames;
   for(size_t imethod=0; imethod<abcds.size(); imethod++) {
+    mm_scen = GetScenario(methods.at(imethod).Data());
     // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
     // if split_bkg [2/4] Other, [3/5] tt1l, [4/6] tt2l
     vector<vector<GammaParams> > allyields;
@@ -578,6 +594,11 @@ int main(int argc, char *argv[]){
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+string GetScenario(const string &method){
+  string key = "_scen_";
+  return method.substr(method.rfind(key)+key.size());
+}
 
 //// Prints table with results
 // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
@@ -847,7 +868,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
   float minx = 0.5, maxx = nbins+0.5, miny = 0;
   if(label_up) maxy = 2.6;
-  //if(maxy > 5) maxy = 5;
+  if(maxy > 5) maxy = 5;
   TH1D histo("histo", "", nbins, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
@@ -949,8 +970,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     graph_mm[indb].Draw("p0 same");
 
     leg.AddEntry(&graph[indb], "MC", "p");
-    TString data_s = (mm_ind==0?"Data":"Pseudodata");
-    leg.AddEntry(&graph_mm[indb], data_s+" (Scen. = "+RoundNumber(mm_ind,0)+")", "p");
+    TString data_s = (mm_scen=="data"||mm_scen=="off"||mm_scen=="no_mismeasurement"?"Data":"Pseudodata");
+    leg.AddEntry(&graph_mm[indb], data_s+" (Scen. = "+mm_scen.c_str()+")", "p");
     //leg.AddEntry(&graph[indb], CodeToRootTex(ind_bcuts[indb].cut.Data()).c_str(), "p");
 
   } // Loop over TGraphs
@@ -1116,6 +1137,7 @@ void GetOptions(int argc, char *argv[]){
       {"only_dilepton", no_argument, 0, '2'}, // Makes tables only for dilepton tests
       {"ht", no_argument, 0, 0},            // Cuts on ht>500 instead of st>500
       {"mm", required_argument, 0, 0},            // Mismeasurment scenario, 0 for data
+      {"quick", no_argument, 0, 0},           // Used inclusive ttbar for quick testing
       {0, 0, 0, 0}
     };
 
@@ -1169,7 +1191,9 @@ void GetOptions(int argc, char *argv[]){
       if(optname == "ht"){
         do_ht = true;
       } else if(optname == "mm"){
-        mm_ind = atoi(optarg);
+        mm_scen = optarg;
+      }else if(optname == "quick"){
+	quick_test = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
 	exit(1);

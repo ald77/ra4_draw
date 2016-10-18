@@ -84,6 +84,24 @@ bool ConfigParser::HaveOpt(const std::string &option) const{
   return options_.find(option) != options_.cend();
 }
 
+vector<string> ConfigParser::GetOptSets(const string &file_path){
+  ifstream file(file_path.c_str());
+  string line;
+  vector<string> opt_sets;
+  while(getline(file, line)){
+    line = Strip(line);
+
+    //Comment line
+    if(line.size()==0 || line.front()=='#') continue;
+
+    //Option set
+    if(line.front() == '[' && line.back() == ']'){
+      opt_sets.push_back(Strip(line.substr(1, line.size()-2)));
+    }
+  }
+  return opt_sets;
+}
+
 const map<string, string> & ConfigParser::Options() const{
   return options_;
 }

@@ -1,6 +1,7 @@
 #ifndef H_CONFIG_PARSER
 #define H_CONFIG_PARSER
 
+#include <vector>
 #include <string>
 #include <map>
 #include <sstream>
@@ -16,6 +17,8 @@ public:
             const std::string &option_set) const;
 
   bool HaveOpt(const std::string &option) const;
+
+  static std::vector<std::string> GetOptSets(const std::string &file_path);
 
   template<typename T = std::string>
   T GetOpt(const std::string &option) const;
