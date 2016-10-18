@@ -9,29 +9,13 @@
 
 void PrintYield(const std::string &name, const std::vector<GammaParams> &yields);
 
-void PrintW(const std::string &name, double omega_lo, double omega_mid, double omega_hi);
-
 bool UseData();
 
 NamedFunc MismeasurementCut();
 
-double GetMismeasurementWeight();
-
 NamedFunc MismeasurementWeight();
 
-void FrequentistAsymptoticOmega(double &omega_lo, double &omega_mid, double &omega_hi,
-                                const GammaParams &a_data, const GammaParams &b_data,
-                                const GammaParams &c_data, const GammaParams &d_data,
-                                const GammaParams &a_mc_good, const GammaParams &b_mc_good,
-                                const GammaParams &c_mc_good, const GammaParams &d_mc_good,
-                                const GammaParams &a_mc_bad, const GammaParams &b_mc_bad,
-                                const GammaParams &c_mc_bad, const GammaParams &d_mc_bad);
-
-void GetInterval(double &x_lo, double &x_hi, double d2);
-
-double GetX(double d2, bool negative_root);
-
-double Likelihood(double x);
+NamedFunc WeightWithCut();
 
 void BayesianOmega(double &omega_lo, double &omega_mid, double &omega_hi,
                    const GammaParams &a_data, const GammaParams &b_data,

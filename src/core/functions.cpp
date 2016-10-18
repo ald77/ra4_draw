@@ -3,6 +3,9 @@
 #include "TVector2.h"
 
 #include "core/utilities.hpp"
+#include "core/config_parser.hpp"
+
+using namespace std;
 
 namespace Functions{
   const NamedFunc n_isr_match("n_isr_match", NISRMatch);
@@ -385,6 +388,91 @@ namespace Functions{
             h2 = true;
           }
         }
+      }
+    }
+  }
+
+  NamedFunc MismeasurementCorrection(const string &file_path,
+                                     const string &mismeas_scenario,
+                                     Variation variation){
+    ConfigParser cp;
+    cp.Load(file_path, mismeas_scenario);
+
+    string name = "w_mismeas";
+    NamedFunc reweight_cut = cp.GetOpt<std::string>("reweight_cut");
+    double wgt = 1.;
+    switch(variation){
+    case Variation::central:
+      wgt = cp.GetOpt<double>("w_central");
+      break;
+    case Variation::up:
+      wgt = cp.GetOpt<double>("w_up");
+      break;
+    case Variation::down:
+      wgt = cp.GetOpt<double>("w_down");
+      break;
+    default:
+      wgt = 1.;
+      ERROR("Invalid variation: "+to_string(static_cast<int>(variation)));
+      break;
+    }
+
+    if(reweight_cut.IsScalar()){
+      return NamedFunc(name, [reweight_cut, wgt](const Baby &b){
+          return reweight_cut.GetScalar(b) ? wgt : 1.;
+        });
+    }else{
+      return NamedFunc(name, [reweight_cut, wgt](const Baby &b){
+          NamedFunc::VectorType cuts = reweight_cut.GetVector(b);
+          NamedFunc::VectorType wgts(cuts.size());
+          for(size_t i = 0; i < cuts.size(); ++i){
+            wgts.at(i) = cuts.at(i) ? wgt : 1.;
+          }
+          return wgts;
+        });
+    }
+  }
+
+  NamedFunc MismeasurementWeight(const std::string &file_path,
+                                 const std::string &mismeas_scenario){
+    ConfigParser cp;
+    cp.Load(file_path, mismeas_scenario);
+    NamedFunc cut = cp.GetOpt<std::string>("mismeas_cut");
+    NamedFunc wgt = cp.GetOpt<std::string>("mismeas_wgt");
+    string name = "w_sys_mm";
+    if(cut.IsScalar()){
+      if(wgt.IsScalar()){
+        return NamedFunc(name, [cut, wgt](const Baby &b){
+            return cut.GetScalar(b) ? wgt.GetScalar(b) : 1.;
+          });
+      }else{
+        return NamedFunc(name, [cut, wgt](const Baby &b){
+            NamedFunc::VectorType wgts = wgt.GetVector(b);
+            return cut.GetScalar(b) ? wgts : NamedFunc::VectorType(wgts.size(), 1.);
+          });
+      }
+    }else{
+      if(wgt.IsScalar()){
+        return NamedFunc(name, [cut, wgt](const Baby &b){
+            NamedFunc::VectorType cuts = cut.GetVector(b);
+            NamedFunc::VectorType wgts(cuts.size());
+            NamedFunc::ScalarType scalar_wgt = wgt.GetScalar(b);
+            for(size_t i = 0; i < wgts.size(); ++i){
+              wgts.at(i) = cuts.at(i) ? scalar_wgt : 1.;
+            }
+            return wgts;
+          });
+      }else{
+        return NamedFunc(name, [cut, wgt](const Baby &b){
+            NamedFunc::VectorType cuts = cut.GetVector(b);
+            NamedFunc::VectorType wgts = wgt.GetVector(b);
+            size_t min_size = min(cuts.size(), wgts.size());
+            NamedFunc::VectorType out(min_size);
+            for(size_t i = 0; i < min_size; ++i){
+              out.at(i) = cuts.at(i) ? wgts.at(i) : 1.;
+            }
+            return out;
+          });
       }
     }
   }

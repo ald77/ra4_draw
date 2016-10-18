@@ -3,6 +3,8 @@
 
 #include <cstddef>
 
+#include <string>
+
 #include "core/named_func.hpp"
  
 namespace Functions{
@@ -31,6 +33,13 @@ namespace Functions{
   void DileptonAngles(const Baby &b,
 		      NamedFunc::ScalarType &eta1, NamedFunc::ScalarType &phi1,
 		      NamedFunc::ScalarType &eta2, NamedFunc::ScalarType &phi2);
+
+  enum class Variation{central, up, down};
+  NamedFunc MismeasurementCorrection(const std::string &file_path,
+                                     const std::string &mismeas_scenario,
+                                     Variation variation = Variation::central);
+  NamedFunc MismeasurementWeight(const std::string &file_path,
+                                 const std::string &mismeas_scenario);
 }
 
 #endif

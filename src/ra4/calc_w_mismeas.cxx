@@ -1,10 +1,7 @@
 #include "ra4/calc_w_mismeas.hpp"
 
-#include <cmath>
-
 #include <random>
 #include <array>
-#include <functional>
 #include <iostream>
 #include <string>
 #include <limits>
@@ -22,12 +19,16 @@
 #include "core/gamma_params.hpp"
 #include "core/named_func.hpp"
 #include "core/plot_maker.hpp"
+#include "core/config_parser.hpp"
 
 using namespace std;
 
 namespace{
   string mismeas_scenario = "mc_as_data";
-  NamedFunc needs_reweight = "ntruleps<=1 && mt_tru<=140 && !(type==5000 || type==13000 || type==15000 || type==16000)";
+  NamedFunc reweight_cut = "mt>140. && mj14>400. && ntruleps<=1 && mt_tru<=140 && !(type==5000 || type==13000 || type==15000 || type==16000)";
+
+  string output_file = "txt/sys_weights.cfg";
+  
   double luminosity = 40.;
   size_t num_toys = 1000000;
 
@@ -81,9 +82,9 @@ int main(int argc, char *argv[]){
   auto mc_all = Process::MakeShared<Baby_full>("mc_all", Process::Type::data, kBlack,
                                                mc_files, baseline);
   auto mc_good = Process::MakeShared<Baby_full>("mc_good", Process::Type::background, kBlack,
-                                             mc_files, baseline && !needs_reweight);
+                                             mc_files, baseline && !reweight_cut);
   auto mc_bad = Process::MakeShared<Baby_full>("mc_bad", Process::Type::background, kBlack,
-                                               mc_files, baseline && needs_reweight);
+                                               mc_files, baseline && reweight_cut);
   auto pseudo_data = UseData() ? data : mc_all;
   vector<shared_ptr<Process> > mc_procs = {mc_good, mc_bad}, data_procs = {pseudo_data};
 
@@ -100,7 +101,7 @@ int main(int argc, char *argv[]){
         TableRow("R3", r3, 0, 0, weight),
         TableRow("R4", r4, 0, 0, weight)
         }, mc_procs, false, false, false);
-  NamedFunc mismeas_wgt = MismeasurementWeight()*weight;
+  NamedFunc mismeas_wgt = WeightWithCut()*weight;
   Table & data_table = pm.Push<Table>("data_yields", vector<TableRow>{
       TableRow("R1", r1, 0, 0, mismeas_wgt),
         TableRow("R2", r2, 0, 0, mismeas_wgt),
@@ -134,12 +135,7 @@ int main(int argc, char *argv[]){
     mc_bad_yield.at(3).SetNEffectiveAndWeight(838.962, 0.644067);
   }
 
-  double omega_lo_f, omega_mid_f, omega_hi_f;
   double omega_lo_b, omega_mid_b, omega_hi_b;
-  FrequentistAsymptoticOmega(omega_lo_f, omega_mid_f, omega_hi_f,
-                             data_yield.at(0), data_yield.at(1), data_yield.at(2), data_yield.at(3),
-                             mc_good_yield.at(0), mc_good_yield.at(1), mc_good_yield.at(2), mc_good_yield.at(3),
-                             mc_bad_yield.at(0), mc_bad_yield.at(1), mc_bad_yield.at(2), mc_bad_yield.at(3));
   BayesianOmega(omega_lo_b, omega_mid_b, omega_hi_b,
                 data_yield.at(0), data_yield.at(1), data_yield.at(2), data_yield.at(3),
                 mc_good_yield.at(0), mc_good_yield.at(1), mc_good_yield.at(2), mc_good_yield.at(3),
@@ -147,17 +143,21 @@ int main(int argc, char *argv[]){
   PrintYield("Data", data_yield);
   PrintYield("MC Good", mc_good_yield);
   PrintYield("MC Bad", mc_bad_yield);
-  PrintW("Frequentist", omega_lo_f, omega_mid_f, omega_hi_f);
-  PrintW("Bayesian", omega_lo_b, omega_mid_b, omega_hi_b);
 
-  cout << "\nWRITE TO CONFIG:\n" << endl;
-  cout << "[" << mismeas_scenario << "]" << endl;
-  cout << "  mismeasured    = " << MismeasurementCut().Name() << endl;
-  cout << "  mismeasurement = " << ToLongString(GetMismeasurementWeight()) << endl;
-  cout << "  reweighted     = " << needs_reweight << endl;
-  cout << "  w_down         = " << ToLongString(exp(omega_lo_b)) << endl;
-  cout << "  w_central      = " << ToLongString(exp(omega_mid_b)) << endl;
-  cout << "  w_up           = " << ToLongString(exp(omega_hi_b)) << '\n' << endl;
+  ConfigParser cp;
+  cp.SetOpt("mismeas_cut", MismeasurementCut());
+  cp.SetOpt("mismeas_wgt", MismeasurementWeight());
+  cp.SetOpt("reweight_cut", reweight_cut);
+  cp.SetOpt("w_down", exp(omega_lo_b));
+  cp.SetOpt("w_central", exp(omega_mid_b));
+  cp.SetOpt("w_up", exp(omega_hi_b));
+  if(debug){
+    cout << "\nDEBUG MODE: NOT WRITING TO FILE:\n" << endl;
+    cout << "Results: " << cp << endl;
+  }else{
+    cp.Save(output_file, mismeas_scenario);
+    cout << "Wrote configuration " << mismeas_scenario << " to file " << output_file << endl;
+  }
 }
 
 void PrintYield(const string &name, const vector<GammaParams> &yields){
@@ -167,10 +167,6 @@ void PrintYield(const string &name, const vector<GammaParams> &yields){
        << ", R3=" << yields.at(2)
        << ", R4=" << yields.at(3)
        << ", kappa=" << kappa << endl;
-}
-
-void PrintW(const string &name, double omega_lo, double omega_mid, double omega_hi){
-  cout << name << ": " << exp(omega_lo) << " " << exp(omega_mid) << " " << exp(omega_hi) << endl;
 }
 
 bool UseData(){
@@ -188,7 +184,7 @@ NamedFunc MismeasurementCut(){
   }
 }
 
-double GetMismeasurementWeight(){
+NamedFunc MismeasurementWeight(){
   if(mismeas_scenario == "data"){
     return 1.;
   }else if(mismeas_scenario == "mc_as_data"){
@@ -199,95 +195,45 @@ double GetMismeasurementWeight(){
   }
 }
 
-NamedFunc MismeasurementWeight(){
-  double mismeasurement_weight = GetMismeasurementWeight();
-  NamedFunc do_mismeas = MismeasurementCut();
-  if(do_mismeas.IsScalar()){
-    return NamedFunc("mismeas_wgt", [do_mismeas, mismeasurement_weight](const Baby &b){
-	return do_mismeas.GetScalar(b) ? mismeasurement_weight : 1.;
-      });
-  }else{
-    return NamedFunc("mismeas_wgt", [do_mismeas, mismeasurement_weight](const Baby &b){
-	auto mismeas_wgt = do_mismeas.GetVector(b);
-	for(auto &w: mismeas_wgt){
-	  if(w) w = mismeasurement_weight;
-	  else w = 1.;
-	}
-	return mismeas_wgt;
-      });
-  }
-}
-
-void FrequentistAsymptoticOmega(double &omega_lo, double &omega_mid, double &omega_hi,
-                                const GammaParams &a_data, const GammaParams &b_data,
-                                const GammaParams &c_data, const GammaParams &d_data,
-                                const GammaParams &a_mc_good, const GammaParams &b_mc_good,
-                                const GammaParams &c_mc_good, const GammaParams &d_mc_good,
-                                const GammaParams &a_mc_bad, const GammaParams &b_mc_bad,
-                                const GammaParams &c_mc_bad, const GammaParams &d_mc_bad){
-  function<void(const string &)> do_bayesian([&](const string &msg){
-      DBG(msg);
-      BayesianOmega(omega_lo, omega_mid, omega_hi,
-                    a_data, b_data, c_data, d_data,
-                    a_mc_good, b_mc_good, c_mc_good, d_mc_good,
-                    a_mc_bad, b_mc_bad, c_mc_bad, d_mc_bad);
-    });
-  
-  double c_x = a_data.Yield()*d_data.Yield()*(b_mc_good.Yield()+b_mc_bad.Yield());
-  double d_x = b_data.Yield()*c_data.Yield()*(a_mc_good.Yield()+a_mc_bad.Yield());
-
-  double w_denom = d_x*d_mc_bad.Yield()-c_x*c_mc_bad.Yield();
-  if(w_denom==0.){do_bayesian("Infinite/undefined w. Falling back to Bayesian method."); return;}
-  double w_numer = c_x*c_mc_good.Yield()-d_x*d_mc_good.Yield();
-  double w = w_numer/w_denom;
-  if(w<=0.){do_bayesian("w<=0. Falling back to Bayesian method."); return;}
-
-  omega_mid = log(w);
-  GetInterval(omega_lo, omega_hi, 2.*(c_mc_bad.NEffective()+d_mc_bad.NEffective()));
-  omega_lo += omega_mid;
-  omega_hi += omega_mid;
-}
-
-void GetInterval(double &x_lo, double &x_hi, double d2){
-  //Solves d2*(x-1+exp(-x))=1
-  if(d2<0. || std::isinf(d2) || std::isnan(d2)){
-    ERROR("Bad d2: "+to_string(d2));
-  }else if(d2==0.){
-    x_hi = numeric_limits<double>::infinity();
-    x_lo = -x_hi;
-  }else{
-    x_lo = GetX(d2, true);
-    x_hi = GetX(d2, false);
-  }
-}
-
-double GetX(double d2, bool negative_root){
-  //Solves d2*(x-1+exp(-x))=1
-  double x_lo = 0.;
-  double x_hi=sqrt(2./d2);
-
-  double sign = (negative_root ? -1. : 1.);
-
-  double y = 1./d2;
-  while(!std::isinf(x_hi) && Likelihood(sign*x_hi)<=y){
-    x_hi *= 2.;
-  }
-
-  double x_mid = x_lo+0.5*(x_hi-x_lo);
-  while(x_lo < x_mid && x_mid < x_hi){
-    if(Likelihood(sign*x_mid)>y){
-      x_hi = x_mid;
+NamedFunc WeightWithCut(){
+  NamedFunc cut = MismeasurementCut();
+  NamedFunc wgt = MismeasurementWeight();
+  string name = "w_mismeas";
+  if(cut.IsScalar()){
+    if(wgt.IsScalar()){
+      return NamedFunc(name, [cut, wgt](const Baby &b){
+          return cut.GetScalar(b) ? wgt.GetScalar(b) : 1.;
+        });
     }else{
-      x_lo = x_mid;
+      return NamedFunc(name, [cut, wgt](const Baby &b){
+          NamedFunc::VectorType wgts = wgt.GetVector(b);
+          return cut.GetScalar(b) ? wgts : NamedFunc::VectorType(wgts.size(), 1.);
+        });
     }
-    x_mid = x_lo+0.5*(x_hi-x_lo);
+  }else{
+    if(wgt.IsScalar()){
+      return NamedFunc(name, [cut, wgt](const Baby &b){
+          NamedFunc::VectorType cuts = cut.GetVector(b);
+          NamedFunc::VectorType wgts(cuts.size());
+          NamedFunc::ScalarType scalar_wgt = wgt.GetScalar(b);
+          for(size_t i = 0; i < wgts.size(); ++i){
+            wgts.at(i) = cuts.at(i) ? scalar_wgt : 1.;
+          }
+          return wgts;
+        });
+    }else{
+      return NamedFunc(name, [cut, wgt](const Baby &b){
+          NamedFunc::VectorType cuts = cut.GetVector(b);
+          NamedFunc::VectorType wgts = wgt.GetVector(b);
+          size_t min_size = min(cuts.size(), wgts.size());
+          NamedFunc::VectorType out(min_size);
+          for(size_t i = 0; i < min_size; ++i){
+            out.at(i) = cuts.at(i) ? wgts.at(i) : 1.;
+          }
+          return out;
+        });
+    }
   }
-  
-  return sign*x_mid;
-}
-
-double Likelihood(double x){
-  return x+expm1(-x);
 }
 
 void BayesianOmega(double &omega_lo, double &omega_mid, double &omega_hi,
@@ -384,15 +330,17 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"mismeas_scenario", required_argument, 0, 'm'},
-      {"luminosity", required_argument, 0, 'l'},
       {"reweight", required_argument, 0, 'r'},
+      {"file", required_argument, 0, 'f'},
+      {"luminosity", required_argument, 0, 'l'},
       {"toys", required_argument, 0, 't'},
+      {"debug", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "m:l:r:t:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "m:r:f:l:t:", long_options, &option_index);
 
     if( opt == -1) break;
 
@@ -401,18 +349,22 @@ void GetOptions(int argc, char *argv[]){
     case 'm':
       mismeas_scenario = optarg;
       break;
+    case 'r':
+      reweight_cut = optarg;
+      break;
+    case 'f':
+      output_file = optarg;
+      break;
     case 'l':
       luminosity = atof(optarg);
-      break;
-    case 'r':
-      needs_reweight = optarg;
       break;
     case 't':
       num_toys = atoi(optarg);
       break;
     case 0:
       optname = long_options[option_index].name;
-      if(false){
+      if(optname == "debug"){
+        debug = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
       }

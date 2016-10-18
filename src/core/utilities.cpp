@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <glob.h>
 #include <libgen.h>
+#include <sys/stat.h>
 
 #include "TMath.h"
 #include "TCanvas.h"
@@ -60,6 +61,25 @@ void ReplaceAll(string &str, const string &orig, const string &rep){
 string CopyReplaceAll(string str, const string &orig, const string &rep){
   ReplaceAll(str, orig, rep);
   return str;
+}
+
+string LeftStrip(string s){
+  s.erase(s.begin(), find_if(s.begin(), s.end(), [](char c){return isspace(c)==0;}));
+  return s;
+}
+
+string RightStrip(string s){
+  s.erase(find_if(s.rbegin(), s.rend(), [](char c){return isspace(c)==0;}).base(), s.end());
+  return s;
+}
+
+string Strip(string s){
+  return LeftStrip(RightStrip(s));
+}
+
+bool FileExists(const string &path){
+  struct stat buffer;
+  return (stat (path.c_str(), &buffer) == 0);
 }
 
 string execute(const string &cmd){
@@ -255,11 +275,22 @@ vector<string> Tokenize(const string& input,
 string MakeDir(string prefix){
   prefix += "XXXXXX";
   char *dir_name = new char[prefix.size()];
-  if(dir_name == nullptr) throw runtime_error("Could not allocate directory name");
+  if(dir_name == nullptr) ERROR("Could not allocate directory name");
   strcpy(dir_name, prefix.c_str());
   mkdtemp(dir_name);
   prefix = dir_name;
   delete[] dir_name;
+  return prefix;
+}
+
+string MakeTemp(string prefix){
+  prefix += "XXXXXX";
+  char *file_name = new char[prefix.size()];
+  if(file_name == nullptr) ERROR("Could not allocate file name");
+  strcpy(file_name, prefix.c_str());
+  mkstemp(file_name);
+  prefix = file_name;
+  delete[] file_name;
   return prefix;
 }
 

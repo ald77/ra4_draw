@@ -29,6 +29,11 @@ bool Contains(const std::string &str, const std::string &pat);
 bool StartsWith(const std::string &str, const std::string &pat);
 void ReplaceAll(std::string &str, const std::string &orig, const std::string &rep);
 std::string CopyReplaceAll(const std::string &str, const std::string &orig, const std::string &rep);
+std::string LeftStrip(std::string str);
+std::string RightStrip(std::string str);
+std::string Strip(std::string str);
+
+bool FileExists(const std::string &path);
 
 std::string execute(const std::string &cmd);
 
@@ -56,6 +61,7 @@ std::vector<std::string> Tokenize(const std::string& input,
                                   const std::string& tokens=" ");
 
 std::string MakeDir(std::string prefix);
+std::string MakeTemp(std::string prefix);
 
 void AdjustDensityForBinWidth(TH1D &h);
 void Normalize(TH1D &h, double normalization, bool norm_per_avg_x);

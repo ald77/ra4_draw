@@ -23,6 +23,7 @@
 #include "core/hist1d.hpp"
 #include "core/hist2d.hpp"
 #include "core/utilities.hpp"
+#include "core/functions.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -139,7 +140,12 @@ int main(int argc, char *argv[]){
         TableRow("$N_{\\text{jets}}\\geq9$", "nleps==1&&st>500&&met>500&&njets>=9&&nbm>=1&&mj14>400&&mt>140"),
         TableRow("$N_{b}\\geq3$", "nleps==1&&st>500&&met>500&&njets>=9&&nbm>=3&&mj14>400&&mt>140")
         }, full_trig_skim);
-  pm.Push<EventScan>("scan", true, vector<NamedFunc>{"weight", "met"}, vector<shared_ptr<Process> >{tt1l});
+
+  NamedFunc mm_wgt = Functions::MismeasurementWeight("txt/sys_weights.cfg", "off");
+  NamedFunc mm_crt = Functions::MismeasurementCorrection("txt/sys_weights.cfg", "off",
+                                                         Functions::Variation::central);
+  pm.Push<EventScan>("scan", true, vector<NamedFunc>{"weight", "met", mm_wgt, mm_crt},
+                     vector<shared_ptr<Process> >{tt1l});
   pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", {250., 400.}),
                   Axis(25, 0., 700., "mt", "m_{T} [GeV]", {140.}),
                   "nleps==1&&st>500&&met>200&&njets>=6&&nbm>=1",
