@@ -6,12 +6,13 @@ using namespace std;
 
 //// Constructor
 abcd_method::abcd_method(TString imethod, vector<TString> iplanecuts, vector<TString> ibincuts, 
-			 vector<TString> iabcdcuts, TString icaption, TString ibasecuts):
+			 vector<TString> iabcdcuts, TString icaption, TString ibasecuts, TString ititle):
   method(imethod),
   planecuts(iplanecuts),
   abcdcuts(iabcdcuts),
   caption(icaption),
-  basecuts(ibasecuts){
+  basecuts(ibasecuts),
+  title(ititle){
 
   // Pushing bincuts for each planecut. This will allow to have different bins in different planes
   for(size_t ind=0; ind<planecuts.size(); ind++) bincuts.push_back(ibincuts);

@@ -15,7 +15,7 @@ public:
   TString method; 
   std::vector<TString> planecuts, abcdcuts, allcuts;
   std::vector<std::vector<TString> > bincuts;
-  TString caption, basecuts, rd_letter; 
+  TString caption, basecuts, title, rd_letter; 
 
   size_t indexBin(size_t iplane, size_t ibin, size_t iabcd);
   void setLeptons();
@@ -27,7 +27,7 @@ public:
 
 
   abcd_method(TString imethod, std::vector<TString> iplanecuts, std::vector<TString> ibincuts, 
-	     std::vector<TString> iabcdcuts, TString icaption="", TString ibasecuts="");
+	      std::vector<TString> iabcdcuts, TString icaption="", TString ibasecuts="", TString ititle="");
   ~abcd_method();
 
 };
