@@ -5,6 +5,27 @@
 using namespace std;
 
 //// Constructor
+abcd_method::abcd_method(TString imethod, vector<TString> iplanecuts, vector<vector<TString> > ibincuts, 
+			 vector<TString> iabcdcuts, TString icaption, TString ibasecuts, TString ititle):
+  method(imethod),
+  planecuts(iplanecuts),
+  abcdcuts(iabcdcuts),
+  bincuts(ibincuts),
+  caption(icaption),
+  basecuts(ibasecuts),
+  title(ititle){
+
+  // Set up dilepton and region name
+  is2l = (method.Contains("2l") || method.Contains("veto"));
+  rd_letter = is2l?"D":"R";
+
+  // Set up whether we integrate R1/R3 in Nb and Njets
+  int_nbnj = true;
+
+  serializeCuts();
+
+  } // Constructor
+
 abcd_method::abcd_method(TString imethod, vector<TString> iplanecuts, vector<TString> ibincuts, 
 			 vector<TString> iabcdcuts, TString icaption, TString ibasecuts, TString ititle):
   method(imethod),

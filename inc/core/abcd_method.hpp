@@ -28,6 +28,8 @@ public:
 
   abcd_method(TString imethod, std::vector<TString> iplanecuts, std::vector<TString> ibincuts, 
 	      std::vector<TString> iabcdcuts, TString icaption="", TString ibasecuts="", TString ititle="");
+  abcd_method(TString imethod, std::vector<TString> iplanecuts, std::vector<std::vector<TString> > ibincuts, 
+	      std::vector<TString> iabcdcuts, TString icaption="", TString ibasecuts="", TString ititle="");
   ~abcd_method();
 
 };

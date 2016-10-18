@@ -287,6 +287,8 @@ int main(int argc, char *argv[]){
   ////////////////////////////////////////// Defining ABCD methods //////////////////////////////////////////
   vector<abcd_method> abcds;
   vector<TString> abcdcuts, metcuts, bincuts;
+  vector<vector<TString> > vbincuts;
+  bool doVBincuts = false;
   PlotMaker pm;
 
   ///// Running over these methods
@@ -294,7 +296,7 @@ int main(int argc, char *argv[]){
                                  "m2lvetomet150", "m2lonlymet150", "mvetoonlymet150", "m1lmet150",
 				 "m5j", "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
  
-  vector<TString> methods_std = {"signalmet100onebin", "m5jmet100onebin", "m2lvetoonebin"};
+  vector<TString> methods_std = {"signalmet100onebin", "m5jmet100onebin", "m2lvetoonebin", "njets1l", "njets2lveto"};
 
   vector<TString> methods = methods_std;
 
@@ -315,6 +317,7 @@ int main(int argc, char *argv[]){
   for(size_t iabcd=0; iabcd<methods.size(); iabcd++) {
     TString method = methods[iabcd];
     TString basecuts = "", caption = "", abcd_title;
+    doVBincuts = false;
 
     //////// General assignments to all methods
     if(method.Contains("2l") || method.Contains("veto")) {
@@ -329,6 +332,22 @@ int main(int argc, char *argv[]){
       if(only_dilepton) continue;
       abcdcuts = abcdcuts_std;
       basecuts = "nleps==1 && nveto==0 && nbm>=1";
+    }
+
+    
+    /////// Methods to check Njets
+    if(method.Contains("njets1l")) {
+      metcuts = vector<TString>{"met>200", "met>200"};
+      vbincuts = vector<vector<TString> >{{"njets==5"}, {"njets>=6&&njets<=8", "njets>=9"}}; 
+      doVBincuts = true;
+      caption = "Signal search regions + low MET";
+      abcd_title = "Signal + low MET (N_{jets})";
+    }
+    if(method.Contains("njets2l")) {
+      metcuts = vector<TString>{"met>200"};
+      bincuts = vector<TString>{"njets>=6&&njets<=8", "njets>=9"}; 
+      caption += "either two reconstructed leptons, or one lepton and one track";
+      abcd_title = "Dilepton (N_{jets})";
     }
 
     //////// Dilepton methods
@@ -403,7 +422,7 @@ int main(int argc, char *argv[]){
 	metcuts = vector<TString>{"met>200"};
 	caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
       } // allmetsignal
-      if(method.Contains("onebin")) bincuts = vector<TString>{"njets>=6&&nbm>=1"};
+      if(method.Contains("onebin")) bincuts = vector<TString>{"njets>=6"};
     } // signal
 
 
@@ -417,7 +436,7 @@ int main(int argc, char *argv[]){
 	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
 	caption = "Validation regions with $1\\ell, \\njets=5$, $100<\\met\\leq200$ GeV";
       } // allmetsignal
-      if(method.Contains("onebin")) bincuts = vector<TString>{"njets==5&&nbm>=1"};
+      if(method.Contains("onebin")) bincuts = vector<TString>{"njets==5"};
      }
 
     ////// Aggregate regions (single lepton). The nbm, njets integration in R1/R3 is done in abcd_method
@@ -457,7 +476,8 @@ int main(int argc, char *argv[]){
     }
 
     //////// Pushing all cuts to then find the yields
-    abcds.push_back(abcd_method(method, metcuts, bincuts, abcdcuts, caption, basecuts, abcd_title));
+    if(doVBincuts) abcds.push_back(abcd_method(method, metcuts, vbincuts, abcdcuts, caption, basecuts, abcd_title));
+    else abcds.push_back(abcd_method(method, metcuts, bincuts, abcdcuts, caption, basecuts, abcd_title));
     if(skim.Contains("mj12")) {
       abcds.back().setMj12();
       abcds.back().caption += ". Using $M_J^{1.2}$";
@@ -876,7 +896,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 	    //// Printing difference between kappa and kappa_mm
 	    float kap = k_ordered[iplane][ibin][ib].kappa[0], kap_mm = k_ordered_mm[iplane][ibin][ib].kappa[0];
 	    TString text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
-	    if(abcd.method.Contains("signal") && iplane>=2) klab.SetTextColor(4);
+	    if((abcd.method.Contains("signal")&&iplane>=2) || (abcd.method.Contains("njets1l")&&iplane>=1)) klab.SetTextColor(4);
 	    else klab.SetTextColor(1);
 	    klab.SetTextSize(0.045);
 	    klab.DrawLatex(xval, 0.952*maxy, text);
