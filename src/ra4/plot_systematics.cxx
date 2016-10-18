@@ -220,15 +220,14 @@ int main(int argc, char *argv[]){
   if(only_mc){
     names_data = names_allmc;
     //names_data = set<string>({foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"});
-    trigs = "1";
+    trigs = "stitch";
   }
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     names_data,baseline && trigs && "pass");
 
   //// Use this process to make quick plots. Requires being run without split_bkg
   auto proc_bkg = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"},
-    baseline && " pass");
+    {foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"}, baseline && " pass");
 
   vector<shared_ptr<Process> > all_procs = {proc_tt1l, proc_tt2l, proc_other};
   //vector<shared_ptr<Process> > all_procs = {proc_bkg};
@@ -877,6 +876,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 	    //// Printing difference between kappa and kappa_mm
 	    float kap = k_ordered[iplane][ibin][ib].kappa[0], kap_mm = k_ordered_mm[iplane][ibin][ib].kappa[0];
 	    TString text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
+	    if(abcd.method.Contains("signal") && iplane>=2) klab.SetTextColor(4);
+	    else klab.SetTextColor(1);
 	    klab.SetTextSize(0.045);
 	    klab.DrawLatex(xval, 0.952*maxy, text);
 	    //// Printing stat uncertainty of kappa_mm/kappa
@@ -945,7 +946,9 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   cmslabel.SetTextAlign(31);
   //cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
   cmslabel.SetTextSize(0.053);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.025, "#font[42]{"+abcd.title+"}");
+  TString title = "#font[42]{"+abcd.title+"}";
+  title.ReplaceAll("Signal", "#color[4]{Signal}");
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.025, title);
 
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
@@ -1012,7 +1015,7 @@ void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
         kweights_mm.push_back(vector<float>());
         kentries_mm.back().push_back(allyields[0][index].Yield());
         kweights_mm.back().push_back(1.);
-        // Yields for kappas_mm*kappas
+        // Yields for kappas_mm/kappas
         kkentries.push_back(vector<float>());
         kkweights.push_back(vector<float>());
         kkentries.back().push_back(allyields[0][index].Yield());
