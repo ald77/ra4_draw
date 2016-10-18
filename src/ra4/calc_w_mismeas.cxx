@@ -25,12 +25,12 @@ using namespace std;
 
 namespace{
   string mismeas_scenario = "mc_as_data";
-  NamedFunc reweight_cut = "mt>140. && mj14>400. && ntruleps<=1 && mt_tru<=140 && !(type==5000 || type==13000 || type==15000 || type==16000)";
+  NamedFunc reweight_cut = "mt>140. && ntruleps<=1 && mt_tru<=140 && !(type==5000 || type==13000 || type==15000 || type==16000)";
 
   string output_file = "txt/sys_weights.cfg";
   
-  double luminosity = 40.;
-  size_t num_toys = 1000000;
+  double luminosity = 35.;
+  size_t num_toys = 10000000;
 
   bool debug = false;
 }
@@ -178,6 +178,20 @@ NamedFunc MismeasurementCut(){
     return 0.;
   }else if(mismeas_scenario == "mc_as_data"){
     return 0.;
+  }else if(mismeas_scenario == "jet_pt_res"){
+    return "jets_pt[0]<0.5 || jets_pt[0]>2.";
+  }else if(mismeas_scenario == "xsec_ttw"){
+    return "type>=4000 && type<5000";
+  }else if(mismeas_scenario == "xsec_ttz"){
+    return "type>=5000 && type<6000";
+  }else if(mismeas_scenario == "xsec_wjets"){
+    return "type>=2000 && type<3000";
+  }else if(mismeas_scenario == "xsec_qcd"){
+    return "type>=7000 && type<8000";
+  }else if(mismeas_scenario == "lep_fake_rate"){
+    return "ntruleps==0";
+  }else if(mismeas_scenario == "mismeas_mt"){
+    return "mt>140. && ntruleps<=1 && mt_tru<=140 && !(type==5000 || type==13000 || type==15000 || type==16000)";
   }else{
     ERROR("Unrecognized mismeasurement scenario: "+mismeas_scenario);
     return 0.;
@@ -189,6 +203,20 @@ NamedFunc MismeasurementWeight(){
     return 1.;
   }else if(mismeas_scenario == "mc_as_data"){
     return 1.;
+  }else if(mismeas_scenario == "jet_pt_res"){
+    return 2.;
+  }else if(mismeas_scenario == "xsec_ttw"){
+    return 2.;
+  }else if(mismeas_scenario == "xsec_ttz"){
+    return 2.;
+  }else if(mismeas_scenario == "xsec_wjets"){
+    return 2.;
+  }else if(mismeas_scenario == "xsec_qcd"){
+    return 2.;
+  }else if(mismeas_scenario == "xsec_wjets"){
+    return 2.;
+  }else if(mismeas_scenario == "mismeas_mt"){
+    return 2.;
   }else{
     ERROR("Unrecognized mismeasurement scenario: "+mismeas_scenario);
     return 1.;
