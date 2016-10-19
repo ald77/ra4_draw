@@ -121,11 +121,11 @@ int main(int argc, char *argv[]){
   if(mm_scen == ""){
     for(const auto &scen: scenarios){
       weights.emplace(scen, w*Functions::MismeasurementWeight(sys_wgts_file, scen));
-      corrections.emplace(scen, w*Functions::MismeasurementCorrection(sys_wgts_file, scen, central));
+      corrections.emplace(scen, Functions::MismeasurementCorrection(sys_wgts_file, scen, central));
     }
   }else if(mm_scen != "no_mismeasurement"){
     weights.emplace(mm_scen, w*Functions::MismeasurementWeight(sys_wgts_file, mm_scen));
-    corrections.emplace(mm_scen, w*Functions::MismeasurementCorrection(sys_wgts_file, mm_scen, central));
+    corrections.emplace(mm_scen, Functions::MismeasurementCorrection(sys_wgts_file, mm_scen, central));
   }
 
   //// Capybara
