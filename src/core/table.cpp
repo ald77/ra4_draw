@@ -364,7 +364,8 @@ void Table::PrintPie(std::size_t irow, double luminosity) const{
   vector<int> colors(Nbkg);
   vector<const char*> labels(Nbkg);
   vector<TH1D> histos(Nbkg, TH1D("","",1,-1.,1.));
-  TLegend leg(0., 0., 1., 1.);
+  TLegend leg(0., 0., 1., 1.); leg.SetFillStyle(0); leg.SetBorderSize(0);
+  bool print_ttbar = false;
   for(size_t ind = 0; ind < Nbkg; ++ind){
     counts[ind] = luminosity*backgrounds_.at(ind)->sumw_.at(irow);
     histos[ind].SetFillColor(backgrounds_.at(ind)->process_->GetFillColor());
@@ -372,8 +373,10 @@ void Table::PrintPie(std::size_t irow, double luminosity) const{
     string label = backgrounds_.at(ind)->process_->name_;
     leg.AddEntry(&histos[ind], label.c_str(), "f");
     labels.at(ind) =  label.c_str();
-    if(Contains(label,"t#bar{t}") && !Contains(label,"t#bar{t}V")) Yield_tt += counts[ind];
-    
+    if(Contains(label,"t#bar{t}") && !Contains(label,"t#bar{t}V")){
+      Yield_tt += counts[ind];
+      print_ttbar = true;
+    }
   } // Loop over backgrounds
 
   // For now, use only the first PlotOpt in the vector
@@ -394,8 +397,10 @@ void Table::PrintPie(std::size_t irow, double luminosity) const{
   // Define piechart
   TPie pie("", "", Nbkg, &counts.at(0), &colors.at(0), &labels.at(0));
   pie.SetCircle(0.5, 0.48, 0.35);
-  pie.SetTitle(CodeToRootTex(rows_.at(irow).cut_.Name()+" (N="+RoundNumber(Yield_tot,1).Data()
-                             +", t#bar{t}="+RoundNumber(Yield_tt*100,1,Yield_tot).Data()+"%)").c_str());
+  TString title = CodeToRootTex(rows_.at(irow).cut_.Name())+" (N="+RoundNumber(Yield_tot,1);
+  if(print_ttbar) title += ", t#bar{t}="+RoundNumber(Yield_tt*100,1,Yield_tot)+"%";
+  title += ")";
+  pie.SetTitle(title);
 
   // Printing pie chart with percentages
   pie.SetLabelFormat("%perc");

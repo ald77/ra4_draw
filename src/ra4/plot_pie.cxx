@@ -17,7 +17,7 @@
 #include "core/plot_opt.hpp"
 
 namespace{
-  //bool do_met150 = true;
+  float lumi = 35.;
 }
 
 using namespace std;
@@ -111,23 +111,23 @@ int main(){
   // procs["goodbad"].push_back(Process::MakeShared<Baby_full>("0-1l m_{T}^{tru}<=140", Process::Type::background, kRed,
   //   allfiles, baseline && "ntruleps<=1 && mt_tru<=140"));
 
+  NamedFunc multNeu = "(type==5000 || type==13000 || type==15000 || type==16000)";
   procs["cats"] = vector<shared_ptr<Process> >();
-
-  procs["cats"].push_back(Process::MakeShared<Baby_full>("#geq 2l", 
-    Process::Type::background, kCyan-3,
-    allfiles, baseline && "ntruleps>=2"));
-  procs["cats"].push_back(Process::MakeShared<Baby_full>("#leq 1l, #geq 2#nu", 
-    Process::Type::background, kAzure-2,
-    allfiles, baseline && "ntruleps<=1 && (type==5000 || type==13000 || type==15000 || type==16000)"));
-  procs["cats"].push_back(Process::MakeShared<Baby_full>("0-1l m_{T}^{tru}#leq 140", 
-    Process::Type::background, kRed-4,
-    allfiles, baseline && "ntruleps<=1 && mt_tru<=140 && !(type==5000 || type==13000 || type==15000 || type==16000)"));
-  procs["cats"].push_back(Process::MakeShared<Baby_full>("1l m_{T}^{tru}>140, no W#lower[-.1]{*}", 
-    Process::Type::background, kOrange,
-    allfiles, baseline && "ntruleps<=1 && mt_tru>140 && !(type==5000 || type==13000 || type==15000 || type==16000)" && offshellw==0.));
-  procs["cats"].push_back(Process::MakeShared<Baby_full>("1l m_{T}^{tru}>140, W#lower[-.1]{*}", 
-    Process::Type::background, kGreen-3,
-    allfiles, baseline && "ntruleps<=1 && mt_tru>140 && !(type==5000 || type==13000 || type==15000 || type==16000)" && offshellw>0.));
+  procs["cats"].push_back(Process::MakeShared<Baby_full>
+			  ("#geq2l", Process::Type::background, kCyan-3,
+			   allfiles, baseline && "ntruleps>=2"));
+  procs["cats"].push_back(Process::MakeShared<Baby_full>
+			  ("#leq1l, #geq2#nu", Process::Type::background, kAzure-2, allfiles, 
+			   baseline &&"ntruleps<=1" && multNeu));
+  procs["cats"].push_back(Process::MakeShared<Baby_full>
+			  ("#leq1l, m_{T}^{tru}#leq140", Process::Type::background, kRed-4, allfiles, 
+			   baseline && "ntruleps<=1 && mt_tru<=140" && !multNeu));
+  procs["cats"].push_back(Process::MakeShared<Baby_full>
+			  ("#leq1l, m_{T}^{tru}>140, no W#lower[-.1]{*}", Process::Type::background, kGreen-3, 
+			   allfiles, baseline && "ntruleps<=1 && mt_tru>140" && !multNeu && offshellw==0.));
+  procs["cats"].push_back(Process::MakeShared<Baby_full>
+			  ("#leq1l, m_{T}^{tru}>140, W#lower[-.1]{*}", Process::Type::background, kOrange,
+			   allfiles, baseline && "ntruleps<=1 && mt_tru>140" && !multNeu && offshellw>0.));
 
   PlotMaker pm;
 
@@ -166,7 +166,7 @@ int main(){
     pm.Push<Table>("chart_"+ipr.first,  table_cuts, ipr.second, true, true, true);
 
   pm.min_print_ = true;
-  pm.MakePlots(40.);
+  pm.MakePlots(lumi);
 
   time(&endtime);
   cout<<endl<<"Making "<<table_cuts.size()<<" piecharts took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
