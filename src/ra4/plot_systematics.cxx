@@ -48,6 +48,7 @@ namespace{
   bool unblind = false;
   bool debug = false;
   bool do_ht = false;
+  bool do_correction = false;
   TString skim = "standard";
   TString json = "2p6";
   TString only_method = "";
@@ -113,14 +114,18 @@ int main(int argc, char *argv[]){
 
   vector<string> scenarios = ConfigParser::GetOptSets(sys_wgts_file);
   NamedFunc w = "weight*eff_trig";
-  map<string, NamedFunc> weights;
+  map<string, NamedFunc> weights, corrections;
+  auto central = Functions::Variation::central;
   weights.emplace("no_mismeasurement", w);
+  corrections.emplace("no_mismeasurement", 1.);
   if(mm_scen == ""){
     for(const auto &scen: scenarios){
       weights.emplace(scen, w*Functions::MismeasurementWeight(sys_wgts_file, scen));
+      corrections.emplace(scen, w*Functions::MismeasurementCorrection(sys_wgts_file, scen, central));
     }
   }else if(mm_scen != "no_mismeasurement"){
     weights.emplace(mm_scen, w*Functions::MismeasurementWeight(sys_wgts_file, mm_scen));
+    corrections.emplace(mm_scen, w*Functions::MismeasurementCorrection(sys_wgts_file, mm_scen, central));
   }
 
   //// Capybara
@@ -505,9 +510,10 @@ int main(int argc, char *argv[]){
     //if(method.Contains("agg_")) abcds.back().int_nbnj = false; // Only changes caption since there is only 1 bin
 
     vector<TableRow> table_cuts, table_cuts_mm;
+    NamedFunc correction = do_correction ? corrections.at(mm_scen) : NamedFunc(1.);
     for(size_t icut=0; icut < abcds.back().allcuts.size(); icut++){
       table_cuts.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data(),
-				    0,0,weights.at("no_mismeasurement")));
+				    0,0,weights.at("no_mismeasurement")*correction));
       table_cuts_mm.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data(),
 				       0,0,weights.at(mm_scen)));
     }
@@ -1124,6 +1130,7 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"method", required_argument, 0, 'm'},  // Method to run on (if you just want one)
+      {"correct", no_argument, 0, 'c'},       // Apply correction
       {"lumi", required_argument, 0, 'l'},    // Luminosity to normalize MC with (no data)
       {"skim", required_argument, 0, 's'},    // Which skim to use: standard, 2015 data
       {"json", required_argument, 0, 'j'},    // Which JSON to use: 0p815, 2p6, 4p0, 7p65, 12p9
@@ -1143,13 +1150,16 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "m:s:j:udbnl:p2ok", long_options, &option_index);
+    opt = getopt_long(argc, argv, "m:cs:j:udbnl:p2ok", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
     switch(opt){
     case 'm':
       only_method = optarg;
+      break;
+    case 'c':
+      do_correction = true;
       break;
     case 'l':
       mc_lumi = optarg;

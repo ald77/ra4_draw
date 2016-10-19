@@ -178,8 +178,8 @@ NamedFunc MismeasurementCut(){
     return 0.;
   }else if(mismeas_scenario == "mc_as_data"){
     return 0.;
-  }else if(mismeas_scenario == "jet_pt_res"){
-    return "jets_pt[0]<0.5 || jets_pt[0]>2.";
+  }else if(mismeas_scenario == "met_res"){
+    return "(met-met_tru)/met>0.5";
   }else if(mismeas_scenario == "xsec_ttw"){
     return "type>=4000 && type<5000";
   }else if(mismeas_scenario == "xsec_ttz"){
@@ -190,6 +190,14 @@ NamedFunc MismeasurementCut(){
     return "type>=7000 && type<8000";
   }else if(mismeas_scenario == "lep_fake_rate"){
     return "ntruleps==0";
+  }else if(mismeas_scenario == "w_isr_1l"){
+    return "ntruleps<=1 && type>=1000 && type<2000";
+  }else if(mismeas_scenario == "isr_pt"){
+    return 1.;
+  }else if(mismeas_scenario == "st_model"){
+    return 1.;
+  }else if(mismeas_scenario == "mismeas_kappa"){
+    return "mt>140. && mj14>400. && ntruleps<=1 && mt_tru<=140 && !(type==5000 || type==13000 || type==15000 || type==16000)";
   }else if(mismeas_scenario == "mismeas_mt"){
     return "mt>140. && ntruleps<=1 && mt_tru<=140 && !(type==5000 || type==13000 || type==15000 || type==16000)";
   }else{
@@ -203,17 +211,25 @@ NamedFunc MismeasurementWeight(){
     return 1.;
   }else if(mismeas_scenario == "mc_as_data"){
     return 1.;
-  }else if(mismeas_scenario == "jet_pt_res"){
+  }else if(mismeas_scenario == "met_res"){
     return 2.;
   }else if(mismeas_scenario == "xsec_ttw"){
-    return 2.;
+    return 3.;
   }else if(mismeas_scenario == "xsec_ttz"){
-    return 2.;
+    return 3.;
   }else if(mismeas_scenario == "xsec_wjets"){
-    return 2.;
+    return 3.;
   }else if(mismeas_scenario == "xsec_qcd"){
+    return 4.;
+  }else if(mismeas_scenario == "lep_fake_rate"){
     return 2.;
-  }else if(mismeas_scenario == "xsec_wjets"){
+  }else if(mismeas_scenario == "w_isr_1l"){
+    return "1./w_isr";
+  }else if(mismeas_scenario == "isr_pt"){
+    return "(isr_tru_pt<=600.) + (isr_tru_pt>600. && isr_tru_pt<=800.)*0.5 + (isr_tru_pt>800.)*0.25";
+  }else if(mismeas_scenario == "st_model"){
+    return "(st<=500.) + (st>500.&&st<=650.)*0.7 + (st>650.&&st<=800.)*0.5 + (st>800.&&st<=1000.)*0.25 + (st>1000.)*0.1";
+  }else if(mismeas_scenario == "mismeas_kappa"){
     return 2.;
   }else if(mismeas_scenario == "mismeas_mt"){
     return 2.;
