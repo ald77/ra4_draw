@@ -124,6 +124,7 @@ int main(int argc, char *argv[]){
       corrections.emplace(scen, Functions::MismeasurementCorrection(sys_wgts_file, scen, central));
     }
   }else if(mm_scen != "no_mismeasurement"){
+    scenarios = vector<string>{mm_scen};
     weights.emplace(mm_scen, w*Functions::MismeasurementWeight(sys_wgts_file, mm_scen));
     corrections.emplace(mm_scen, Functions::MismeasurementCorrection(sys_wgts_file, mm_scen, central));
   }
@@ -306,7 +307,9 @@ int main(int argc, char *argv[]){
                                  "m2lvetomet150", "m2lonlymet150", "mvetoonlymet150", "m1lmet150",
 				 "m5j", "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
  
-  vector<TString> methods_std = {"signalmet100onebin", "m5jmet100onebin", "m2lvetoonebin", "njets1l", "njets2lveto"};
+  vector<TString> methods_std = {"m5jmet350onebin", "signalmet100onebin", "m5jmet100onebin", 
+   				 "m2lvetoonebin", "njets1l", "njets2lveto"};  
+  //vector<TString> methods_std = {"njets1l", "njets2lveto"};
 
   vector<TString> methods = methods_std;
 
@@ -357,14 +360,15 @@ int main(int argc, char *argv[]){
     
     /////// Methods to check Njets
     if(method.Contains("njets1l")) {
-      metcuts = vector<TString>{"met>200", "met>200"};
-      vbincuts = vector<vector<TString> >{{"njets==5"}, {"njets>=6&&njets<=8", "njets>=9"}}; 
+      metcuts = vector<TString>{"met>100&&met<=200", "met>100&&met<=200", "met>200", "met>200"};
+      vbincuts = vector<vector<TString> >{{"njets==5"}, {"njets>=6&&njets<=8", "njets>=9"},
+					  {"njets==5"}, {"njets>=6&&njets<=8", "njets>=9"}}; 
       doVBincuts = true;
       caption = "Signal search regions + low MET";
       abcd_title = "Signal + low MET (N_{jets})";
     }
     if(method.Contains("njets2l")) {
-      metcuts = vector<TString>{"met>200"};
+      metcuts = vector<TString>{"met>100&&met<=200", "met>200&&met<=500"};
       bincuts = vector<TString>{"njets>=6&&njets<=8", "njets>=9"}; 
       caption += "either two reconstructed leptons, or one lepton and one track";
       abcd_title = "Dilepton (N_{jets})";
@@ -427,9 +431,10 @@ int main(int argc, char *argv[]){
       } // allmetsignal
       if(method.Contains("met100")) {
 	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
-	bincuts = vector<TString>{c_lownb+" && "+c_lownj, c_lownb+" && "+c_hignj,
-				  c_midnb+" && "+c_lownj, c_midnb+" && "+c_hignj,
-				  c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj};
+	caption = "Signal search regions plus $100<\\met\\leq200$ GeV";
+      } // allmetsignal
+      if(method.Contains("met350")) {
+	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, "met>350"};
 	caption = "Signal search regions plus $100<\\met\\leq200$ GeV";
       } // allmetsignal
       if(method.Contains("nb0")) {
@@ -454,6 +459,10 @@ int main(int argc, char *argv[]){
       abcd_title = "N_{jets} = 5";
       if(method.Contains("met100")) {
 	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
+	caption = "Validation regions with $1\\ell, \\njets=5$, $100<\\met\\leq200$ GeV";
+      } // allmetsignal
+      if(method.Contains("met350")) {
+	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, "met>350"};
 	caption = "Validation regions with $1\\ell, \\njets=5$, $100<\\met\\leq200$ GeV";
       } // allmetsignal
       if(method.Contains("onebin")) bincuts = vector<TString>{"njets==5"};
@@ -782,7 +791,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   //// Setting plot style
   PlotOpt opts("txt/plot_styles.txt", "Kappa");
   if(label_up) opts.BottomMargin(0.11);
-  if(kappas.size() >= 4) {
+  if(kappas.size() >= 1) { // Used to be 4
     opts.CanvasWidth(1300);
     markerSize = 1.5;
   }
@@ -801,6 +810,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   vector<kmarker> bcuts({{"nbm==1",2,21,zz}, {"nbm==2",4,20,zz}, {"nbm>=3",kGreen+3,22,zz}, 
 								   {"nbm==0",kMagenta+2,23,zz}, 
 								   {"nbl==0",kMagenta+2,23,zz}});
+  
+  int cSignal = kBlue;
   float maxy = 2.4, fYaxis = 1.3;
   int nbins = 0; // Total number of njets bins (used in the base histo)
   for(size_t iplane=0; iplane < kappas.size(); iplane++) {
@@ -923,7 +934,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 	    //// Printing difference between kappa and kappa_mm
 	    float kap = k_ordered[iplane][ibin][ib].kappa[0], kap_mm = k_ordered_mm[iplane][ibin][ib].kappa[0];
 	    TString text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
-	    if((abcd.method.Contains("signal")&&iplane>=2) || (abcd.method.Contains("njets1l")&&iplane>=1)) klab.SetTextColor(4);
+	    if((abcd.method.Contains("signal")&&iplane>=2) || (abcd.method.Contains("njets1l")&&iplane>=3)) 
+	      klab.SetTextColor(cSignal);
 	    else klab.SetTextColor(1);
 	    klab.SetTextSize(0.045);
 	    klab.DrawLatex(xval, 0.952*maxy, text);
@@ -994,7 +1006,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   //cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
   cmslabel.SetTextSize(0.053);
   TString title = "#font[42]{"+abcd.title+"}";
-  title.ReplaceAll("Signal", "#color[4]{Signal}");
+  TString newSignal = "#color["; newSignal += cSignal; newSignal += "]{Signal}";
+  title.ReplaceAll("Signal", newSignal);
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.025, title);
 
   line.SetLineStyle(3); line.SetLineWidth(1);

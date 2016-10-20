@@ -18,6 +18,7 @@
 
 namespace{
   float lumi = 35.;
+  bool do_2l = true;
 }
 
 using namespace std;
@@ -114,20 +115,20 @@ int main(){
   NamedFunc multNeu = "(type==5000 || type==13000 || type==15000 || type==16000)";
   procs["cats"] = vector<shared_ptr<Process> >();
   procs["cats"].push_back(Process::MakeShared<Baby_full>
-			  ("#geq2l", Process::Type::background, kCyan-3,
-			   allfiles, baseline && "ntruleps>=2"));
+  			  ("#geq2l", Process::Type::background, kCyan-3,
+  			   allfiles, baseline && "ntruleps>=2"));
   procs["cats"].push_back(Process::MakeShared<Baby_full>
-			  ("#leq1l, #geq2#nu", Process::Type::background, kAzure-2, allfiles, 
-			   baseline &&"ntruleps<=1" && multNeu));
+  			  ("#leq1l, #geq2#nu", Process::Type::background, kAzure-2, allfiles, 
+  			   baseline &&"ntruleps<=1" && multNeu));
   procs["cats"].push_back(Process::MakeShared<Baby_full>
-			  ("#leq1l, m_{T}^{tru}#leq140", Process::Type::background, kRed-4, allfiles, 
-			   baseline && "ntruleps<=1 && mt_tru<=140" && !multNeu));
+  			  ("#leq1l, m_{T}^{tru}#leq140", Process::Type::background, kRed-4, allfiles, 
+  			   baseline && "ntruleps<=1 && mt_tru<=140" && !multNeu));
   procs["cats"].push_back(Process::MakeShared<Baby_full>
-			  ("#leq1l, m_{T}^{tru}>140, no W#lower[-.1]{*}", Process::Type::background, kGreen-3, 
-			   allfiles, baseline && "ntruleps<=1 && mt_tru>140" && !multNeu && offshellw==0.));
+  			  ("#leq1l, m_{T}^{tru}>140, no W#lower[-.1]{*}", Process::Type::background, kGreen-3, 
+  			   allfiles, baseline && "ntruleps<=1 && mt_tru>140" && !multNeu && offshellw==0.));
   procs["cats"].push_back(Process::MakeShared<Baby_full>
-			  ("#leq1l, m_{T}^{tru}>140, W#lower[-.1]{*}", Process::Type::background, kOrange,
-			   allfiles, baseline && "ntruleps<=1 && mt_tru>140" && !multNeu && offshellw>0.));
+  			  ("#leq1l, m_{T}^{tru}>140, W#lower[-.1]{*}", Process::Type::background, kOrange,
+  			   allfiles, baseline && "ntruleps<=1 && mt_tru>140" && !multNeu && offshellw>0.));
 
   PlotMaker pm;
 
@@ -158,8 +159,19 @@ int main(){
   vector<TString> cuts;
   vector<TableRow> table_cuts;
 
-  for(auto &imet: metcuts) for(auto &inb: nbcuts) for(auto &inj: njcuts) for(auto &imt: mtcuts)
-    cuts.push_back("nleps==1 && nveto==0 && "+imet+"&&"+inb+"&&"+inj+"&&"+imt);
+  //// nleps = 1
+  for(auto &imet: metcuts) 
+    for(auto &inb: nbcuts) 
+      for(auto &inj: njcuts) 
+	for(auto &imt: mtcuts)
+	  if(!do_2l) cuts.push_back("nleps==1 && nveto==0 && "+imet+"&&"+inb+"&&"+inj+"&&"+imt);
+
+  TString cuts_2l = "((nleps==2&&njets>=5) || (nleps==1&&nveto==1&&mt>140&&njets>=6))";
+  for(auto &imet: metcuts) 
+    for(auto &inb: nbcuts) 
+      for(auto &imt: mtcuts)
+	if(do_2l) cuts.push_back(cuts_2l+" && "+imet+"&&"+inb+"&&"+imt);
+
   for(size_t icut=0; icut<cuts.size(); icut++)
     table_cuts.push_back(TableRow("$"+CodeToLatex(cuts[icut].Data())+"$", cuts[icut].Data()));  
   for(auto &ipr: procs) 

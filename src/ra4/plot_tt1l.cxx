@@ -97,6 +97,8 @@ int main(){
   pm.Push<Hist1D>(Axis(30,200.,800.,"met","MET [GeV]"),"met>200", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(30,-1.,5.,"(met-met_tru)/met_tru","(MET-MET^{tru})/MET^{tru}"),"met>100", 
 		  tt1l_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(30,-0.5,1.,"(met-met_tru)/met","(MET-MET^{tru})/MET"),"met>100", 
+		  tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(60,-100.,200.,"met-met_tru","MET-MET^{tru} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(30,300.,1500.,"m_tt","m_{t#bar{t}} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(6,-0.5,5.5,"nisr","N_{jets}^{ISR}"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
