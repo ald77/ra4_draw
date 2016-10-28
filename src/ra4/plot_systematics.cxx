@@ -149,7 +149,7 @@ int main(int argc, char *argv[]){
   Palette colors("txt/colors.txt", "default");
 
   // Cuts in baseline speed up the yield finding
-  string baseline_s = "mj14>250 && nleps>=1 && met>100 && njets>=5";
+  string baseline_s = "mj14>250 && nleps>=1 && met>100 && njets>=5 && st<10000";
   if(skim.Contains("mj12")) ReplaceAll(baseline_s, "mj14","mj");
   if(skim.Contains("met100")) ReplaceAll(baseline_s, "150","100");
 
@@ -307,8 +307,8 @@ int main(int argc, char *argv[]){
                                  "m2lvetomet150", "m2lonlymet150", "mvetoonlymet150", "m1lmet150",
 				 "m5j", "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
  
-  vector<TString> methods_std = {"m5jmet350onebin", "signalmet100onebin", "m5jmet100onebin", 
-   				 "m2lvetoonebin", "njets1l", "njets2lveto"};  
+  vector<TString> methods_std = {"signalmet100onebin", "m5jmet100onebin", 
+   				 "m2lvetoonebin", "nb1l", "njets1l", "njets2lveto"};  
   //vector<TString> methods_std = {"njets1l", "njets2lveto"};
 
   vector<TString> methods = methods_std;
@@ -358,6 +358,13 @@ int main(int argc, char *argv[]){
     }
 
     
+    /////// Methods to check Nb
+    if(method.Contains("nb1l")) {
+      metcuts = vector<TString>{"met>200&&njets==5", "met>200&&njets>=6"};
+      bincuts = vector<TString>{"nbm==1", "nbm==2", "nbm>=3"};
+      caption = "Signal search regions + $\\njets=5$";
+      abcd_title = "Signal + N_{jets}=5 (N_{b})";
+    }
     /////// Methods to check Njets
     if(method.Contains("njets1l")) {
       metcuts = vector<TString>{"met>100&&met<=200", "met>100&&met<=200", "met>200", "met>200"};
@@ -807,10 +814,11 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   vector<vector<vector<kmarker> > > k_ordered, kk_ordered, k_ordered_mm;
   vector<kmarker> ind_bcuts; // nb cuts actually used in the plot
   vector<float> zz; // Zero length vector for the kmarker constructor
-  vector<kmarker> bcuts({{"nbm==1",2,21,zz}, {"nbm==2",4,20,zz}, {"nbm>=3",kGreen+3,22,zz}, 
-								   {"nbm==0",kMagenta+2,23,zz}, 
-								   {"nbl==0",kMagenta+2,23,zz}});
-  
+  // vector<kmarker> bcuts({{"nbm==1",2,21,zz}, {"nbm==2",4,20,zz}, {"nbm>=3",kGreen+3,22,zz}, 
+  // 								   {"nbm==0",kMagenta+2,23,zz}, 
+  // 								   {"nbl==0",kMagenta+2,23,zz}});
+  vector<kmarker> bcuts({{"none",2,21,zz}});
+   
   int cSignal = kBlue;
   float maxy = 2.4, fYaxis = 1.3;
   int nbins = 0; // Total number of njets bins (used in the base histo)
@@ -934,7 +942,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 	    //// Printing difference between kappa and kappa_mm
 	    float kap = k_ordered[iplane][ibin][ib].kappa[0], kap_mm = k_ordered_mm[iplane][ibin][ib].kappa[0];
 	    TString text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
-	    if((abcd.method.Contains("signal")&&iplane>=2) || (abcd.method.Contains("njets1l")&&iplane>=3)) 
+	    if((abcd.method.Contains("signal")&&iplane>=2) || (abcd.method.Contains("njets1l")&&iplane>=3)
+	       || (abcd.method.Contains("nb1l")&&iplane>=1) ) 
 	      klab.SetTextColor(cSignal);
 	    else klab.SetTextColor(1);
 	    klab.SetTextSize(0.045);
@@ -957,7 +966,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
     // Drawing MET labels
     if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
-    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.11*maxy, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
+    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.10*maxy, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
   } // Loop over plane cuts
 
   //// Drawing legend and TGraphs
@@ -1008,7 +1017,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   TString title = "#font[42]{"+abcd.title+"}";
   TString newSignal = "#color["; newSignal += cSignal; newSignal += "]{Signal}";
   title.ReplaceAll("Signal", newSignal);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.025, title);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.03, title);
 
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);

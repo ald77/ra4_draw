@@ -45,6 +45,7 @@ namespace{
   bool unblind = false;
   bool debug = false;
   bool do_ht = false;
+  bool do_zbi = true;
   TString skim = "standard";
   TString json = "2p6";
   TString only_method = "";
@@ -133,7 +134,7 @@ int main(int argc, char *argv[]){
     baseline && "stitch && pass");
 
   auto proc_t1c = Process::MakeShared<Baby_full>("T1tttt(C)", Process::Type::signal, colors("t1tttt"),
-    {foldersig+"*mGluino-1300_mLSP-900_*.root"},
+    {foldersig+"*mGluino-1400_mLSP-1000_*.root"},
     baseline && "stitch");
   auto proc_t1nc = Process::MakeShared<Baby_full>("T1tttt(NC)", Process::Type::signal, colors("t1tttt"),
     {foldersig+"*mGluino-1700_mLSP-100_*.root"},
@@ -375,15 +376,16 @@ int main(int argc, char *argv[]){
 
 
     if(method.Contains("m5j")) {
-      metcuts = vector<TString>{c_lowmet, c_midmet, c_higmet};
+      metcuts = vector<TString>{c_lowmet, c_midmet};
       //if(only_mc) metcuts.push_back(c_higmet);
       bincuts = vector<TString>{c_lownb+" && "+c_nj5, c_midnb+" && "+c_nj5, c_hignb+" && "+c_nj5};
       caption = "Validation regions with $1\\ell, \\njets=5$";
       if(method.Contains("met100")) {
-	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
+	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
 	caption = "Validation regions with $1\\ell, \\njets=5$, $100<\\met\\leq200$ GeV";
       } // allmetsignal
       if(method.Contains("onebin")) bincuts = vector<TString>{"njets==5&&nbm>=1"};
+      if(only_mc) metcuts.push_back(c_higmet);
      }
 
     ////// Aggregate regions (single lepton). The nbm, njets integration in R1/R3 is done in abcd_method
@@ -522,16 +524,16 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   //// Table general parameters
   int digits = 2;
   TString ump = " & ";
-  bool do_zbi = true;
   if(!unblind) do_zbi = false;
-  size_t Ncol = 6;
-  if(do_zbi) Ncol++;
-  if(do_signal) Ncol += 2;
+  size_t Ncol = 4;
   if(split_bkg) Ncol += 3;
+  if(do_signal) Ncol += 2;
   if(only_mc) {
-    if(do_signal) Ncol -= 1;
-    else Ncol -= 3;
+    if(do_signal && do_zbi) Ncol += 2;
+  } else {
+    if(do_zbi) Ncol++;
   }
+
   TString blind_s = "$\\spadesuit$";
 
   //// Setting output file name
@@ -561,7 +563,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if(split_bkg) out << " & Other & $t\\bar{t}(1\\ell)$ & $t\\bar{t}(2\\ell)$ ";
   out << "& $\\kappa$ & MC bkg. & Pred.";
   if(!only_mc) out << "& Obs. & Obs./MC "<<(do_zbi?"& Signi.":"");
-  else if(do_signal) out << "& Signi.(NC) & Signi.(C)";
+  else if(do_signal && do_zbi) out << "& Signi.(NC) & Signi.(C)";
   out << " \\\\ \\hline\\hline\n";
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -625,7 +627,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
           if(do_zbi && iabcd==3) out << ump << Zbi(allyields[0][index].Yield(), preds[iplane][ibin][0], 
 						   preds[iplane][ibin][1], preds[iplane][ibin][2]);
         } else {// if not only_mc
-          if(iabcd==3 && do_signal) {
+          if(iabcd==3 && do_signal && do_zbi) {
             out<<ump<<Zbi(allyields[0][index].Yield()+allyields[2][index].Yield(),preds[iplane][ibin][0],
 			  preds[iplane][ibin][1], preds[iplane][ibin][2]);
             out<<ump<<Zbi(allyields[0][index].Yield()+allyields[3][index].Yield(),preds[iplane][ibin][0],
@@ -952,6 +954,7 @@ void GetOptions(int argc, char *argv[]){
       {"unblind", no_argument, 0, 'u'},       // Unblinds R4/D4
       {"only_mc", no_argument, 0, 'o'},       // Uses MC as data for the predictions
       {"only_kappa", no_argument, 0, 'k'},    // Only plots kappa (no table)
+      {"no_zbi", no_argument, 0, 'z'},         // Don't print significance in tables
       {"debug", no_argument, 0, 'd'},         // Debug: prints yields and cuts used
       {"only_dilepton", no_argument, 0, '2'}, // Makes tables only for dilepton tests
       {"ht", no_argument, 0, 0},            // Cuts on ht>500 instead of st>500
@@ -960,7 +963,7 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "m:s:j:udbnl:p2ok", long_options, &option_index);
+    opt = getopt_long(argc, argv, "m:s:j:udbnl:p2okz", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
@@ -996,6 +999,9 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 'n':
       do_signal = false;
+      break;
+    case 'z':
+      do_zbi = false;
       break;
     case 'u':
       unblind = true;

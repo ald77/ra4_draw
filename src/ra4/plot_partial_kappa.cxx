@@ -124,7 +124,7 @@ int main(int argc, char *argv[]){
   }
   if(ifilesDen == wjets) {
     denfiles = wfiles;
-    dentitle = "Wjets";
+    dentitle = "W+jets";
   }
   if(ifilesNum == ttbar) {
     numfiles = ttfiles;
@@ -136,6 +136,7 @@ int main(int argc, char *argv[]){
   }
 
   NamedFunc multNeu = "(type==5000 || type==13000 || type==15000 || type==16000)";
+  NamedFunc multNeu2l = "(ntruleps>=2 || (ntruleps<=1&&(type==5000 || type==13000 || type==15000 || type==16000)))";
   vector<shared_ptr<Process> > procs;
   //// First entry is for low-mT region (kappa denominator)
   procs.push_back(Process::MakeShared<Baby_full>(dentitle, Process::Type::background, 1, denfiles, baselinef));
@@ -143,22 +144,28 @@ int main(int argc, char *argv[]){
   //// Processes for the high-mT region (kappa numerator)
   if(ifilesNum==all || ifilesNum==ttbar)
     procs.push_back(Process::MakeShared<Baby_full>
-		    (numtitle+"#geq2l", Process::Type::background, kCyan-3, numfiles, 
-		     baselinef && "ntruleps>=2"));
-  if(ifilesNum==all)
-    procs.push_back(Process::MakeShared<Baby_full>
-		    (numtitle+"#leq1l, #geq2#nu", Process::Type::background, kAzure-2, numfiles, 
-		     baselinef && "ntruleps<=1" && multNeu));
-  procs.push_back(Process::MakeShared<Baby_full>
-		  (numtitle+"#leq1l, m_{T}^{tru}#leq140", Process::Type::background, kRed-4, numfiles, 
-		   baselinef&&"ntruleps<=1&&mt_tru<=140" && !multNeu));
+		    (numtitle+"#geq2#nu^{prompt}", Process::Type::background, kCyan-3, numfiles, 
+		     baselinef && multNeu2l));
+  // procs.push_back(Process::MakeShared<Baby_full>
+  // 		    (numtitle+"#geq2l", Process::Type::background, kCyan-3, numfiles, 
+  // 		     baselinef && "ntruleps>=2"));
+  // if(ifilesNum==all)
+  //   procs.push_back(Process::MakeShared<Baby_full>
+  // 		    (numtitle+"#leq1l, #geq2#nu", Process::Type::background, kAzure-2, numfiles, 
+  // 		     baselinef && "ntruleps<=1" && multNeu));
   procs.push_back(Process::MakeShared<Baby_full>
 		  (numtitle+"#leq1l, m_{T}^{tru}>140, no W#lower[-.1]{*}", Process::Type::background, kGreen-3, 
 		   numfiles, baselinef&&"ntruleps<=1&&mt_tru>140" && !multNeu && offshellw==0.));
+  procs.push_back(Process::MakeShared<Baby_full>
+		  (numtitle+"#leq1l, m_{T}^{tru}#leq140", Process::Type::background, kRed-4, numfiles, 
+		   baselinef&&"ntruleps<=1&&mt_tru<=140" && !multNeu));
   if(ifilesNum==all || ifilesNum==wjets)
     procs.push_back(Process::MakeShared<Baby_full>
 		    (numtitle+"#leq1l, m_{T}^{tru}>140, W#lower[-.1]{*}",Process::Type::background,kOrange,numfiles,
 		     baselinef&&"ntruleps<=1&&mt_tru>140" && !multNeu && offshellw>0.));
+  procs.push_back(Process::MakeShared<Baby_full>
+		  (numtitle+"All",Process::Type::background,1,numfiles,
+		   baselinef));
 
 
 
@@ -169,18 +176,20 @@ int main(int argc, char *argv[]){
 
   // Makes a plot for each vector in plotcuts
   vector<oneplot> plotcuts({
-      {"met","njets>=5&&st>800&&st<=1000",{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=350",
-	    "met>350&&met<=500","met>500"}},
+      // {"met","njets>=5&&st>800&&st<=1000",{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=350",
+      // 	    "met>350&&met<=500","met>500"}},
+      // {"met","njets>=5&&ht>800&&ht<=1000",{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=350",
+      // 	    "met>350&&met<=500","met>500"}},
 	{"met","njets>=5",{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=350",
 	      "met>350&&met<=500","met>500"}},
-	  {"met","njets>=6",{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=350",
-		"met>350&&met<=500","met>500"}},
-	    {"st", "met>100&&met<200&&njets>=5", {"st>500&&st<=650", "st>650&&st<=800", "st>800&&st<=1000", 
-		  "st>1000&&st<=1500","st>1500"}},
-	      {"st", "met>200&&njets>=5", {"st>500&&st<=650", "st>650&&st<=800", "st>800&&st<=1000", 
-		    "st>1000&&st<=1500","st>1500"}},
-		{"ht", "met>200&&njets>=5", {"ht>500&&ht<=650", "ht>650&&ht<=800", "ht>800&&ht<=1000", 
-		      "ht>1000&&ht<=1500","ht>1500"}},
+	   {"met","njets>=6",{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=350",
+	   	"met>350&&met<=500","met>500"}},
+	  //   {"st", "met>100&&met<200&&njets>=5", {"st>500&&st<=650", "st>650&&st<=800", "st>800&&st<=1000", 
+	  // 	  "st>1000&&st<=1500","st>1500"}},
+	  //     {"st", "met>200&&njets>=5", {"st>500&&st<=650", "st>650&&st<=800", "st>800&&st<=1000", 
+	  // 	    "st>1000&&st<=1500","st>1500"}},
+	  // 	{"ht", "met>200&&njets>=5", {"ht>500&&ht<=650", "ht>650&&ht<=800", "ht>800&&ht<=1000", 
+	  // 	      "ht>1000&&ht<=1500","ht>1500"}},
 		  {"njets", "met>100", {"njets==5", "njets==6", "njets==7", "njets==8", "njets>=9"}},
 		    {"njets", "met>150", {"njets==5", "njets==6", "njets==7", "njets==8", "njets>=9"}},
 		      {"njets", "met>200", {"njets==5", "njets==6", "njets==7", "njets==8", "njets>=9"}},
@@ -351,10 +360,10 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   double legX(opts.LeftMargin()+0.023), legY(1-opts.TopMargin()-0.03), legSingle = 0.05;
   double legW = 0.19*4, legH = legSingle;
   int Ncol = ngraphs;
-  if(ngraphs>4) {
-    legW = 0.19*4;
+  if(ngraphs>3) {
     legH *= 2;
     Ncol = (ngraphs+1)/2;
+    legW = 0.25*Ncol;
   }
   TLegend leg(legX, legY-legH, legX+legW, legY);
   leg.SetTextSize(opts.LegendEntryHeight()); leg.SetFillColor(0);
@@ -372,7 +381,9 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   for(size_t igraph=0; igraph<ngraphs; igraph++){
     graph[igraph] = TGraphAsymmErrors(vx[igraph].size(), &(vx[igraph][0]), &(vy[igraph][0]),
                                     &(vexl[igraph][0]), &(vexh[igraph][0]), &(veyl[igraph][0]), &(veyh[igraph][0]));
-    graph[igraph].SetMarkerStyle(styles[igraph]); graph[igraph].SetMarkerSize(1.4);
+    graph[igraph].SetMarkerStyle(styles[igraph]); 
+    if(leglabels[igraph].Contains("All")) graph[igraph].SetMarkerStyle(21);
+    graph[igraph].SetMarkerSize(1.4);
     graph[igraph].SetMarkerColor(mcolors[igraph]);
     graph[igraph].SetLineColor(mcolors[igraph]); graph[igraph].SetLineWidth(2);
     graph[igraph].Draw("p0 same");

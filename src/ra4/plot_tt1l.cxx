@@ -62,16 +62,23 @@ int main(){
   /// Study of ttbar 1l
   auto proc_tt1l_lomt = Process::MakeShared<Baby_full>("t#bar{t} 1l, m_{T}#leq140", Process::Type::background, 
 						       colors("tt_1l"), ttfiles, 
-						       baseline && "stitch && ntruleps<=1 && mt<=140");
+						       baseline && "ntruleps<=1 && mt<=140");
+  auto proc_ttltau = Process::MakeShared<Baby_full>("t#bar{t} l#tau_{h}, m_{T}>140", Process::Type::background, 
+						    kBlue-6, ttfiles, 
+						    baseline && "ntruels+ntrumus+ntrutausl==1 && ntrutaush==1 && mt>140");
+  auto proc_tt2l = Process::MakeShared<Baby_full>("t#bar{t} 2l, m_{T}>140", Process::Type::background, 
+						  colors("tt_2l"), ttfiles, 
+						  baseline && "ntruels+ntrumus+ntrutausl==2 && mt>140");
   auto proc_tt1l_ghimt = Process::MakeShared<Baby_full>("t#bar{t} 1l, m_{T}>140, m_{T}^{tru}>140", Process::Type::background, 
 						       kGreen-3, ttfiles, 
-						       baseline && "stitch && ntruleps<=1 && mt>140&&mt_tru>140");
+						       baseline && "ntruleps<=1 && mt>140&&mt_tru>140");
   auto proc_tt1l_bhimt = Process::MakeShared<Baby_full>("t#bar{t} 1l, m_{T}>140, m_{T}^{tru}#leq140", Process::Type::background, 
 						       kRed-4, ttfiles, 
-						       baseline && "stitch && ntruleps<=1 && mt>140&&mt_tru<140");
+						       baseline && "ntruleps<=1 && mt>140&&mt_tru<140");
 
   
 
+  vector<shared_ptr<Process> > tt_procs = {proc_tt1l_lomt, proc_tt2l, proc_ttltau, proc_tt1l_ghimt, proc_tt1l_bhimt};
   vector<shared_ptr<Process> > tt1l_procs = {proc_tt1l_lomt, proc_tt1l_ghimt, proc_tt1l_bhimt};
   
   PlotOpt log_shapes("txt/plot_styles.txt", "CMSPaper");
@@ -87,24 +94,28 @@ int main(){
   PlotMaker pm;
 
 
-  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>100", tt1l_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>100", tt_procs, plot_types).Tag("tt1l");
+
+  pm.Push<Hist1D>(Axis(35,0.,700.,max_b_pt,"Max b-quark p_{T} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(30,-0.5,1.,"(met-met_tru)/met","(MET-MET^{tru})/MET"),"met>100", 
+		  tt1l_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(60,-100.,200.,"met-met_tru","MET-MET^{tru} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
+
+
   pm.Push<Hist1D>(Axis(30,300.,1500.,"ht","H_{T} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
+
   pm.Push<Hist1D>(Axis(30,500.,1700.,"st","S_{T} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(30,300.,1500.,"ht_tru","H_{T}^{tru} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(48,-800.,400.,"ht-ht_tru","H_{T}-H_{T}^{tru} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(40,-100.,300.,"mt-mt_tru","m_{T}-m_{T}^{tru} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
 
-  pm.Push<Hist1D>(Axis(30,200.,800.,"met","MET [GeV]"),"met>200", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(30,-1.,5.,"(met-met_tru)/met_tru","(MET-MET^{tru})/MET^{tru}"),"met>100", 
 		  tt1l_procs, plot_types).Tag("tt1l");
-  pm.Push<Hist1D>(Axis(30,-0.5,1.,"(met-met_tru)/met","(MET-MET^{tru})/MET"),"met>100", 
-		  tt1l_procs, plot_types).Tag("tt1l");
-  pm.Push<Hist1D>(Axis(60,-100.,200.,"met-met_tru","MET-MET^{tru} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(30,200.,800.,"met","MET [GeV]"),"met>200", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(30,300.,1500.,"m_tt","m_{t#bar{t}} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(6,-0.5,5.5,"nisr","N_{jets}^{ISR}"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(40,0.,200.,"leps_pt[0]","Lepton p_{T} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(50,0.,500.,"isr_tru_pt","t#bar{t} true p_{T} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
-  pm.Push<Hist1D>(Axis(35,0.,700.,max_b_pt,"Max b-quark p_{T} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(35,0.,700.,max_t_pt,"Max t-quark p_{T} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
 
 
