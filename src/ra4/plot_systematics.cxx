@@ -962,7 +962,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 	    //// Printing difference between kappa and kappa_mm
 	    float kap = k_ordered[iplane][ibin][ib].kappa[0], kap_mm = k_ordered_mm[iplane][ibin][ib].kappa[0];
 	    TString text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
-	    if((abcd.method.Contains("signal")&&iplane>=2) || (abcd.method.Contains("njets1l")&&iplane>=3)
+	    if((abcd.method.Contains("signal")&&iplane>=2) || (abcd.method.Contains("njets1lmet200")&&iplane>=1)
 	       || (abcd.method.Contains("nb1l")&&iplane>=1) ) 
 	      klab.SetTextColor(cSignal);
 	    else klab.SetTextColor(1);
