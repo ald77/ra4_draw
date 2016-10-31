@@ -300,6 +300,15 @@ int main(int argc, char *argv[]){
       basecuts = "nleps==1 && nveto==0 && nbm>=1";
     }
 
+    /////// Methods to check Njets
+    if(method.Contains("njets2l")) {
+      metcuts = vector<TString>{"met>100&&met<=200", "met>200&&met<=500"};
+      bincuts = vector<TString>{"njets>=6&&njets<=8", "njets>=9"}; 
+      abcdcuts = abcdcuts_2lveto;
+      caption += "either two reconstructed leptons, or one lepton and one track";
+    }
+
+
     //////// Dilepton methods
     if(method.Contains("2lonly")) {
       abcdcuts = abcdcuts_2l;

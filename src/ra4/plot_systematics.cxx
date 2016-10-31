@@ -39,8 +39,8 @@
 using namespace std;
 
 namespace{
-  bool only_mc = true;
-  bool only_kappa = true;
+  bool only_mc = false;
+  bool only_kappa = false;
   bool split_bkg = true;
   bool only_dilepton = false;
   bool do_leptons = false;
@@ -104,7 +104,9 @@ int main(int argc, char *argv[]){
 
   if(mm_scen == ""){
     cout << " ======== Doing all mis-measurement scenarios ======== \n" << endl;
-  }else if(mm_scen == "no_mismeasurement" || mm_scen == "data" || mm_scen == "off" || mm_scen == "mc_as_data"){
+  }else if(mm_scen == "data"){
+    cout << " ======== Comparing MC and actual DATA ======== \n" << endl;
+  }else if(mm_scen == "no_mismeasurement" || mm_scen == "off" || mm_scen == "mc_as_data"){
     cout << " ======== No mismeasurement applied ======== \n" << endl;
     if(mm_scen == "mc_as_data") only_mc = true;
   }else{
@@ -123,6 +125,8 @@ int main(int argc, char *argv[]){
       weights.emplace(scen, w*Functions::MismeasurementWeight(sys_wgts_file, scen));
       corrections.emplace(scen, Functions::MismeasurementCorrection(sys_wgts_file, scen, central));
     }
+  }else if(mm_scen == "data"){
+    scenarios = vector<string>{mm_scen};
   }else if(mm_scen != "no_mismeasurement"){
     scenarios = vector<string>{mm_scen};
     weights.emplace(mm_scen, w*Functions::MismeasurementWeight(sys_wgts_file, mm_scen));
@@ -132,7 +136,7 @@ int main(int argc, char *argv[]){
   //// Capybara
   string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_stdnj5/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_met100_stdnj5/");
 
   // Old 2015 data
   if(skim.Contains("2015")){
@@ -241,7 +245,10 @@ int main(int argc, char *argv[]){
 
   vector<shared_ptr<Process> > all_procs;
   if(!quick_test) all_procs = vector<shared_ptr<Process> >{proc_tt1l, proc_tt2l, proc_other};
-  else all_procs = vector<shared_ptr<Process> >{proc_bkg};
+  else {
+    all_procs = vector<shared_ptr<Process> >{proc_bkg};
+    split_bkg = false;
+  }
   if (do_signal){
     all_procs.push_back(proc_t1nc);
     all_procs.push_back(proc_t1c);
@@ -308,7 +315,8 @@ int main(int argc, char *argv[]){
 				 "m5j", "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
  
   vector<TString> methods_std = {"signalmet100onebin", "m5jmet100onebin", 
-   				 "m2lvetoonebin", "nb1l", "njets1l", "njets2lveto"};  
+   				 "m2lvetoonebin", "nb1l", "njets1lmet100x200", "njets1lmet200x500",
+                                 "njets2lveto", "inclvetoonly"};  
   //vector<TString> methods_std = {"njets1l", "njets2lveto"};
 
   vector<TString> methods = methods_std;
@@ -335,6 +343,8 @@ int main(int argc, char *argv[]){
     }
   }
 
+  TString njets = "N#lower[-0.1]{_{jets}}";
+  TString nbs = "N#lower[-0.1]{_{b}}";
   for(size_t iabcd=0; iabcd<methods.size(); iabcd++) {
     TString method = methods[iabcd];
     mm_scen = GetScenario(method.Data());
@@ -360,39 +370,50 @@ int main(int argc, char *argv[]){
     
     /////// Methods to check Nb
     if(method.Contains("nb1l")) {
-      metcuts = vector<TString>{"met>200&&njets==5", "met>200&&njets>=6"};
+      metcuts = vector<TString>{"met>200&&met<=500&&njets==5", "met>200&&met<=500&&njets>=6"};
       bincuts = vector<TString>{"nbm==1", "nbm==2", "nbm>=3"};
       caption = "Signal search regions + $\\njets=5$";
-      abcd_title = "Signal + N_{jets}=5 (N_{b})";
+      abcd_title = "Signal + "+njets+"=5 ("+nbs+" bins)";
     }
     /////// Methods to check Njets
-    if(method.Contains("njets1l")) {
-      metcuts = vector<TString>{"met>100&&met<=200", "met>100&&met<=200", "met>200", "met>200"};
+    if(method.Contains("njets1lmet100x200")) {
+      metcuts = vector<TString>{"met>100&&met<=150", "met>100&&met<=150","met>150&&met<=200", "met>150&&met<=200"};
       vbincuts = vector<vector<TString> >{{"njets==5"}, {"njets>=6&&njets<=8", "njets>=9"},
 					  {"njets==5"}, {"njets>=6&&njets<=8", "njets>=9"}}; 
       doVBincuts = true;
-      caption = "Signal search regions + low MET";
-      abcd_title = "Signal + low MET (N_{jets})";
+      caption = "Low MET";
+      abcd_title = "Low MET ("+njets+" bins)";
+    }
+    if(method.Contains("njets1lmet200x500")) {
+      metcuts = vector<TString>{"met>200&&met<=500", "met>200&&met<=500"};
+      vbincuts = vector<vector<TString> >{{"njets==5"}, {"njets>=6&&njets<=8", "njets>=9"}}; 
+      doVBincuts = true;
+      caption = "Signal search regions + $\\njets=5$";
+      abcd_title = "Signal + "+njets+"=5 ";
     }
     if(method.Contains("njets2l")) {
       metcuts = vector<TString>{"met>100&&met<=200", "met>200&&met<=500"};
       bincuts = vector<TString>{"njets>=6&&njets<=8", "njets>=9"}; 
-      caption += "either two reconstructed leptons, or one lepton and one track";
-      abcd_title = "Dilepton (N_{jets})";
     }
-
+    if(method.Contains("inclvetoonly")) {
+      metcuts = vector<TString>{"met>100&&met<=200", "met>200&&met<=500"};
+      bincuts = vector<TString>{"njets>=6"}; 
+    }
     //////// Dilepton methods
     if(method.Contains("2lonly")) {
       abcdcuts = abcdcuts_2l;
       caption += "two reconstructed leptons";
+      abcd_title = "Dilepton (ll)";
     }
     if(method.Contains("2lveto")) {
       abcdcuts = abcdcuts_2lveto;
       caption += "either two reconstructed leptons, or one lepton and one track";
+      abcd_title = "Dilepton (ll+lv)";
     }
     if(method.Contains("vetoonly")) {
       abcdcuts = abcdcuts_veto;
       caption += "one lepton and one track";
+      abcd_title = "Dilepton (lv)";
     }
     if(method.Contains("2lcombined")) {
       metcuts = vector<TString>{"met>200&&met<=500"};
@@ -459,21 +480,17 @@ int main(int argc, char *argv[]){
 
 
     if(method.Contains("m5j")) {
-      metcuts = vector<TString>{c_lowmet, c_midmet, c_higmet};
-      //if(only_mc) metcuts.push_back(c_higmet);
+      metcuts = vector<TString>{c_lowmet, c_midmet};
       bincuts = vector<TString>{c_lownb+" && "+c_nj5, c_midnb+" && "+c_nj5, c_hignb+" && "+c_nj5};
       caption = "Validation regions with $1\\ell, \\njets=5$";
-      abcd_title = "N_{jets} = 5";
+      abcd_title = njets+" = 5";
       if(method.Contains("met100")) {
-	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
-	caption = "Validation regions with $1\\ell, \\njets=5$, $100<\\met\\leq200$ GeV";
-      } // allmetsignal
-      if(method.Contains("met350")) {
-	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, "met>350"};
+	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
 	caption = "Validation regions with $1\\ell, \\njets=5$, $100<\\met\\leq200$ GeV";
       } // allmetsignal
       if(method.Contains("onebin")) bincuts = vector<TString>{"njets==5"};
-     }
+      if(only_mc) metcuts.push_back(c_higmet);     
+    }
 
     ////// Aggregate regions (single lepton). The nbm, njets integration in R1/R3 is done in abcd_method
     if(method.Contains("agg_himet")) {
@@ -530,8 +547,8 @@ int main(int argc, char *argv[]){
     for(size_t icut=0; icut < abcds.back().allcuts.size(); icut++){
       table_cuts.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data(),
 				    0,0,weights.at("no_mismeasurement")*correction));
-      table_cuts_mm.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data(),
-				       0,0,weights.at(mm_scen)));
+      if(only_mc) table_cuts_mm.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data(),
+						   0,0,weights.at(mm_scen)));
     }
     TString tname = "preds"; tname += iabcd;
     pm.Push<Table>(tname.Data(),  table_cuts, all_procs, true, false);
@@ -563,7 +580,6 @@ int main(int argc, char *argv[]){
     } else {
       yield_table = static_cast<Table*>(pm.Figures()[imethod].get());
       allyields.push_back(yield_table->DataYield());
-      cout<<"Data: "<<allyields[0][0].Yield()<<endl;
     }
     allyields.push_back(yield_table->BackgroundYield(lumi));
     if(do_signal){
@@ -899,7 +915,11 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   histo.SetMaximum(maxy);
   histo.GetYaxis()->CenterTitle(true);
   histo.GetXaxis()->SetLabelOffset(0.008);
-  histo.SetYTitle("#kappa");
+  TString ytitle = "#kappa";
+  if(mm_scen!="data") ytitle += " (Scen. = "+mm_scen+")";
+  histo.SetTitleOffset(0.7,"y");
+  histo.SetTitleSize(0.07,"y");
+  histo.SetYTitle(ytitle);
   histo.Draw();
 
   //// Filling vx, vy vectors with kappa coordinates. Each nb cut is stored in a TGraphAsymmetricErrors
@@ -949,10 +969,11 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 	    klab.SetTextSize(0.045);
 	    klab.DrawLatex(xval, 0.952*maxy, text);
 	    //// Printing stat uncertainty of kappa_mm/kappa
-	    kap = kk_ordered[iplane][ibin][ib].kappa[0];
-	    text = "#sigma_{stat} = ^{+"+RoundNumber(kk_ordered[iplane][ibin][ib].kappa[1]*100,0, kap)+"%}_{-"
-	      +RoundNumber(kk_ordered[iplane][ibin][ib].kappa[2]*100,0, kap)+"%}";
-	    klab.SetTextSize(0.05);
+	    float kapUp = k_ordered[iplane][ibin][ib].kappa[1], kapDown = k_ordered[iplane][ibin][ib].kappa[2];
+	    float kap_mmUp = k_ordered_mm[iplane][ibin][ib].kappa[1];
+	    float kap_mmDown = k_ordered_mm[iplane][ibin][ib].kappa[2];
+	    float errStat = (kap>kap_mm?sqrt(pow(kapDown,2)+pow(kap_mmUp,2)):sqrt(pow(kapUp,2)+pow(kap_mmDown,2)));
+	    text = "#sigma_{stat} = "+RoundNumber(errStat*100,0, kap)+"%";
  	    klab.DrawLatex(xval, 0.888*maxy, text);
 
            xval += binw;
@@ -970,6 +991,10 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   } // Loop over plane cuts
 
   //// Drawing legend and TGraphs
+  int digits_lumi = 1;
+  if(lumi < 1) digits_lumi = 3;
+  if(lumi >= 15) digits_lumi = 0;
+  TString lumi_s = RoundNumber(lumi, digits_lumi);
   double legX(opts.LeftMargin()+0.005), legY(1-0.03), legSingle = 0.05;
   if(label_up) legY = 0.8;
   double legW = 0.35, legH = legSingle*(ind_bcuts.size()+1)/2;
@@ -998,7 +1023,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
     leg.AddEntry(&graph[indb], "MC", "p");
     TString data_s = (mm_scen=="data"||mm_scen=="off"||mm_scen=="no_mismeasurement"?"Data":"Pseudodata");
-    leg.AddEntry(&graph_mm[indb], data_s+" (Scen. = "+mm_scen.c_str()+")", "p");
+    leg.AddEntry(&graph_mm[indb], data_s+" "+lumi_s+" fb^{-1}", "p");
     //leg.AddEntry(&graph[indb], CodeToRootTex(ind_bcuts[indb].cut.Data()).c_str(), "p");
 
   } // Loop over TGraphs
@@ -1024,6 +1049,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
   TString fname="plots/kappa_" + abcd.method;
   if(do_ht) fname  += "_ht500";
+  lumi_s.ReplaceAll(".","p");
+  fname += "_lumi"+lumi_s;
   fname += ".pdf";
   can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl;

@@ -180,6 +180,8 @@ int main(int argc, char *argv[]){
       // 	    "met>350&&met<=500","met>500"}},
       // {"met","njets>=5&&ht>800&&ht<=1000",{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=350",
       // 	    "met>350&&met<=500","met>500"}},
+	{"met","njets==5",{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=350",
+	      "met>350&&met<=500","met>500"}},
 	{"met","njets>=5",{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=350",
 	      "met>350&&met<=500","met>500"}},
 	   {"met","njets>=6",{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=350",

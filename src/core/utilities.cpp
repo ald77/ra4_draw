@@ -147,6 +147,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "met>200&&met<=300", "200<met<=300");
   ReplaceAll(code, "met>200&&met<=350", "200<met<=350");
   ReplaceAll(code, "met>350&&met<=500", "350<met<=500");
+  ReplaceAll(code, "met>200&&met<=500", "200<met<=500");
   ReplaceAll(code, "njets>=5&&njets<=7", "5<=njets<=7");
   ReplaceAll(code, "njets>=6&&njets<=8", "6<=njets<=8");
   ReplaceAll(code, "nbm>=1&&nbm<=2", "1<=nbm<=2");
