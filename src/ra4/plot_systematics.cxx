@@ -64,10 +64,10 @@ string GetScenario(const string &method);
 TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                    vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds);
 void plotKappa(abcd_method &abcd, vector<vector<vector<float> > >  &kappas, 
-	       vector<vector<vector<float> > >  &kappas_mm, vector<vector<vector<float> > >  &kks);
+	       vector<vector<vector<float> > >  &kappas_mm, vector<vector<vector<float> > >  &kmcdat);
 void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &kappas_mm, 
-	       vector<vector<vector<float> > > &kks, vector<vector<vector<float> > > &preds);
+	       vector<vector<vector<float> > > &kmcdat, vector<vector<vector<float> > > &preds);
 void printDebug(abcd_method &abcd, vector<vector<GammaParams> > &allyields, TString baseline,
                 vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &kappas_mm, 
 		vector<vector<vector<float> > > &preds);
@@ -593,8 +593,8 @@ int main(int argc, char *argv[]){
     }
 
     //// Calculating kappa and Total bkg prediction
-    vector<vector<vector<float> > > kappas, kappas_mm, kks, preds;
-    findPreds(abcds[imethod], allyields, kappas, kappas_mm, kks, preds);
+    vector<vector<vector<float> > > kappas, kappas_mm, kmcdat, preds;
+    findPreds(abcds[imethod], allyields, kappas, kappas_mm, kmcdat, preds);
 
     //// Makes table MC/Data yields, kappas, preds, Zbi
     if(!only_kappa) {
@@ -603,7 +603,7 @@ int main(int argc, char *argv[]){
     }
 
     //// Plotting kappa
-    plotKappa(abcds[imethod], kappas, kappas_mm, kks);
+    plotKappa(abcds[imethod], kappas, kappas_mm, kmcdat);
 
     //// Print MC/Data yields, cuts applied, kappas, preds
     if(debug) printDebug(abcds[imethod], allyields, TString(baseline.Name()), kappas, kappas_mm, preds);
@@ -806,7 +806,7 @@ TString Zbi(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg){
 
 //// Makes kappa plots
 void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas, 
-	       vector<vector<vector<float> > > &kappas_mm, vector<vector<vector<float> > > &kks){
+	       vector<vector<vector<float> > > &kappas_mm, vector<vector<vector<float> > > &kmcdat){
 
   bool label_up = false; //// Putting the MET labels at the bottom
   double markerSize = 1.1;
@@ -827,7 +827,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     vector<float> kappa;
   };
   //// k_ordered has all the kappas grouped in sets of nb cuts (typically, in bins of njets)
-  vector<vector<vector<kmarker> > > k_ordered, kk_ordered, k_ordered_mm;
+  vector<vector<vector<kmarker> > > k_ordered, kmd_ordered, k_ordered_mm;
   vector<kmarker> ind_bcuts; // nb cuts actually used in the plot
   vector<float> zz; // Zero length vector for the kmarker constructor
   // vector<kmarker> bcuts({{"nbm==1",2,21,zz}, {"nbm==2",4,20,zz}, {"nbm>=3",kGreen+3,22,zz}, 
@@ -840,7 +840,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   int nbins = 0; // Total number of njets bins (used in the base histo)
   for(size_t iplane=0; iplane < kappas.size(); iplane++) {
     k_ordered.push_back(vector<vector<kmarker> >());
-    kk_ordered.push_back(vector<vector<kmarker> >());
+    kmd_ordered.push_back(vector<vector<kmarker> >());
     k_ordered_mm.push_back(vector<vector<kmarker> >());
     for(size_t ibin=0; ibin < kappas[iplane].size(); ibin++){
       if(maxy < fYaxis*(kappas[iplane][ibin][0]+kappas[iplane][ibin][1])) 
@@ -870,7 +870,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
             //// Adding point to a given njets cut
             if(bincut==k_ordered[iplane][ik][0].cut){
               k_ordered[iplane][ik].push_back({bincut, bcuts[ib].color, bcuts[ib].style, kappas[iplane][ibin]});
-              kk_ordered[iplane][ik].push_back({bincut, 1, bcuts[ib].style, kks[iplane][ibin]});
+              kmd_ordered[iplane][ik].push_back({bincut, bcuts[ib].color, bcuts[ib].style, kmcdat[iplane][ibin]});
               k_ordered_mm[iplane][ik].push_back({bincut, 1, bcuts[ib].style, kappas_mm[iplane][ibin]});
               found = true;
               break;
@@ -879,7 +879,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
           //// If it doesn't correspond to any njet cut yet, create a new bin
           if(!found) {
             k_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[ib].color, bcuts[ib].style, kappas[iplane][ibin]}}));
-            kk_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[ib].color, bcuts[ib].style, kks[iplane][ibin]}}));
+            kmd_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[ib].color, bcuts[ib].style, kmcdat[iplane][ibin]}}));
             k_ordered_mm[iplane].push_back(vector<kmarker>({{bincut, 1, bcuts[ib].style, kappas_mm[iplane][ibin]}}));
             found = true;
             nbins++;
@@ -890,7 +890,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
       //// If it doesn't correspond to any nb cut, create a new bin with default (color in [0], blue)
       if(!found) {
         k_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[0].color, bcuts[0].style, kappas[iplane][ibin]}}));
-        kk_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[0].color, bcuts[0].style, kks[iplane][ibin]}}));
+        kmd_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[0].color, bcuts[0].style, kmcdat[iplane][ibin]}}));
         k_ordered_mm[iplane].push_back(vector<kmarker>({{bincut, 1, bcuts[0].style, kappas_mm[iplane][ibin]}}));
         nbins++;
         if(ind_bcuts.size()==0) ind_bcuts.push_back(bcuts[0]);
@@ -928,6 +928,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   vector<vector<double> > vy(ind_bcuts.size()), veyh(ind_bcuts.size()), veyl(ind_bcuts.size());
   vector<vector<double> > vx_mm(ind_bcuts.size()), vexh_mm(ind_bcuts.size()), vexl_mm(ind_bcuts.size());
   vector<vector<double> > vy_mm(ind_bcuts.size()), veyh_mm(ind_bcuts.size()), veyl_mm(ind_bcuts.size());
+  vector<vector<double> > vx_kmd(ind_bcuts.size()), vexh_kmd(ind_bcuts.size()), vexl_kmd(ind_bcuts.size());
+  vector<vector<double> > vy_kmd(ind_bcuts.size()), veyh_kmd(ind_bcuts.size()), veyl_kmd(ind_bcuts.size());
   for(size_t iplane=0; iplane < k_ordered.size(); iplane++) {
     for(size_t ibin=0; ibin < k_ordered[iplane].size(); ibin++){
       bin++;
@@ -951,13 +953,27 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
             veyh[indb].push_back(k_ordered[iplane][ibin][ib].kappa[1]);
             veyl[indb].push_back(k_ordered[iplane][ibin][ib].kappa[2]);
 	    
+	    //// MC kappas with data uncertainties
+            vx_kmd[indb].push_back(xval);
+            vexl_kmd[indb].push_back(0);
+            vexh_kmd[indb].push_back(0);
+            vy_kmd[indb].push_back(kmd_ordered[iplane][ibin][ib].kappa[0]);
+	    float ekmdUp = sqrt(pow(k_ordered[iplane][ibin][ib].kappa[1],2) +
+				pow(kmd_ordered[iplane][ibin][ib].kappa[1],2));
+	    float ekmdDown = sqrt(pow(k_ordered[iplane][ibin][ib].kappa[2],2) +
+				  pow(kmd_ordered[iplane][ibin][ib].kappa[2],2));
+            veyh_kmd[indb].push_back(ekmdUp);
+            veyl_kmd[indb].push_back(ekmdDown);
+	    
 	    //// Data/pseudodata kappas
             vx_mm[indb].push_back(xval+0.1);
             vexl_mm[indb].push_back(0);
             vexh_mm[indb].push_back(0);
             vy_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[0]);
-            veyh_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[1]);
-            veyl_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[2]);
+            // veyh_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[1]);
+            // veyl_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[2]);
+            veyh_mm[indb].push_back(0);
+            veyl_mm[indb].push_back(0);
 
 	    //// Printing difference between kappa and kappa_mm
 	    float kap = k_ordered[iplane][ibin][ib].kappa[0], kap_mm = k_ordered_mm[iplane][ibin][ib].kappa[0];
@@ -974,6 +990,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 	    float kap_mmDown = k_ordered_mm[iplane][ibin][ib].kappa[2];
 	    float errStat = (kap>kap_mm?sqrt(pow(kapDown,2)+pow(kap_mmUp,2)):sqrt(pow(kapUp,2)+pow(kap_mmDown,2)));
 	    text = "#sigma_{stat} = "+RoundNumber(errStat*100,0, kap)+"%";
+	    text = "#sigma_{stat} = ^{+"+RoundNumber(ekmdUp*100,0, kap)+"%}_{-"+RoundNumber(ekmdDown*100,0, kap)+"%}";
+	    klab.SetTextSize(0.05);
  	    klab.DrawLatex(xval, 0.888*maxy, text);
 
            xval += binw;
@@ -1005,8 +1023,17 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   leg.SetTextFont(42);
   leg.SetNColumns(2);
   TGraphAsymmErrors graph[20]; // There's problems with vectors of TGraphs, so using an array
+  TGraphAsymmErrors graph_kmd[20]; // There's problems with vectors of TGraphs, so using an array
   TGraphAsymmErrors graph_mm[20]; // There's problems with vectors of TGraphs, so using an array
   for(size_t indb=0; indb<ind_bcuts.size(); indb++){
+    graph_kmd[indb] = TGraphAsymmErrors(vx_kmd[indb].size(), &(vx_kmd[indb][0]), &(vy_kmd[indb][0]),
+					&(vexl_kmd[indb][0]), &(vexh_kmd[indb][0]), &(veyl_kmd[indb][0]), 
+					&(veyh_kmd[indb][0]));
+    graph_kmd[indb].SetMarkerStyle(ind_bcuts[indb].style); graph_kmd[indb].SetMarkerSize(markerSize);
+    graph_kmd[indb].SetMarkerColor(ind_bcuts[indb].color);
+    graph_kmd[indb].SetLineColor(1); graph_kmd[indb].SetLineWidth(2);
+    graph_kmd[indb].Draw("p0 same");
+
     graph[indb] = TGraphAsymmErrors(vx[indb].size(), &(vx[indb][0]), &(vy[indb][0]),
                                     &(vexl[indb][0]), &(vexh[indb][0]), &(veyl[indb][0]), &(veyh[indb][0]));
     graph[indb].SetMarkerStyle(ind_bcuts[indb].style); graph[indb].SetMarkerSize(markerSize);
@@ -1015,8 +1042,9 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     graph[indb].Draw("p0 same");
 
     graph_mm[indb] = TGraphAsymmErrors(vx_mm[indb].size(), &(vx_mm[indb][0]), &(vy_mm[indb][0]),
-                                    &(vexl_mm[indb][0]), &(vexh_mm[indb][0]), &(veyl_mm[indb][0]), &(veyh_mm[indb][0]));
-    graph_mm[indb].SetMarkerStyle(20); graph_mm[indb].SetMarkerSize(markerSize);
+				       &(vexl_mm[indb][0]), &(vexh_mm[indb][0]), &(veyl_mm[indb][0]), 
+				       &(veyh_mm[indb][0]));
+    graph_mm[indb].SetMarkerStyle(20); graph_mm[indb].SetMarkerSize(markerSize*1.2);
     graph_mm[indb].SetMarkerColor(1);
     graph_mm[indb].SetLineColor(1); graph_mm[indb].SetLineWidth(2);
     graph_mm[indb].Draw("p0 same");
@@ -1061,10 +1089,10 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
 void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &kappas_mm, 
-	       vector<vector<vector<float> > > &kks, vector<vector<vector<float> > > &preds){
+	       vector<vector<vector<float> > > &kmcdat, vector<vector<vector<float> > > &preds){
   // Powers for kappa:   ({R1, R2, D3, R4})
   vector<float> pow_kappa({ 1, -1, -1,  1});
-  vector<float> pow_kk({ 1, -1, -1,  1, -1, 1, 1, -1});
+  vector<float> pow_kk({ 1, -1, -1,  1});
   // Powers for TotBkg pred:({R1, R2, D3,  R1, R2, D3, D4})
   vector<float> pow_totpred( {-1,  1,  1,   1, -1, -1,  1});
 
@@ -1072,12 +1100,13 @@ void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
 
   for(size_t iplane=0; iplane < abcd.planecuts.size(); iplane++) {
     kappas.push_back(vector<vector<float> >());
-    kks.push_back(vector<vector<float> >());
+    kmcdat.push_back(vector<vector<float> >());
     kappas_mm.push_back(vector<vector<float> >());
     preds.push_back(vector<vector<float> >());
     for(size_t ibin=0; ibin < abcd.bincuts[iplane].size(); ibin++){
       vector<vector<float> > entries;
       vector<vector<float> > weights;
+      float NdataPlane = 0, NmcPlane = 0;
       //// Pushing data yields for predictions
       for(size_t iabcd=0; iabcd < 3; iabcd++){
         size_t index = abcd.indexBin(iplane, ibin, iabcd);
@@ -1085,6 +1114,8 @@ void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
         weights.push_back(vector<float>());
         entries.back().push_back(allyields[0][index].Yield());
         weights.back().push_back(1.);
+	NdataPlane += allyields[0][index].Yield();
+	NmcPlane += allyields[1][index].Yield();
       } // Loop over ABCD cuts
 
       vector<vector<float> > kentries;
@@ -1111,16 +1142,11 @@ void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
         kweights_mm.push_back(vector<float>());
         kentries_mm.back().push_back(allyields[0][index].Yield());
         kweights_mm.back().push_back(1.);
-        // Yields for kappas_mm/kappas
+        // Yields for kappas_mc normalized to data
         kkentries.push_back(vector<float>());
         kkweights.push_back(vector<float>());
-        kkentries.back().push_back(allyields[0][index].Yield());
+        kkentries.back().push_back(allyields[1][index].Yield()*NdataPlane/NmcPlane);
         kkweights.back().push_back(1.);
-	kkentries.push_back(vector<float>());
-        kkweights.push_back(vector<float>());
-        kkentries.back().push_back(allyields[1][index].NEffective());
-        kkweights.back().push_back(allyields[1][index].Weight());
-
 
       } // Loop over ABCD cuts
 
@@ -1139,7 +1165,7 @@ void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
       // Throwing toys to find kappas and uncertainties
       val = calcKappa(kkentries, kkweights, pow_kk, valdown, valup);
       if(valdown<0) valdown = 0;
-      kks[iplane].push_back(vector<float>({val, valup, valdown}));
+      kmcdat[iplane].push_back(vector<float>({val, valup, valdown}));
     } // Loop over bin cuts
   } // Loop over plane cuts
 
