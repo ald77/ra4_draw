@@ -65,9 +65,11 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                    vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds);
 void plotKappa(abcd_method &abcd, vector<vector<vector<float> > >  &kappas, 
 	       vector<vector<vector<float> > >  &kappas_mm, vector<vector<vector<float> > >  &kmcdat);
-void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
-               vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &kappas_mm, 
-	       vector<vector<vector<float> > > &kmcdat, vector<vector<vector<float> > > &preds);
+vector<vector<float> > findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
+				 vector<vector<vector<float> > > &kappas, 
+				 vector<vector<vector<float> > > &kappas_mm, 
+				 vector<vector<vector<float> > > &kmcdat, 
+				 vector<vector<vector<float> > > &preds);
 void printDebug(abcd_method &abcd, vector<vector<GammaParams> > &allyields, TString baseline,
                 vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &kappas_mm, 
 		vector<vector<vector<float> > > &preds);
@@ -845,8 +847,10 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     for(size_t ibin=0; ibin < kappas[iplane].size(); ibin++){
       if(maxy < fYaxis*(kappas[iplane][ibin][0]+kappas[iplane][ibin][1])) 
 	maxy = fYaxis*(kappas[iplane][ibin][0]+kappas[iplane][ibin][1]);
-      if(maxy < fYaxis*(kappas_mm[iplane][ibin][0]+kappas_mm[iplane][ibin][1])) 
-	maxy = fYaxis*(kappas_mm[iplane][ibin][0]+kappas_mm[iplane][ibin][1]);
+      if(maxy < fYaxis*(kmcdat[iplane][ibin][0]+kmcdat[iplane][ibin][1])) 
+	maxy = fYaxis*(kmcdat[iplane][ibin][0]+kmcdat[iplane][ibin][1]);
+      if(maxy < fYaxis*(kappas_mm[iplane][ibin][0])) 
+	maxy = fYaxis*(kappas_mm[iplane][ibin][0]);
       TString bincut = abcd.bincuts[iplane][ibin];
       bincut.ReplaceAll(" ","");
       bincut.ReplaceAll("mm_","");
@@ -909,7 +913,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
   float minx = 0.5, maxx = nbins+0.5, miny = 0;
   if(label_up) maxy = 2.6;
-  if(maxy > 5) maxy = 5;
+  if(maxy > 6) maxy = 6;
   TH1D histo("histo", "", nbins, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
@@ -1087,7 +1091,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
 //// Calculating kappa and Total bkg prediction
 // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
-void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
+vector<vector<float> > findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &kappas_mm, 
 	       vector<vector<vector<float> > > &kmcdat, vector<vector<vector<float> > > &preds){
   // Powers for kappa:   ({R1, R2, D3, R4})
@@ -1097,8 +1101,21 @@ void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   vector<float> pow_totpred( {-1,  1,  1,   1, -1, -1,  1});
 
   float val(1.), valup(1.), valdown(1.);
-
+  vector<vector<float> > yieldsPlane;
   for(size_t iplane=0; iplane < abcd.planecuts.size(); iplane++) {
+    //// Counting yields in plane without double-counting R1/R3 yields when integrated
+    GammaParams NdataPlane, NmcPlane;
+    for(size_t ibin=0; ibin < abcd.bincuts[iplane].size(); ibin++){
+      for(size_t iabcd=0; iabcd < 4; iabcd++){
+	if( ! (abcd.int_nbnj && ibin>0 && (iabcd==0||iabcd==2)) ){
+	  size_t index = abcd.indexBin(iplane, ibin, iabcd);
+	  NdataPlane += allyields[0][index];
+	  NmcPlane += allyields[1][index];
+	}
+      } // Loop over ABCD cuts
+    } // Loop over bin cuts
+    cout<<"Plane "<<iplane<<": MC is "<<NmcPlane<<", data is "<<NdataPlane<<endl;
+
     kappas.push_back(vector<vector<float> >());
     kmcdat.push_back(vector<vector<float> >());
     kappas_mm.push_back(vector<vector<float> >());
@@ -1106,7 +1123,6 @@ void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
     for(size_t ibin=0; ibin < abcd.bincuts[iplane].size(); ibin++){
       vector<vector<float> > entries;
       vector<vector<float> > weights;
-      float NdataPlane = 0, NmcPlane = 0;
       //// Pushing data yields for predictions
       for(size_t iabcd=0; iabcd < 3; iabcd++){
         size_t index = abcd.indexBin(iplane, ibin, iabcd);
@@ -1114,8 +1130,6 @@ void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
         weights.push_back(vector<float>());
         entries.back().push_back(allyields[0][index].Yield());
         weights.back().push_back(1.);
-	NdataPlane += allyields[0][index].Yield();
-	NmcPlane += allyields[1][index].Yield();
       } // Loop over ABCD cuts
 
       vector<vector<float> > kentries;
@@ -1145,7 +1159,7 @@ void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
         // Yields for kappas_mc normalized to data
         kkentries.push_back(vector<float>());
         kkweights.push_back(vector<float>());
-        kkentries.back().push_back(allyields[1][index].Yield()*NdataPlane/NmcPlane);
+        kkentries.back().push_back(allyields[1][index].Yield()*NdataPlane.Yield()/NmcPlane.Yield());
         kkweights.back().push_back(1.);
 
       } // Loop over ABCD cuts
@@ -1169,6 +1183,7 @@ void findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
     } // Loop over bin cuts
   } // Loop over plane cuts
 
+  return yieldsPlane;
 } // findPreds
 
 // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
