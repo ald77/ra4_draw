@@ -41,10 +41,10 @@ using namespace std;
 namespace{
   bool only_mc = false;
   bool only_kappa = false;
-  bool split_bkg = true;
+  bool split_bkg = false;
   bool only_dilepton = false;
   bool do_leptons = false;
-  bool do_signal = false;
+  bool do_signal = true;
   bool unblind = false;
   bool debug = false;
   bool do_ht = false;
@@ -62,7 +62,8 @@ namespace{
 string GetScenario(const string &method);
 
 TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
-                   vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds);
+                   vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds, 
+		   vector<vector<float> > yieldsPlane);
 void plotKappa(abcd_method &abcd, vector<vector<vector<float> > >  &kappas, 
 	       vector<vector<vector<float> > >  &kappas_mm, vector<vector<vector<float> > >  &kmcdat);
 vector<vector<float> > findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
@@ -136,7 +137,7 @@ int main(int argc, char *argv[]){
   }
 
   //// Capybara
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/");
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_met100_stdnj5/");
 
@@ -165,7 +166,7 @@ int main(int argc, char *argv[]){
 
 
   auto proc_t1c = Process::MakeShared<Baby_full>("T1tttt(C)", Process::Type::signal, colors("t1tttt"),
-    {foldersig+"*mGluino-1300_mLSP-900_*.root"},
+    {foldersig+"*mGluino-1400_mLSP-1000_*.root"},
     baseline && "stitch");
   auto proc_t1nc = Process::MakeShared<Baby_full>("T1tttt(NC)", Process::Type::signal, colors("t1tttt"),
     {foldersig+"*mGluino-1700_mLSP-100_*.root"},
@@ -488,7 +489,7 @@ int main(int argc, char *argv[]){
       abcd_title = njets+" = 5";
       if(method.Contains("met100")) {
 	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet};
-	caption = "Validation regions with $1\\ell, \\njets=5$, $100<\\met\\leq200$ GeV";
+	caption = "Validation regions with $1\\ell, \\njets=5$";
       } // allmetsignal
       if(method.Contains("onebin")) bincuts = vector<TString>{"njets==5"};
       if(only_mc) metcuts.push_back(c_higmet);     
@@ -596,11 +597,11 @@ int main(int argc, char *argv[]){
 
     //// Calculating kappa and Total bkg prediction
     vector<vector<vector<float> > > kappas, kappas_mm, kmcdat, preds;
-    findPreds(abcds[imethod], allyields, kappas, kappas_mm, kmcdat, preds);
+    vector<vector<float> > yieldsPlane = findPreds(abcds[imethod], allyields, kappas, kappas_mm, kmcdat, preds);
 
     //// Makes table MC/Data yields, kappas, preds, Zbi
     if(!only_kappa) {
-      TString fullname = printTable(abcds[imethod], allyields, kappas, preds);
+      TString fullname = printTable(abcds[imethod], allyields, kappas, preds, yieldsPlane);
       tablenames.push_back(fullname);
     }
 
@@ -644,8 +645,9 @@ string GetScenario(const string &method){
 // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
 // if split_bkg: [2/4] Other, [3/5] tt1l, [4/6] tt2l
 TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
-                   vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds){
-  cout<<endl<<"Printing table (significance estimation can take a bit)"<<endl;
+                   vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds, 
+		   vector<vector<float> > yieldsPlane){
+  //cout<<endl<<"Printing table (significance estimation can take a bit)"<<endl;
   //// Table general parameters
   int digits = 2;
   TString ump = " & ";
@@ -694,7 +696,9 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////// Printing results////////////////////////////////////////////////
   for(size_t iplane=0; iplane < abcd.planecuts.size(); iplane++) {
-    out<<endl<< "\\multicolumn{"<<Ncol<<"}{c}{$"<<CodeToLatex(abcd.planecuts[iplane].Data())<<"$}  \\\\ \\hline\n";
+    out<<endl<< "\\multicolumn{"<<Ncol<<"}{c}{$"<<CodeToLatex(abcd.planecuts[iplane].Data())
+       <<"$ (Obs/MC = $"<<RoundNumber(yieldsPlane[iplane][0],2)<<"\\pm"<<RoundNumber(yieldsPlane[iplane][1],2)
+       <<"$)}  \\\\ \\hline\n";
     for(size_t iabcd=0; iabcd < abcd.abcdcuts.size(); iabcd++){
       for(size_t ibin=0; ibin < abcd.bincuts[iplane].size(); ibin++){
         size_t index = abcd.indexBin(iplane, ibin, iabcd);
@@ -1114,7 +1118,12 @@ vector<vector<float> > findPreds(abcd_method &abcd, vector<vector<GammaParams> >
 	}
       } // Loop over ABCD cuts
     } // Loop over bin cuts
-    cout<<"Plane "<<iplane<<": MC is "<<NmcPlane<<", data is "<<NdataPlane<<endl;
+    //cout<<"Plane "<<iplane<<": MC is "<<NmcPlane<<", data is "<<NdataPlane<<endl;
+    float Nobs = NdataPlane.Yield(), Nmc = NmcPlane.Yield();
+    float dataMC = Nobs/Nmc;
+    float edataMC = sqrt(pow(sqrt(Nobs)/Nmc,2) + pow(Nobs*NmcPlane.Uncertainty()/Nmc/Nmc,2));
+    yieldsPlane.push_back({dataMC, edataMC});
+    
 
     kappas.push_back(vector<vector<float> >());
     kmcdat.push_back(vector<vector<float> >());
@@ -1141,6 +1150,9 @@ vector<vector<float> > findPreds(abcd_method &abcd, vector<vector<GammaParams> >
       //// Pushing MC yields for predictions and kappas
       for(size_t iabcd=0; iabcd < 4; iabcd++){
         size_t index = abcd.indexBin(iplane, ibin, iabcd);
+	// Renormalizing MC to data
+	allyields[1][index] *= dataMC;
+
         // Yields for predictions
         entries.push_back(vector<float>());
         weights.push_back(vector<float>());
@@ -1159,7 +1171,7 @@ vector<vector<float> > findPreds(abcd_method &abcd, vector<vector<GammaParams> >
         // Yields for kappas_mc normalized to data
         kkentries.push_back(vector<float>());
         kkweights.push_back(vector<float>());
-        kkentries.back().push_back(allyields[1][index].Yield()*NdataPlane.Yield()/NmcPlane.Yield());
+        kkentries.back().push_back(allyields[1][index].Yield());
         kkweights.back().push_back(1.);
 
       } // Loop over ABCD cuts
@@ -1266,7 +1278,7 @@ void GetOptions(int argc, char *argv[]){
       json = optarg;
       break;
     case 'b':
-      split_bkg = false;
+      split_bkg = true;
       break;
     case 'o':
       only_mc = true;
