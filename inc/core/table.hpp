@@ -40,7 +40,8 @@ public:
 	const std::vector<std::shared_ptr<Process> > &processes,
 	bool do_zbi=true,
 	bool print_table=true,
-	bool print_pie=false);
+	bool print_pie=false,
+	bool print_titlepie=true);
   Table(Table &&) = default;
   Table& operator=(Table &&) = default;
   ~Table() = default;
@@ -61,6 +62,7 @@ public:
   bool do_zbi_;
   bool print_table_;
   bool print_pie_;
+  bool print_titlepie_;
   std::vector<PlotOpt> plot_options_;//!<Styles with which to draw pie chart
 
 private:

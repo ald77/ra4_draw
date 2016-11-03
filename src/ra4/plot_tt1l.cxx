@@ -61,7 +61,7 @@ int main(){
 
   /// Study of ttbar 1l
   auto proc_tt1l_lomt = Process::MakeShared<Baby_full>("t#bar{t} 1l, m_{T}#leq140", Process::Type::background, 
-						       colors("tt_1l"), ttfiles, 
+						       1, ttfiles, 
 						       baseline && "ntruleps<=1 && mt<=140");
   auto proc_ttltau = Process::MakeShared<Baby_full>("t#bar{t} l#tau_{h}, m_{T}>140", Process::Type::background, 
 						    kBlue-6, ttfiles, 

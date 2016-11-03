@@ -106,13 +106,15 @@ Table::Table(const string &name,
              const vector<shared_ptr<Process> > &processes,
 	     bool do_zbi,
 	     bool print_table,
-	     bool print_pie):
+	     bool print_pie,
+	     bool print_titlepie):
   Figure(),
   name_(name),
   rows_(rows),
   do_zbi_(do_zbi),
   print_table_(print_table),
   print_pie_(print_pie),
+  print_titlepie_(print_titlepie),
   plot_options_({PlotOpt("txt/plot_styles.txt", "Pie")}),
   backgrounds_(),
   signals_(),
@@ -397,10 +399,12 @@ void Table::PrintPie(std::size_t irow, double luminosity) const{
   // Define piechart
   TPie pie("", "", Nbkg, &counts.at(0), &colors.at(0), &labels.at(0));
   pie.SetCircle(0.5, 0.48, 0.35);
-  TString title = CodeToRootTex(rows_.at(irow).cut_.Name())+" (N="+RoundNumber(Yield_tot,1);
-  if(print_ttbar) title += ", t#bar{t}="+RoundNumber(Yield_tt*100,1,Yield_tot)+"%";
-  title += ")";
-  pie.SetTitle(title);
+  if(print_titlepie_){
+    TString title = CodeToRootTex(rows_.at(irow).cut_.Name())+" (N="+RoundNumber(Yield_tot,1);
+    if(print_ttbar) title += ", t#bar{t}="+RoundNumber(Yield_tt*100,1,Yield_tot)+"%";
+    title += ")";
+    pie.SetTitle(title);
+  }
 
   // Printing pie chart with percentages
   pie.SetLabelFormat("%perc");

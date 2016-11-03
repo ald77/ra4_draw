@@ -107,6 +107,7 @@ int main(int argc, char *argv[]){
 
   if(mm_scen == ""){
     cout << " ======== Doing all mis-measurement scenarios ======== \n" << endl;
+    only_mc = true;
   }else if(mm_scen == "data"){
     cout << " ======== Comparing MC and actual DATA ======== \n" << endl;
   }else if(mm_scen == "no_mismeasurement" || mm_scen == "off" || mm_scen == "mc_as_data"){

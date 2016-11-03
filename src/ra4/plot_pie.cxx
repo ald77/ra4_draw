@@ -18,6 +18,7 @@
 
 namespace{
   float lumi = 35.;
+  bool do_allplots = false;
 }
 
 using namespace std;
@@ -31,6 +32,17 @@ NamedFunc offshellw("offshellw",[](const Baby &b) -> NamedFunc::ScalarType{
     }
     return 0;
   });
+
+//// Lowers the njets requirements for dilepton bins
+TString lowerNjets(TString &cut){
+  TString lowcut = cut;
+  for(int nj=6; nj<=9; nj++){
+    TString nj_s = ""; nj_s += nj;
+    TString njlo_s = ""; njlo_s += nj-1;
+    lowcut.ReplaceAll(nj_s, njlo_s);
+  }
+  return lowcut;
+}
 
 int main(){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
@@ -61,10 +73,14 @@ int main(){
          foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",foldermc+"*_ZZ_*"+ntupletag+"*.root"
        };
 
+  // allfiles = set<string>({foldermc+"*_TTJets_Tune*"});
+
   // Cuts in baseline speed up the yield finding
   string baseline = "pass && stitch && mj14>250 && nleps>=1 && st>500 && met>100 && njets>=5 && weight<1"; // Excluding one QCD event
 
   map<string, vector<shared_ptr<Process> > > procs;
+
+
   procs["procs"] = vector<shared_ptr<Process> >();
   procs["procs"].push_back(Process::MakeShared<Baby_full>("t#bar{t} (l)", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets_HT*.root"},
@@ -102,14 +118,6 @@ int main(){
     foldermc+"*_ZZ_*.root"},
     baseline));
 
-  // procs["goodbad"] = vector<shared_ptr<Process> >();
-
-  // procs["goodbad"].push_back(Process::MakeShared<Baby_full>("2l", Process::Type::background, kCyan-3,
-  //   allfiles, baseline && "ntruleps>=2"));
-  // procs["goodbad"].push_back(Process::MakeShared<Baby_full>("0-1l m_{T}^{tru}>140", Process::Type::background, kGreen-3,
-  //   allfiles, baseline && "ntruleps<=1 && mt_tru>140"));
-  // procs["goodbad"].push_back(Process::MakeShared<Baby_full>("0-1l m_{T}^{tru}<=140", Process::Type::background, kRed,
-  //   allfiles, baseline && "ntruleps<=1 && mt_tru<=140"));
 
   NamedFunc multNeu = "(type==5000 || type==13000 || type==15000 || type==16000)";
   NamedFunc multNeu2l = "(ntruleps>=2 || (ntruleps<=1&&(type==5000 || type==13000 || type==15000 || type==16000)))";
@@ -117,20 +125,14 @@ int main(){
   procs["cats"].push_back(Process::MakeShared<Baby_full>
   			  ("#geq2#nu^{prompt}", Process::Type::background, kCyan-3,
   			   allfiles, baseline && multNeu2l));
-  // procs["cats"].push_back(Process::MakeShared<Baby_full>
-  // 			  ("#geq2l", Process::Type::background, kCyan-3,
-  // 			   allfiles, baseline && "(ntruleps>=2 || ())"));
-  // procs["cats"].push_back(Process::MakeShared<Baby_full>
-  // 			  ("#leq1l, #geq2#nu", Process::Type::background, kAzure-2, allfiles, 
-  // 			   baseline &&"ntruleps<=1" && multNeu));
   procs["cats"].push_back(Process::MakeShared<Baby_full>
-  			  ("#leq1l, m_{T}^{tru}#leq140", Process::Type::background, kRed-4, allfiles, 
+  			  ("#leq1#kern[.1]{#nu^{pr.}}, mismeas.", Process::Type::background, kRed-4, allfiles, 
   			   baseline && "ntruleps<=1 && mt_tru<=140" && !multNeu));
   procs["cats"].push_back(Process::MakeShared<Baby_full>
-  			  ("#leq1l, m_{T}^{tru}>140, no W#lower[-.1]{*}", Process::Type::background, kGreen-3, 
+  			  ("#leq1#kern[.1]{#nu^{pr.}}, #geq1#kern[.1]{#nu}^{non-prompt}", Process::Type::background, kGreen-3, 
   			   allfiles, baseline && "ntruleps<=1 && mt_tru>140" && !multNeu && offshellw==0.));
   procs["cats"].push_back(Process::MakeShared<Baby_full>
-  			  ("#leq1l, m_{T}^{tru}>140, W#lower[-.1]{*}", Process::Type::background, kOrange,
+  			  ("#leq1#kern[.1]{#nu^{pr.}}, off-shell W", Process::Type::background, kOrange,
   			   allfiles, baseline && "ntruleps<=1 && mt_tru>140" && !multNeu && offshellw>0.));
 
   PlotMaker pm;
@@ -142,18 +144,21 @@ int main(){
   metcuts.push_back("met>200 && met<=350");
   metcuts.push_back("met>350 && met<=500");
   metcuts.push_back("met>500");
+  metcuts.push_back("met>200");
 
   vector<TString> nbcuts;
   //nbcuts.push_back("nbm==0");
   nbcuts.push_back("nbm>=1");
-  nbcuts.push_back("nbm==1");
-  nbcuts.push_back("nbm==2");
-  nbcuts.push_back("nbm>=3");
+  if(do_allplots){
+    nbcuts.push_back("nbm==1");
+    nbcuts.push_back("nbm==2");
+    nbcuts.push_back("nbm>=3");
+  }
 
   vector<TString> njcuts;
   njcuts.push_back("njets==5");
   //njcuts.push_back("njets>=5");
-  //njcuts.push_back("njets>=6");
+  njcuts.push_back("njets>=6");
   njcuts.push_back("njets>=6 && njets<=8");
   njcuts.push_back("njets>=9");
   
@@ -174,16 +179,20 @@ int main(){
   
 
 
-  //// nleps = 2
-  njcuts = vector<TString>{"njets>=5&&njets<=7", "njets>=8"};
+  //// nleps = 2 and ll+lv
   for(auto &imet: metcuts) 
-      for(auto &inj: njcuts) 
-	cuts.push_back("nleps==2 && nbm<=2 && "+imet+"&&"+inj);
+    for(size_t ind=0; ind<njcuts.size(); ind++) {
+      if(njcuts[ind]=="njets==5") continue;
+      cuts.push_back("nleps==2 && nbm<=2 && "+imet+"&&"+lowerNjets(njcuts[ind]));
+      if(do_allplots) 
+	cuts.push_back("((nleps==2 && nbm<=2 && "+lowerNjets(njcuts[ind])+") || (nleps==1 && nveto==1 && nbm>=1 && mt>140 && "
+		       +njcuts[ind]+")) && "+imet);
+    }
 
   for(size_t icut=0; icut<cuts.size(); icut++)
     table_cuts.push_back(TableRow("$"+CodeToLatex(cuts[icut].Data())+"$", cuts[icut].Data()));  
   for(auto &ipr: procs) 
-    pm.Push<Table>("chart_"+ipr.first,  table_cuts, ipr.second, true, true, true);
+    pm.Push<Table>("chart_"+ipr.first,  table_cuts, ipr.second, true, true, true, false);
 
   pm.min_print_ = true;
   pm.MakePlots(lumi);

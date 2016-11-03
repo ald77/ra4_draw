@@ -154,14 +154,14 @@ int main(int argc, char *argv[]){
   // 		    (numtitle+"#leq1l, #geq2#nu", Process::Type::background, kAzure-2, numfiles, 
   // 		     baselinef && "ntruleps<=1" && multNeu));
   procs.push_back(Process::MakeShared<Baby_full>
-		  (numtitle+"#leq1l, m_{T}^{tru}>140, no W#lower[-.1]{*}", Process::Type::background, kGreen-3, 
+		  (numtitle+"#leq1#kern[.1]{#nu^{pr.}}, #geq1#kern[.1]{#nu}^{non-prompt}", Process::Type::background, kGreen-3, 
 		   numfiles, baselinef&&"ntruleps<=1&&mt_tru>140" && !multNeu && offshellw==0.));
   procs.push_back(Process::MakeShared<Baby_full>
-		  (numtitle+"#leq1l, m_{T}^{tru}#leq140", Process::Type::background, kRed-4, numfiles, 
+		  (numtitle+"#leq1#kern[.1]{#nu^{pr.}}, mismeas.", Process::Type::background, kRed-4, numfiles, 
 		   baselinef&&"ntruleps<=1&&mt_tru<=140" && !multNeu));
   if(ifilesNum==all || ifilesNum==wjets)
     procs.push_back(Process::MakeShared<Baby_full>
-		    (numtitle+"#leq1l, m_{T}^{tru}>140, W#lower[-.1]{*}",Process::Type::background,kOrange,numfiles,
+		    (numtitle+"#leq1#kern[.1]{#nu^{pr.}}, off-shell W",Process::Type::background,kOrange,numfiles,
 		     baselinef&&"ntruleps<=1&&mt_tru>140" && !multNeu && offshellw>0.));
   procs.push_back(Process::MakeShared<Baby_full>
 		  (numtitle+"All",Process::Type::background,1,numfiles,
