@@ -97,8 +97,15 @@ string execute(const string &cmd){
 }
 
 string CodeToPlainText(string code){
+  ReplaceAll(code, " ", "");
   ReplaceAll(code, "((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "SLtrig");
   ReplaceAll(code, "(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))>80&&(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))<100", "zmasswindow");
+  ReplaceAll(code, "nbt==2&&nbm==2","2b");
+  ReplaceAll(code, "nbt>=2&&nbm==3&&nbl==3","3b");
+  ReplaceAll(code, "nbt>=2&&nbm>=3&&nbl>=4","4b");
+  ReplaceAll(code, "pass&&stitch&&nvleps==0&&ntks==0&&!low_dphi&&njets>=4&&njets<=5","preseln");
+  ReplaceAll(code, "hig_am>100&&hig_am<=140&&hig_dm<=40","HIG");
+  ReplaceAll(code, "(hig_am<=100||hig_am>140||hig_dm>40)","SBD");
   ReplaceAll(code, ".", "p");
   ReplaceAll(code, "(", "");
   ReplaceAll(code, ")", "");
@@ -135,7 +142,13 @@ string CodeToPlainText(string code){
 
 string CodeToRootTex(string code){
   ReplaceAll(code, " ", "");
-
+  ReplaceAll(code, "pass&&stitch&&nvleps==0&&ntks==0&&!low_dphi&&njets>=4&&njets<=5","Preseln");
+  ReplaceAll(code, "nbt<=1&&nbm==2","TM+MM");
+  ReplaceAll(code, "nbt==2&&nbm==2","2b");
+  ReplaceAll(code, "nbt>=2&&nbm==3&&nbl==3","3b");
+  ReplaceAll(code, "nbt>=2&&nbm>=3&&nbl>=4","4b");
+  ReplaceAll(code, "hig_am>100&&hig_am<=140&&hig_dm<=40","HIG");
+  ReplaceAll(code, "(hig_am<=100||hig_am>140||hig_dm>40)","SBD");
   ReplaceAll(code, "ht1l_stmin2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,min}");
   ReplaceAll(code, "ht1l_stmax2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,max}");
   ReplaceAll(code, "ht1l_stave2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,ave}");
@@ -146,6 +159,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "met>150&&met<=200", "150<met<=200");
   ReplaceAll(code, "met>200&&met<=300", "200<met<=300");
   ReplaceAll(code, "met>200&&met<=350", "200<met<=350");
+  ReplaceAll(code, "met>300&&met<=500", "300<met<=500");
   ReplaceAll(code, "met>350&&met<=500", "350<met<=500");
   ReplaceAll(code, "met>200&&met<=500", "200<met<=500");
   ReplaceAll(code, "njets>=5&&njets<=7", "5<=njets<=7");
@@ -257,6 +271,7 @@ string CodeToRootTex(string code){
 string CodeToLatex(string code){
   code = CodeToRootTex(code);
   ReplaceAll(code, "#", "\\");
+  ReplaceAll(code, "\\DeltaR", "\\Delta R");
   return code;
 }
 

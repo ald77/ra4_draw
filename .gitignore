@@ -35,6 +35,8 @@
 *.log
 *.pdf
 *.txt
+*.fdb_latexmk
+*.fls
 !txt/variables/*
 !txt/colors.txt
 !txt/plot_styles.txt
