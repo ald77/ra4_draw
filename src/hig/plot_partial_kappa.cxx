@@ -35,11 +35,11 @@ using namespace Functions;
 
 namespace{
   bool debug = false;
-  TString skim = "higloose";
+  TString skim = "both1l";
   float lumi=40.;
 
   enum Regions {sbd2b, hig2b, sbd3b, hig3b, sbd4b, hig4b};
-  enum files {all, ttbar, wjets};
+  enum files {all, ttbar, vjets};
   int ifilesDen = ttbar;
   int ifilesNum = ttbar;
   struct oneplot{
@@ -82,14 +82,18 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string ntupletag="";
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_"+skim+"/");
+  string ntupletag="higloose";
+  if(skim.Contains("higlep")) ntupletag="higlep";
+  if(skim.Contains("both")) ntupletag="";
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/");
 
   Palette colors("txt/colors.txt", "default");
 
   // Cuts in baseline speed up the yield finding
+  string zcuts = "nvleps==2 && ((mumuv_m>80&&mumuv_m<100) || (elelv_m>80&&elelv_m<100))";
   string baseline="pass && stitch";
-  if(skim == "higlep") baseline += " && nvleps==1";
+  // if(skim.Contains("1l")) baseline += " && nvleps==1";
+  // if(skim.Contains("zll")) baseline += " && "+zcuts;
   NamedFunc baselinef = baseline;
 
   set<string> allfiles = {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root",
@@ -115,8 +119,13 @@ int main(int argc, char *argv[]){
     foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",
     foldermc+"*_ZZ_*"+ntupletag+"*.root"
   };
-  set<string> ttfiles = {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"};
-  set<string> wfiles = {foldermc+"*_WJetsToLNu*"+ntupletag+"*.root"};
+  set<string> ttfiles = {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root",
+			 foldermc+"*_TTW*"+ntupletag+"*.root", foldermc+"*_TTZ*"+ntupletag+"*.root",
+			 foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
+			 foldermc+"*_TTTT*"+ntupletag+"*.root"};
+  // set<string> vfiles = {foldermc+"*DYJetsToLL*"+ntupletag+"*.root",foldermc+"*_ZJet*"+ntupletag+"*.root",
+  // 			foldermc+"*_WJetsToLNu*"+ntupletag+"*.root"};
+  set<string> vfiles = {foldermc+"*_ZJet*"+ntupletag+"*.root"};
 
   //allfiles = set<string>({foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"});
   // allfiles = nonttfiles;
@@ -129,17 +138,17 @@ int main(int argc, char *argv[]){
     denfiles = ttfiles;
     dentitle = "t#bar{t}";
   }
-  if(ifilesDen == wjets) {
-    denfiles = wfiles;
-    dentitle = "W+jets";
+  if(ifilesDen == vjets) {
+    denfiles = vfiles;
+    dentitle = "V+jets";
   }
   if(ifilesNum == ttbar) {
     numfiles = ttfiles;
     numtitle = "t#bar{t}, ";
   }
-  if(ifilesNum == wjets) {
-    numfiles = wfiles;
-    numtitle = "W, ";
+  if(ifilesNum == vjets) {
+    numfiles = vfiles;
+    numtitle = "Vjets, ";
   }
 
   vector<shared_ptr<Process> > procs;
@@ -148,33 +157,48 @@ int main(int argc, char *argv[]){
 						 baselinef));
 
   //// Processes for the high-mT region (kappa numerator)
-  procs.push_back(Process::MakeShared<Baby_full>
-		  (numtitle+"#leq1 true B-hadron", Process::Type::background, kPink+2, 
-		   numfiles, baselinef && nb_tru<=1));
-  procs.push_back(Process::MakeShared<Baby_full>
-		  (numtitle+"2 true B-hadron", Process::Type::background, kOrange-4, 
-		   numfiles, baselinef && nb_tru==2));
-  procs.push_back(Process::MakeShared<Baby_full>
-		  (numtitle+"3 true B-hadron", Process::Type::background, kTeal-8, 
-		   numfiles, baselinef && nb_tru==3));
-  procs.push_back(Process::MakeShared<Baby_full>
-		  (numtitle+"#geq4 true B-hadron", Process::Type::background, kAzure-4, 
-		   numfiles, baselinef && nb_tru>=4));
+  if(skim.Contains("both")) {
+    string leptitle = "N_{lep} = 1",  lepcuts = "nvleps==1";
+    if(skim.Contains("zll")) {
+      leptitle = "Z #rightarrow ll";
+      lepcuts = zcuts;
+    }
+    procs.push_back(Process::MakeShared<Baby_full>
+		    (numtitle+"N_{lep} = 0", Process::Type::background, kBlue, 
+		     numfiles, baselinef && "nvleps==0"));
+    procs.push_back(Process::MakeShared<Baby_full>
+		    (numtitle+leptitle, Process::Type::background, kRed+1, 
+		     numfiles, baselinef && lepcuts));
+  } else {
+    procs.push_back(Process::MakeShared<Baby_full>
+		    (numtitle+"#leq1 true B-hadron", Process::Type::background, kPink+2, 
+		     numfiles, baselinef && nb_tru<=1));
+    procs.push_back(Process::MakeShared<Baby_full>
+		    (numtitle+"2 true B-hadron", Process::Type::background, kOrange-4, 
+		     numfiles, baselinef && nb_tru==2));
+    procs.push_back(Process::MakeShared<Baby_full>
+		    (numtitle+"3 true B-hadron", Process::Type::background, kTeal-8, 
+		     numfiles, baselinef && nb_tru==3));
+    procs.push_back(Process::MakeShared<Baby_full>
+		    (numtitle+"#geq4 true B-hadron", Process::Type::background, kAzure-4, 
+		     numfiles, baselinef && nb_tru>=4));
 
-  procs.push_back(Process::MakeShared<Baby_full>
-		  (numtitle+"All",Process::Type::background,1,numfiles,
-		   baselinef));
-
+    procs.push_back(Process::MakeShared<Baby_full>
+		    (numtitle+"All",Process::Type::background,1,numfiles,
+		     baselinef));
+  }
 
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
  /////////////////////////////////////////// Defining cuts ///////////////////////////////////////////////
   // baseline defined above
+  TString cutlep = "nvleps==0";
+  if(skim.Contains("higlep")) cutlep = "nvleps==1";
+  if(skim.Contains("both")) cutlep = "1";
+
 
   // Makes a plot for each vector in plotcuts
-  TString cutlep = "nvleps==0";
-  if(skim=="higlep") cutlep = "nvleps==1";
   vector<oneplot> plotcuts({
 	{"met",cutlep,{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=250", "met>250&&met<=350","met>350"}},
 	{"met",cutlep+"&&hig_drmax<2.2",{"met>100&&met<=150","met>150&&met<=200",
@@ -184,7 +208,7 @@ int main(int argc, char *argv[]){
 	});
 
   TString c_2b="nbt==2&&nbm==2", c_3b="nbt>=2&&nbm==3&&nbl==3", c_4b="nbt>=2&&nbm>=3&&nbl>=4";
-  TString c_hig="hig_am>100&&hig_am<140&&hig_dm<40", c_sbd="!("+c_hig+")";
+  TString c_hig="hig_am>100&&hig_am<140&&hig_dm<40", c_sbd="!("+c_hig+") && hig_am<200 && hig_dm<150";
   TString ump=" && ";
 
   vector<TString> abcdcuts = {c_2b +ump+ c_sbd, c_2b +ump+ c_hig, c_3b +ump+ c_sbd, c_3b +ump+ c_hig, 
@@ -233,7 +257,10 @@ int main(int argc, char *argv[]){
     //// 3b kappa
     indices.clear(); leglabels.clear();
     for(int ibkg=1; ibkg<static_cast<int>(procs.size()); ibkg++) {
-      indices.push_back(vector<vector<int> >({{ibkg, hig3b, 1}, {ibkg, sbd3b, -1}, {0, hig2b, -1}, {0, sbd2b, 1}}));
+      int idenom=0;
+      if(skim.Contains("both")) idenom = ibkg;
+      indices.push_back(vector<vector<int> >({{ibkg, hig3b, 1}, {ibkg, sbd3b, -1}, 
+								  {idenom, hig2b, -1}, {idenom, sbd2b, 1}}));
       leglabels.push_back(procs[ibkg]->name_);
     }
     plotRatio(allyields, plotcuts[iplot], indices, leglabels, procs);
@@ -241,7 +268,10 @@ int main(int argc, char *argv[]){
     //// 4b kappa
     indices.clear(); leglabels.clear();
     for(int ibkg=1; ibkg<static_cast<int>(procs.size()); ibkg++) {
-      indices.push_back(vector<vector<int> >({{ibkg, hig4b, 1}, {ibkg, sbd4b, -1}, {0, hig2b, -1}, {0, sbd2b, 1}}));
+      int idenom=0;
+      if(skim.Contains("both")) idenom = ibkg;
+      indices.push_back(vector<vector<int> >({{ibkg, hig4b, 1}, {ibkg, sbd4b, -1}, 
+								  {idenom, hig2b, -1}, {idenom, sbd2b, 1}}));
       leglabels.push_back(procs[ibkg]->name_);
     }
     plotRatio(allyields, plotcuts[iplot], indices, leglabels, procs);
@@ -326,12 +356,15 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
 
   float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = maxr*1.2;
   if(maxy>3) maxy = 3;
+  if(maxy<2) maxy = 2;
+  plotdef.baseline.ReplaceAll("1&&","");
+  if(plotdef.baseline=="1") plotdef.baseline = "";
   TH1D histo("histo", CodeToRootTex(plotdef.baseline.Data()).c_str(), nbins, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
   histo.GetYaxis()->CenterTitle(true);
   histo.GetXaxis()->SetLabelOffset(0.008);
-  histo.GetXaxis()->SetTitleSize(0.06);
+  histo.GetYaxis()->SetTitleSize(0.06);
   histo.SetYTitle(ytitle);
   histo.Draw();
 
@@ -409,7 +442,7 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   TString fname = "plots/ratio_"+CodeToPlainText(ytitle.Data())+"_"+plotdef.name+"_"
     +CodeToPlainText(plotdef.baseline.Data())+"_NumAllbkg.pdf";
   if(ifilesNum == ttbar) fname.ReplaceAll("NumAllbkg", "Numttbar");
-  if(ifilesNum == wjets) fname.ReplaceAll("NumAllbkg", "NumWjets");
+  if(ifilesNum == vjets) fname.ReplaceAll("NumAllbkg", "NumVjets");
   can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl;
 

@@ -42,7 +42,7 @@
 [Ratio]
   CanvasW	  = 1100
   CanvasH	  = 700
-  TitleSize	  = 0.042
+  TitleSize	  = 0.045
   LabelSize	  = 0.052
   xTitleOffset	  = 1.1
   yTitleOffset	  = 1.2
