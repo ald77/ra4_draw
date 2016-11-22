@@ -18,24 +18,25 @@
 
 namespace{
   float lumi = 35.;
+  bool do_procs = true;
 }
 
 using namespace std;
-
-NamedFunc nb_tru("nb_tru",[](const Baby &b) -> NamedFunc::ScalarType{
-  int nbtru(0);
-  for (unsigned i(0); i<b.jets_pt()->size(); i++){
-    if (!b.jets_h1()->at(i) && !b.jets_h2()->at(i)) continue;
-    if (b.jets_hflavor()->at(i)==5) nbtru++;
-  }
-  return nbtru;
-});
   
 int main(){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
 
   time_t begtime, endtime;
   time(&begtime);
+
+  NamedFunc nb_tru("nb_tru",[](const Baby &b) -> NamedFunc::ScalarType{
+    int nbtru(0);
+    for (unsigned i(0); i<b.jets_pt()->size(); i++){
+      if (!b.jets_h1()->at(i) && !b.jets_h2()->at(i)) continue;
+      if (b.jets_hflavor()->at(i)==5) nbtru++;
+    }
+    return nbtru;
+  });
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining processes //////////////////////////////////////////
@@ -47,7 +48,7 @@ int main(){
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/");
 
   // Cuts in baseline speed up the yield finding
-  string preseln = "pass && stitch && nvleps==0 && ntks==0 && !low_dphi && njets>=4 && njets<=5"; //keep order to allow replacement with "preseln" in filename & tex
+  string preseln = "pass && stitch && nvleps==1 && !low_dphi && njets>=4 && njets<=5"; //keep order to allow replacement with "preseln" in filename & tex
   string baseline = preseln + "&& hig_drmax<2.2";
 
   Palette colors("txt/colors.txt", "default");
@@ -64,66 +65,57 @@ int main(){
          foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",foldermc+"*_ZZ_*"+ntupletag+"*.root"
        };
 
-  // allfiles = set<string>({foldermc+"*_TTJets_Tune*"});
+  // allfiles = set<string>({foldermc+"*_TTJets*Lept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"});
 
   map<string, vector<shared_ptr<Process> > > procs;
-
-  procs["procs"] = vector<shared_ptr<Process> >();
-  procs["procs"].push_back(Process::MakeShared<Baby_full>("t#bar{t} (l)", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets_HT*.root"},
-    baseline+" && ntruleps==1"));
-  procs["procs"].push_back(Process::MakeShared<Baby_full>("t#bar{t} (ll)", Process::Type::background, colors("tt_2l"),
-    {foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"},
-    baseline+" && ntruleps==2"));
-  procs["procs"].push_back(Process::MakeShared<Baby_full>("Z+jets", Process::Type::background, kOrange+1,
-    {foldermc+"*_ZJet*.root"}, baseline));
-  procs["procs"].push_back(Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
-    {foldermc+"*_WJetsToLNu*.root"}, baseline));
-  procs["procs"].push_back(Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
-    {foldermc+"*_ST_*.root"}, baseline));
-  procs["procs"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+W/Z/#gamma", Process::Type::background, kBlue-2,
-    {foldermc+"*_TTZ*.root", foldermc+"*_TTW*.root", foldermc+"*_TTGJets*.root"}, baseline));
-  procs["procs"].push_back(Process::MakeShared<Baby_full>("QCD", Process::Type::background, colors("other"),
-  {foldermc+"*QCD_HT*0_Tune*.root",
-    foldermc+"*QCD_HT*Inf_Tune*.root"},
-    baseline));
-  procs["procs"].push_back(Process::MakeShared<Baby_full>("Other", Process::Type::background, kPink-2,
-    {foldermc+"*DYJetsToLL*.root",
-    foldermc+"*_TTTT*.root",
-    foldermc+"*_ttHJetTobb*.root",
-    foldermc+"*_WH_HToBB*.root",
-    foldermc+"*_ZH_HToBB*.root",
-    foldermc+"*_WWTo*.root",
-    foldermc+"*_WZ*.root",
-    foldermc+"*_ZZ_*.root"},
-    baseline));
+  if (do_procs) {
+    procs["procs"] = vector<shared_ptr<Process> >();
+    procs["procs"].push_back(Process::MakeShared<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_1l"),
+      {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root"},
+      baseline+" && ntruleps>=1"));
+    procs["procs"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", Process::Type::background, kPink+4,
+      {foldermc+"*_TTZ*.root", foldermc+"*_TTW*.root", foldermc+"*_TTGJets*.root", 
+      foldermc+"*_ttHJetTobb*.root",foldermc+"*_TTTT*.root"},
+      baseline));
+    procs["procs"].push_back(Process::MakeShared<Baby_full>("V+jets", Process::Type::background, kOrange+1,
+      {foldermc+"*_ZJet*.root", foldermc+"*_WJetsToLNu*.root", foldermc+"*DYJetsToLL*.root"}, baseline));
+    procs["procs"].push_back(Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
+      {foldermc+"*_ST_*.root"}, baseline));
+    procs["procs"].push_back(Process::MakeShared<Baby_full>("QCD", Process::Type::background, colors("other"),
+    {foldermc+"*QCD_HT*0_Tune*.root",
+      foldermc+"*QCD_HT*Inf_Tune*.root"},
+      baseline));
+    procs["procs"].push_back(Process::MakeShared<Baby_full>("Other", Process::Type::background, kPink-2,
+      {foldermc+"*_WH_HToBB*.root", foldermc+"*_ZH_HToBB*.root",
+      foldermc+"*_WWTo*.root", foldermc+"*_WZ*.root", foldermc+"*_ZZ_*.root"},
+      baseline));
+  }
 
   NamedFunc base_func(baseline);
   procs["cats"] = vector<shared_ptr<Process> >();
   procs["cats"].push_back(Process::MakeShared<Baby_full>
           ("#leq 1 B-hadron", Process::Type::background, kPink+2,
-           allfiles, base_func && nb_tru<=1));
+           allfiles, base_func && nb_tru<=1 && "ntruleps>=1"));
   procs["cats"].push_back(Process::MakeShared<Baby_full>
   			  ("2 B-hadrons", Process::Type::background, kOrange-4,
-  			   allfiles, base_func && nb_tru==2));
+  			   allfiles, base_func && nb_tru==2 && "ntruleps>=1"));
   procs["cats"].push_back(Process::MakeShared<Baby_full>
   			  ("3 B-hadrons", Process::Type::background, kTeal-8, 
-           allfiles, base_func &&  nb_tru==3));
+           allfiles, base_func &&  nb_tru==3 && "ntruleps>=1"));
   procs["cats"].push_back(Process::MakeShared<Baby_full>
   			  ("#geq 4 B-hadrons", Process::Type::background, kAzure-4, 
-  			   allfiles, base_func && nb_tru>=4));
+  			   allfiles, base_func && nb_tru>=4 && "ntruleps>=1"));
 
   PlotMaker pm;
 
   vector<TString> metcuts;
-  // metcuts.push_back("met>100 && met<=150");
+  metcuts.push_back("met>100 && met<=150");
   metcuts.push_back("met>150 && met<=200");
-  metcuts.push_back("met>200 && met<=300");
-  metcuts.push_back("met>300 && met<=500");
-  metcuts.push_back("met>500");
+  metcuts.push_back("met>200 && met<=250");
+  metcuts.push_back("met>250 && met<=350");
+  metcuts.push_back("met>350");
 
   vector<TString> nbcuts;
-  nbcuts.push_back("nbt<=1&&nbm==2");
   nbcuts.push_back("nbt==2&&nbm==2");
   nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
   nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");

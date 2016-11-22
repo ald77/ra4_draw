@@ -245,6 +245,7 @@ void Table::PrintHeader(ofstream &file) const{
   file << "\\begin{document}\n";
   file << "\\begin{sidewaystable}[tbp!]\n";
   file << "  \\centering\n";
+  file << "  \\resizebox{\\textwidth}{!}{";
   file << "  \\begin{tabular}{ l";
   
   if(backgrounds_.size() > 1){
@@ -448,6 +449,7 @@ void Table::PrintFooter(ofstream &file) const{
   file << "\\\\\n";
   file << "    \\hline\\hline\n";
   file << "  \\end{tabular}\n";
+  file << " }\n"; //close resizebox
   file << "\\end{sidewaystable}\n";
   file << "\\end{document}\n";
 }

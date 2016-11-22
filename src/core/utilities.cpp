@@ -142,7 +142,9 @@ string CodeToPlainText(string code){
 
 string CodeToRootTex(string code){
   ReplaceAll(code, " ", "");
-  ReplaceAll(code, "pass&&stitch&&nvleps==0&&ntks==0&&!low_dphi&&njets>=4&&njets<=5","Preseln");
+  ReplaceAll(code, "pass&&stitch", "ps");
+  ReplaceAll(code, "&&1", "");
+  ReplaceAll(code, "weight", "w");
   ReplaceAll(code, "nbt<=1&&nbm==2","TM+MM");
   ReplaceAll(code, "nbt==2&&nbm==2","2b");
   ReplaceAll(code, "nbt>=2&&nbm==3&&nbl==3","3b");
@@ -162,6 +164,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "met>300&&met<=500", "300<met<=500");
   ReplaceAll(code, "met>350&&met<=500", "350<met<=500");
   ReplaceAll(code, "met>200&&met<=500", "200<met<=500");
+  ReplaceAll(code, "njets>=4&&njets<=5", "4<=njets<=5");
   ReplaceAll(code, "njets>=5&&njets<=7", "5<=njets<=7");
   ReplaceAll(code, "njets>=6&&njets<=8", "6<=njets<=8");
   ReplaceAll(code, "nbm>=1&&nbm<=2", "1<=nbm<=2");
