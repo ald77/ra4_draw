@@ -241,11 +241,10 @@ void Table::PrintHeader(ofstream &file) const{
   file << "\\documentclass[10pt,oneside]{report}\n";
   file << "\\usepackage{graphicx,xspace,amssymb,amsmath,colordvi,colortbl,verbatim,multicol}\n";
   file << "\\usepackage{multirow, rotating}\n\n";
+  file << "\\usepackage[active,tightpage]{preview}\n\n";
 
   file << "\\begin{document}\n";
-  file << "\\begin{sidewaystable}[tbp!]\n";
-  file << "  \\centering\n";
-  file << "  \\resizebox{\\textwidth}{!}{";
+  file << "\\begin{preview}\n";
   file << "  \\begin{tabular}{ l";
   
   if(backgrounds_.size() > 1){
@@ -449,8 +448,7 @@ void Table::PrintFooter(ofstream &file) const{
   file << "\\\\\n";
   file << "    \\hline\\hline\n";
   file << "  \\end{tabular}\n";
-  file << " }\n"; //close resizebox
-  file << "\\end{sidewaystable}\n";
+  file << "\\end{preview}\n";
   file << "\\end{document}\n";
 }
 

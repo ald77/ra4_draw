@@ -20,8 +20,9 @@ using namespace std;
 
 namespace{
   float lumi = 36.;
-  bool do_cats_ntrub = false;
-  vector<string> selns= {"nom","onelep","dilep"};
+  bool do_procs = false;
+  bool do_cats_ntrub = true;
+  vector<string> selns= {"nom","qcd","onelep","dilep"};
   // vector<string> selns= {"dilep"};
   enum proc_types{ttx, vjets, singlet, qcd, other, nprocs};
 }
@@ -50,15 +51,17 @@ int main(){
 
   map<string, string> folders; 
   folders["nom"] = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
+  folders["qcd"] = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
   folders["onelep"] = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_hig_nlep1/";
   folders["dilep"] = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_hig_nlep2/";
 
   // Cuts in baseline speed up the yield finding
   map<string, string> baseline;
-  baseline["nom"]   = "pass && stitch && njets>=4 && njets<=5 && nvleps==0 && ntks==0 && !low_dphi && met>150";
-  baseline["onelep"] = "pass && stitch && njets>=4 && njets<=5 && nleps==1 && met>150";
+  baseline["nom"]   = "pass && stitch && njets>=4 && njets<=5 && nvleps==0 && ntks==0 && !low_dphi";
+  baseline["qcd"]   = "pass && stitch && njets>=4 && njets<=5 && nvleps==0 && ntks==0 && low_dphi";
+  baseline["onelep"] = "pass && stitch && njets>=4 && njets<=5 && nleps==1 && mt<140";
   //z-mass window already in the skim
-  baseline["dilep"] = "pass && stitch && njets>=4 && njets<=5 && nleps==2 && mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0)>150";
+  baseline["dilep"] = "pass && stitch && njets>=4 && njets<=5 && nleps==2 && (mumu_m*(mumu_m>0)+elel_m*(elel_m>0))>80&&(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))<100";
 
   Palette colors("txt/colors.txt", "default");
 
@@ -77,39 +80,41 @@ int main(){
     return fset; 
   };
   map<string, vector<shared_ptr<Process> > > procs;
-  for (auto &iseln: selns){
-    procs[iseln] = vector<shared_ptr<Process> >();
-    procs[iseln].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", Process::Type::background, colors("tt_1l"),
-      get_fset(folders[iseln], files[ttx]), baseline[iseln]));
-    procs[iseln].push_back(Process::MakeShared<Baby_full>("V+jets", Process::Type::background, kOrange+1,
-      get_fset(folders[iseln], files[vjets]), baseline[iseln]));
-    procs[iseln].push_back(Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
-      get_fset(folders[iseln], files[singlet]), baseline[iseln]));
-    procs[iseln].push_back(Process::MakeShared<Baby_full>("QCD", Process::Type::background, colors("other"),
-      get_fset(folders[iseln], files[qcd]), baseline[iseln]));
-    procs[iseln].push_back(Process::MakeShared<Baby_full>("Other", Process::Type::background, kPink-2,
-      get_fset(folders[iseln], files[other]), baseline[iseln]));
-  }
-
+  if (do_procs) {  
+    for (auto &iseln: selns){
+      procs[iseln] = vector<shared_ptr<Process> >();
+      procs[iseln].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", Process::Type::background, colors("tt_1l"),
+        get_fset(folders[iseln], files[ttx]), baseline[iseln]));
+      procs[iseln].push_back(Process::MakeShared<Baby_full>("V+jets", Process::Type::background, kOrange+1,
+        get_fset(folders[iseln], files[vjets]), baseline[iseln]));
+      procs[iseln].push_back(Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
+        get_fset(folders[iseln], files[singlet]), baseline[iseln]));
+      procs[iseln].push_back(Process::MakeShared<Baby_full>("QCD", Process::Type::background, colors("other"),
+        get_fset(folders[iseln], files[qcd]), baseline[iseln]));
+      procs[iseln].push_back(Process::MakeShared<Baby_full>("Other", Process::Type::background, kGreen+1,
+        get_fset(folders[iseln], files[other]), baseline[iseln]));
+    }
+  } 
   if (do_cats_ntrub) {
     set<string> allfiles;
     for (auto &iset: files) 
       allfiles.insert(iset.begin(), iset.end());
     for (auto &iseln: selns){
+      set<string> full_fset = get_fset(folders[iseln], allfiles);
       NamedFunc base_func(baseline[iseln]);
       procs["cats"+iseln] = vector<shared_ptr<Process> >();
       procs["cats"+iseln].push_back(Process::MakeShared<Baby_full>
               ("#leq 1 B-hadron", Process::Type::background, kPink+2,
-               allfiles, base_func && nb_tru<=1));
+               full_fset, base_func && nb_tru<=1));
       procs["cats"+iseln].push_back(Process::MakeShared<Baby_full>
       			  ("2 B-hadrons", Process::Type::background, kOrange-4,
-      			   allfiles, base_func && nb_tru==2));
+      			   full_fset, base_func && nb_tru==2));
       procs["cats"+iseln].push_back(Process::MakeShared<Baby_full>
       			  ("3 B-hadrons", Process::Type::background, kTeal-8, 
-               allfiles, base_func &&  nb_tru==3));
+               full_fset, base_func &&  nb_tru==3));
       procs["cats"+iseln].push_back(Process::MakeShared<Baby_full>
       			  ("#geq 4 B-hadrons", Process::Type::background, kAzure-4, 
-      			   allfiles, base_func && nb_tru>=4));
+      			   full_fset, base_func && nb_tru>=4));
     }
   }
 
@@ -117,7 +122,8 @@ int main(){
 
   map<string, vector<string> > metcuts;
   metcuts["nom"] = {"met>150&&met<=200", "met>200&&met<=300","met>300"};
-  metcuts["onelep"] = {"met>150&&met<=200", "met>200&&met<=300","met>300"};
+  metcuts["qcd"] = metcuts["nom"];
+  metcuts["onelep"] = metcuts["nom"];
   metcuts["dilep"] = {"(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>150&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=200", 
                       "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>200&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=300",
                       "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>300"};
@@ -132,20 +138,27 @@ int main(){
   regs.push_back("hig_am>100 && hig_am<=140 && hig_dm <= 40");
   regs.push_back("(hig_am<=100 || hig_am>140 || hig_dm > 40)");
 
+  map<string, string> xcuts; // additional cut options, done for each selection
+  xcuts["1"] = "1";
+  xcuts["hdrmax"] = "hig_drmax<2.2";
+
   for (auto &iseln: selns) {
-    vector<TString> cuts;
-    vector<TableRow> table_cuts;
-    for(auto &imet: metcuts[iseln]) { 
-      for(auto &inb: nbcuts) {
-        for (auto &ireg: regs) {
-          cuts.push_back(baseline[iseln]+"&&"+imet+"&&"+inb+"&&"+ireg);
-          cuts.push_back(baseline[iseln]+"&&"+imet+"&&"+inb+"&&"+ireg+"&& hig_drmax<2.2");
+    for (auto &ixcut: xcuts) {
+      vector<TString> cuts;
+      vector<TableRow> table_cuts;
+      for(auto &imet: metcuts[iseln]) { 
+        for(auto &inb: nbcuts) {
+          for (auto &ireg: regs) {
+            cuts.push_back(baseline[iseln]+"&&"+imet+"&&"+inb+"&&"+ireg+"&&"+ixcut.second);
+          }
         }
       }
+      for(size_t icut=0; icut<cuts.size(); icut++)
+        table_cuts.push_back(TableRow("$"+CodeToLatex(cuts[icut].Data())+"$", cuts[icut].Data()));  
+      if (do_procs) pm.Push<Table>("chart_"+iseln+"_"+ixcut.first,  table_cuts, procs[iseln], true, true, true, false);
+      if (do_cats_ntrub) 
+        pm.Push<Table>("chartcats_"+iseln+"_"+ixcut.first,  table_cuts, procs["cats"+iseln], true, true, true, false);
     }
-    for(size_t icut=0; icut<cuts.size(); icut++)
-      table_cuts.push_back(TableRow("$"+CodeToLatex(cuts[icut].Data())+"$", cuts[icut].Data()));  
-    pm.Push<Table>("chart_"+iseln,  table_cuts, procs[iseln], true, true, true, true);
   }
 
   pm.min_print_ = true;
