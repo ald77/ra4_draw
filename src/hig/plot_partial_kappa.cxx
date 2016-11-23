@@ -200,11 +200,10 @@ int main(int argc, char *argv[]){
 
   // Makes a plot for each vector in plotcuts
   vector<oneplot> plotcuts({
-	{"met",cutlep,{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=250", "met>250&&met<=350","met>350"}},
-	{"met",cutlep+"&&hig_drmax<2.2",{"met>100&&met<=150","met>150&&met<=200",
-	      "met>200&&met<=250", "met>250&&met<=350","met>350"}},
+	{"met",cutlep,{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=300", "met>300"}},
+	{"met",cutlep+"&&hig_drmax<2.2",{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=300", "met>300"}},
 	{"met",cutlep+"&&ntks==0 && !low_dphi && hig_drmax<2.2",{"met>100&&met<=150","met>150&&met<=200",
-	      "met>200&&met<=250", "met>250&&met<=350","met>350"}},
+	      "met>200&&met<=300", "met>300"}},
 	});
 
   TString c_2b="nbt==2&&nbm==2", c_3b="nbt>=2&&nbm==3&&nbl==3", c_4b="nbt>=2&&nbm>=3&&nbl>=4";
