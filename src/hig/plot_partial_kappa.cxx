@@ -123,9 +123,9 @@ int main(int argc, char *argv[]){
 			 foldermc+"*_TTW*"+ntupletag+"*.root", foldermc+"*_TTZ*"+ntupletag+"*.root",
 			 foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
 			 foldermc+"*_TTTT*"+ntupletag+"*.root"};
-  // set<string> vfiles = {foldermc+"*DYJetsToLL*"+ntupletag+"*.root",foldermc+"*_ZJet*"+ntupletag+"*.root",
-  // 			foldermc+"*_WJetsToLNu*"+ntupletag+"*.root"};
-  set<string> vfiles = {foldermc+"*_ZJet*"+ntupletag+"*.root"};
+   set<string> vfiles = {foldermc+"*DYJetsToLL*"+ntupletag+"*.root",foldermc+"*_ZJet*"+ntupletag+"*.root",
+   			foldermc+"*_WJetsToLNu*"+ntupletag+"*.root"};
+   //set<string> vfiles = {foldermc+"*_ZJet*"+ntupletag+"*.root"};
 
   //allfiles = set<string>({foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"});
   // allfiles = nonttfiles;
@@ -208,6 +208,7 @@ int main(int argc, char *argv[]){
 	});
 
   TString c_2b="nbt==2&&nbm==2", c_3b="nbt>=2&&nbm==3&&nbl==3", c_4b="nbt>=2&&nbm>=3&&nbl>=4";
+  //TString c_2b="nbm==2", c_3b="nbm==3", c_4b="nbm>=4";
   TString c_hig="hig_am>100&&hig_am<140&&hig_dm<40", c_sbd="!("+c_hig+") && hig_am<200 && hig_dm<150";
   TString ump=" && ";
 
@@ -458,8 +459,7 @@ void printDebug(vector<vector<TString> > &allcuts, vector<vector<vector<GammaPar
   cout<<"-- Baseline cuts: "<<baseline<<endl<<endl;
   for(size_t ibin=0; ibin<allcuts[0].size(); ibin++){
     for(size_t iabcd=0; iabcd<allcuts.size(); iabcd++){
-      for(size_t ibkg=0; procs.size(); ibkg++)
-      
+      for(size_t ibkg=0; ibkg<procs.size(); ibkg++)
 	cout<<procs[ibkg]->name_<<": "    <<setw(9)<<RoundNumber(allyields[ibkg][iabcd][ibin].Yield(), digits)<<", ";
       cout<<"  - "<< allcuts[iabcd][ibin]<<endl;
     } // Loop over ABCD cuts
