@@ -20,10 +20,10 @@ using namespace std;
 
 namespace{
   float lumi = 36.;
-  bool do_procs = false;
-  bool do_cats_ntrub = true;
+  bool do_procs = true;
+  bool do_cats_ntrub = false;
   vector<string> selns= {"nom","qcd","onelep","dilep"};
-  // vector<string> selns= {"dilep"};
+  // vector<string> selns= {"qcd","dilep"};
   enum proc_types{ttx, vjets, singlet, qcd, other, nprocs};
 }
   
@@ -59,7 +59,7 @@ int main(){
   map<string, string> baseline;
   baseline["nom"]   = "pass && stitch && njets>=4 && njets<=5 && nvleps==0 && ntks==0 && !low_dphi";
   baseline["qcd"]   = "pass && stitch && njets>=4 && njets<=5 && nvleps==0 && ntks==0 && low_dphi";
-  baseline["onelep"] = "pass && stitch && njets>=4 && njets<=5 && nleps==1 && mt<140";
+  baseline["onelep"] = "pass && stitch && njets>=4 && njets<=5 && nleps==1 && mt<=140";
   //z-mass window already in the skim
   baseline["dilep"] = "pass && stitch && njets>=4 && njets<=5 && nleps==2 && (mumu_m*(mumu_m>0)+elel_m*(elel_m>0))>80&&(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))<100";
 
@@ -74,25 +74,20 @@ int main(){
   files[other]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
                                 "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
 
-  auto get_fset = [](string folder, set<string>& fileset) {
-    set<string> fset = set<string>();
-    for (auto &ifile: fileset) fset.insert(folder+ifile);
-    return fset; 
-  };
   map<string, vector<shared_ptr<Process> > > procs;
   if (do_procs) {  
     for (auto &iseln: selns){
       procs[iseln] = vector<shared_ptr<Process> >();
       procs[iseln].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", Process::Type::background, colors("tt_1l"),
-        get_fset(folders[iseln], files[ttx]), baseline[iseln]));
+        attach_folder(folders[iseln], files[ttx]), baseline[iseln]));
       procs[iseln].push_back(Process::MakeShared<Baby_full>("V+jets", Process::Type::background, kOrange+1,
-        get_fset(folders[iseln], files[vjets]), baseline[iseln]));
+        attach_folder(folders[iseln], files[vjets]), baseline[iseln]));
       procs[iseln].push_back(Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
-        get_fset(folders[iseln], files[singlet]), baseline[iseln]));
+        attach_folder(folders[iseln], files[singlet]), baseline[iseln]));
       procs[iseln].push_back(Process::MakeShared<Baby_full>("QCD", Process::Type::background, colors("other"),
-        get_fset(folders[iseln], files[qcd]), baseline[iseln]));
+        attach_folder(folders[iseln], files[qcd]), baseline[iseln]));
       procs[iseln].push_back(Process::MakeShared<Baby_full>("Other", Process::Type::background, kGreen+1,
-        get_fset(folders[iseln], files[other]), baseline[iseln]));
+        attach_folder(folders[iseln], files[other]), baseline[iseln]));
     }
   } 
   if (do_cats_ntrub) {
@@ -100,7 +95,7 @@ int main(){
     for (auto &iset: files) 
       allfiles.insert(iset.begin(), iset.end());
     for (auto &iseln: selns){
-      set<string> full_fset = get_fset(folders[iseln], allfiles);
+      set<string> full_fset = attach_folder(folders[iseln], allfiles);
       NamedFunc base_func(baseline[iseln]);
       procs["cats"+iseln] = vector<shared_ptr<Process> >();
       procs["cats"+iseln].push_back(Process::MakeShared<Baby_full>
@@ -124,9 +119,7 @@ int main(){
   metcuts["nom"] = {"met>150&&met<=200", "met>200&&met<=300","met>300"};
   metcuts["qcd"] = metcuts["nom"];
   metcuts["onelep"] = metcuts["nom"];
-  metcuts["dilep"] = {"(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>150&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=200", 
-                      "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>200&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=300",
-                      "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>300"};
+  metcuts["dilep"] = {"(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>50"};
   
 
   vector<TString> nbcuts;
@@ -135,6 +128,7 @@ int main(){
   nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
 
   vector<TString> regs;
+  regs.push_back("1");
   regs.push_back("hig_am>100 && hig_am<=140 && hig_dm <= 40");
   regs.push_back("(hig_am<=100 || hig_am>140 || hig_dm > 40)");
 
@@ -151,6 +145,7 @@ int main(){
           for (auto &ireg: regs) {
             cuts.push_back(baseline[iseln]+"&&"+imet+"&&"+inb+"&&"+ireg+"&&"+ixcut.second);
           }
+
         }
       }
       for(size_t icut=0; icut<cuts.size(); icut++)

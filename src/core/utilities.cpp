@@ -625,3 +625,9 @@ double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weight
 
   return stdval;
 }
+
+set<string> attach_folder(string folder, set<string> &fileset) {
+  set<string> fset = set<string>();
+  for (auto &ifile: fileset) fset.insert(folder+ifile);
+  return fset; 
+}
