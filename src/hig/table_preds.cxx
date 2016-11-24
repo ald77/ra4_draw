@@ -89,7 +89,7 @@ int main(int argc, char *argv[]){
 
   //// Capybara
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higtight/");
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/TChiHH/merged_higmc_higtight/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/TChiHH/merged_higmc_higloose/");
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_stdnj5/");
 
   Palette colors("txt/colors.txt", "default");
@@ -275,6 +275,9 @@ int main(int argc, char *argv[]){
     vector<vector<vector<float> > > kappas, preds;
     findPreds(abcds[imethod], allyields, kappas, preds);
 
+    //// Print MC/Data yields, cuts applied, kappas, preds
+    if(debug) printDebug(abcds[imethod], allyields, TString(baseline.Name()), kappas, preds);
+
     //// Makes table MC/Data yields, kappas, preds, Zbi
     if(!only_kappa) {
       TString fullname = printTable(abcds[imethod], allyields, kappas, preds, proc_sigs);
@@ -283,9 +286,6 @@ int main(int argc, char *argv[]){
 
     //// Plotting kappa
     plotKappa(abcds[imethod], kappas);
-
-    //// Print MC/Data yields, cuts applied, kappas, preds
-    if(debug) printDebug(abcds[imethod], allyields, TString(baseline.Name()), kappas, preds);
 
   } // Loop over ABCD methods
 

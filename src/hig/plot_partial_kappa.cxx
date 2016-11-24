@@ -83,16 +83,16 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string ntupletag="higloose";
-  if(skim.Contains("higlep")) ntupletag="higlep";
+  if(skim.Contains("nlep1")) ntupletag="nlep1";
   if(skim.Contains("both")) ntupletag="";
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/");
 
   Palette colors("txt/colors.txt", "default");
 
   // Cuts in baseline speed up the yield finding
-  string zcuts = "nvleps==2 && ((mumuv_m>80&&mumuv_m<100) || (elelv_m>80&&elelv_m<100))";
+  string zcuts = "nleps==2 && ((mumuv_m>80&&mumuv_m<100) || (elelv_m>80&&elelv_m<100))";
   string baseline="pass && stitch";
-  // if(skim.Contains("1l")) baseline += " && nvleps==1";
+  // if(skim.Contains("1l")) baseline += " && nleps==1";
   // if(skim.Contains("zll")) baseline += " && "+zcuts;
   NamedFunc baselinef = baseline;
 
@@ -158,7 +158,7 @@ int main(int argc, char *argv[]){
 
   //// Processes for the high-mT region (kappa numerator)
   if(skim.Contains("both")) {
-    string leptitle = "N_{lep} = 1",  lepcuts = "nvleps==1";
+    string leptitle = "N_{lep} = 1",  lepcuts = "nleps==1";
     if(skim.Contains("zll")) {
       leptitle = "Z #rightarrow ll";
       lepcuts = zcuts;
@@ -170,21 +170,24 @@ int main(int argc, char *argv[]){
 		    (numtitle+leptitle, Process::Type::background, kRed+1, 
 		     numfiles, baselinef && lepcuts));
   } else {
-    procs.push_back(Process::MakeShared<Baby_full>
-		    (numtitle+"#leq1 true B-hadron", Process::Type::background, kPink+2, 
-		     numfiles, baselinef && nb_tru<=1));
-    procs.push_back(Process::MakeShared<Baby_full>
-		    (numtitle+"2 true B-hadron", Process::Type::background, kOrange-4, 
-		     numfiles, baselinef && nb_tru==2));
-    procs.push_back(Process::MakeShared<Baby_full>
-		    (numtitle+"3 true B-hadron", Process::Type::background, kTeal-8, 
-		     numfiles, baselinef && nb_tru==3));
-    procs.push_back(Process::MakeShared<Baby_full>
-		    (numtitle+"#geq4 true B-hadron", Process::Type::background, kAzure-4, 
-		     numfiles, baselinef && nb_tru>=4));
+    // procs.push_back(Process::MakeShared<Baby_full>
+    // 		    (numtitle+"#leq1 true B-hadron", Process::Type::background, kPink+2, 
+    // 		     numfiles, baselinef && nb_tru<=1));
+    // procs.push_back(Process::MakeShared<Baby_full>
+    // 		    (numtitle+"2 true B-hadron", Process::Type::background, kOrange-4, 
+    // 		     numfiles, baselinef && nb_tru==2));
+    // procs.push_back(Process::MakeShared<Baby_full>
+    // 		    (numtitle+"3 true B-hadron", Process::Type::background, kTeal-8, 
+    // 		     numfiles, baselinef && nb_tru==3));
+    // procs.push_back(Process::MakeShared<Baby_full>
+    // 		    (numtitle+"#geq4 true B-hadron", Process::Type::background, kAzure-4, 
+    // 		     numfiles, baselinef && nb_tru>=4));
 
     procs.push_back(Process::MakeShared<Baby_full>
-		    (numtitle+"All",Process::Type::background,1,numfiles,
+		    ("All bkg",Process::Type::background,1,numfiles,
+		     baselinef));
+    procs.push_back(Process::MakeShared<Baby_full>
+		    ("t#bar{t}",Process::Type::background,colors("tt_1l"),ttfiles,
 		     baselinef));
   }
 
@@ -193,22 +196,23 @@ int main(int argc, char *argv[]){
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
  /////////////////////////////////////////// Defining cuts ///////////////////////////////////////////////
   // baseline defined above
-  TString cutlep = "nvleps==0";
-  if(skim.Contains("higlep")) cutlep = "nvleps==1";
-  if(skim.Contains("both")) cutlep = "1";
+  TString cutlep = "nvleps==0&&";
+  if(skim.Contains("nlep1")) cutlep = "nleps==1";
+  if(skim.Contains("both")) cutlep = "";
 
 
   // Makes a plot for each vector in plotcuts
   vector<oneplot> plotcuts({
-	{"met",cutlep,{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=300", "met>300"}},
-	{"met",cutlep+"&&hig_drmax<2.2",{"met>100&&met<=150","met>150&&met<=200","met>200&&met<=300", "met>300"}},
-	{"met",cutlep+"&&ntks==0 && !low_dphi && hig_drmax<2.2",{"met>100&&met<=150","met>150&&met<=200",
+	{"met",cutlep,{"met>150&&met<=200","met>200&&met<=300", "met>300"}},
+	{"met",cutlep+"&&hig_drmax<2.2",{"met>150&&met<=200","met>200&&met<=300", "met>300"}},
+	{"met",cutlep+"&&ntks==0 && !low_dphi && hig_drmax<2.2",{"met>150&&met<=200",
 	      "met>200&&met<=300", "met>300"}},
 	});
 
   TString c_2b="nbt==2&&nbm==2", c_3b="nbt>=2&&nbm==3&&nbl==3", c_4b="nbt>=2&&nbm>=3&&nbl>=4";
   //TString c_2b="nbm==2", c_3b="nbm==3", c_4b="nbm>=4";
   TString c_hig="hig_am>100&&hig_am<140&&hig_dm<40", c_sbd="!("+c_hig+") && hig_am<200 && hig_dm<150";
+  //TString c_hig="hig_am>100&&hig_am<140&&hig_dm<40", c_sbd="!("+c_hig+")";
   TString ump=" && ";
 
   vector<TString> abcdcuts = {c_2b +ump+ c_sbd, c_2b +ump+ c_hig, c_3b +ump+ c_sbd, c_3b +ump+ c_hig, 
@@ -258,7 +262,7 @@ int main(int argc, char *argv[]){
     indices.clear(); leglabels.clear();
     for(int ibkg=1; ibkg<static_cast<int>(procs.size()); ibkg++) {
       int idenom=0;
-      if(skim.Contains("both")) idenom = ibkg;
+      if(skim.Contains("both") || skim.Contains("higloose") || skim.Contains("nlep1")) idenom = ibkg;
       indices.push_back(vector<vector<int> >({{ibkg, hig3b, 1}, {ibkg, sbd3b, -1}, 
 								  {idenom, hig2b, -1}, {idenom, sbd2b, 1}}));
       leglabels.push_back(procs[ibkg]->name_);
@@ -269,7 +273,7 @@ int main(int argc, char *argv[]){
     indices.clear(); leglabels.clear();
     for(int ibkg=1; ibkg<static_cast<int>(procs.size()); ibkg++) {
       int idenom=0;
-      if(skim.Contains("both")) idenom = ibkg;
+      if(skim.Contains("both") || skim.Contains("higloose") || skim.Contains("nlep1")) idenom = ibkg;
       indices.push_back(vector<vector<int> >({{ibkg, hig4b, 1}, {ibkg, sbd4b, -1}, 
 								  {idenom, hig2b, -1}, {idenom, sbd2b, 1}}));
       leglabels.push_back(procs[ibkg]->name_);
@@ -340,10 +344,14 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   if(indices[0].size()==4){
     size_t ind0=indices[0][0][1], ind1=indices[0][1][1];
     size_t ind2=indices[0][2][1], ind3=indices[0][3][1];
-    if((ind0==hig4b&&ind1==sbd4b && ind2==hig2b&&ind3==sbd2b)) 
+    if((ind0==hig4b&&ind1==sbd4b && ind2==hig2b&&ind3==sbd2b)) {
       ytitle = "[4b Hig/Sbd] / [2b Hig/Sbd("+TString(procs[0]->name_)+")]";
-    if((ind0==hig3b&&ind1==sbd3b && ind2==hig2b&&ind3==sbd2b)) 
+      ytitle = "4b #kappa";
+    }
+    if((ind0==hig3b&&ind1==sbd3b && ind2==hig2b&&ind3==sbd2b)) {
       ytitle = "[3b Hig/Sbd] / [2b Hig/Sbd("+TString(procs[0]->name_)+")]";
+      ytitle = "3b #kappa";
+    }
   }
   //// Setting plot style
   PlotOpt opts("txt/plot_styles.txt", "Ratio");
@@ -357,14 +365,14 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = maxr*1.2;
   if(maxy>3) maxy = 3;
   if(maxy<2) maxy = 2;
-  plotdef.baseline.ReplaceAll("1&&","");
   if(plotdef.baseline=="1") plotdef.baseline = "";
   TH1D histo("histo", CodeToRootTex(plotdef.baseline.Data()).c_str(), nbins, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
   histo.GetYaxis()->CenterTitle(true);
   histo.GetXaxis()->SetLabelOffset(0.008);
-  histo.GetYaxis()->SetTitleSize(0.06);
+  histo.GetYaxis()->SetTitleSize(0.09);
+  histo.GetYaxis()->SetTitleOffset(0.7);
   histo.SetYTitle(ytitle);
   histo.Draw();
 
@@ -394,7 +402,7 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
 
   //// Drawing legend and TGraphs
   double legX(opts.LeftMargin()+0.023), legY(1-opts.TopMargin()-0.03), legSingle = 0.05;
-  double legW = 0.19*4, legH = legSingle;
+  double legW = 0.19*ngraphs, legH = legSingle;
   int Ncol = ngraphs;
   if(ngraphs>3) {
     legH *= 2;
@@ -402,7 +410,7 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
     legW = 0.25*Ncol;
   }
   TLegend leg(legX, legY-legH, legX+legW, legY);
-  leg.SetTextSize(opts.LegendEntryHeight()); leg.SetFillColor(0);
+  leg.SetTextSize(opts.LegendEntryHeight()*1.2); leg.SetFillColor(0);
   leg.SetFillStyle(0); leg.SetBorderSize(0);
   leg.SetTextFont(42);
   leg.SetNColumns(Ncol);

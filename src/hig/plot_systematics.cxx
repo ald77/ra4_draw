@@ -100,8 +100,6 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string ntupletag="higloose";
-
   if(mm_scen == ""){
     cout << " ======== Doing all mis-measurement scenarios ======== \n" << endl;
     only_mc = true;
@@ -117,7 +115,7 @@ int main(int argc, char *argv[]){
 
   vector<string> scenarios = ConfigParser::GetOptSets(sys_wgts_file);
   //NamedFunc w = "weight*eff_trig";
-  NamedFunc w = "weight";
+  NamedFunc w = "weight" * Functions::eff_mettrig;
   map<string, NamedFunc> weights, corrections;
   auto central = Functions::Variation::central;
   weights.emplace("no_mismeasurement", w);
@@ -140,11 +138,14 @@ int main(int argc, char *argv[]){
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/");
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_met100_stdnj5/");
 
+  string ntupletag="higloose";
+  if(skim.Contains("nlep1")) ntupletag="nlep1";
+  if(skim.Contains("nlep2")) ntupletag="nlep2";
 
   Palette colors("txt/colors.txt", "default");
 
   // Cuts in baseline speed up the yield finding
-  string baseline_s = "pass && stitch&&ntks==0 && !low_dphi && hig_drmax<2.2";
+  string baseline_s = "stitch && njets>=4 && njets<=5";
   NamedFunc baseline=baseline_s;
 
 
@@ -153,6 +154,7 @@ int main(int argc, char *argv[]){
   for(size_t ind=0; ind<sigMasses.size(); ind++)
     proc_sigs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigMasses[ind]+")", Process::Type::signal, 2,
       {foldersig+"*mGluino-"+sigMasses[ind]+"_*"+ntupletag+"*.root"}, baseline && "stitch"));
+
   auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets*SingleLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
     baseline && "stitch && ntruleps==1 && pass");
@@ -256,7 +258,8 @@ int main(int argc, char *argv[]){
 
   ////// CR, SR cuts
   TString c_sr="hig_am>100&&hig_am<140&&hig_dm<40";
-  TString c_cr="!("+c_sr+")";
+  TString c_cr="!("+c_sr+") && hig_am<200 && hig_dm<150";
+  //TString c_cr="!("+c_sr+")";
 
   ////// ABCD cuts
   vector<TString> abcdcuts_std = {c_cr + " && 2bcuts",
@@ -272,7 +275,7 @@ int main(int argc, char *argv[]){
   PlotMaker pm;
 
   ///// Running over these methods
-  vector<TString> methods = {"TTML", "MMMM"};
+  vector<TString> methods = {"TTML"};
 
   if(only_method!="") methods = vector<TString>({only_method});
 
@@ -285,21 +288,36 @@ int main(int argc, char *argv[]){
   }
 
   TString njets = "N#lower[-0.1]{_{jets}}";
+  TString nleps = "N#lower[-0.1]{_{leps}}";
   TString nbs = "N#lower[-0.1]{_{b}}";
+  TString llpt = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
   for(size_t iabcd=0; iabcd<methods.size(); iabcd++) {
     TString method = methods[iabcd];
     mm_scen = GetScenario(method.Data());
 
-    TString basecuts = "", caption = "", abcd_title;
+    TString basecuts = "nvleps==0 && ntks==0 && !low_dphi && hig_drmax<2.2", caption = "", abcd_title;
+    metcuts = vector<TString>{c_lowmet, c_midmet, c_higmet};
 
+    // Standard TTML cuts
+    c_2b="nbt==2&&nbm==2";
+    c_3b="nbt>=2&&nbm==3&&nbl==3";
+    c_4b="nbt>=2&&nbm>=3&&nbl>=4";
+    caption = "Search bins for TTML method: 2 tight b-tags, 1 medium, 1 loose";
+    abcd_title = "Search bins";
 
-    if(method.Contains("TTML")){
-      c_2b="nbt==2&&nbm==2";
-      c_3b="nbt>=2&&nbm==3&&nbl==3";
-      c_4b="nbt>=2&&nbm>=3&&nbl>=4";
-      caption = "TTML method: 2 tight b-tags, 1 medium, 1 loose";
-      abcd_title = "TTML";
-    } // TTML
+    if(method.Contains("lowdphi")){
+      caption = "Low $\\Delta\\phi$ CR for TTML method: 2 tight b-tags, 1 medium, 1 loose";
+      abcd_title = "Low #Delta#phi";
+      basecuts = "nvleps==0 && ntks==0 && low_dphi && hig_drmax<2.2";
+      //metcuts = vector<TString>{"met>100&&met<=150",c_lowmet, c_midmet, c_higmet};
+    }
+
+    if(method.Contains("nlep1")){
+      caption = "$N_{\\rm leps}=1$ CR for TTML method: 2 tight b-tags, 1 medium, 1 loose";
+      abcd_title = nleps+" = 1";
+      basecuts = "nleps==1 && hig_drmax<2.2 && mt<100";
+    }
+
     if(method.Contains("MMMM")){
       c_2b="nbm==2";
       c_3b="nbm==3";
@@ -312,8 +330,16 @@ int main(int argc, char *argv[]){
     abcdcuts = abcdcuts_std;
     for(size_t ind=0; ind<abcdcuts.size(); ind++)
       abcdcuts[ind].ReplaceAll("2bcuts", c_2b);
-    metcuts = vector<TString>{c_lowmet, c_midmet, c_higmet};
     bincuts = vector<TString>{c_3b, c_4b};
+
+    if(method.Contains("nlep2")){
+      caption = "$N_{\\rm leps}=2$ CR for TTML method: 2 tight b-tags, 1 medium, 1 loose";
+      abcd_title = nleps+" = 2";
+      basecuts = "nleps==2 && ((mumu_m>80&&mumu_m<100) || (elel_m>80&&elel_m<100)) && hig_drmax<2.2";
+      metcuts = vector<TString>{llpt+">150&&"+llpt+"<=200",llpt+">200&&"+llpt+"<=300",llpt+">300"};
+      metcuts = vector<TString>{llpt+">50"};
+      bincuts = vector<TString>{"nbt>=2&&nbm>=3"};
+   }
 
 
 
@@ -445,7 +471,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   //// Setting output file name
   int digits_lumi = 1;
   if(lumi < 1) digits_lumi = 3;
-  if(lumi >= 15) digits_lumi = 0;
+  if(lumi-floor(lumi)==0) digits_lumi = 0;
   TString lumi_s = RoundNumber(lumi, digits_lumi);
   TString outname = "tables/table_pred_lumi"+lumi_s; outname.ReplaceAll(".","p");
   if(skim.Contains("2015")) outname += "_2015";
@@ -781,7 +807,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 	      klab.SetTextColor(cSignal);
 	    else klab.SetTextColor(1);
 	    klab.SetTextSize(0.045);
-	    klab.DrawLatex(xval, 0.952*maxy, text);
+	    if(mm_scen!="mc_as_data") klab.DrawLatex(xval, 0.952*maxy, text);
 	    //// Printing stat uncertainty of kappa_mm/kappa
 	    float kapUp = k_ordered[iplane][ibin][ib].kappa[1], kapDown = k_ordered[iplane][ibin][ib].kappa[2];
 	    float kap_mmUp = k_ordered_mm[iplane][ibin][ib].kappa[1];
@@ -809,7 +835,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   //// Drawing legend and TGraphs
   int digits_lumi = 1;
   if(lumi < 1) digits_lumi = 3;
-  if(lumi >= 15) digits_lumi = 0;
+  if(lumi-floor(lumi)==0) digits_lumi = 0;
   TString lumi_s = RoundNumber(lumi, digits_lumi);
   double legX(opts.LeftMargin()+0.005), legY(1-0.03), legSingle = 0.05;
   if(label_up) legY = 0.8;
@@ -845,7 +871,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     graph_mm[indb].SetMarkerStyle(20); graph_mm[indb].SetMarkerSize(markerSize*1.2);
     graph_mm[indb].SetMarkerColor(1);
     graph_mm[indb].SetLineColor(1); graph_mm[indb].SetLineWidth(2);
-    graph_mm[indb].Draw("p0 same");
+    if(mm_scen!="mc_as_data")graph_mm[indb].Draw("p0 same");
 
     leg.AddEntry(&graph[indb], "MC", "p");
     TString data_s = (mm_scen=="data"||mm_scen=="off"||mm_scen=="no_mismeasurement"?"Data":"Pseudodata");

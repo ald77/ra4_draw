@@ -173,7 +173,38 @@ namespace Functions{
     });
 
 
-  
+
+  //// Efficiency of the MET[100||110||120] triggers in all 36.2 ifb
+const NamedFunc eff_mettrig("eff_mettrig", [](const Baby &b) -> NamedFunc::ScalarType{
+    float eff = 1.;
+    if(b.type() < 1000) eff = 1;
+    else if(b.type()>=7000 && b.type()<8000) {
+      if(b.met()<=100) {eff = 0.;}
+      if(b.met()> 100 && b.met()<= 125) {eff = 0.092;}
+      if(b.met()> 125 && b.met()<= 150) {eff = 0.217;}
+      if(b.met()> 150 && b.met()<= 175) {eff = 0.383;}
+      if(b.met()> 175 && b.met()<= 200) {eff = 0.535;}
+      if(b.met()> 200 && b.met()<= 225) {eff = 0.642;}
+      if(b.met()> 225 && b.met()<= 250) {eff = 0.711;}
+      if(b.met()> 250 && b.met()<= 275) {eff = 0.758;}
+      if(b.met()> 275 && b.met()<= 300) {eff = 0.779;}
+      if(b.met()> 300 && b.met()<=9999) {eff = 0.815;}
+    } else {
+      if(b.met()<=100) {eff = 0.;}
+      if(b.met()> 100 && b.met()<= 125) {eff = 0.121;}
+      if(b.met()> 125 && b.met()<= 150) {eff = 0.331;}
+      if(b.met()> 150 && b.met()<= 175) {eff = 0.602;}
+      if(b.met()> 175 && b.met()<= 200) {eff = 0.798;}
+      if(b.met()> 200 && b.met()<= 225) {eff = 0.898;}
+      if(b.met()> 225 && b.met()<= 250) {eff = 0.943;}
+      if(b.met()> 250 && b.met()<= 275) {eff = 0.966;}
+      if(b.met()> 275 && b.met()<= 300) {eff = 0.975;}
+      if(b.met()> 300 && b.met()<=9999) {eff = 0.985;}
+    }
+    return eff;
+  });
+
+
 
   bool IsGoodJet(const Baby &b, size_t ijet){
     return ijet<b.jets_pt()->size()

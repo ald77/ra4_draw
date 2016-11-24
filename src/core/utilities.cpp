@@ -101,6 +101,7 @@ string CodeToPlainText(string code){
   ReplaceAll(code, "((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "SLtrig");
   ReplaceAll(code, "(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))>80&&(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))<100", "zmasswindow");
   ReplaceAll(code, "nbt==2&&nbm==2","2b");
+  ReplaceAll(code, "nbt>=2&&nbm>=3","ge3b");
   ReplaceAll(code, "nbt>=2&&nbm==3&&nbl==3","3b");
   ReplaceAll(code, "nbt>=2&&nbm>=3&&nbl>=4","4b");
   ReplaceAll(code, "pass&&stitch&&nvleps==0&&ntks==0&&!low_dphi&&njets>=4&&njets<=5","preseln");
@@ -148,6 +149,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "weight", "w");
   ReplaceAll(code, "nbt<=1&&nbm==2","TM+MM");
   ReplaceAll(code, "nbt==2&&nbm==2","2b");
+  ReplaceAll(code, "nbt>=2&&nbm>=3","3+b");
   ReplaceAll(code, "nbt>=2&&nbm==3&&nbl==3","3b");
   ReplaceAll(code, "nbt>=2&&nbm>=3&&nbl>=4","4b");
   ReplaceAll(code, "hig_am>100&&hig_am<=140&&hig_dm<=40","HIG");
