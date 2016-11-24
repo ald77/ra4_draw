@@ -28,7 +28,7 @@ std::string Basename(const std::string &filename);
 bool Contains(const std::string &str, const std::string &pat);
 bool StartsWith(const std::string &str, const std::string &pat);
 void ReplaceAll(std::string &str, const std::string &orig, const std::string &rep);
-std::string CopyReplaceAll(const std::string &str, const std::string &orig, const std::string &rep);
+std::string CopyReplaceAll(const std::string str, const std::string &orig, const std::string &rep);
 std::string LeftStrip(std::string str);
 std::string RightStrip(std::string str);
 std::string Strip(std::string str);

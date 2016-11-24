@@ -22,18 +22,19 @@ using namespace std;
 using namespace PlotOptTypes;
 
 namespace{
-  float lumi = 36.;
-  bool do_cats_ntrub = false;
+  float lumi = 36.2;
+  bool do_cats_ntrub = true;
   // turn on/off control region plots
   bool do_cr_pies = false;
   bool do_cr_plots = false;
   // simplify selection
-  bool do_onemet = true; // only met>150
+  bool do_onemet = false; // only met>150
   bool do_ge3b = false;  // do btag cats: 2b and 3b+
-  bool do_23vs4b = true; // combine 2b with 3b, keep 4b separate
+  bool do_23vs4b = false; // combine 2b with 3b, keep 4b separate
   // choose processes to include, options are: "ttx", "vjets", "singlet", "qcd", "other", "ttonly"
   // default bkg includes: {"ttx", "vjets", "singlet", "qcd", "other"}
   set<string> proc_types = {"ttx", "vjets", "singlet", "qcd", "other"};
+  // set<string> proc_types = {"ttonly","qcd"};
   // set<string> proc_types = {"ttonly"};
   // signal points to include and their colors
   vector<string> sigm = {"225","300","400","700"}; 
@@ -134,9 +135,10 @@ int main(){
         attach_folder(foldermc[iskim], filetags["other"]), baseline[iskim]));
     if (iskim == "lep0") {
       procs["sig"+iskim] = vector<shared_ptr<Process> >(procs[iskim]);
+      string basesig = CopyReplaceAll(baseline[iskim], "pass","1");
       for (unsigned isig(0); isig<sigm.size(); isig++)
         procs["sig"+iskim].push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
-          sig_colors[isig], {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, baseline[iskim]));
+          sig_colors[isig], {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, basesig));
     }
   }
   if (do_cats_ntrub) {
@@ -200,6 +202,7 @@ int main(){
   xcuts["hig"] = "hig_am>100 && hig_am<=140 && hig_dm <= 40";
   xcuts["fullhig"] = "hig_am>100 && hig_am<=140 && hig_dm <= 40 && hig_drmax<2.2";
   xcuts["sbd"] = "(hig_am<=100 || hig_am>140 || hig_dm > 40)";
+  xcuts["fullsbd"] = "(hig_am<=100 || hig_am>140 || hig_dm > 40) && hig_drmax<2.2";
 
   //     N-1 and other 1D distributions
   //----------------------------------------
@@ -256,51 +259,43 @@ int main(){
     string iproc = "lep0";
     if (iseln.first=="lep1" || iseln.first=="lep2") iproc = iseln.first;
     if (!do_cr_pies && (iseln.first=="lep1" || iseln.first=="lep2" || iseln.first=="qcd")) continue;
-    for (auto &ixcut: {"drmax"}) {
-      vector<TString> cuts;
-      vector<TableRow> table_cuts;
-      for(auto &imet: metcuts[iseln.first]) {
-        for(auto &inb: nbcuts) {
-          for (auto &ireg: {"hig","sbd"}) {
-            cuts.push_back(iseln.second+"&&"+njcut+"&&"+imet+"&&"+inb+"&&"+xcuts[ireg]+"&&"+xcuts[ixcut]);
-          }
+    vector<TString> cuts;
+    vector<TableRow> table_cuts;
+    for(auto &imet: metcuts[iseln.first]) {
+      for(auto &inb: nbcuts) {
+        for (auto &ireg: {"fullhig","fullsbd"}) {
+          cuts.push_back(iseln.second+"&&"+njcut+"&&"+imet+"&&"+inb+"&&"+xcuts[ireg]);
         }
       }
-      for(size_t icut=0; icut<cuts.size(); icut++)
-        table_cuts.push_back(TableRow("$"+CodeToLatex(cuts[icut].Data())+"$", cuts[icut].Data()));  
-      pm.Push<Table>("chart_"+iseln.first+"_"+ixcut,  table_cuts, procs[iproc], true, true, true, false);
-      if (do_cats_ntrub) 
-        pm.Push<Table>("chartcats_"+iseln.first+"_"+ixcut,  table_cuts, procs["cats"+iproc], true, true, true, false);
     }
+    for(size_t icut=0; icut<cuts.size(); icut++)
+      table_cuts.push_back(TableRow("$"+CodeToLatex(cuts[icut].Data())+"$", cuts[icut].Data()));  
+    pm.Push<Table>("chart_"+iseln.first,  table_cuts, procs[iproc], true, true, true, false);
+    if (do_cats_ntrub) 
+      pm.Push<Table>("chartcats_"+iseln.first,  table_cuts, procs["bcat_"+iproc], true, true, true, false);
   }
 
   //        Cutflow table
   //--------------------------------
   pm.Push<Table>("cutflow", vector<TableRow>{
-    TableRow("$E_{T}^{miss} > 150$, $\\text{2M b-tags}$, $\\text{4 or 5 jets}$, $0\\ell$", 
-      "met>150 && nbm>=2 && njets>=4 && njets<=5"),
-    TableRow("$E_{T}^{miss} > 150$, $\\text{2T b-tags}$, $\\text{4 or 5 jets}$, $0\\ell$", 
-      "met>150 && nbt>=2 && njets>=4 && njets<=5"),
-    TableRow("$\\Delta\\phi_{\\text{min}}$", 
-      "met>150 && nbt>=2 && njets>=4 && njets<=5 && !low_dphi"),
-    TableRow("$\\Delta R_{\\text{max}} < 2.2$", 
-      "met>150 && nbt>=2 && njets>=4 && njets<=5 && !low_dphi && hig_drmax<2.2" ,0,1),
-    TableRow("$\\Delta m < 40$", 
-      "met>150 && nbt>=2 && njets>=4 && njets<=5 && !low_dphi && hig_drmax<2.2 && hig_dm<=40"),
-    TableRow("$\\left< m \\right> \\in (100,140)$", 
-      "met>150 && nbt>=2 && njets>=4 && njets<=5 && !low_dphi && hig_drmax<2.2 && hig_dm<=40 && hig_am>100 && hig_am<=140",0,1),
-    TableRow("3b", 
-      "met>150 && nbt>=2&&nbm==3&&nbl==3 && njets>=4 && njets<=5 && !low_dphi && hig_drmax<2.2 && hig_dm<=40 && hig_am>100 && hig_am<=140"),
-    TableRow("4b", 
-      "met>150 && nbt>=2&&nbm>=3&&nbl>=4 && njets>=4 && njets<=5 && !low_dphi && hig_drmax<2.2 && hig_dm<=40 && hig_am>100 && hig_am<=140"),
-    TableRow("3b, $E_{T}^{miss}>$200", 
-      "met>200 && nbt>=2&&nbm==3&&nbl==3 && njets>=4 && njets<=5 && !low_dphi && hig_drmax<2.2 && hig_dm<=40 && hig_am>100 && hig_am<=140"),
-    TableRow("4b, $E_{T}^{miss}>$200", 
-      "met>200 && nbt>=2&&nbm>=3&&nbl>=4 && njets>=4 && njets<=5 && !low_dphi && hig_drmax<2.2 && hig_dm<=40 && hig_am>100 && hig_am<=140"),
-    TableRow("3b, $E_{T}^{miss}>$300", 
-      "met>300 && nbt>=2&&nbm==3&&nbl==3 && njets>=4 && njets<=5 && !low_dphi && hig_drmax<2.2 && hig_dm<=40 && hig_am>100 && hig_am<=140"),
-    TableRow("4b, $E_{T}^{miss}>$300", 
-      "met>300 && nbt>=2&&nbm>=3&&nbl>=4 && njets>=4 && njets<=5 && !low_dphi && hig_drmax<2.2 && hig_dm<=40 && hig_am>100 && hig_am<=140"),
+    TableRow("$E_{T}^{miss} > 150$, $\\text{2M b-tags}$, $\\text{4 or 5 jets}$, $0\\ell$", "ntks==0 && met>150 && nbm>=2 &&"+njcut),
+    TableRow("$E_{T}^{miss} > 150$, $\\text{2T b-tags}$, $\\text{4 or 5 jets}$, $0\\ell$", "ntks==0 && met>150 && nbt>=2 &&"+njcut),
+    TableRow("$\\Delta\\phi_{\\text{min}}$",        "ntks==0 && met>150 && nbt>=2 &&"+njcut+"&& !low_dphi"),
+    TableRow("$\\Delta R_{\\text{max}} < 2.2$",     "ntks==0 && met>150 && nbt>=2 &&"+njcut+"&& !low_dphi && hig_drmax<2.2" ,0,1),
+    TableRow("$\\Delta m < 40$",                    "ntks==0 && met>150 && nbt>=2 &&"+njcut+"&& !low_dphi && hig_drmax<2.2 && hig_dm<=40"),
+    TableRow("$\\left< m \\right> \\in (100,140)$", "ntks==0 && met>150 && nbt>=2 &&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,2),
+    TableRow("HIG, 3b, $150<E_{T}^{miss}\\leq$200", "ntks==0 && met>150 && met<=200 && nbt>=2&&nbm==3&&nbl==3 &&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"]),
+    TableRow("SBD, 3b, $150<E_{T}^{miss}\\leq$200", "ntks==0 && met>150 && met<=200 && nbt>=2&&nbm==3&&nbl==3 &&"+njcut+"&& !low_dphi &&"+xcuts["fullsbd"]),
+    TableRow("HIG, 4b, $150<E_{T}^{miss}\\leq$200", "ntks==0 && met>150 && met<=200 && nbt>=2&&nbm>=3&&nbl>=4 &&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"]),
+    TableRow("SBD, 4b, $150<E_{T}^{miss}\\leq$200", "ntks==0 && met>150 && met<=200 && nbt>=2&&nbm>=3&&nbl>=4 &&"+njcut+"&& !low_dphi &&"+xcuts["fullsbd"]),
+    TableRow("HIG, 3b, $200<E_{T}^{miss}\\leq$300", "ntks==0 && met>200 && met<=300 && nbt>=2&&nbm==3&&nbl==3 &&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"]),
+    TableRow("SBD, 3b, $200<E_{T}^{miss}\\leq$300", "ntks==0 && met>200 && met<=300 && nbt>=2&&nbm==3&&nbl==3 &&"+njcut+"&& !low_dphi &&"+xcuts["fullsbd"]),
+    TableRow("HIG, 4b, $200<E_{T}^{miss}\\leq$300", "ntks==0 && met>200 && met<=300 && nbt>=2&&nbm>=3&&nbl>=4 &&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"]),
+    TableRow("SBD, 4b, $200<E_{T}^{miss}\\leq$300", "ntks==0 && met>200 && met<=300 && nbt>=2&&nbm>=3&&nbl>=4 &&"+njcut+"&& !low_dphi &&"+xcuts["fullsbd"]),
+    TableRow("HIG, 3b, $E_{T}^{miss}>$300",         "ntks==0 && met>300 && nbt>=2&&nbm==3&&nbl==3 &&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"]),
+    TableRow("SBD, 3b, $E_{T}^{miss}>$300",         "ntks==0 && met>300 && nbt>=2&&nbm==3&&nbl==3 &&"+njcut+"&& !low_dphi &&"+xcuts["fullsbd"]),
+    TableRow("HIG, 4b, $E_{T}^{miss}>$300",         "ntks==0 && met>300 && nbt>=2&&nbm>=3&&nbl>=4 &&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"]),
+    TableRow("SBD, 4b, $E_{T}^{miss}>$300",         "ntks==0 && met>300 && nbt>=2&&nbm>=3&&nbl>=4 &&"+njcut+"&& !low_dphi &&"+xcuts["fullsbd"]),
   },procs["siglep0"],0);
 
   pm.min_print_ = true;
