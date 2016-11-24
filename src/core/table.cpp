@@ -302,6 +302,7 @@ void Table::PrintHeader(ofstream &file) const{
   }
 
   file << "\\\\\n";
+  file << "\\hline\n";
 }
 
 void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
