@@ -172,7 +172,12 @@ namespace Functions{
       return 0;
     });
 
-
+  const NamedFunc hig_nb("hig_nb",[](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.nbt()==2 && b.nbm()==2) return 2;
+    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) return 3;
+    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) return 4;
+    else return 0;
+  });
 
   //// Efficiency of the MET[100||110||120] triggers in all 36.2 ifb
 const NamedFunc eff_mettrig("eff_mettrig", [](const Baby &b) -> NamedFunc::ScalarType{

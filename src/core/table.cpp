@@ -143,10 +143,11 @@ void Table::Print(double luminosity,
   if(!print_table_) return;
   if(subdir != "") mkdir(("tables/"+subdir).c_str(), 0777);
   string file_name = subdir != ""
-    ? "tables/"+subdir+"/"+name_+"_lumi_"+ToString(luminosity)+".tex"
-    : "tables/"+name_+"_lumi_"+ToString(luminosity)+".tex";
+    ? "tables/"+subdir+"/"+name_+"_lumi_"+RoundNumber(luminosity,0).Data()+".tex"
+    : "tables/"+name_+"_lumi_"+RoundNumber(luminosity,0).Data()+".tex";
   std::ofstream file(file_name);
-  file << fixed << setprecision(2);
+  if (print_pie_) file << fixed << setprecision(2);
+  else file << fixed << setprecision(1);
   PrintHeader(file);
   for(size_t i = 0; i < rows_.size(); ++i){
     PrintRow(file, i, luminosity);
@@ -324,8 +325,7 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
           file << " & " << luminosity*backgrounds_.at(i)->sumw_.at(irow)/totyield << "$\\pm$" 
               << luminosity*sqrt(backgrounds_.at(i)->sumw2_.at(irow))/totyield;
         else 
-          file << " & " << luminosity*backgrounds_.at(i)->sumw_.at(irow) << "$\\pm$" 
-             << luminosity*sqrt(backgrounds_.at(i)->sumw2_.at(irow));
+          file << " & " << luminosity*backgrounds_.at(i)->sumw_.at(irow);
       }
       file << " & " << totyield << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
     }else if(backgrounds_.size() == 1){
