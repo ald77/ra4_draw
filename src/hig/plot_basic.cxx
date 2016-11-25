@@ -23,14 +23,19 @@ using namespace std;
 using namespace PlotOptTypes;
 
 namespace{
+  //fixme:simplify options
   float lumi = 36.2;
+  // float lumi = 4.3;
+  string json = "json4p0";
   bool do_data = false;
+  bool do_data_shapes = false;
+  bool unblind = false;
   bool do_cats_ntrub = false;
   bool do_loose_seln = false; // removes track veto and delta phi requirement
   //output
-  bool do_stackplots = false;
+  bool do_stackplots = true;
   bool do_cflow = false;
-  bool do_pies = true;
+  bool do_pies = false;
   bool do_shapes = false;
   bool do_cr_pies = false;
   bool do_cr_stackplots = false;
@@ -78,8 +83,13 @@ int main(){
   PlotOpt lin_lumi_info = lin_lumi().Title(TitleType::info);
   PlotOpt log_shapes_info = log_shapes().Title(TitleType::info).Bottom(BottomType::ratio);
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info).Bottom(BottomType::ratio);
+  if (do_data) {
+    log_lumi_info = log_lumi().Title(TitleType::info).Bottom(BottomType::ratio);
+    lin_lumi_info = lin_lumi().Title(TitleType::info).Bottom(BottomType::ratio);
+  }
   vector<PlotOpt> all_plot_types = {lin_lumi_info, log_lumi_info};
-  vector<PlotOpt> all_shapes = {lin_shapes_info, log_shapes_info};
+  vector<PlotOpt> all_shapes = {lin_shapes_info};
+  Palette colors("txt/colors.txt", "default");
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining processes //////////////////////////////////////////
@@ -89,7 +99,7 @@ int main(){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   set<string> skims;
-  if (do_cr_pies || do_cr_stackplots) skims = {"lep0","lep1","lep2"};
+  if (do_cr_pies || do_cr_stackplots || do_data_shapes) skims = {"lep0","lep1","lep2"}; 
   else skims = {"lep0"};
 
   map<string, string> foldermc; //ordered in number of leptons
@@ -97,54 +107,55 @@ int main(){
   foldermc["lep1"] = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_hig_nlep1/";
   foldermc["lep2"] = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_hig_nlep2/";
 
+  map<string, set<string>> mctags; 
+  mctags["ttx"]     = set<string>({"*_TTJets*Lept*.root", "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
+                                     "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root"});
+  mctags["ttonly"]  = set<string>({"*_TTJets*Lept*.root", "*_TTJets_HT*.root"});
+  mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
+  mctags["singlet"] = set<string>({"*_ST_*.root"});
+  mctags["qcd"]     = set<string>({"*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root"});
+  mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+                                     "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
+  set<string> allmctags;
+  for (auto &iset: mctags) {
+    if (proc_types.find(iset.first)!=proc_types.end()) 
+      allmctags.insert(iset.second.begin(), iset.second.end());
+  }
+
+  map<string, string> folderdata; //ordered in number of leptons
+  folderdata["lep0"] = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higloose/";
+  folderdata["lep1"] = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1/";
+  folderdata["lep2"] = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep2/";
+
   string foldersig = bfolder+"/cms2r0/babymaker/babies/2016_08_10/TCHiHH/merged_higmc_unskimmed/";
 
-  Palette colors("txt/colors.txt", "default");
-
-  map<string, set<string>> filetags; 
-  filetags["ttx"]     = set<string>({"*_TTJets*Lept*.root", "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
-                                     "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root"});
-  filetags["ttonly"]  = set<string>({"*_TTJets*Lept*.root", "*_TTJets_HT*.root"});
-  filetags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
-  filetags["singlet"] = set<string>({"*_ST_*.root"});
-  filetags["qcd"]     = set<string>({"*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root"});
-  filetags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
-                                     "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
-  set<string> allfiletags;
-  for (auto &iset: filetags) {
-    if (proc_types.find(iset.first)!=proc_types.end()) 
-      allfiletags.insert(iset.second.begin(), iset.second.end());
-  }
-
-  set<string> allfiletags_noqcd;
-  for (auto &iset: filetags) {
-    if (iset.first == "qcd") continue;
-    if (proc_types.find(iset.first)!=proc_types.end()) 
-      allfiletags_noqcd.insert(iset.second.begin(), iset.second.end());
-  }
-
   map<string, vector<shared_ptr<Process> > > procs;
-  if (do_stackplots || do_pies) {
+  if (do_stackplots || do_pies || do_cr_stackplots || do_cr_pies) {
     for (auto &iskim: skims){
       procs[iskim] = vector<shared_ptr<Process> >();
       if (proc_types.find("ttx")!=proc_types.end()) 
         procs[iskim].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", Process::Type::background, colors("tt_1l"),
-          attach_folder(foldermc[iskim], filetags["ttx"]), "pass && stitch"));
+          attach_folder(foldermc[iskim], mctags["ttx"]), "pass && stitch"));
       if (proc_types.find("ttonly")!=proc_types.end()) 
         procs[iskim].push_back(Process::MakeShared<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_1l"),
-          attach_folder(foldermc[iskim], filetags["ttonly"]), "pass && stitch"));
+          attach_folder(foldermc[iskim], mctags["ttonly"]), "pass && stitch"));
       if (proc_types.find("vjets")!=proc_types.end())       
         procs[iskim].push_back(Process::MakeShared<Baby_full>("V+jets", Process::Type::background, kOrange+1,
-          attach_folder(foldermc[iskim], filetags["vjets"]), "pass && stitch"));
+          attach_folder(foldermc[iskim], mctags["vjets"]), "pass && stitch"));
       if (proc_types.find("singlet")!=proc_types.end())       
         procs[iskim].push_back(Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
-          attach_folder(foldermc[iskim], filetags["singlet"]), "pass && stitch"));
+          attach_folder(foldermc[iskim], mctags["singlet"]), "pass && stitch"));
       if (proc_types.find("qcd")!=proc_types.end())       
         procs[iskim].push_back(Process::MakeShared<Baby_full>("QCD", Process::Type::background, colors("other"),
-          attach_folder(foldermc[iskim], filetags["qcd"]), "pass && stitch")); // && weight<1
+          attach_folder(foldermc[iskim], mctags["qcd"]), "pass && stitch")); 
       if (proc_types.find("other")!=proc_types.end())       
         procs[iskim].push_back(Process::MakeShared<Baby_full>("Other", Process::Type::background, kGreen+1,
-          attach_folder(foldermc[iskim], filetags["other"]), "pass && stitch"));
+          attach_folder(foldermc[iskim], mctags["other"]), "pass && stitch"));
+      if (do_data) {
+        procs[iskim].push_back(Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
+          {folderdata[iskim]+"*RunB*root"}, "trig_ra4 && pass &&"+json)); 
+          // {folderdata[iskim]+"*RunB*root"}, "(trig[13]||trig[33]||trig[14]||trig[15]||trig[30]||trig[31]) && pass &&"+json)); 
+      }
       if (iskim == "lep0") {
         procs["sig"+iskim] = vector<shared_ptr<Process> >(procs[iskim]);
         if (proc_types.size()==0) { // have to pretend signal is background, otherwise crashes
@@ -162,7 +173,7 @@ int main(){
 
   if (do_cats_ntrub && proc_types.size()>0) {
     for (auto &iskim: skims){
-      set<string> allfiles = attach_folder(foldermc[iskim], allfiletags);
+      set<string> allfiles = attach_folder(foldermc[iskim], allmctags);
       NamedFunc base_func("pass && stitch");
       procs["bcat_"+iskim] = vector<shared_ptr<Process> >();
       procs["bcat_"+iskim].push_back(Process::MakeShared<Baby_full>
@@ -181,14 +192,29 @@ int main(){
   }
 
   if (do_shapes){
-    set<string> allfiles = attach_folder(foldermc["lep0"], allfiletags); 
-    procs["shapes"] = vector<shared_ptr<Process> >();
-    procs["shapes"].push_back(Process::MakeShared<Baby_full>("2b all bkg", Process::Type::background, kBlack,
-      allfiles, "pass && stitch && weight<0.2" && Functions::hig_nb==2));
-    procs["shapes"].push_back(Process::MakeShared<Baby_full>("3b all bkg", Process::Type::background, kAzure+1,
-      allfiles, "pass && stitch && weight<0.2" && Functions::hig_nb==3));
-    procs["shapes"].push_back(Process::MakeShared<Baby_full>("4b all bkg", Process::Type::background, kPink+2,
-      allfiles, "pass && stitch && weight<0.2" && Functions::hig_nb==4));
+    for (auto &iskim: skims){
+      set<string> allfiles = attach_folder(foldermc[iskim], allmctags); 
+      procs["shapes"+iskim] = vector<shared_ptr<Process> >();
+      procs["shapes"+iskim].push_back(Process::MakeShared<Baby_full>("2b all bkg", Process::Type::background, kBlack,
+        allfiles, "pass && stitch && weight<0.2" && Functions::hig_nb==2));
+      procs["shapes"+iskim].push_back(Process::MakeShared<Baby_full>("3b all bkg", Process::Type::background, kAzure+1,
+        allfiles, "pass && stitch && weight<0.2" && Functions::hig_nb==3));
+      procs["shapes"+iskim].push_back(Process::MakeShared<Baby_full>("4b all bkg", Process::Type::background, kPink+2,
+        allfiles, "pass && stitch && weight<0.2" && Functions::hig_nb==4));
+    }
+  }
+
+  if (do_data_shapes){
+    for (auto &iskim: skims){
+      procs["data_shapes"+iskim] = vector<shared_ptr<Process> >();
+      procs["data_shapes"+iskim].push_back(Process::MakeShared<Baby_full>("#geq 3b data", Process::Type::data, kBlack,
+        {folderdata[iskim]+"*RunB*root"}, "trig_ra4 && pass" && json && Functions::hig_nb>=3));
+      procs["data_shapes"+iskim].push_back(Process::MakeShared<Baby_full>("2b data", Process::Type::background, kBlack,
+        {folderdata[iskim]+"*RunB*root"}, "trig_ra4 && pass" && json && Functions::hig_nb==2));
+      procs["data_shapes"+iskim].back()->SetFillColor(kBlue-7);
+      procs["data_shapes"+iskim].back()->SetLineColor(kBlue-7);
+      procs["data_shapes"+iskim].back()->SetLineWidth(2);
+    }
   }
 
   PlotMaker pm;
@@ -199,7 +225,7 @@ int main(){
   map<string, string> selns;
   selns["base"]   = "nvleps==0 && ntks==0 && !low_dphi";
   if (do_loose_seln) selns["notrkphi"] = "nvleps==0";
-  if (do_cr_stackplots || do_cr_pies) {
+  if (do_cr_stackplots || do_cr_pies || do_data_shapes || do_shapes) { 
     selns["qcd"]   = "nvleps==0 && ntks==0 && low_dphi";
     selns["lep1"] = "nleps==1 && mt<=100";
     selns["lep2"] = "nleps==2 && (mumu_m*(mumu_m>0)+elel_m*(elel_m>0))>80&&(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))<100";
@@ -214,16 +240,21 @@ int main(){
   metcuts["lep2"] = {"(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>50"};
   
   vector<string> nbcuts;
-  if (do_23vs4b) {
-    nbcuts.push_back("((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3))");
-    nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
-  } else {
+  if (do_data) {
     nbcuts.push_back("nbt==2&&nbm==2");
-    if (do_ge3b) {
-      nbcuts.push_back("nbt>=2&&nbm>=3");
-    } else {
-      nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
+    nbcuts.push_back("nbt>=2&&nbm>=3");
+  } else {
+    if (do_23vs4b) {
+      nbcuts.push_back("((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3))");
       nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
+    } else {
+      nbcuts.push_back("nbt==2&&nbm==2");
+      if (do_ge3b) {
+        nbcuts.push_back("nbt>=2&&nbm>=3");
+      } else {
+        nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
+        nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
+      }
     }
   }
 
@@ -291,13 +322,32 @@ int main(){
       vector<PlotOpt>({lin_shapes_info, log_shapes_info})).Tag("sig");
   }
 
+  // Temporary funcs for other b-tag category options
+  //-----------------------------------------------------
+  const NamedFunc hig_nb_mmmm("hig_nb_mmmm",[](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.nbm()>=2) return min(4,b.nbm());
+    else return 0;
+  });
+  const NamedFunc hig_nb_ttll("hig_nb_ttll",[](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.nbt()==2 && b.nbl()==2) return 2;
+    else if (b.nbt()>=2 && b.nbl()==3) return 3;
+    else if (b.nbt()>=2 && b.nbl()>=4) return 4;
+    else return 0;
+  });
+  const NamedFunc hig_nb_tmml("hig_nb_tmml",[](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.nbt()>=1 && b.nbm()==2) return 2;
+    else if (b.nbt()>=1 && b.nbm()==3 && b.nbl()==3) return 3;
+    else if (b.nbt()>=1 && b.nbm()>=3 && b.nbl()>=4) return 4;
+    else return 0;
+  });
+  vector<NamedFunc> btag_xopts = {hig_nb_mmmm, hig_nb_tmml, hig_nb_ttll};
+
   //     N-1 and other 1D distributions
   //----------------------------------------
-  if (do_stackplots) {
+  if ((do_stackplots || do_cr_stackplots) && !do_data) {
     for (auto &iseln: selns) {
       NamedFunc wgt = "weight" * Functions::eff_mettrig;
       if (!do_data) wgt = "weight";
-      if (proc_types.size()==0) continue;
       //decide which is the relevant set of procs
       string iskimcat = "lep0";
       if (iseln.first=="lep1" || iseln.first=="lep2") iskimcat = iseln.first;
@@ -305,40 +355,105 @@ int main(){
       //for the moment skip control regions
       if (!do_cr_stackplots && (iseln.first=="lep1" || iseln.first=="lep2" || iseln.first=="qcd")) continue;
       for(unsigned imet(0); imet<metcuts[iseln.first].size(); imet++) { 
-        for(auto &inb: nbcuts) {  
+        if (iseln.first!= "notrkphi") {
+          string tmp_seln = iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&& nbm>=2 &&" + xcuts["fullhig"];
+          pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbl", "N_{b}^{L}"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+          pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbm", "N_{b}^{M}"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+          pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbt", "N_{b}^{T}"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+          if (iseln.first=="base"){
+            tmp_seln = iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&& nbm>=2 && hig_dm<=40 && hig_drmax<=2.2 && hig_am<=200";
+            pm.Push<Hist1D>(Axis(5,0.5,5.5,Functions::hig_nb, "b-tag category (TTML)"), tmp_seln && Functions::hig_nb>0., procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            pm.Push<Hist1D>(Axis(5,0.5,5.5,hig_nb_ttll, "b-tag category (TTLL)"), tmp_seln && hig_nb_ttll>0., procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            pm.Push<Hist1D>(Axis(5,0.5,5.5,hig_nb_tmml, "b-tag category (TMML)"), tmp_seln && hig_nb_tmml>0., procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            pm.Push<Hist1D>(Axis(5,0.5,5.5,hig_nb_mmmm, "b-tag category (MMMM)"), tmp_seln && hig_nb_mmmm>0., procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+          }
+        }
+        for(unsigned inb(0); inb<nbcuts.size(); inb++) {
           if (iseln.first!= "notrkphi") {
             pm.Push<Hist1D>(Axis(15,0,150,"hig_dm", "#Deltam [GeV]", {40.}),
-              iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+inb+"&&hig_am>100 && hig_am<=140 && hig_drmax<=2.2", 
+              iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+nbcuts[inb]+"&&hig_am>100 && hig_am<=140 && hig_drmax<=2.2", 
               procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
             pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m> [GeV]", {100., 140.}),
-              iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+inb+"&&hig_dm<=40 && hig_drmax<=2.2", 
+              iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+nbcuts[inb]+"&&hig_dm<=40 && hig_drmax<=2.2", 
               procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
             pm.Push<Hist1D>(Axis(20,0,4,"hig_drmax", "#DeltaR_{max}", {2.2}),
-              iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+inb+"&&hig_am>100 && hig_am<=140 && hig_dm <= 40", 
+              iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+nbcuts[inb]+"&&hig_am>100 && hig_am<=140 && hig_dm <= 40", 
               procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
-            string tmp_seln = iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+inb+"&&" + xcuts["fullhig"];
+            string tmp_seln = iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+nbcuts[inb]+"&&" + xcuts["fullhig"];
             pm.Push<Hist1D>(Axis(15,0,600,"jets_pt[0]", "Jet 1 p_{T} [GeV]"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
             pm.Push<Hist1D>(Axis(17,0,340,"jets_pt[1]", "Jet 2 p_{T} [GeV]"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
             pm.Push<Hist1D>(Axis(12,0,240,"jets_pt[2]", "Jet 3 p_{T} [GeV]"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
             pm.Push<Hist1D>(Axis(12,0,240,"jets_pt[3]", "Jet 4 p_{T} [GeV]"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
-            tmp_seln = iseln.second+"&&"+njcut+"&& met>100 &&"+inb+"&&" + xcuts["fullhig"];
+            tmp_seln = iseln.second+"&&"+njcut+"&& met>100 &&"+nbcuts[inb]+"&&" + xcuts["fullhig"];
             pm.Push<Hist1D>(Axis(10,100,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
-            tmp_seln = iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&& nbm>=2 &&" + xcuts["fullhig"];
-            pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbl", "N_{b}^{L}"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
-            pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbm", "N_{b}^{M}"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
-            pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbt", "N_{b}^{T}"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
-            tmp_seln = iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&& nbm>=2 && hig_dm<=40";
-            pm.Push<Hist1D>(Axis(6,-0.5,5.5,Functions::hig_nb, "b-tag category"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
-            tmp_seln = iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&& nbm>=2 && hig_dm<=40 && hig_drmax<=2.2";
-            pm.Push<Hist1D>(Axis(6,-0.5,5.5,Functions::hig_nb, "b-tag category"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
           } else if (iseln.first == "notrkphi") {
             if (imet>0) continue; 
-            string tmp_seln = iseln.second+"&& ntks==0 && !low_dphi &&"+njcut+"&& met>100 &&"+inb;
+            string tmp_seln = iseln.second+"&& ntks==0 && !low_dphi &&"+njcut+"&& met>100 &&"+nbcuts[inb];
             pm.Push<Hist1D>(Axis(10,100,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
-            tmp_seln = iseln.second+"&& !low_dphi &&"+njcut+"&& met>150 &&"+inb;
+            tmp_seln = iseln.second+"&& !low_dphi &&"+njcut+"&& met>150 &&"+nbcuts[inb];
             pm.Push<Hist1D>(Axis(5,-0.5,4.5,"ntks", "N_{tks}"),
               tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
-            tmp_seln = iseln.second+"&& ntks==0 &&"+njcut+"&& met>150 &&"+inb;
+            tmp_seln = iseln.second+"&& ntks==0 &&"+njcut+"&& met>150 &&"+nbcuts[inb];
+            pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi2", "#Delta#phi_{2}",{0.5}),
+              tmp_seln+"&& dphi1>0.5", procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi3", "#Delta#phi_{3}",{0.3}),
+              tmp_seln+"&& dphi1>0.5 && dphi2>0.5", procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi4", "#Delta#phi_{4}",{0.3}),
+              tmp_seln+"&& dphi1>0.5 && dphi2>0.5 && dphi3>0.3", procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+          }
+        }
+      }
+    }
+  }
+
+  //    1D distributions with data
+  //----------------------------------------
+  if ((do_stackplots || do_cr_stackplots) && do_data) {
+    for (auto &iseln: selns) {
+      NamedFunc wgt = "weight" * Functions::eff_mettrig;
+      //decide which is the relevant set of procs
+      string iskimcat = "lep0";
+      if (iseln.first=="lep1" || iseln.first=="lep2") iskimcat = iseln.first;
+      string iproc = iskimcat=="lep0" ? ("sig"+iskimcat) : iskimcat; //want to include signal for selections with 0 leptons
+      //for the moment skip control regions
+      if (!do_cr_stackplots && (iseln.first=="lep1" || iseln.first=="lep2" || iseln.first=="qcd")) continue;
+      for(unsigned imet(0); imet<metcuts[iseln.first].size(); imet++) { 
+        for(unsigned inb(0); inb<nbcuts.size(); inb++) {
+          if (iskimcat=="lep0" && !unblind && inb>0) continue;         
+          if (iseln.first!= "notrkphi") {
+            pm.Push<Hist1D>(Axis(15,0,150,"hig_dm", "#Deltam [GeV]", {40.}),
+              iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+nbcuts[inb], 
+              procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m> [GeV]", {100., 140.}),
+              iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+nbcuts[inb]+"&&hig_dm<=40 && hig_drmax<=2.2", 
+              procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m> [GeV]", {100., 140.}),
+              iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+nbcuts[inb]+"&&hig_dm<=40", 
+              procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            pm.Push<Hist1D>(Axis(20,0,4,"hig_drmax", "#DeltaR_{max}", {2.2}),
+              iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+nbcuts[inb]+"&&hig_dm<=40", 
+              procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            string tmp_seln = iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+nbcuts[inb];
+            pm.Push<Hist1D>(Axis(15,0,600,"jets_pt[0]", "Jet 1 p_{T} [GeV]"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            pm.Push<Hist1D>(Axis(17,0,340,"jets_pt[1]", "Jet 2 p_{T} [GeV]"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            pm.Push<Hist1D>(Axis(12,0,240,"jets_pt[2]", "Jet 3 p_{T} [GeV]"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            pm.Push<Hist1D>(Axis(12,0,240,"jets_pt[3]", "Jet 4 p_{T} [GeV]"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            tmp_seln = iseln.second+"&&"+njcut+"&& met>150 &&"+nbcuts[inb];
+            pm.Push<Hist1D>(Axis(18,150,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            if (iseln.first=="lep1"){
+              pm.Push<Hist1D>(Axis(18,150,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln+"&&nels==1", procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+              pm.Push<Hist1D>(Axis(18,150,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln+"&&nmus==1", procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            }
+            tmp_seln = iseln.second+"&&"+njcut+"&&"+metcuts[iseln.first][imet]+"&&"+nbcuts[inb];
+            pm.Push<Hist1D>(Axis(20,0,2000,"ht", "H_{T} [GeV]"), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+          } else if (iseln.first == "notrkphi") {
+            if (imet>0) continue; 
+            string tmp_seln = iseln.second+"&& ntks==0 && !low_dphi &&"+njcut+"&& met>100 &&"+nbcuts[inb];
+            pm.Push<Hist1D>(Axis(10,100,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            tmp_seln = iseln.second+"&& !low_dphi &&"+njcut+"&& met>150 &&"+nbcuts[inb];
+            pm.Push<Hist1D>(Axis(5,-0.5,4.5,"ntks", "N_{tks}"),
+              tmp_seln, procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
+            tmp_seln = iseln.second+"&& ntks==0 &&"+njcut+"&& met>150 &&"+nbcuts[inb];
             pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi2", "#Delta#phi_{2}",{0.5}),
               tmp_seln+"&& dphi1>0.5", procs[iproc], all_plot_types).Weight(wgt).Tag(iseln.first);
             pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi3", "#Delta#phi_{3}",{0.3}),
@@ -353,7 +468,7 @@ int main(){
 
   //        Pie charts
   //--------------------------------
-  if (do_pies) { 
+  if (do_pies || do_cr_pies) { 
     NamedFunc wgt = "weight" * Functions::eff_mettrig;
     for (auto &iseln: selns) {
       if (proc_types.size()==0) continue;
@@ -365,6 +480,7 @@ int main(){
       vector<TableRow> table_cuts;
       for(auto &imet: metcuts[iseln.first]) {
         for(auto &inb: nbcuts) {
+          cuts.push_back(iseln.second+"&&"+njcut+"&&"+imet+"&&"+inb+"&& hig_dm<=40 && hig_am<=200");
           for (auto &ireg: {"fullhig","fullsbd"}) {
             cuts.push_back(iseln.second+"&&"+njcut+"&&"+imet+"&&"+inb+"&&"+xcuts[ireg]);
           }
@@ -424,19 +540,26 @@ int main(){
 
   //    Background closure - shapes
   //-----------------------------------
-  if (do_shapes) {
-    string tmp_seln = "nvleps==0 && ntks==0 && !low_dphi";
-    if (do_loose_seln) tmp_seln = "nvleps==0";
-    for(auto &imet: metcuts["base"]) { 
-      pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m> [GeV]", {100., 140.}),
-              tmp_seln+"&&"+njcut+"&&"+imet, 
-              procs["shapes"], all_shapes).Tag("base");
-      pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m> [GeV]", {100., 140.}),
-              tmp_seln+"&&"+njcut+"&&"+imet+"&&hig_dm<=40", 
-              procs["shapes"], all_shapes).Tag("base");
-      pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m> [GeV]", {100., 140.}),
-              tmp_seln+"&&"+njcut+"&&"+imet+"&&hig_dm<=40 && hig_drmax<=2.2", 
-              procs["shapes"], all_shapes).Tag("base");      
+  if (do_shapes || do_data_shapes) {
+    for(auto &iseln: selns) {
+      string iskimcat = "lep0";
+      if (iseln.first=="lep1" || iseln.first=="lep2") iskimcat = iseln.first;
+      string iproc = do_data_shapes ? "data_shapes"+iskimcat : "shapes"+iskimcat; //fixme: want both opts
+      if (iseln.first=="base" && !unblind && do_data_shapes) continue;
+      for(auto &imet: {"met>=150"}){//metcuts[iseln.first]) { 
+        pm.Push<Hist1D>(Axis(12,0,240,"hig_am", "<m> [GeV]", {100., 140.}),
+                iseln.second+"&&"+njcut+"&&"+imet, 
+                procs[iproc], all_shapes).Tag("datavsdata_"+iseln.first); //fixme: tag for mc
+        pm.Push<Hist1D>(Axis(12,0,240,"hig_am", "<m> [GeV]", {100., 140.}),
+                iseln.second+"&&"+njcut+"&&"+imet+"&&hig_dm<=40", 
+                procs[iproc], all_shapes).Tag("datavsdata_"+iseln.first);
+        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
+                iseln.second+"&&"+njcut+"&&"+imet+"&&hig_dm<=40 && hig_am<=200", 
+                procs[iproc], all_shapes).Tag("datavsdata_"+iseln.first);
+        pm.Push<Hist1D>(Axis(12,0,240,"hig_am", "<m> [GeV]", {100., 140.}),
+                iseln.second+"&&"+njcut+"&&"+imet+"&&hig_dm<=40 && hig_drmax<=2.2", 
+                procs[iproc], all_shapes).Tag("datavsdata_"+iseln.first);      
+      }
     }
   }
 

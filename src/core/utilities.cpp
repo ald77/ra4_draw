@@ -154,7 +154,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "nbt>=2&&nbm>=3","3+b");
   ReplaceAll(code, "hig_am>100&&hig_am<=140&&hig_dm<=40","HIG");
   ReplaceAll(code, "(hig_am<=100||(hig_am>140&&hig_am<=200))&&hig_dm<=40","SBD");
-  ReplaceAll(code, "hig_dm","#Delta m");
+  ReplaceAll(code, "hig_dm","#Deltam");
   ReplaceAll(code, "ht1l_stmin2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,min}");
   ReplaceAll(code, "ht1l_stmax2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,max}");
   ReplaceAll(code, "ht1l_stave2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,ave}");
@@ -213,6 +213,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "Max$(abs(els_eta)*(els_sigid&&els_miniso<0.1&&els_pt>20))>1.479","endcap #font[12]{e}");
 
   ReplaceAll(code, "!low_dphi", "high #Delta#phi");
+  ReplaceAll(code, "low_dphi", "low #Delta#phi");
   ReplaceAll(code, "hig_drmax", "#DeltaR^{max}_{bb}");
   ReplaceAll(code, "ntks", "N_{tks}");
   ReplaceAll(code, "nleps", "N_{lep}");

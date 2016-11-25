@@ -142,9 +142,10 @@ void Table::Print(double luminosity,
                   const string &subdir){
   if(!print_table_) return;
   if(subdir != "") mkdir(("tables/"+subdir).c_str(), 0777);
+  string fmt_lumi = CopyReplaceAll(RoundNumber(luminosity,1).Data(),".","p");
   string file_name = subdir != ""
-    ? "tables/"+subdir+"/"+name_+"_lumi_"+RoundNumber(luminosity,0).Data()+".tex"
-    : "tables/"+name_+"_lumi_"+RoundNumber(luminosity,0).Data()+".tex";
+    ? "tables/"+subdir+"/"+name_+"_lumi_"+fmt_lumi+".tex"
+    : "tables/"+name_+"_lumi_"+fmt_lumi+".tex";
   std::ofstream file(file_name);
   if (print_pie_) file << fixed << setprecision(2);
   else file << fixed << setprecision(1);
