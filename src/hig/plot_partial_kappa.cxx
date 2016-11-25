@@ -196,9 +196,9 @@ int main(int argc, char *argv[]){
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
  /////////////////////////////////////////// Defining cuts ///////////////////////////////////////////////
   // baseline defined above
-  TString cutlep = "nvleps==0&&";
-  if(skim.Contains("nlep1")) cutlep = "nleps==1";
-  if(skim.Contains("both")) cutlep = "";
+  TString cutlep = "nvleps==0";
+  if(skim.Contains("nlep1")) cutlep = "nleps==1&&mt<100";
+  if(skim.Contains("both")) cutlep = "1";
 
 
   // Makes a plot for each vector in plotcuts
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]){
 
   TString c_2b="nbt==2&&nbm==2", c_3b="nbt>=2&&nbm==3&&nbl==3", c_4b="nbt>=2&&nbm>=3&&nbl>=4";
   //TString c_2b="nbm==2", c_3b="nbm==3", c_4b="nbm>=4";
-  TString c_hig="hig_am>100&&hig_am<140&&hig_dm<40", c_sbd="!("+c_hig+") && hig_am<200 && hig_dm<150";
+  TString c_hig="hig_am>100&&hig_am<140&&hig_dm<40", c_sbd="!("+c_hig+") && hig_am<200 && hig_dm<40";
   //TString c_hig="hig_am>100&&hig_am<140&&hig_dm<40", c_sbd="!("+c_hig+")";
   TString ump=" && ";
 

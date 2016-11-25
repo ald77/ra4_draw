@@ -136,7 +136,7 @@ int main(int argc, char *argv[]){
   //// Capybara
   string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/TChiHH/merged_higmc_higloose/");
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_met100_stdnj5/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higloose/");
 
   string ntupletag="higloose";
   if(skim.Contains("nlep1")) ntupletag="nlep1";
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]){
   Palette colors("txt/colors.txt", "default");
 
   // Cuts in baseline speed up the yield finding
-  string baseline_s = "stitch && njets>=4 && njets<=5";
+  string baseline_s = "njets>=4 && njets<=5";
   NamedFunc baseline=baseline_s;
 
 
@@ -217,12 +217,15 @@ int main(int argc, char *argv[]){
   if(only_method.Contains("old")) trigs = "(trig[4]||trig[8])";
   if(!skim.Contains("2015")) trigs += " && "+jsonCuts;
 
-  set<string> names_data({folderdata+"*"+ntupletag+"*.root"});
+  set<string> names_data({folderdata+"*RunB*.root"});
   if(only_mc){
     names_data = names_allmc;
     if(quick_test) names_data = set<string>({foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"});
     trigs = quick_test ? "1" : "stitch";
   }
+
+   if(mm_scen == "data")
+     cout<<"Data files are "<<*(names_data.begin())<<" with cuts "<<baseline<<"&&"<< trigs << "&&pass"<<endl<<endl;
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     names_data,baseline && trigs && "pass");
 
@@ -258,7 +261,7 @@ int main(int argc, char *argv[]){
 
   ////// CR, SR cuts
   TString c_sr="hig_am>100&&hig_am<140&&hig_dm<40";
-  TString c_cr="!("+c_sr+") && hig_am<200 && hig_dm<150";
+  TString c_cr="!("+c_sr+") && hig_am<200 && hig_dm<40";
   //TString c_cr="!("+c_sr+")";
 
   ////// ABCD cuts
@@ -308,14 +311,16 @@ int main(int argc, char *argv[]){
     if(method.Contains("lowdphi")){
       caption = "Low $\\Delta\\phi$ CR for TTML method: 2 tight b-tags, 1 medium, 1 loose";
       abcd_title = "Low #Delta#phi";
-      basecuts = "nvleps==0 && ntks==0 && low_dphi && hig_drmax<2.2";
+      basecuts = "nvleps==0 && ntks==0 && low_dphi";
       //metcuts = vector<TString>{"met>100&&met<=150",c_lowmet, c_midmet, c_higmet};
+      if(mm_scen=="data") metcuts = vector<TString>{c_lowmet, "met>200"};
     }
 
     if(method.Contains("nlep1")){
       caption = "$N_{\\rm leps}=1$ CR for TTML method: 2 tight b-tags, 1 medium, 1 loose";
       abcd_title = nleps+" = 1";
-      basecuts = "nleps==1 && hig_drmax<2.2 && mt<100";
+      basecuts = "nleps==1 && mt<100";
+      if(mm_scen=="data") metcuts = vector<TString>{c_lowmet, "met>200"};
     }
 
     if(method.Contains("MMMM")){
@@ -335,7 +340,7 @@ int main(int argc, char *argv[]){
     if(method.Contains("nlep2")){
       caption = "$N_{\\rm leps}=2$ CR for TTML method: 2 tight b-tags, 1 medium, 1 loose";
       abcd_title = nleps+" = 2";
-      basecuts = "nleps==2 && ((mumu_m>80&&mumu_m<100) || (elel_m>80&&elel_m<100)) && hig_drmax<2.2";
+      basecuts = "nleps==2 && ((mumu_m>80&&mumu_m<100) || (elel_m>80&&elel_m<100))";
       metcuts = vector<TString>{llpt+">150&&"+llpt+"<=200",llpt+">200&&"+llpt+"<=300",llpt+">300"};
       metcuts = vector<TString>{llpt+">50"};
       bincuts = vector<TString>{"nbt>=2&&nbm>=3"};
@@ -813,6 +818,10 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 	    float kap_mmUp = k_ordered_mm[iplane][ibin][ib].kappa[1];
 	    float kap_mmDown = k_ordered_mm[iplane][ibin][ib].kappa[2];
 	    float errStat = (kap>kap_mm?sqrt(pow(kapDown,2)+pow(kap_mmUp,2)):sqrt(pow(kapUp,2)+pow(kap_mmDown,2)));
+	    if(only_mc && abcd.method.Contains("TTML")) {
+	      ekmdUp = k_ordered[iplane][ibin][ib].kappa[1];
+	      ekmdDown = k_ordered[iplane][ibin][ib].kappa[2];
+	    }
 	    text = "#sigma_{stat} = "+RoundNumber(errStat*100,0, kap)+"%";
 	    text = "#sigma_{stat} = ^{+"+RoundNumber(ekmdUp*100,0, kap)+"%}_{-"+RoundNumber(ekmdDown*100,0, kap)+"%}";
 	    klab.SetTextSize(0.05);
@@ -856,7 +865,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     graph_kmd[indb].SetMarkerStyle(ind_bcuts[indb].style); graph_kmd[indb].SetMarkerSize(markerSize);
     graph_kmd[indb].SetMarkerColor(ind_bcuts[indb].color);
     graph_kmd[indb].SetLineColor(1); graph_kmd[indb].SetLineWidth(2);
-    graph_kmd[indb].Draw("p0 same");
+    if(!(only_mc && abcd.method.Contains("TTML"))) graph_kmd[indb].Draw("p0 same");
 
     graph[indb] = TGraphAsymmErrors(vx[indb].size(), &(vx[indb][0]), &(vy[indb][0]),
                                     &(vexl[indb][0]), &(vexh[indb][0]), &(veyl[indb][0]), &(veyh[indb][0]));

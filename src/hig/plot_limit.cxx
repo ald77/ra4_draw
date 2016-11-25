@@ -22,7 +22,7 @@
 using namespace std;
 
 namespace{
-  TString lumi = "40";
+  TString lumi = "36p2";
   TString filename = "txt/limits/limits_TChiHH_lumi"+lumi+".txt";
   TString model = "TChiHH";
 }
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]){
   GetOptions(argc, argv);
 
   //// Setting plot style
-  PlotOpt opts("txt/plot_styles.txt", "Ratio");
+  PlotOpt opts("txt/plot_styles.txt", "Std1D");
   setPlotStyle(opts);
   gStyle->SetGridStyle(3);
 
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]){
     double pmx, pmy, pxsec, pexsec, pobs, pobsup, pobsdown, pexp, pup, pdown, p2up, p2down, sigobs, sigexp;
     iss >> pmx >> pmy >> pxsec >> pexsec >> pobs >> pobsup >> pobsdown 
 	>> pexp >> pup >> pdown >> p2up >> p2down >> sigobs >> sigexp;
-    if(pmx<200) continue;
+    if(pmx==175) continue;
     vmx.push_back(pmx);
     vmy.push_back(pmy);
     vxsec.push_back(pxsec);
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]){
   TString chii= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0,#pm}}}#kern[-3.]{#scale[0.85]{_{i}}}";
   TString chij= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0,#mp}}}#kern[-3.]{#scale[0.85]{_{j}}}";
   TString mass_ = "m#kern[0.1]{#lower[-0.12]{_{";
-  float minh=200, maxh=1000;
+  float minh=150, maxh=1000;
   TH1D histo("histo", "", 18, minh, maxh);
   histo.SetMinimum(0);
   histo.SetMaximum(4.5);
