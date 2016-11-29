@@ -20,13 +20,13 @@ using namespace PlotOptTypes;
 int main(){
   gErrorIgnoreLevel = 6000;
 
-  double lumi = 2.6;
+  double lumi = 36.2;
 
   // 80X (ttbar, qcd, dy[ht=100-600], wjets) + 74X (rest)
-  string trig_mc        = "/net/cms2/cms2r0/babymaker/babies/2016_06_14/mc/unskimmed/";
-  string trig_skim1l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_06_14/mc/merged_standard/";
-  string trig_skim0l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_06_14/mc/merged_qcd/";
-  string trig_skim2l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_06_14/mc/merged_dy_ht300/";
+  string trig_mc        = "/net/cms2/cms2r0/babymaker/babies/2016_08_10/mc/unskimmed/";
+  string trig_skim1l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_08_10/mc/skim_standard/";
+  string trig_skim0l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_08_10/mc/merged_qcd/";
+  string trig_skim2l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_08_10/mc/merged_dy_ht300/";
 
   Palette colors("txt/colors.txt", "default");
 
@@ -35,7 +35,7 @@ int main(){
   auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
     {trig_skim1l_mc+"*_TTJets*Lept*.root", trig_skim1l_mc+"*_TTJets_HT*.root"}, "ntruleps>=2&&stitch");
   auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
-    {trig_skim1l_mc+"*_WJetsToLNu*.root"});
+    {trig_skim1l_mc+"*_WJetsToLNu*.root"},"stitch");
   auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
     {trig_skim1l_mc+"*_ST_*.root"});
   auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
@@ -55,7 +55,7 @@ int main(){
   t1tttt_c->SetLineStyle(2);
 
   auto data_1l = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    {"/net/cms2/cms2r0/babymaker/babies/2016_06_21/data/skim_standard/*.root"},"pass&&(trig[4]||trig[8]||trig[13]||trig[33])");
+    {"/net/cms2/cms2r0/babymaker/babies/2016_11_08/data/skim_standard/*.root"},"pass&&trig_ra4");
   vector<shared_ptr<Process> > full_trig_skim_1l = {data_1l, /*t1tttt_nc, t1tttt_c,*/ tt1l, tt2l, wjets, single_t, ttv, other};
 
   //
@@ -123,8 +123,8 @@ int main(){
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info);
   vector<PlotOpt> all_plot_types = {log_lumi_info, lin_lumi_info};
 
-  NamedFunc lowmtcut = "ht>500&&met>200&&mt<140";
-  NamedFunc lowmjcut = "ht>500&&met>200&&mj14<400";
+  NamedFunc lowmtcut = "st>500&&met>200&&mt<140";
+  NamedFunc lowmjcut = "st>500&&met>200&&mj14<400";
   PlotMaker pm;
 
   for(int ilep=0; ilep<3; ilep++){
@@ -154,7 +154,7 @@ int main(){
           //
           // event-level variables except ones related to fatjet
           //
-          pm.Push<Hist1D>(Axis(15, 500, 2000., "ht", "H_{T} [GeV]", {500.}),
+          pm.Push<Hist1D>(Axis(15, 500, 2000., "st", "S_{T} [GeV]", {500.}),
                           lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
                           full_trig_skim_1l, all_plot_types);
           pm.Push<Hist1D>(Axis(10, 200, 700., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
@@ -176,7 +176,10 @@ int main(){
                           lepcut&&lowmjcut&&njetscut&&nbcut&&nvetocut,
                           full_trig_skim_1l, all_plot_types);
           pm.Push<Hist1D>(Axis(14, 0., 280., "mt", "m_{T} [GeV]", {140.}),
-                          lepcut&&lowmtcut&&njetscut+"&&nbm==0"&&nvetocut,
+                          lepcut&&lowmtcut&&njetscut&&nvetocut&&"nbm==0",
+                          full_trig_skim_1l, all_plot_types);
+          pm.Push<Hist1D>(Axis(14, 0., 280., "mt", "m_{T} [GeV]", {140.}),
+                          lepcut&&lowmjcut&&njetscut&&nvetocut&&"nbm==0",
                           full_trig_skim_1l, all_plot_types);
 
           if(ilep==0){
@@ -271,7 +274,7 @@ int main(){
                           lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
                           full_trig_skim_1l, all_plot_types);
 
-          pm.Push<Hist1D>(Axis(20, 0, 400., "fjets14_m[0]", "m_{J1} [GeV]"),
+          pm.Push<Hist1D>(Axis(40, 0, 400., "fjets14_m[0]", "m_{J1} [GeV]"),
                           lepcut&&lowmtcut&&"njets<=5&&nbm>=1",
                           full_trig_skim_1l, all_plot_types);
 
@@ -287,7 +290,7 @@ int main(){
       } //for(int injets=0; injets<2; injets++)
     } //for(int inveto=0; inveto<2; inveto++)
   }
-
+/*
   //
   // 0-lepton events
   //
@@ -343,6 +346,38 @@ int main(){
   pm.Push<Hist1D>(Axis(15, 0., 500., "fjets14_m", "m_{J} [GeV]", {400.}),
                   "(nmus>=2||nels>=2)&&ht>350&&njets>=4"&&mllcut,
                   full_trig_skim_2l, all_plot_types);
+*/
+  pm.Push<Hist1D>(Axis(10, 0, 1000., "fjets14_pt[0]", "p_{T}(J1) [GeV]"),
+                  //"st>500&&(nleps==2||(nleps==1&&nveto==1))&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]"),
+                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "fjets14_eta[0]", "#eta(J1)"),
+                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "fjets14_nconst[0]", "N_{constituents}(J1)"),
+                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(10, 0, 1000., "fjets14_pt", "p_{T}(J) [GeV]"),
+                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(10, 0, 500., "fjets14_m", "m_{J} [GeV]"),
+                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "fjets14_eta", "#eta(J)"),
+                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "fjets14_nconst", "N_{constituents}(J)"),
+                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(15, 0., 2000., "mj14", "M_{J} [GeV]", {400.}),
+                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500",
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "nfjets14", "N_{J} [GeV]"),
+                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
 
   pm.MakePlots(lumi);
 
