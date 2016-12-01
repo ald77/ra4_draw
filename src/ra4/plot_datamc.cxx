@@ -151,6 +151,14 @@ int main(){
           if(inb==1)  nbcut="nbm>=2";
           if(inb==1)  continue;
 
+// 12.9 fb-1 nbm plot with rereco
+// - need to change lumi and add json12p9 to data
+// - note that this is fully unblinded, i.e., no mT<140 cut
+// 
+//          pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbm", "N_{b}", {0.5, 1.5, 2.5}),
+//                          lepcut&&njetscut&&nvetocut&&"st>500&&met>200",
+//                          full_trig_skim_1l, all_plot_types);
+
           //
           // event-level variables except ones related to fatjet
           //
@@ -346,37 +354,94 @@ int main(){
   pm.Push<Hist1D>(Axis(15, 0., 500., "fjets14_m", "m_{J} [GeV]", {400.}),
                   "(nmus>=2||nels>=2)&&ht>350&&njets>=4"&&mllcut,
                   full_trig_skim_2l, all_plot_types);
-*/
+*/ 
+
+ // nleps==1 && nveto==1
   pm.Push<Hist1D>(Axis(10, 0, 1000., "fjets14_pt[0]", "p_{T}(J1) [GeV]"),
-                  //"st>500&&(nleps==2||(nleps==1&&nveto==1))&&njets>=5&&nbm<=2&&met>200&&met<500", 
-                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200&&met<500", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200&&met<500", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "fjets14_eta[0]", "#eta(J1)"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200&&met<500", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "fjets14_nconst[0]", "N_{constituents}(J1)"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200&&met<500", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(10, 0, 1000., "fjets14_pt", "p_{T}(J) [GeV]"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200&&met<500", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(10, 0, 500., "fjets14_m", "m_{J} [GeV]"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200&&met<500", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "fjets14_eta", "#eta(J)"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200&&met<500", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "fjets14_nconst", "N_{constituents}(J)"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200&&met<500", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(15, 0., 2000., "mj14", "M_{J} [GeV]", {400.}),
-                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500",
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200&&met<500",
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "nfjets14", "N_{J} [GeV]"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types); 
+  pm.Push<Hist1D>(Axis(15, 500, 2000., "st", "S_{T} [GeV]", {500.}),
+          "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(10, 200, 700., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+          "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(16, -0.5, 15.5, "njets", "N_{jets}", {5.5, 8.5}),
+          "st>500&&nleps==1&&nveto==1&&mt>140&&nbm>=1&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbm", "N_{b}", {0.5, 1.5, 2.5}),
+          "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+
+ // nleps==1 && nveto==1
+  pm.Push<Hist1D>(Axis(10, 0, 1000., "fjets14_pt[0]", "p_{T}(J1) [GeV]"),
+                  "st>500&&nleps==1&&nveto==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]"),
+                  "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "fjets14_eta[0]", "#eta(J1)"),
+                  "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "fjets14_nconst[0]", "N_{constituents}(J1)"),
+                  "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(10, 0, 1000., "fjets14_pt", "p_{T}(J) [GeV]"),
+                  "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(10, 0, 500., "fjets14_m", "m_{J} [GeV]"),
+                  "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "fjets14_eta", "#eta(J)"),
+                  "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "fjets14_nconst", "N_{constituents}(J)"),
+                  "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(15, 0., 2000., "mj14", "M_{J} [GeV]", {400.}),
+                  "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500",
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "nfjets14", "N_{J} [GeV]"),
+                  "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types); 
+  pm.Push<Hist1D>(Axis(15, 500, 2000., "st", "S_{T} [GeV]", {500.}),
+          "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(10, 200, 700., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+          "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(16, -0.5, 15.5, "njets", "N_{jets}", {4.5, 7.5}),
+          "st>500&&nleps==2&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbm", "N_{b}", {0.5, 1.5, 2.5}),
+          "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
                   full_trig_skim_1l, all_plot_types);
 
   pm.MakePlots(lumi);
