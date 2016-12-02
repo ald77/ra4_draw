@@ -415,8 +415,8 @@ int main(int argc, char *argv[]){
     }
     if(method.Contains("agg_1b")) {
       metcuts = vector<TString>{"met>500"};
-      bincuts = vector<TString>{"nbm>=1&&njets>=6"};
-      caption = "Single b-tag aggregate region with $1\\ell$, $\\met>500\\text{ GeV}$, $\\njets\\geq6$, $\\nb\\geq1$";
+      bincuts = vector<TString>{"nbm>=1&&njets>=9"};
+      caption = "Single b-tag aggregate region with $1\\ell$, $\\met>500\\text{ GeV}$, $\\njets\\geq9$, $\\nb\\geq1$";
     }
 
     //////// MET150 methods
