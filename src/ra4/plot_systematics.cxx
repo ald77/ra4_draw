@@ -140,7 +140,8 @@ int main(int argc, char *argv[]){
   //// Capybara
   string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/");
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_met100_stdnj5/");
+  //string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_met100_stdnj5/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_database_standard/");
 
   // Old 2015 data
   if(skim.Contains("2015")){
@@ -227,6 +228,9 @@ int main(int argc, char *argv[]){
   } else if(json=="12p9"){
     lumi = 12.9;
     jsonCuts = "json12p9";
+  } else if(json=="full"){
+    lumi = 36.2;
+    jsonCuts = "1";
   }
   if(mc_lumi!="") lumi = mc_lumi.Atof();
 
