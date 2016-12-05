@@ -353,12 +353,14 @@ int main(int argc, char *argv[]){
 
   TString njets = "N#lower[-0.1]{_{jets}}";
   TString nbs = "N#lower[-0.1]{_{b}}";
+  int firstSigBin;
   for(size_t iabcd=0; iabcd<methods.size(); iabcd++) {
     TString method = methods[iabcd];
     mm_scen = GetScenario(method.Data());
-
+    
     TString basecuts = "", caption = "", abcd_title;
     doVBincuts = false;
+    firstSigBin = -1; //// First MET bin that is a signal bin
 
     //////// General assignments to all methods
     if(method.Contains("2l") || method.Contains("veto")) {
@@ -379,6 +381,7 @@ int main(int argc, char *argv[]){
     /////// Methods to check Nb
     if(method.Contains("nb1l")) {
       metcuts = vector<TString>{"met>200&&met<=500&&njets==5", "met>200&&met<=500&&njets>=6"};
+      firstSigBin = 1;
       bincuts = vector<TString>{"nbm==1", "nbm==2", "nbm>=3"};
       caption = "Signal search regions + $\\njets=5$";
       abcd_title = "Signal + "+njets+"=5 ("+nbs+" bins)";
@@ -396,6 +399,7 @@ int main(int argc, char *argv[]){
       metcuts = vector<TString>{"met>200&&met<=500", "met>200&&met<=500"};
       vbincuts = vector<vector<TString> >{{"njets==5"}, {"njets>=6&&njets<=8", "njets>=9"}}; 
       doVBincuts = true;
+      firstSigBin = 1;
       caption = "Signal search regions + $\\njets=5$";
       abcd_title = "Signal + "+njets+"=5 ";
     }
@@ -452,6 +456,7 @@ int main(int argc, char *argv[]){
                                 c_hignb+" && "+c_lownj, c_hignb+" && "+c_hignj};
       caption = "Signal search regions";
       abcd_title = "Signal + low MET";
+      firstSigBin = 0;
       if(method.Contains("nb1")) {
         bincuts = vector<TString>{c_lownb+" && "+c_lownj, c_lownb+" && "+c_hignj};
         caption += " for $\\nb=1$";
@@ -464,24 +469,29 @@ int main(int argc, char *argv[]){
       if(method.Contains("allmet")) {
 	metcuts = vector<TString>{c_vlowmet, c_lowmet, c_midmet, c_higmet};
 	caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
+	firstSigBin = 1;
       } // allmetsignal
       if(method.Contains("met100")) {
 	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
 	caption = "Signal search regions plus $100<\\met\\leq200$ GeV";
+	firstSigBin = 2;
       } // allmetsignal
       if(method.Contains("met350")) {
 	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, "met>350"};
 	caption = "Signal search regions plus $100<\\met\\leq200$ GeV";
+	firstSigBin = 2;
       } // allmetsignal
       if(method.Contains("nb0")) {
 	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
 	bincuts = vector<TString>{"nbm==0&&njets>=6"};
 	basecuts = "nleps==1 && nveto==0";
 	caption = "Signal search regions plus $100<\\met\\leq200$ GeV for $\\Nb==0$";
+	firstSigBin = 2;
       } // allmetsignal
       if(method.Contains("onemet")) {
 	metcuts = vector<TString>{"met>200"};
 	caption = "Signal search regions plus $150<\\met\\leq200$ GeV";
+	firstSigBin = 0;
       } // allmetsignal
       if(method.Contains("onebin")) bincuts = vector<TString>{"njets>=6"};
     } // signal
@@ -505,21 +515,25 @@ int main(int argc, char *argv[]){
       metcuts = vector<TString>{"met>500"};
       bincuts = vector<TString>{"nbm>=3&&njets>=6"};
       caption = "High-\\met aggregate region with $1\\ell$, $\\met>500\\text{ GeV}$, $\\njets\\geq6$, $\\nb\\geq3$";
+      firstSigBin = 0;
     }
     if(method.Contains("agg_mixed")) {
       metcuts = vector<TString>{"met>350"};
       bincuts = vector<TString>{"nbm>=2&&njets>=9"};
       caption = "Mixed aggregate region with $1\\ell$, $\\met>350\\text{ GeV}$, $\\njets\\geq9$, $\\nb\\geq2$";
+      firstSigBin = 0;
     }
     if(method.Contains("agg_himult")) {
       metcuts = vector<TString>{"met>200"};
       bincuts = vector<TString>{"nbm>=3&&njets>=9"};
       caption = "High-multiplicity aggregate region with $1\\ell$, $\\met>200\\text{ GeV}$, $\\njets\\geq9$, $\\nb\\geq3$";
+      firstSigBin = 0;
     }
     if(method.Contains("agg_1b")) {
       metcuts = vector<TString>{"met>500"};
       bincuts = vector<TString>{"nbm>=1&&njets>=9"};
       caption = "Single b-tag aggregate region with $1\\ell$, $\\met>500\\text{ GeV}$, $\\njets\\geq9$, $\\nb\\geq1$";
+      firstSigBin = 0;
     }
 
     //////// MET150 methods
@@ -539,6 +553,8 @@ int main(int argc, char *argv[]){
     //////// Pushing all cuts to then find the yields
     if(doVBincuts) abcds.push_back(abcd_method(method, metcuts, vbincuts, abcdcuts, caption, basecuts, abcd_title));
     else abcds.push_back(abcd_method(method, metcuts, bincuts, abcdcuts, caption, basecuts, abcd_title));
+    abcds.back().setFirstSignalBin(firstSigBin);
+
     if(skim.Contains("mj12")) {
       abcds.back().setMj12();
       abcds.back().caption += ". Using $M_J^{1.2}$";
@@ -743,7 +759,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                          << "}_{-" << RoundNumber(preds[iplane][ibin][2], digits) <<"}$ ";
         if(!only_mc){
           //// Printing observed events in data and Obs/MC ratio
-          if(!unblind && iabcd==3) out << ump << blind_s<< ump << blind_s;
+          if(!unblind && iabcd==3 && abcd.signalplanes[iplane]) out << ump << blind_s<< ump << blind_s;
           else {
             out << ump << RoundNumber(allyields[0][index].Yield(), 0);
             TString ratio_s = "-";
@@ -884,7 +900,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
             if(bincut==k_ordered[iplane][ik][0].cut){
               k_ordered[iplane][ik].push_back({bincut, bcuts[ib].color, bcuts[ib].style, kappas[iplane][ibin]});
               kmd_ordered[iplane][ik].push_back({bincut, bcuts[ib].color, bcuts[ib].style, kmcdat[iplane][ibin]});
-              k_ordered_mm[iplane][ik].push_back({bincut, 1, bcuts[ib].style, kappas_mm[iplane][ibin]});
+	      if(unblind || !abcd.signalplanes[iplane])
+		k_ordered_mm[iplane][ik].push_back({bincut, 1, bcuts[ib].style, kappas_mm[iplane][ibin]});
               found = true;
               break;
             } // if same njets cut
@@ -893,7 +910,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
           if(!found) {
             k_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[ib].color, bcuts[ib].style, kappas[iplane][ibin]}}));
             kmd_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[ib].color, bcuts[ib].style, kmcdat[iplane][ibin]}}));
-            k_ordered_mm[iplane].push_back(vector<kmarker>({{bincut, 1, bcuts[ib].style, kappas_mm[iplane][ibin]}}));
+            if(unblind || !abcd.signalplanes[iplane])
+	      k_ordered_mm[iplane].push_back(vector<kmarker>({{bincut, 1, bcuts[ib].style, kappas_mm[iplane][ibin]}}));
             found = true;
             nbins++;
           }
@@ -904,7 +922,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
       if(!found) {
         k_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[0].color, bcuts[0].style, kappas[iplane][ibin]}}));
         kmd_ordered[iplane].push_back(vector<kmarker>({{bincut, bcuts[0].color, bcuts[0].style, kmcdat[iplane][ibin]}}));
-        k_ordered_mm[iplane].push_back(vector<kmarker>({{bincut, 1, bcuts[0].style, kappas_mm[iplane][ibin]}}));
+	if(unblind || !abcd.signalplanes[iplane])
+	  k_ordered_mm[iplane].push_back(vector<kmarker>({{bincut, 1, bcuts[0].style, kappas_mm[iplane][ibin]}}));
         nbins++;
         if(ind_bcuts.size()==0) ind_bcuts.push_back(bcuts[0]);
       }
@@ -978,34 +997,37 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
             veyh_kmd[indb].push_back(ekmdUp);
             veyl_kmd[indb].push_back(ekmdDown);
 	    
-	    //// Data/pseudodata kappas
-            vx_mm[indb].push_back(xval+0.1);
-            vexl_mm[indb].push_back(0);
-            vexh_mm[indb].push_back(0);
-            vy_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[0]);
-            // veyh_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[1]);
-            // veyl_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[2]);
-            veyh_mm[indb].push_back(0);
-            veyl_mm[indb].push_back(0);
+	    if(unblind || !abcd.signalplanes[iplane]) {
+	      //// Data/pseudodata kappas
+	      vx_mm[indb].push_back(xval+0.1);
+	      vexl_mm[indb].push_back(0);
+	      vexh_mm[indb].push_back(0);
+	      vy_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[0]);
+	      // veyh_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[1]);
+	      // veyl_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[2]);
+	      veyh_mm[indb].push_back(0);
+	      veyl_mm[indb].push_back(0);
+	    }
 
-	    //// Printing difference between kappa and kappa_mm
-	    float kap = k_ordered[iplane][ibin][ib].kappa[0], kap_mm = k_ordered_mm[iplane][ibin][ib].kappa[0];
-	    TString text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
-	    if((abcd.method.Contains("signal")&&iplane>=2) || (abcd.method.Contains("njets1lmet200")&&iplane>=1)
-	       || (abcd.method.Contains("nb1l")&&iplane>=1) ) 
-	      klab.SetTextColor(cSignal);
-	    else klab.SetTextColor(1);
-	    klab.SetTextSize(0.045);
-	    klab.DrawLatex(xval, 0.952*maxy, text);
-	    //// Printing stat uncertainty of kappa_mm/kappa
-	    float kapUp = k_ordered[iplane][ibin][ib].kappa[1], kapDown = k_ordered[iplane][ibin][ib].kappa[2];
-	    float kap_mmUp = k_ordered_mm[iplane][ibin][ib].kappa[1];
-	    float kap_mmDown = k_ordered_mm[iplane][ibin][ib].kappa[2];
-	    float errStat = (kap>kap_mm?sqrt(pow(kapDown,2)+pow(kap_mmUp,2)):sqrt(pow(kapUp,2)+pow(kap_mmDown,2)));
-	    text = "#sigma_{stat} = "+RoundNumber(errStat*100,0, kap)+"%";
-	    text = "#sigma_{stat} = ^{+"+RoundNumber(ekmdUp*100,0, kap)+"%}_{-"+RoundNumber(ekmdDown*100,0, kap)+"%}";
-	    klab.SetTextSize(0.05);
- 	    klab.DrawLatex(xval, 0.888*maxy, text);
+	    if(unblind || !abcd.signalplanes[iplane]) {
+	      //// Printing difference between kappa and kappa_mm
+	      float kap = k_ordered[iplane][ibin][ib].kappa[0], kap_mm = k_ordered_mm[iplane][ibin][ib].kappa[0];
+	      TString text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
+	      if(abcd.signalplanes[iplane])
+		klab.SetTextColor(cSignal);
+	      else klab.SetTextColor(1);
+	      klab.SetTextSize(0.045);
+	      klab.DrawLatex(xval, 0.952*maxy, text);
+	      //// Printing stat uncertainty of kappa_mm/kappa
+	      float kapUp = k_ordered[iplane][ibin][ib].kappa[1], kapDown = k_ordered[iplane][ibin][ib].kappa[2];
+	      float kap_mmUp = k_ordered_mm[iplane][ibin][ib].kappa[1];
+	      float kap_mmDown = k_ordered_mm[iplane][ibin][ib].kappa[2];
+	      float errStat = (kap>kap_mm?sqrt(pow(kapDown,2)+pow(kap_mmUp,2)):sqrt(pow(kapUp,2)+pow(kap_mmDown,2)));
+	      text = "#sigma_{stat} = "+RoundNumber(errStat*100,0, kap)+"%";
+	      text = "#sigma_{stat} = ^{+"+RoundNumber(ekmdUp*100,0, kap)+"%}_{-"+RoundNumber(ekmdDown*100,0, kap)+"%}";
+	      klab.SetTextSize(0.05);
+	      klab.DrawLatex(xval, 0.888*maxy, text);
+	    } // If unblind || not signal bin
 
            xval += binw;
           }

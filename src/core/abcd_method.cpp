@@ -15,6 +15,9 @@ abcd_method::abcd_method(TString imethod, vector<TString> iplanecuts, vector<vec
   basecuts(ibasecuts),
   title(ititle){
 
+  //// By default, all planes are signal
+  signalplanes = vector<bool>(planecuts.size(), true);
+
   // Set up dilepton and region name
   is2l = (method.Contains("2l") || method.Contains("veto"));
   rd_letter = is2l?"D":"R";
@@ -35,6 +38,9 @@ abcd_method::abcd_method(TString imethod, vector<TString> iplanecuts, vector<TSt
   basecuts(ibasecuts),
   title(ititle){
 
+  //// By default, all planes are signal
+  signalplanes = vector<bool>(planecuts.size(), true);
+
   // Pushing bincuts for each planecut. This will allow to have different bins in different planes
   for(size_t ind=0; ind<planecuts.size(); ind++) bincuts.push_back(ibincuts);
 
@@ -48,6 +54,15 @@ abcd_method::abcd_method(TString imethod, vector<TString> iplanecuts, vector<TSt
   serializeCuts();
 
   } // Constructor
+
+//// Setting the planes that are signal
+void abcd_method::setFirstSignalBin(int firstSigBin){
+  int lastBkgBin = firstSigBin-1;
+  if(lastBkgBin<0) lastBkgBin = planecuts.size();
+  for(int bin=0; bin<=lastBkgBin; bin++)
+    signalplanes[bin] = false;
+}
+
 
 //// Setting the integration in Nb and Njets
 void abcd_method::setIntNbNj(bool int_nbnj_b){
