@@ -135,16 +135,8 @@ long PlotMaker::GetYield(Baby *baby_ptr){
   }
   oss << "]" << flush;
   tag += oss.str();
-  {
-    lock_guard<mutex> lock(print_mutex);
-    if(!min_print_) cout << "Processing " << tag << endl;
-  }
 
   long num_entries = baby.GetEntries();
-  {
-    lock_guard<mutex> lock(print_mutex);
-    if(!min_print_) cout << tag << " has " << num_entries << " entries." << endl;
-  }
 
   vector<pair<const Process*, set<Figure::FigureComponent*> > > proc_figs(baby.processes_.size());
   size_t iproc = 0;
@@ -176,9 +168,9 @@ long PlotMaker::GetYield(Baby *baby_ptr){
   double num_seconds = chrono::duration<double>(end_time - start_time).count();
   {
     lock_guard<mutex> lock(print_mutex);
-    if(!min_print_) cout << "Finished processing " << tag << ". "
-			 << num_entries << " events in " << num_seconds << " seconds = "
-			 << 0.001*num_entries/num_seconds << " kHz. "<< endl;
+    if(!min_print_) cout << setw(9) << num_entries << " entries/"
+                         << setw(10) << num_seconds << " sec.="
+                         << setw(10) << 0.001*num_entries/num_seconds << " kHz for " << tag << endl;
   }
   return num_entries;
 }
