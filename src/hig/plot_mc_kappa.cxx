@@ -35,13 +35,12 @@ using namespace Functions;
 
 namespace{
   bool debug = false;
-  TString skim = "both1l";
+  // options "zll", "qcd", "ttbar", "search"
+  string sample = "search";
   float lumi=40.;
+  bool do_trim = true;
 
   enum Regions {sbd2b, hig2b, sbd3b, hig3b, sbd4b, hig4b};
-  enum files {all, ttbar, vjets};
-  int ifilesDen = ttbar;
-  int ifilesNum = ttbar;
   struct oneplot{
     TString name;
     TString baseline;
@@ -51,22 +50,11 @@ namespace{
 
 
 void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotdef,
-	       vector<vector<vector<int> > > &indices, vector<TString> &leglabels,
-	       vector<shared_ptr<Process> > &procs);
+               vector<vector<vector<int> > > &indices, vector<TString> &leglabels,
+               vector<shared_ptr<Process> > &procs);
 void printDebug(vector<vector<TString> > &allcuts, vector<vector<vector<GammaParams> > > &allyields, 
-		TString baseline, vector<shared_ptr<Process> > &procs);
+                TString baseline, vector<shared_ptr<Process> > &procs);
 void GetOptions(int argc, char *argv[]);
-
-NamedFunc nb_tru("nb_tru",[](const Baby &b) -> NamedFunc::ScalarType{
-  int nbtru(0);
-  for (unsigned i(0); i<b.jets_pt()->size(); i++){
-    if (!b.jets_h1()->at(i) && !b.jets_h2()->at(i)) continue;
-    if (b.jets_hflavor()->at(i)==5) nbtru++;
-  }
-  return nbtru;
-});
-  
-
 
 int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
@@ -75,6 +63,8 @@ int main(int argc, char *argv[]){
   chrono::high_resolution_clock::time_point begTime;
   begTime = chrono::high_resolution_clock::now();
 
+  Palette colors("txt/colors.txt", "default");
+
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining processes //////////////////////////////////////////
   string bfolder("");
@@ -82,141 +72,92 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string ntupletag="higloose";
-  if(skim.Contains("nlep1")) ntupletag="nlep1";
-  if(skim.Contains("both")) ntupletag="";
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/");
+  string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
+  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
+  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_zisrnjet45/";
+  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
 
-  Palette colors("txt/colors.txt", "default");
+  set<string> alltags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root", 
+            "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root",
+            "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root",
+            "*_ST_*.root",
+            "*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root",
+            "*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"};
 
-  // Cuts in baseline speed up the yield finding
-  string zcuts = "nleps==2 && ((mumuv_m>80&&mumuv_m<100) || (elelv_m>80&&elelv_m<100))";
+  // Baseline definitions
   string baseline="pass && stitch";
-  // if(skim.Contains("1l")) baseline += " && nleps==1";
-  // if(skim.Contains("zll")) baseline += " && "+zcuts;
-  NamedFunc baselinef = baseline;
-
-  set<string> allfiles = {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root",
-    foldermc+"*_WJetsToLNu*"+ntupletag+"*.root",
-    foldermc+"*_ST_*"+ntupletag+"*.root",
-    foldermc+"*_TTW*"+ntupletag+"*.root", foldermc+"*_TTZ*"+ntupletag+"*.root",
-    foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_TTTT*"+ntupletag+"*.root",
-    foldermc+"*QCD_HT*Inf_Tune*"+ntupletag+"*.root", 
-    foldermc+"*QCD_HT*0_Tune*"+ntupletag+"*.root",foldermc+"*DYJetsToLL*"+ntupletag+"*.root",
-    foldermc+"*_ZJet*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
-    foldermc+"*_WH_HToBB*"+ntupletag+"*.root",foldermc+"*_ZH_HToBB*"+ntupletag+"*.root",
-    foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",
-    foldermc+"*_ZZ_*"+ntupletag+"*.root"
-  };
-  set<string> nonttfiles = {foldermc+"*_WJetsToLNu*"+ntupletag+"*.root",
-    foldermc+"*_ST_*"+ntupletag+"*.root",
-    foldermc+"*_TTW*"+ntupletag+"*.root", foldermc+"*_TTZ*"+ntupletag+"*.root",
-    foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_TTTT*"+ntupletag+"*.root",
-    foldermc+"*QCD_HT*Inf_Tune*"+ntupletag+"*.root", 
-    foldermc+"*QCD_HT*0_Tune*"+ntupletag+"*.root",foldermc+"*DYJetsToLL*"+ntupletag+"*.root",
-    foldermc+"*_ZJet*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
-    foldermc+"*_WH_HToBB*"+ntupletag+"*.root",foldermc+"*_ZH_HToBB*"+ntupletag+"*.root",
-    foldermc+"*_WWTo*"+ntupletag+"*.root",foldermc+"*_WZ*"+ntupletag+"*.root",
-    foldermc+"*_ZZ_*"+ntupletag+"*.root"
-  };
-  set<string> ttfiles = {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root",
-			 foldermc+"*_TTW*"+ntupletag+"*.root", foldermc+"*_TTZ*"+ntupletag+"*.root",
-			 foldermc+"*_TTGJets*"+ntupletag+"*.root",foldermc+"*_ttHJetTobb*"+ntupletag+"*.root",
-			 foldermc+"*_TTTT*"+ntupletag+"*.root"};
-   set<string> vfiles = {foldermc+"*DYJetsToLL*"+ntupletag+"*.root",foldermc+"*_ZJet*"+ntupletag+"*.root",
-   			foldermc+"*_WJetsToLNu*"+ntupletag+"*.root"};
-   //set<string> vfiles = {foldermc+"*_ZJet*"+ntupletag+"*.root"};
-
-  //allfiles = set<string>({foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"});
-  // allfiles = nonttfiles;
-
-  cout<<endl<<"Doing denominator "<<ifilesDen<<" and numerator "<<ifilesNum<<endl<<endl;
-
-  string dentitle = "All bkg", numtitle="";
-  set<string> denfiles = allfiles, numfiles = allfiles;
-  if(ifilesDen == ttbar) {
-    denfiles = ttfiles;
-    dentitle = "t#bar{t}";
-  }
-  if(ifilesDen == vjets) {
-    denfiles = vfiles;
-    dentitle = "V+jets";
-  }
-  if(ifilesNum == ttbar) {
-    numfiles = ttfiles;
-    numtitle = "t#bar{t}, ";
-  }
-  if(ifilesNum == vjets) {
-    numfiles = vfiles;
-    numtitle = "Vjets, ";
-  }
+  NamedFunc base_func("pass && stitch");
+  if (do_trim) base_func = base_func && "hig_dm<40 && hig_am<200";
 
   vector<shared_ptr<Process> > procs;
-  //// First entry is for low-mT region (kappa denominator)
-  procs.push_back(Process::MakeShared<Baby_full>(dentitle, Process::Type::background, 1, denfiles, 
-						 baselinef));
+  // All bkg. kappa
+  procs.push_back(Process::MakeShared<Baby_full>("All bkg.", Process::Type::background, 
+    kBlack, attach_folder(foldermc,alltags), base_func));
+  // Sample specific kappa
+  if (sample=="zll") 
+    procs.push_back(Process::MakeShared<Baby_full>("DY+jets", Process::Type::background, 
+      kOrange+1, {foldermc+"*DYJetsToLL*.root"}, base_func));
+  if (sample=="qcd") 
+    procs.push_back(Process::MakeShared<Baby_full>("QCD", Process::Type::background, 
+      colors("other"),{foldermc+"*QCD_HT*0_Tune*.root", foldermc+"*QCD_HT*Inf_Tune*.root"}, base_func)); 
+  if (sample=="ttbar" || sample=="search") 
+    procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}", Process::Type::background,
+      colors("tt_1l"),{foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root"}, base_func));
 
-  //// Processes for the high-mT region (kappa numerator)
-  if(skim.Contains("both")) {
-    string leptitle = "N_{lep} = 1",  lepcuts = "nleps==1";
-    if(skim.Contains("zll")) {
-      leptitle = "Z #rightarrow ll";
-      lepcuts = zcuts;
-    }
-    procs.push_back(Process::MakeShared<Baby_full>
-		    (numtitle+"N_{lep} = 0", Process::Type::background, kBlue, 
-		     numfiles, baselinef && "nvleps==0"));
-    procs.push_back(Process::MakeShared<Baby_full>
-		    (numtitle+leptitle, Process::Type::background, kRed+1, 
-		     numfiles, baselinef && lepcuts));
-  } else {
-    // procs.push_back(Process::MakeShared<Baby_full>
-    // 		    (numtitle+"#leq1 true B-hadron", Process::Type::background, kPink+2, 
-    // 		     numfiles, baselinef && nb_tru<=1));
-    // procs.push_back(Process::MakeShared<Baby_full>
-    // 		    (numtitle+"2 true B-hadron", Process::Type::background, kOrange-4, 
-    // 		     numfiles, baselinef && nb_tru==2));
-    // procs.push_back(Process::MakeShared<Baby_full>
-    // 		    (numtitle+"3 true B-hadron", Process::Type::background, kTeal-8, 
-    // 		     numfiles, baselinef && nb_tru==3));
-    // procs.push_back(Process::MakeShared<Baby_full>
-    // 		    (numtitle+"#geq4 true B-hadron", Process::Type::background, kAzure-4, 
-    // 		     numfiles, baselinef && nb_tru>=4));
-
-    procs.push_back(Process::MakeShared<Baby_full>
-		    ("All bkg",Process::Type::background,1,numfiles,
-		     baselinef));
-    procs.push_back(Process::MakeShared<Baby_full>
-		    ("t#bar{t}",Process::Type::background,colors("tt_1l"),ttfiles,
-		     baselinef));
+ /////////////////////////////////////////////////////////////////////////////////////////////////////////
+ /////////////////////////////////////////// Defining cuts ///////////////////////////////////////////////
+  vector<TString> xcuts; // all desired cut combinations
+  // zll skim:  
+  // nvleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
+  if (sample=="zll") {
+    xcuts.push_back("nvleps==2 && ((elelv_m>80&&elelv_m<100)||(mumuv_m>80&&mumuv_m<100)) && met<50");
+    xcuts.push_back("nvleps==2 && ((elelv_m>80&&elelv_m<100)||(mumuv_m>80&&mumuv_m<100)) && met<50 && hig_drmax<2.2");
+  }
+  // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
+  if (sample=="qcd") {
+    xcuts.push_back("nvleps==0 && ntks==0 && low_dphi");
+    xcuts.push_back("nvleps==0 && ntks==0 && low_dphi && hig_drmax<2.2");
+  }
+  // ttbar skim - met>100 && nleps==1 && (njets==4||njets==5) && nbm>=2
+  if (sample=="ttbar") {
+    xcuts.push_back("nleps==1 && mt<100");
+    xcuts.push_back("nleps==1 && mt<100 && hig_drmax<2.2");
+    xcuts.push_back("nleps==1 && mt<100 && hig_drmax<2.2 && ntks==0 && !low_dphi");
+  } 
+  // search skim - met>100 && nvleps==0 && (njets==4||njets==5) && nbm>=2
+  if (sample=="search") {
+    xcuts.push_back("nvleps==0");
+    xcuts.push_back("nvleps==0 && ntks==0 && !low_dphi");
+    xcuts.push_back("nvleps==0 && ntks==0 && !low_dphi && hig_drmax<2.2");
   }
 
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
- /////////////////////////////////////////// Defining cuts ///////////////////////////////////////////////
-  // baseline defined above
-  TString cutlep = "nvleps==0";
-  if(skim.Contains("nlep1")) cutlep = "nleps==1&&mt<100";
-  if(skim.Contains("both")) cutlep = "1";
-
+  vector<TString> metcuts;
+  string metdef = "met";
+  if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
+  // if (sample!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
+  metcuts.push_back(metdef+">150&&"+metdef+"<=200");
+  metcuts.push_back(metdef+">200&&"+metdef+"<=300");
+  metcuts.push_back(metdef+">300");
 
   // Makes a plot for each vector in plotcuts
-  vector<oneplot> plotcuts({
-	{"met",cutlep,{"met>150&&met<=200","met>200&&met<=300", "met>300"}},
-	{"met",cutlep+"&&hig_drmax<2.2",{"met>150&&met<=200","met>200&&met<=300", "met>300"}},
-	{"met",cutlep+"&&ntks==0 && !low_dphi && hig_drmax<2.2",{"met>150&&met<=200",
-	      "met>200&&met<=300", "met>300"}},
-	});
+  vector<oneplot> plotcuts;
+  for (auto &ixcut: xcuts) plotcuts.push_back({"met",ixcut,metcuts});
 
-  TString c_2b="nbt==2&&nbm==2", c_3b="nbt>=2&&nbm==3&&nbl==3", c_4b="nbt>=2&&nbm>=3&&nbl>=4";
-  //TString c_2b="nbm==2", c_3b="nbm==3", c_4b="nbm>=4";
-  TString c_hig="hig_am>100&&hig_am<140&&hig_dm<40", c_sbd="!("+c_hig+") && hig_am<200 && hig_dm<40";
-  //TString c_hig="hig_am>100&&hig_am<140&&hig_dm<40", c_sbd="!("+c_hig+")";
-  TString ump=" && ";
+  TString c_ab="nbt==2&&nbm==2";
+  TString c_cd="nbt>=2&&nbm==3&&nbl==3";
+  TString c_ef="nbt>=2&&nbm>=3&&nbl>=4";
+  if (sample=="qcd" || sample=="zll"){
+    c_ab="nbm==0";
+    c_cd="nbm==1";
+    c_ef="nbt==1";  
+  }
 
-  vector<TString> abcdcuts = {c_2b +ump+ c_sbd, c_2b +ump+ c_hig, c_3b +ump+ c_sbd, c_3b +ump+ c_hig, 
-			      c_4b +ump+ c_sbd, c_4b +ump+ c_hig};
+  TString c_hig="hig_am>100&&hig_am<140&&hig_dm<40";
+  TString c_sbd="!("+c_hig+") && hig_am<200 && hig_dm<40";
+
+  vector<TString> abcdcuts = {c_ab+"&&"+c_sbd, c_ab+"&&"+c_hig, 
+                              c_cd+"&&"+c_sbd, c_cd+"&&"+c_hig, 
+                              c_ef+"&&"+c_sbd, c_ef+"&&"+c_hig};
   size_t Nabcd = abcdcuts.size();
 
   PlotMaker pm;
@@ -225,9 +166,9 @@ int main(int argc, char *argv[]){
     for(size_t iabcd=0; iabcd<abcdcuts.size(); iabcd++){
       vector<TableRow> table_cuts;
       for(size_t ibin=0; ibin<plotcuts[iplot].bincuts.size(); ibin++){
-	TString totcut=plotcuts[iplot].baseline+" && "+plotcuts[iplot].bincuts[ibin]+" && "+abcdcuts[iabcd];
-	table_cuts.push_back(TableRow("", totcut.Data()));
-	allcuts[iplot][iabcd].push_back(totcut);
+        TString totcut=plotcuts[iplot].baseline+" && "+plotcuts[iplot].bincuts[ibin]+" && "+abcdcuts[iabcd];
+        table_cuts.push_back(TableRow("", totcut.Data()));
+        allcuts[iplot][iabcd].push_back(totcut);
       } // Loop over bins
       TString tname = "rmj"; tname += iplot; tname += iabcd;
       pm.Push<Table>(tname.Data(),  table_cuts, procs, false, false);
@@ -236,7 +177,6 @@ int main(int argc, char *argv[]){
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////// Finding all yields ///////////////////////////////////////////////
-
   pm.min_print_ = true;
   pm.MakePlots(lumi);
 
@@ -248,7 +188,7 @@ int main(int argc, char *argv[]){
     for(size_t iabcd=0; iabcd<abcdcuts.size(); iabcd++){
       Table * yield_table = static_cast<Table*>(pm.Figures()[iplot*Nabcd+iabcd].get());
       for(size_t ibkg=0; ibkg<procs.size(); ibkg++)
-	allyields[ibkg][iabcd] = yield_table->Yield(procs[ibkg].get(), lumi);
+        allyields[ibkg][iabcd] = yield_table->Yield(procs[ibkg].get(), lumi);
     } // Loop over ABCD cuts
 
     //// Print MC/Data yields, cuts applied, kappas, preds
@@ -260,27 +200,21 @@ int main(int argc, char *argv[]){
 
     //// 3b kappa
     indices.clear(); leglabels.clear();
-    for(int ibkg=1; ibkg<static_cast<int>(procs.size()); ibkg++) {
-      int idenom=0;
-      if(skim.Contains("both") || skim.Contains("higloose") || skim.Contains("nlep1")) idenom = ibkg;
-      indices.push_back(vector<vector<int> >({{ibkg, hig3b, 1}, {ibkg, sbd3b, -1}, 
-								  {idenom, hig2b, -1}, {idenom, sbd2b, 1}}));
+    for(int ibkg=0; ibkg<static_cast<int>(procs.size()); ibkg++) {
+      indices.push_back(vector<vector<int> >({{ibkg, hig3b, 1},  {ibkg, sbd3b, -1}, 
+                                              {ibkg, hig2b, -1}, {ibkg, sbd2b, 1}}));
       leglabels.push_back(procs[ibkg]->name_);
     }
     plotRatio(allyields, plotcuts[iplot], indices, leglabels, procs);
 
     //// 4b kappa
     indices.clear(); leglabels.clear();
-    for(int ibkg=1; ibkg<static_cast<int>(procs.size()); ibkg++) {
-      int idenom=0;
-      if(skim.Contains("both") || skim.Contains("higloose") || skim.Contains("nlep1")) idenom = ibkg;
-      indices.push_back(vector<vector<int> >({{ibkg, hig4b, 1}, {ibkg, sbd4b, -1}, 
-								  {idenom, hig2b, -1}, {idenom, sbd2b, 1}}));
+    for(int ibkg=0; ibkg<static_cast<int>(procs.size()); ibkg++) {
+      indices.push_back(vector<vector<int> >({{ibkg, hig4b, 1},  {ibkg, sbd4b, -1}, 
+                                              {ibkg, hig2b, -1}, {ibkg, sbd2b, 1}}));
       leglabels.push_back(procs[ibkg]->name_);
     }
     plotRatio(allyields, plotcuts[iplot], indices, leglabels, procs);
-
-
   } // Loop over plots
 
 
@@ -294,12 +228,9 @@ int main(int argc, char *argv[]){
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
 void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotdef,
-	       vector<vector<vector<int> > > &indices, vector<TString> &leglabels, 
-	       vector<shared_ptr<Process> > &procs){
+               vector<vector<vector<int> > > &indices, vector<TString> &leglabels, 
+               vector<shared_ptr<Process> > &procs){
 
   size_t ngraphs = indices.size();
   size_t nbins = allyields[0][0].size();
@@ -318,8 +249,8 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
       vector<vector<float> > entries;
       vector<vector<float> > weights;
       for(size_t ind=0; ind<indices[igraph].size(); ind++) {
-	size_t ibkg = indices[igraph][ind][0];
-	size_t iabcd = indices[igraph][ind][1];
+        size_t ibkg = indices[igraph][ind][0];
+        size_t iabcd = indices[igraph][ind][1];
         entries.push_back(vector<float>());
         weights.push_back(vector<float>());
         entries.back().push_back(allyields[ibkg][iabcd][ibin].NEffective());
@@ -345,12 +276,12 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
     size_t ind0=indices[0][0][1], ind1=indices[0][1][1];
     size_t ind2=indices[0][2][1], ind3=indices[0][3][1];
     if((ind0==hig4b&&ind1==sbd4b && ind2==hig2b&&ind3==sbd2b)) {
-      ytitle = "[4b Hig/Sbd] / [2b Hig/Sbd("+TString(procs[0]->name_)+")]";
-      ytitle = "4b #kappa";
+      if (sample=="qcd" || sample=="zll") ytitle = "1tb #kappa";
+      else ytitle = "4b #kappa";
     }
     if((ind0==hig3b&&ind1==sbd3b && ind2==hig2b&&ind3==sbd2b)) {
-      ytitle = "[3b Hig/Sbd] / [2b Hig/Sbd("+TString(procs[0]->name_)+")]";
-      ytitle = "3b #kappa";
+      if (sample=="qcd" || sample=="zll") ytitle = "1mb #kappa";
+      else ytitle = "3b #kappa";
     }
   }
   //// Setting plot style
@@ -417,7 +348,7 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
 
   Palette colors("txt/colors.txt", "default");
   vector<int> mcolors, styles;
-  for(size_t ibkg=1; ibkg<procs.size(); ibkg++) {
+  for(size_t ibkg=0; ibkg<procs.size(); ibkg++) {
     mcolors.push_back(procs[ibkg]->color_);
     styles.push_back(19+ibkg);
   }
@@ -448,9 +379,7 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   line.DrawLine(minx, 1, maxx, 1);
 
   TString fname = "plots/ratio_"+CodeToPlainText(ytitle.Data())+"_"+plotdef.name+"_"
-    +CodeToPlainText(plotdef.baseline.Data())+"_NumAllbkg.pdf";
-  if(ifilesNum == ttbar) fname.ReplaceAll("NumAllbkg", "Numttbar");
-  if(ifilesNum == vjets) fname.ReplaceAll("NumAllbkg", "NumVjets");
+    +CodeToPlainText(plotdef.baseline.Data())+"_"+sample+".pdf";
   can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl;
 
@@ -460,14 +389,14 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
 
 // allyields: [0] All bkg, [1] tt1l, [2] tt2l, [3] other
 void printDebug(vector<vector<TString> > &allcuts, vector<vector<vector<GammaParams> > > &allyields, 
-		TString baseline, vector<shared_ptr<Process> > &procs){
+                TString baseline, vector<shared_ptr<Process> > &procs){
   int digits = 3;
   cout<<endl<<endl<<"============================ Printing cuts  ============================"<<endl;
   cout<<"-- Baseline cuts: "<<baseline<<endl<<endl;
   for(size_t ibin=0; ibin<allcuts[0].size(); ibin++){
     for(size_t iabcd=0; iabcd<allcuts.size(); iabcd++){
       for(size_t ibkg=0; ibkg<procs.size(); ibkg++)
-	cout<<procs[ibkg]->name_<<": "    <<setw(9)<<RoundNumber(allyields[ibkg][iabcd][ibin].Yield(), digits)<<", ";
+        cout<<procs[ibkg]->name_<<": "    <<setw(9)<<RoundNumber(allyields[ibkg][iabcd][ibin].Yield(), digits)<<", ";
       cout<<"  - "<< allcuts[iabcd][ibin]<<endl;
     } // Loop over ABCD cuts
     cout<<endl;
@@ -479,10 +408,8 @@ void printDebug(vector<vector<TString> > &allcuts, vector<vector<vector<GammaPar
 void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
-      {"numerator", required_argument, 0, 'n'},    // Ntuples to use in the numerator
-      {"denominator", required_argument, 0, 'd'},    // Ntuples to use in the denominator
       {"lumi", required_argument, 0, 'l'},    // Luminosity to normalize MC with (no data)
-      {"skim", required_argument, 0, 's'},    // Which skim to use: standard, met150, 2015 data
+      {"sample", required_argument, 0, 's'},    // Which sample to use: standard, met150, 2015 data
       {"debug", no_argument, 0, 'g'},         // Debug: prints yields and cuts used
       {0, 0, 0, 0}
     };
@@ -494,17 +421,11 @@ void GetOptions(int argc, char *argv[]){
 
     string optname;
     switch(opt){
-    case 'n':
-      ifilesNum = atoi(optarg);
-      break;
-    case 'd':
-      ifilesDen = atoi(optarg);
-      break;
     case 'l':
       lumi = atof(optarg);
       break;
     case 's':
-      skim = optarg;
+      sample = optarg;
       break;
     case 'g':
       debug = true;

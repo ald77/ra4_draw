@@ -168,17 +168,6 @@ int main(int argc, char *argv[]){
   
   // pie charts for the "met - nb cuts" plane, one slide per set of additional cuts
   //--------------------------------------------------------------------------------
-  vector<string> nbcats; //nb bins for where we are actually doing the ABCD test
-  if (sample=="zll" || sample=="qcd") {
-    nbcats.push_back("nbm==0");
-    nbcats.push_back("nbm==1");
-    nbcats.push_back("nbt==1");
-  } else {
-    nbcats.push_back("nbt==2&&nbm==2");
-    nbcats.push_back("nbt>=2&&nbm==3&&nbl==3");
-    nbcats.push_back("nbt>=2&&nbm>=3&&nbl>=4");
-  }
-
   vector<string> metcuts;
   string metdef = "met";
   if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
@@ -191,7 +180,7 @@ int main(int argc, char *argv[]){
     pnames.clear();
     string slide_ttl = "Additional cuts: $"+CodeToLatex(ixcut)+"$";
     if (ixcut=="1") slide_ttl = "No additional cuts";
-    for(auto &inb: nbcats) {
+    for(auto &inb: nbcuts) {
       for(auto &imet: metcuts) {
         string icut = inb+"&&"+imet+"&&"+ixcut;
         if (split_higsbd) {
@@ -213,7 +202,7 @@ int main(int argc, char *argv[]){
   pm.Push<Table>("procs",  table_cuts, procs, true, true, true);
 
   pm.min_print_ = true;
-  pm.multithreaded_ = false;
+  pm.multithreaded_ = true;
 
   pm.MakePlots(lumi);
   sm.Close();
