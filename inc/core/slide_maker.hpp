@@ -11,6 +11,8 @@ public:
   ~SlideMaker() = default;
 
   void AddSlide(std::vector<std::string> pnames, int ncols = -1, std::string title = "");
+  void AddSlideWithReplace(std::string oldexp, std::string newexp, 
+  	std::vector<std::string> pnames, int ncols = -1, std::string title = "");
   void Close();
 
 private:

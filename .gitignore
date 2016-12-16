@@ -47,6 +47,9 @@ sftp-config.json
 # LaTeX
 *.tex
 *.aux
+*.nav
+*.snm
+*.toc
 *.gz
 
 # Auto-generated files

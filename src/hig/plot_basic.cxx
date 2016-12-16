@@ -1,5 +1,3 @@
-///// table_preds: Makes piecharts
-
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -35,9 +33,7 @@ namespace{
   //output
   bool do_stackplots = true;
   bool do_cflow = false;
-  bool do_pies = false;
   bool do_shapes = false;
-  bool do_cr_pies = false;
   bool do_cr_stackplots = false;
   // simplify selection
   bool do_metg150_metg200 = false; // only integrated met>150 and met > 200
@@ -99,18 +95,18 @@ int main(){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   set<string> skims;
-  if (do_cr_pies || do_cr_stackplots || do_data_shapes) skims = {"lep0","lep1","lep2"}; 
+  if (do_cr_stackplots || do_data_shapes) skims = {"lep0","lep1","lep2"}; 
   else skims = {"lep0"};
 
   map<string, string> foldermc; //ordered in number of leptons
   foldermc["lep0"] = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
-  foldermc["lep1"] = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_hig_nlep1/";
+  foldermc["lep1"] = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
   foldermc["lep2"] = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_hig_nlep2/";
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({"*_TTJets*Lept*.root", "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
                                      "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root"});
-  mctags["ttonly"]  = set<string>({"*_TTJets*Lept*.root", "*_TTJets_HT*.root"});
+  mctags["ttonly"]  = set<string>({"*_TTJets_*Lept*.root", "*_TTJets_HT*.root"});
   mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
   mctags["singlet"] = set<string>({"*_ST_*.root"});
   mctags["qcd"]     = set<string>({"*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root"});
@@ -130,7 +126,7 @@ int main(){
   string foldersig = bfolder+"/cms2r0/babymaker/babies/2016_08_10/TCHiHH/merged_higmc_unskimmed/";
 
   map<string, vector<shared_ptr<Process> > > procs;
-  if (do_stackplots || do_pies || do_cr_stackplots || do_cr_pies) {
+  if (do_stackplots || do_cr_stackplots) {
     for (auto &iskim: skims){
       procs[iskim] = vector<shared_ptr<Process> >();
       if (proc_types.find("ttx")!=proc_types.end()) 
@@ -225,7 +221,7 @@ int main(){
   map<string, string> selns;
   selns["base"]   = "nvleps==0 && ntks==0 && !low_dphi";
   if (do_loose_seln) selns["notrkphi"] = "nvleps==0";
-  if (do_cr_stackplots || do_cr_pies || do_data_shapes || do_shapes) { 
+  if (do_cr_stackplots || do_data_shapes || do_shapes) { 
     selns["qcd"]   = "nvleps==0 && ntks==0 && low_dphi";
     selns["lep1"] = "nleps==1 && mt<=100";
     selns["lep2"] = "nleps==2 && (mumu_m*(mumu_m>0)+elel_m*(elel_m>0))>80&&(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))<100";
@@ -463,34 +459,6 @@ int main(){
           }
         }
       }
-    }
-  }
-
-  //        Pie charts
-  //--------------------------------
-  if (do_pies || do_cr_pies) { 
-    NamedFunc wgt = "weight" * Functions::eff_mettrig;
-    for (auto &iseln: selns) {
-      if (proc_types.size()==0) continue;
-      //decide which is the relevant set of procs
-      string iproc = "lep0";
-      if (iseln.first=="lep1" || iseln.first=="lep2") iproc = iseln.first;
-      if (!do_cr_pies && (iseln.first=="lep1" || iseln.first=="lep2" || iseln.first=="qcd")) continue;
-      vector<TString> cuts;
-      vector<TableRow> table_cuts;
-      for(auto &imet: metcuts[iseln.first]) {
-        for(auto &inb: nbcuts) {
-          cuts.push_back(iseln.second+"&&"+njcut+"&&"+imet+"&&"+inb+"&& hig_dm<=40 && hig_am<=200");
-          for (auto &ireg: {"fullhig","fullsbd"}) {
-            cuts.push_back(iseln.second+"&&"+njcut+"&&"+imet+"&&"+inb+"&&"+xcuts[ireg]);
-          }
-        }
-      }
-      for(size_t icut=0; icut<cuts.size(); icut++)
-        table_cuts.push_back(TableRow("$"+CodeToLatex(cuts[icut].Data())+"$", cuts[icut].Data(), 0, 0, wgt));  
-      pm.Push<Table>("chart_"+iseln.first,  table_cuts, procs[iproc], true, true, true, false);
-      if (do_cats_ntrub) 
-        pm.Push<Table>("chartcats_"+iseln.first,  table_cuts, procs["bcat_"+iproc], true, true, true, false);
     }
   }
 

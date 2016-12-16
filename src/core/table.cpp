@@ -10,6 +10,7 @@
 #include "TCanvas.h"
 #include "TPie.h"
 #include "TLegend.h"
+#include "TLatex.h"
 #include "TStyle.h"
 #include "TString.h"
 
@@ -417,6 +418,8 @@ void Table::PrintPie(std::size_t irow, double luminosity) const{
   // Printing pie chart with percentages
   pie.SetLabelFormat("%perc");
   pie.Draw();
+  TLatex total(0.68,0.5,RoundNumber(Yield_tot,1));
+  if(print_titlepie_) total.Draw();
   plot_name = "plots/pie_"+name_+"_"+CodeToPlainText(rows_.at(irow).cut_.Name())+"_perc_lumi"+RoundNumber(luminosity,0).Data()+".pdf";
   can.SaveAs(plot_name.c_str());
   cout<<" open "<<plot_name<<endl;
