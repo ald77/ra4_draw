@@ -84,6 +84,9 @@ int main(int argc, char *argv[]){
             "*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root",
             "*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"};
 
+  set<string> ttxtags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root", 
+            "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root"};
+
   // Baseline definitions
   string baseline="pass && stitch";
   NamedFunc base_func("pass && stitch");
@@ -95,23 +98,23 @@ int main(int argc, char *argv[]){
     kBlack, attach_folder(foldermc,alltags), base_func));
   // Sample specific kappa
   if (sample=="zll") 
-    procs.push_back(Process::MakeShared<Baby_full>("DY+jets", Process::Type::background, 
+    procs.push_back(Process::MakeShared<Baby_full>("Z#rightarrow ll", Process::Type::background, 
       kOrange+1, {foldermc+"*DYJetsToLL*.root"}, base_func));
   if (sample=="qcd") 
     procs.push_back(Process::MakeShared<Baby_full>("QCD", Process::Type::background, 
       colors("other"),{foldermc+"*QCD_HT*0_Tune*.root", foldermc+"*QCD_HT*Inf_Tune*.root"}, base_func)); 
   if (sample=="ttbar" || sample=="search") 
-    procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}", Process::Type::background,
-      colors("tt_1l"),{foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root"}, base_func));
+    procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", Process::Type::background,
+      colors("tt_1l"),attach_folder(foldermc,ttxtags), base_func));
 
  /////////////////////////////////////////////////////////////////////////////////////////////////////////
  /////////////////////////////////////////// Defining cuts ///////////////////////////////////////////////
   vector<TString> xcuts; // all desired cut combinations
-  // zll skim:  
+  // zll skim:  ((elelv_m>80&&elelv_m<100)||(mumuv_m>80&&mumuv_m<100))
   // nvleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
   if (sample=="zll") {
-    xcuts.push_back("nvleps==2 && ((elelv_m>80&&elelv_m<100)||(mumuv_m>80&&mumuv_m<100)) && met<50");
-    xcuts.push_back("nvleps==2 && ((elelv_m>80&&elelv_m<100)||(mumuv_m>80&&mumuv_m<100)) && met<50 && hig_drmax<2.2");
+    xcuts.push_back("nvleps==2 && met<50");
+    xcuts.push_back("nvleps==2 && met<50 && hig_drmax<2.2");
   }
   // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
   if (sample=="qcd") {
@@ -133,7 +136,7 @@ int main(int argc, char *argv[]){
 
   vector<TString> metcuts;
   string metdef = "met";
-  if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
+  if (sample=="zll") metdef = "(mumuv_pt*(mumuv_pt>0)+elelv_pt*(elelv_pt>0))";
   // if (sample!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
@@ -276,11 +279,11 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
     size_t ind0=indices[0][0][1], ind1=indices[0][1][1];
     size_t ind2=indices[0][2][1], ind3=indices[0][3][1];
     if((ind0==hig4b&&ind1==sbd4b && ind2==hig2b&&ind3==sbd2b)) {
-      if (sample=="qcd" || sample=="zll") ytitle = "1tb #kappa";
+      if (sample=="qcd" || sample=="zll") ytitle = "1 tight b #kappa";
       else ytitle = "4b #kappa";
     }
     if((ind0==hig3b&&ind1==sbd3b && ind2==hig2b&&ind3==sbd2b)) {
-      if (sample=="qcd" || sample=="zll") ytitle = "1mb #kappa";
+      if (sample=="qcd" || sample=="zll") ytitle = "1b #kappa";
       else ytitle = "3b #kappa";
     }
   }
@@ -378,8 +381,8 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, oneplot &plotde
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
 
-  TString fname = "plots/ratio_"+CodeToPlainText(ytitle.Data())+"_"+plotdef.name+"_"
-    +CodeToPlainText(plotdef.baseline.Data())+"_"+sample+".pdf";
+  TString fname = "plots/ratio_"+sample+"_"+CodeToPlainText(ytitle.Data())+"_"+plotdef.name+"_"
+    +CodeToPlainText(plotdef.baseline.Data())+".pdf";
   can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl;
 

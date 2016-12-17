@@ -242,7 +242,7 @@ int main(int argc, char *argv[]){
 
   ////// MET cuts
   string metdef = "met";
-  if (skim=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
+  if (skim=="zll") metdef = "(mumuv_pt*(mumuv_pt>0)+elelv_pt*(elelv_pt>0))";
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
   metcuts.push_back(metdef+">300");

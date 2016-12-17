@@ -33,7 +33,7 @@ namespace{
   string sample = "search";
   bool do_ntrub = true;
   bool do_trim = true;
-  bool split_higsbd = true;
+  bool split_higsbd = false;
 }
   
 int main(int argc, char *argv[]){
@@ -141,7 +141,6 @@ int main(int argc, char *argv[]){
   if (sample=="zll" || sample=="qcd") {
     nbcuts.push_back("nbm==0");
     nbcuts.push_back("nbm==1");
-    nbcuts.push_back("nbt==1");
   }
   nbcuts.push_back("nbt==2&&nbm==2");
   nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
@@ -152,25 +151,25 @@ int main(int argc, char *argv[]){
     for(auto &inb: nbcuts) {
       string icut = inb+"&&"+ixcut;
       table_cuts.push_back(TableRow("", icut, 0, 0, wgt));  
-      pnames.push_back("pie_"+tag+"_"+CodeToPlainText(icut)+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
+      pnames.push_back("pie_"+sample+"_"+tag+"_"+CodeToPlainText(icut)+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
     }
     pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m_{jj}> [GeV]", {100., 140.}),
       ixcut, procs_ntrub, plt_types).Weight(wgt).Tag("trub");
   }
   if (do_ntrub) { 
-    pm.Push<Table>(tag,  table_cuts, procs_ntrub, true, true, true);
+    pm.Push<Table>(sample+"_"+tag,  table_cuts, procs_ntrub, true, true, true);
     sm.AddSlide(pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts");
   }
 
   //push the table with the same cuts but different procs, so also have to change the pie chart names
-  pm.Push<Table>("procs",  table_cuts, procs, true, true, true);
+  pm.Push<Table>(sample+"_procs",  table_cuts, procs, true, true, true);
   sm.AddSlideWithReplace(tag,"procs", pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts");
   
   // pie charts for the "met - nb cuts" plane, one slide per set of additional cuts
   //--------------------------------------------------------------------------------
   vector<string> metcuts;
   string metdef = "met";
-  if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
+  if (sample=="zll") metdef = "(mumuv_pt*(mumuv_pt>0)+elelv_pt*(elelv_pt>0))";
   if (sample!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
@@ -185,21 +184,21 @@ int main(int argc, char *argv[]){
         string icut = inb+"&&"+imet+"&&"+ixcut;
         if (split_higsbd) {
           table_cuts.push_back(TableRow("", icut+"&&!(hig_am>100&&hig_am<=140)", 0, 0, wgt));  
-          pnames.push_back("pie_procs_"+CodeToPlainText(icut+"&&!(hig_am>100&&hig_am<=140)")+
+          pnames.push_back("pie_"+sample+"_procs_"+CodeToPlainText(icut+"&&!(hig_am>100&&hig_am<=140)")+
             "_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
           table_cuts.push_back(TableRow("", icut+"&&(hig_am>100&&hig_am<=140)", 0, 0, wgt));  
-          pnames.push_back("pie_procs_"+CodeToPlainText(icut+"&&(hig_am>100&&hig_am<=140)")+
+          pnames.push_back("pie_"+sample+"_procs_"+CodeToPlainText(icut+"&&(hig_am>100&&hig_am<=140)")+
             "_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
           } else {
           table_cuts.push_back(TableRow("", icut, 0, 0, wgt));  
-          pnames.push_back("pie_procs_"+CodeToPlainText(icut)+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
+          pnames.push_back("pie_"+sample+"_procs_"+CodeToPlainText(icut)+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
         }
       }
     }
     if (split_higsbd) sm.AddSlide(pnames, metcuts.size()*2, slide_ttl);
     else sm.AddSlide(pnames, metcuts.size(), slide_ttl);
   }
-  pm.Push<Table>("procs",  table_cuts, procs, true, true, true);
+  pm.Push<Table>(sample+"_procs",  table_cuts, procs, true, true, true);
 
   pm.min_print_ = true;
   pm.multithreaded_ = true;
