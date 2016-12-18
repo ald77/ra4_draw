@@ -75,13 +75,13 @@ int main(int argc, char *argv[]){
   string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
   if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
   if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_zisrnjet45/";
-  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
+  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
 
   set<string> alltags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root", 
             "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root",
             "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root",
             "*_ST_*.root",
-            "*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root",
+            // "*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root",
             "*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"};
 
   set<string> ttxtags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root", 
@@ -110,11 +110,11 @@ int main(int argc, char *argv[]){
  /////////////////////////////////////////////////////////////////////////////////////////////////////////
  /////////////////////////////////////////// Defining cuts ///////////////////////////////////////////////
   vector<TString> xcuts; // all desired cut combinations
-  // zll skim:  ((elelv_m>80&&elelv_m<100)||(mumuv_m>80&&mumuv_m<100))
-  // nvleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
+  // zll skim:  ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100))
+  // nleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
   if (sample=="zll") {
-    xcuts.push_back("nvleps==2 && met<50");
-    xcuts.push_back("nvleps==2 && met<50 && hig_drmax<2.2");
+    xcuts.push_back("nleps==2 && met<50");
+    xcuts.push_back("nleps==2 && met<50 && hig_drmax<2.2");
   }
   // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
   if (sample=="qcd") {
@@ -136,10 +136,11 @@ int main(int argc, char *argv[]){
 
   vector<TString> metcuts;
   string metdef = "met";
-  if (sample=="zll") metdef = "(mumuv_pt*(mumuv_pt>0)+elelv_pt*(elelv_pt>0))";
+  if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
   // if (sample!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
+  // metcuts.push_back(metdef+">300&&"+metdef+"<=400");
   metcuts.push_back(metdef+">300");
 
   // Makes a plot for each vector in plotcuts

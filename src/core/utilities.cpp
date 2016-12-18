@@ -107,7 +107,7 @@ string CodeToPlainText(string code){
   ReplaceAll(code, "pass&&stitch&&nvleps==0&&ntks==0&&!low_dphi&&njets>=4&&njets<=5","preseln");
   ReplaceAll(code, "hig_am>100&&hig_am<=140&&hig_dm<=40","HIG");
   ReplaceAll(code, "(hig_am<=100||(hig_am>140&&hig_am<=200))&&hig_dm<=40","SBD");
-  ReplaceAll(code, "mumuv_pt*(mumuv_pt>0)+elelv_pt*(elelv_pt>0)","zpt");
+  ReplaceAll(code, "mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0)","zpt");
   ReplaceAll(code, ".", "p");
   ReplaceAll(code, "(", "");
   ReplaceAll(code, ")", "");
@@ -192,15 +192,13 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "nvmus==2&&nmus>=1","N_{#mu}#geq1, N^{veto}_{#mu}=2");
   ReplaceAll(code, "nvels==2&&nels>=1","N_{e}#geq1, N^{veto}_{e}=2");
   ReplaceAll(code, "(nvmus>=2||nvels>=2)","N^{veto}_{lep} #geq 2");
-  ReplaceAll(code, "(mumuv_pt*(mumuv_pt>0)+elelv_pt*(elelv_pt>0))>150&&(mumuv_pt*(mumuv_pt>0)+elelv_pt*(elelv_pt>0))<=200",
+  ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>150&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=200",
                    "150<p_{T}^{Z}#leq200");
-  ReplaceAll(code, "(mumuv_pt*(mumuv_pt>0)+elelv_pt*(elelv_pt>0))>200&&(mumuv_pt*(mumuv_pt>0)+elelv_pt*(elelv_pt>0))<=300",
+  ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>200&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=300",
                    "200<p_{T}^{Z}#leq300");
-  ReplaceAll(code, "(mumuv_pt*(mumuv_pt>0)+elelv_pt*(elelv_pt>0))","p_{T}^{Z}");
+  ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))","p_{T}^{Z}");
 
   ReplaceAll(code, "(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))>80&&(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))<100",
-             "80<m_{ll}<100");
-  ReplaceAll(code, "(mumuv_m*(mumuv_m>0)+elelv_m*(elelv_m>0))>80&&(mumuv_m*(mumuv_m>0)+elelv_m*(elelv_m>0))<100",
              "80<m_{ll}<100");
   ReplaceAll(code, "mumuv_m>80&&mumuv_m<100",
              "80<m_{ll}<100");

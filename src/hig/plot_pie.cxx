@@ -31,7 +31,6 @@ namespace{
   float lumi = 36.2;
   // options "zll", "qcd", "ttbar", "search"
   string sample = "search";
-  bool do_ntrub = true;
   bool do_trim = true;
   bool split_higsbd = false;
 }
@@ -91,13 +90,13 @@ int main(int argc, char *argv[]){
   NamedFunc wgt = "weight"* Functions::eff_mettrig;
   NamedFunc base_func("pass && stitch");
   if (do_trim) base_func = base_func && "hig_dm<40 && hig_am<200";
-  // zll skim: ((elelv_m>80&&elelv_m<100)||(mumuv_m>80&&mumuv_m<100)) && 
-  // nvleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
+  // zll skim: ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && 
+  // nleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
   if (sample=="zll") base_func = base_func && "met<50";
   // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
   if (sample=="qcd") base_func = base_func && "ntks==0 && low_dphi";
   // ttbar skim - met>100 && nleps==1 && (njets==4||njets==5) && nbm>=2
-  if (sample=="ttbar") base_func = base_func && "mt<100";
+  if (sample=="ttbar") base_func = base_func && "mt<100 && met>150";
   // search skim - met>100 && nvleps==0 && (njets==4||njets==5) && nbm>=2
   if (sample=="search") base_func = base_func && "ntks==0 && !low_dphi";
 
@@ -113,8 +112,8 @@ int main(int argc, char *argv[]){
   procs.push_back(Process::MakeShared<Baby_full>("Other",      
     Process::Type::background, kGreen+1,           attach_folder(foldermc,mctags["other"]),   base_func));      
 
-  vector<shared_ptr<Process> > procs_ntrub;
   set<string> allfiles = attach_folder(foldermc, allmctags);
+  vector<shared_ptr<Process> > procs_ntrub;
   procs_ntrub.push_back(Process::MakeShared<Baby_full>
     ("0 B-hadron",       Process::Type::background, kAzure-4,   allfiles, base_func && ntrub<=1));
   procs_ntrub.push_back(Process::MakeShared<Baby_full>
@@ -125,6 +124,23 @@ int main(int argc, char *argv[]){
     ("3 B-hadrons",      Process::Type::background, kPink+2,    allfiles, base_func && ntrub==3));
   procs_ntrub.push_back(Process::MakeShared<Baby_full>
     ("#geq 4 B-hadrons", Process::Type::background, kMagenta-1, allfiles, base_func && ntrub>=4));
+
+  set<string> samplefiles = {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root"};
+  if (sample=="qcd") samplefiles = {foldermc+"*QCD_HT*0_Tune*.root", foldermc+"*QCD_HT*Inf_Tune*.root"};
+  if (sample=="zll") samplefiles = {foldermc+"*DYJetsToLL*.root"};
+  vector<shared_ptr<Process> > procs_ntrub_sample;
+  if (sample!="ttbar" && sample!="search") {
+    procs_ntrub_sample.push_back(Process::MakeShared<Baby_full>
+      ("0 B-hadron",       Process::Type::background, kAzure-4,   samplefiles, base_func && ntrub<=1));
+    procs_ntrub_sample.push_back(Process::MakeShared<Baby_full>
+      ("1 B-hadron",       Process::Type::background, kTeal-8,    samplefiles, base_func && ntrub==1));
+  }
+  procs_ntrub_sample.push_back(Process::MakeShared<Baby_full>
+    ("2 B-hadrons",      Process::Type::background, kOrange-4,  samplefiles, base_func && ntrub==2));
+  procs_ntrub_sample.push_back(Process::MakeShared<Baby_full>
+    ("3 B-hadrons",      Process::Type::background, kPink+2,    samplefiles, base_func && ntrub==3));
+  procs_ntrub_sample.push_back(Process::MakeShared<Baby_full>
+    ("#geq 4 B-hadrons", Process::Type::background, kMagenta-1, samplefiles, base_func && ntrub>=4));
 
   vector<string> xcuts; // useful additional cut definitions
   xcuts.push_back("1");
@@ -154,12 +170,12 @@ int main(int argc, char *argv[]){
       pnames.push_back("pie_"+sample+"_"+tag+"_"+CodeToPlainText(icut)+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
     }
     pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m_{jj}> [GeV]", {100., 140.}),
-      ixcut, procs_ntrub, plt_types).Weight(wgt).Tag("trub");
+      base_func && ixcut, procs_ntrub, plt_types).Weight(wgt).Tag("trub");
+    pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m_{jj}> [GeV]", {100., 140.}),
+      base_func && ixcut, procs_ntrub_sample, plt_types).Weight(wgt).Tag(sample+"_trub");
   }
-  if (do_ntrub) { 
-    pm.Push<Table>(sample+"_"+tag,  table_cuts, procs_ntrub, true, true, true);
-    sm.AddSlide(pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts");
-  }
+  pm.Push<Table>(sample+"_"+tag,  table_cuts, procs_ntrub, true, true, true);
+  sm.AddSlide(pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts");  
 
   //push the table with the same cuts but different procs, so also have to change the pie chart names
   pm.Push<Table>(sample+"_procs",  table_cuts, procs, true, true, true);
@@ -169,8 +185,8 @@ int main(int argc, char *argv[]){
   //--------------------------------------------------------------------------------
   vector<string> metcuts;
   string metdef = "met";
-  if (sample=="zll") metdef = "(mumuv_pt*(mumuv_pt>0)+elelv_pt*(elelv_pt>0))";
-  if (sample!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
+  if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
+  // if (sample!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
   metcuts.push_back(metdef+">300");
@@ -189,7 +205,8 @@ int main(int argc, char *argv[]){
           table_cuts.push_back(TableRow("", icut+"&&(hig_am>100&&hig_am<=140)", 0, 0, wgt));  
           pnames.push_back("pie_"+sample+"_procs_"+CodeToPlainText(icut+"&&(hig_am>100&&hig_am<=140)")+
             "_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
-          } else {
+        } else {
+          // procs
           table_cuts.push_back(TableRow("", icut, 0, 0, wgt));  
           pnames.push_back("pie_"+sample+"_procs_"+CodeToPlainText(icut)+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
         }
@@ -197,8 +214,11 @@ int main(int argc, char *argv[]){
     }
     if (split_higsbd) sm.AddSlide(pnames, metcuts.size()*2, slide_ttl);
     else sm.AddSlide(pnames, metcuts.size(), slide_ttl);
+
+    if (!split_higsbd) sm.AddSlideWithReplace("procs", tag, pnames, metcuts.size(), slide_ttl);
   }
   pm.Push<Table>(sample+"_procs",  table_cuts, procs, true, true, true);
+  if (!split_higsbd) pm.Push<Table>(sample+"_"+tag,  table_cuts, procs_ntrub, true, true, true);
 
   pm.min_print_ = true;
   pm.multithreaded_ = true;
@@ -226,9 +246,6 @@ void GetOptions(int argc, char *argv[]){
 
     string optname;
     switch(opt){
-    case 'c':
-      do_ntrub = true;
-      break;
     case 'l':
       lumi = atof(optarg);
       break;

@@ -139,6 +139,8 @@ int main(int argc, char *argv[]){
   if (skim=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higloose/");
   if (skim=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1/";
+  if (skim=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_zisrnjet45/";
+  if (skim=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higqcd/";
   string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/TChiHH/merged_higmc_higloose/");
 
   Palette colors("txt/colors.txt", "default");
@@ -242,7 +244,7 @@ int main(int argc, char *argv[]){
 
   ////// MET cuts
   string metdef = "met";
-  if (skim=="zll") metdef = "(mumuv_pt*(mumuv_pt>0)+elelv_pt*(elelv_pt>0))";
+  if (skim=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
   metcuts.push_back(metdef+">300");
@@ -264,11 +266,11 @@ int main(int argc, char *argv[]){
 
   ////// One loose and one tight selection option for each region
   TString basecuts; 
-  // zll skim:  ((elelv_m>80&&elelv_m<100)||(mumuv_m>80&&mumuv_m<100))
-  // nvleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
+  // zll skim:  ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100))
+  // nleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
   if (skim=="zll") {
-    if (do_loose) basecuts = "nvleps==2 && ((elelv_m>80&&elelv_m<100)||(mumuv_m>80&&mumuv_m<100)) && met<50";
-    else basecuts = "nvleps==2 && ((elelv_m>80&&elelv_m<100)||(mumuv_m>80&&mumuv_m<100)) && met<50 && hig_drmax<2.2";
+    if (do_loose) basecuts = "nleps==2 && ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && met<50";
+    else basecuts = "nleps==2 && ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && met<50 && hig_drmax<2.2";
   }
   // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
   if (skim=="qcd") {
