@@ -20,6 +20,7 @@
 #include "core/hist1d.hpp"
 #include "core/plot_opt.hpp"
 #include "core/functions.hpp"
+#include "hig/hig_functions.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -87,7 +88,7 @@ int main(int argc, char *argv[]){
   }
 
   // Baseline definitions
-  NamedFunc wgt = "weight"* Functions::eff_mettrig;
+  NamedFunc wgt = "weight"* Functions::eff_higtrig;
   NamedFunc base_func("pass && stitch");
   if (do_trim) base_func = base_func && "hig_dm<40 && hig_am<200";
   // zll skim: ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && 

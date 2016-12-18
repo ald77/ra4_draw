@@ -38,6 +38,7 @@
 #include "core/plot_opt.hpp"
 #include "core/config_parser.hpp"
 #include "core/functions.hpp"
+#include "hig/hig_functions.hpp"
 
 using namespace std;
 
@@ -114,7 +115,7 @@ int main(int argc, char *argv[]){
 
   vector<string> scenarios = ConfigParser::GetOptSets(sys_wgts_file);
   //NamedFunc w = "weight*eff_trig";
-  NamedFunc w = "weight" * Functions::eff_mettrig;
+  NamedFunc w = "weight" * Functions::eff_higtrig;
   map<string, NamedFunc> weights, corrections;
   auto central = Functions::Variation::central;
   weights.emplace("no_mismeasurement", w);

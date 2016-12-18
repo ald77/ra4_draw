@@ -16,6 +16,7 @@
 #include "core/hist1d.hpp"
 #include "core/plot_opt.hpp"
 #include "core/functions.hpp"
+#include "hig/hig_functions.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -342,7 +343,7 @@ int main(){
   //----------------------------------------
   if ((do_stackplots || do_cr_stackplots) && !do_data) {
     for (auto &iseln: selns) {
-      NamedFunc wgt = "weight" * Functions::eff_mettrig;
+      NamedFunc wgt = "weight" * Functions::eff_higtrig;
       if (!do_data) wgt = "weight";
       //decide which is the relevant set of procs
       string iskimcat = "lep0";
@@ -406,7 +407,7 @@ int main(){
   //----------------------------------------
   if ((do_stackplots || do_cr_stackplots) && do_data) {
     for (auto &iseln: selns) {
-      NamedFunc wgt = "weight" * Functions::eff_mettrig;
+      NamedFunc wgt = "weight" * Functions::eff_higtrig;
       //decide which is the relevant set of procs
       string iskimcat = "lep0";
       if (iseln.first=="lep1" || iseln.first=="lep2") iskimcat = iseln.first;
@@ -465,7 +466,7 @@ int main(){
   //        Cutflow table
   //-------------------------------- 
   if (do_cflow && proc_types.size()>0) {
-    NamedFunc wgt = "weight" * Functions::eff_mettrig;
+    NamedFunc wgt = "weight" * Functions::eff_higtrig;
     pm.Push<Table>("cutflow", vector<TableRow>{
       TableRow("$E_{T}^{miss} > 150$, 2 CSVM, $\\text{4-5 jets}$, $0\\ell/$tk", 
         "nvleps==0 && ntks==0 && met>150 && nbm>=2 &&"+njcut,0,0, wgt),
