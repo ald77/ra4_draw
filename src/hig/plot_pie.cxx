@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
 
   string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
   if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
-  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_zisrnjet45/";
+  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_nj4zcandl40/";
   if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
 
   map<string, set<string>> mctags; 
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]){
   }
 
   // Baseline definitions
-  NamedFunc wgt = "weight"* Functions::eff_higtrig;
+  NamedFunc wgt = "weight"* Higfuncs::eff_higtrig;
   NamedFunc base_func("pass && stitch");
   if (do_trim) base_func = base_func && "hig_dm<40 && hig_am<200";
   // zll skim: ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && 

@@ -74,14 +74,14 @@ int main(int argc, char *argv[]){
 
   string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
   if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
-  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_zisrnjet45/";
-  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
+  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_nj4zcandl40/";
+  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
 
   set<string> alltags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root", 
             "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root",
             "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root",
             "*_ST_*.root",
-            // "*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root",
+            "*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root",
             "*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"};
 
   set<string> ttxtags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root", 

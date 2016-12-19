@@ -115,7 +115,7 @@ int main(int argc, char *argv[]){
 
   vector<string> scenarios = ConfigParser::GetOptSets(sys_wgts_file);
   //NamedFunc w = "weight*eff_trig";
-  NamedFunc w = "weight" * Functions::eff_higtrig;
+  NamedFunc w = "weight" * Higfuncs::eff_higtrig;
   map<string, NamedFunc> weights, corrections;
   auto central = Functions::Variation::central;
   weights.emplace("no_mismeasurement", w);
@@ -136,12 +136,12 @@ int main(int argc, char *argv[]){
   //// Capybara
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/");
   if (skim=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
-  if (skim=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_zisrnjet45/";
+  if (skim=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_nj4zcandl40/";
   if (skim=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higloose/");
   if (skim=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1/";
-  if (skim=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_zisrnjet45/";
-  if (skim=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higqcd/";
+  if (skim=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_nj4zcandl40/";
+  if (skim=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_nl0nj4met150/";
   string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/TChiHH/merged_higmc_higloose/");
 
   Palette colors("txt/colors.txt", "default");
@@ -176,9 +176,6 @@ int main(int argc, char *argv[]){
   set<string> names_allmc;
   for (auto &iset: mctags) names_allmc.insert(iset.second.begin(), iset.second.end());
 
-  string trigs = "trig_ra4";
-  if(skim.Contains("2015")) trigs = "(trig[4]||trig[8]||trig[28]||trig[14])";
-
   // Setting luminosity
   string jsonCuts = "nonblind";
   if(skim.Contains("2015")) lumi = 2.3;
@@ -206,25 +203,20 @@ int main(int argc, char *argv[]){
   }
   if(mc_lumi!="") lumi = mc_lumi.Atof();
 
-
-  if(only_method.Contains("old")) trigs = "(trig[4]||trig[8])";
-  if(!skim.Contains("2015")) trigs += " && "+jsonCuts;
-
   set<string> names_data({folderdata+"*RunB*.root"});
   if(only_mc){
     names_data = attach_folder(foldermc, names_allmc);
-    if(quick_test) names_data = set<string>({foldermc+"*_TTJets_Tune*.root"});
-    trigs = quick_test ? "1" : "stitch";
+    if(quick_test) names_data = set<string>({foldermc+"*_TTJets_SingleLeptFromT_*.root"});
   }
 
    if(mm_scen == "data")
-     cout<<"Data files are "<<*(names_data.begin())<<" with cuts "<<baseline<<"&&"<< trigs << "&&pass"<<endl<<endl;
+     cout<<"Data files are "<<*(names_data.begin())<<" with cuts "<<baseline<<"&&"<< Higfuncs::trig_hig << "&&pass"<<endl<<endl;
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    names_data,baseline && trigs && "pass");
+    names_data,baseline && Higfuncs::trig_hig>0. && "pass");
 
   //// Use this process to make quick plots. Requires being run without split_bkg
   auto proc_bkg = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets_Tune*.root"}, baseline && " pass");
+    {foldermc+"*_TTJets_SingleLeptFromT_*.root"}, baseline && " pass");
 
   vector<shared_ptr<Process> > all_procs;
   if(!quick_test) all_procs = vector<shared_ptr<Process> >{proc_tt1l, proc_tt2l, proc_other};

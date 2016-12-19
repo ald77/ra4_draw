@@ -7,8 +7,9 @@
 
 #include "core/named_func.hpp"
  
-namespace Functions{
-  extern const NamedFunc eff_higtrig;
+namespace Higfuncs{
+	extern const NamedFunc trig_hig;
+	extern const NamedFunc eff_higtrig;
 }
 
 #endif
