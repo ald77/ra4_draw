@@ -150,7 +150,7 @@ void Table::Print(double luminosity,
   std::ofstream file(file_name);
   if (print_pie_) file << fixed << setprecision(2);
   else file << fixed << setprecision(1);
-  PrintHeader(file);
+  PrintHeader(file, luminosity);
   for(size_t i = 0; i < rows_.size(); ++i){
     PrintRow(file, i, luminosity);
   }
@@ -240,7 +240,7 @@ const vector<unique_ptr<Table::TableColumn> >& Table::GetComponentList(const Pro
     return backgrounds_;
   }
 }
-void Table::PrintHeader(ofstream &file) const{
+void Table::PrintHeader(ofstream &file, double luminosity) const{
   file << "\\documentclass[10pt,oneside]{report}\n";
   file << "\\usepackage{graphicx,xspace,amssymb,amsmath,colordvi,colortbl,verbatim,multicol}\n";
   file << "\\usepackage{multirow, rotating}\n\n";
@@ -277,7 +277,7 @@ void Table::PrintHeader(ofstream &file) const{
 
   file << " }\n";
   file << "    \\hline\\hline\n";
-  file << "    Cut";
+  file <<" \\multicolumn{1}{c|}{${\\cal L} = "<<setprecision(1)<<luminosity<<"$ fb$^{-1}$} ";
 
   if(backgrounds_.size() > 1){
     for(size_t i = 0; i < backgrounds_.size(); ++i){
@@ -429,7 +429,7 @@ void Table::PrintPie(std::size_t irow, double luminosity) const{
 
 void Table::PrintFooter(ofstream &file) const{
   file << "    \\hline\n";
-  file << "    Cut";
+  file << "    ";
 
   if(backgrounds_.size() > 1){
     for(size_t i = 0; i < backgrounds_.size(); ++i){

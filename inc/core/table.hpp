@@ -76,7 +76,7 @@ private:
 
   const std::vector<std::unique_ptr<TableColumn> >& GetComponentList(const Process *process) const;
 
-  void PrintHeader(std::ofstream &file) const;
+  void PrintHeader(std::ofstream &file, double luminosity) const;
   void PrintRow(std::ofstream &file, std::size_t irow, double luminosity) const;
   void PrintPie(std::size_t irow, double luminosity) const;
   void PrintFooter(std::ofstream &file) const;
