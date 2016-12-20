@@ -89,10 +89,10 @@ int main(int argc, char *argv[]){
 
   // Baseline definitions
   NamedFunc wgt = "weight"* Higfuncs::eff_higtrig;
-  NamedFunc base_func("pass && stitch");
+  NamedFunc base_func("pass && stitch && njets>=4 && njets<=5");
   if (do_trim) base_func = base_func && "hig_dm<40 && hig_am<200";
   // zll skim: ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && 
-  // nleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
+  // nleps==2 && Max$(leps_pt)>40
   if (sample=="zll") base_func = base_func && "met<50";
   // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
   if (sample=="qcd") base_func = base_func && "ntks==0 && low_dphi";

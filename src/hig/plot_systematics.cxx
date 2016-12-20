@@ -56,6 +56,8 @@ namespace{
   bool do_correction = false;
   bool do_loose = true;
   bool do_trim = true;
+  bool do_highnb = false;
+  bool do_onemet = false;
   TString skim = "search";
   TString json = "2p6";
   TString only_method = "";
@@ -147,7 +149,7 @@ int main(int argc, char *argv[]){
   Palette colors("txt/colors.txt", "default");
 
   // Cuts in baseline speed up the yield finding
-  string baseline_s = "njets>=4 && njets<=5";
+  string baseline_s = "met/met_calo<5 && njets>=4 && njets<=5";
   NamedFunc baseline=baseline_s;
 
   map<string, set<string>> mctags; 
@@ -209,10 +211,12 @@ int main(int argc, char *argv[]){
     if(quick_test) names_data = set<string>({foldermc+"*_TTJets_SingleLeptFromT_*.root"});
   }
 
+  NamedFunc base_data = baseline && Higfuncs::trig_hig>0. && jsonCuts+"&& pass";
+  if (only_mc) base_data = baseline && "stitch && pass";
    if(mm_scen == "data")
      cout<<"Data files are "<<*(names_data.begin())<<" with cuts "<<baseline<<"&&"<< Higfuncs::trig_hig << "&&pass"<<endl<<endl;
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    names_data,baseline && Higfuncs::trig_hig>0. && "pass");
+    names_data,base_data);
 
   //// Use this process to make quick plots. Requires being run without split_bkg
   auto proc_bkg = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
@@ -238,12 +242,15 @@ int main(int argc, char *argv[]){
   ////// MET cuts
   string metdef = "met";
   if (skim=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
-  metcuts.push_back(metdef+">150&&"+metdef+"<=200");
-  metcuts.push_back(metdef+">200&&"+metdef+"<=300");
-  metcuts.push_back(metdef+">300");
+  if (do_onemet) metcuts.push_back(metdef+">150");
+  else {
+    metcuts.push_back(metdef+">150&&"+metdef+"<=200");
+    metcuts.push_back(metdef+">200&&"+metdef+"<=300");
+    metcuts.push_back(metdef+">300");
+  }
 
   ////// Nb cuts
-  if (skim=="qcd" || skim=="zll"){
+  if ((skim=="qcd" && !do_highnb) ||skim=="zll"){// 
     nbcuts.push_back("nbm==0");
     nbcuts.push_back("nbm==1");
   } else {
@@ -254,31 +261,31 @@ int main(int argc, char *argv[]){
 
   ////// CR, SR cuts
   TString c_sr="hig_am>100&&hig_am<140&&hig_dm<40";
-  TString c_cr="(hig_am<=100 || hig_am>=140) && hig_am<200 && hig_dm<40";
+  TString c_cr="!("+c_sr+") && hig_am<200 && hig_dm<40";//"(hig_am<=100 || hig_am>=140) && hig_am<200 && hig_dm<40";
   if (!do_trim) c_cr="hig_am<=100 || hig_am>=140 || hig_dm>=40";
 
   ////// One loose and one tight selection option for each region
-  TString basecuts; 
+  TString basecuts("njets>=4 && njets<=5"); 
   // zll skim:  ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100))
-  // nleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
+  // nleps==2 && Max$(leps_pt)>40 
   if (skim=="zll") {
-    if (do_loose) basecuts = "nleps==2 && ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && met<50";
-    else basecuts = "nleps==2 && ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && met<50 && hig_drmax<2.2";
+    if (do_loose) basecuts += " && nleps==2 && ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && met<50";
+    else basecuts += " && nleps==2 && ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && met<50 && hig_drmax<2.2";
   }
   // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
   if (skim=="qcd") {
-    if (do_loose) basecuts = "nvleps==0 && ntks==0 && low_dphi";
-    else basecuts = "nvleps==0 && ntks==0 && low_dphi && hig_drmax<2.2";
+    if (do_loose) basecuts += " && nvleps==0 && ntks==0 && low_dphi";
+    else basecuts += " && nvleps==0 && ntks==0 && low_dphi && hig_drmax<2.2";
   }
   // ttbar skim - met>100 && nleps==1 && (njets==4||njets==5) && nbm>=2
   if (skim=="ttbar") {
-    if (do_loose) basecuts = "nleps==1 && mt<100";
-    else basecuts = "nleps==1 && mt<100 && hig_drmax<2.2 && ntks==0 && !low_dphi";
+    if (do_loose) basecuts += " && nleps==1 && mt<100";
+    else basecuts += " && nleps==1 && mt<100 && hig_drmax<2.2";
   } 
   // search skim - met>100 && nvleps==0 && (njets==4||njets==5) && nbm>=2
   if (skim=="search") {
-    if (do_loose) basecuts = "nvleps==0";
-    else basecuts = "nvleps==0 && ntks==0 && !low_dphi && hig_drmax<2.2";
+    if (do_loose) basecuts += " && nvleps==0 && ntks==0 && !low_dphi";
+    else basecuts += " && nvleps==0 && ntks==0 && !low_dphi && hig_drmax<2.2";
   }
 
   ////// ABCD cuts
@@ -329,6 +336,7 @@ int main(int argc, char *argv[]){
     }
 
     if(mm_scen=="data"){
+      metcuts.clear();
       metcuts.push_back(metdef+">150&&"+metdef+"<=200");
       metcuts.push_back(metdef+">200");
     }
@@ -483,8 +491,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   TString lumi_s = RoundNumber(lumi, digits_lumi);
   TString outname = "tables/table_pred_"+skim+"_tight_lumi"+lumi_s; outname.ReplaceAll(".","p");
   if (do_loose) outname = "tables/table_pred_"+skim+"_loose_lumi"+lumi_s; outname.ReplaceAll(".","p");
-  if(skim.Contains("2015")) outname += "_2015";
-  if(skim.Contains("mj12")) outname += "_mj12";
+  if (do_highnb) outname +="_highnb";
   if(unblind) outname += "_unblind";
   else outname += "_blind";
   if(do_ht) outname += "_ht500";
@@ -914,6 +921,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
   TString fname="plots/kappa_"+skim+"_tight_" +abcd.method;
   if (do_loose) fname="plots/kappa_"+skim+"_loose_"+abcd.method;
+  if (do_highnb) fname +="_highnb";
   if(do_ht) fname  += "_ht500";
   lumi_s.ReplaceAll(".","p");
   fname += "_lumi"+lumi_s;
@@ -1079,6 +1087,8 @@ void GetOptions(int argc, char *argv[]){
       {"mm", required_argument, 0, 0},            // Mismeasurment scenario, 0 for data
       {"quick", no_argument, 0, 0},           // Used inclusive ttbar for quick testing
       {"zbi", no_argument, 0, 0},             // Use Zbi instead of toys
+      {"highnb", no_argument, 0, 0},             // Do 3b and 4b for QCD CR
+      {"onemet", no_argument, 0, 0},             
       {0, 0, 0, 0}
     };
 
@@ -1143,6 +1153,10 @@ void GetOptions(int argc, char *argv[]){
         quick_test = true;
       }else if(optname == "zbi"){
         actualZbi = true;
+      }else if(optname == "highnb"){
+        do_highnb = true;
+      }else if(optname == "onemet"){
+        do_onemet = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
         exit(1);

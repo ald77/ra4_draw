@@ -29,6 +29,7 @@
 #include "core/styles.hpp"
 #include "core/plot_opt.hpp"
 #include "core/functions.hpp"
+#include "hig/hig_functions.hpp"
 
 using namespace std;
 using namespace Functions;
@@ -89,7 +90,7 @@ int main(int argc, char *argv[]){
 
   // Baseline definitions
   string baseline="pass && stitch";
-  NamedFunc base_func("pass && stitch");
+  NamedFunc base_func("pass && stitch && njets>=4 && njets<=5 && met/met_calo<5");
   if (do_trim) base_func = base_func && "hig_dm<40 && hig_am<200";
 
   vector<shared_ptr<Process> > procs;
@@ -111,7 +112,7 @@ int main(int argc, char *argv[]){
  /////////////////////////////////////////// Defining cuts ///////////////////////////////////////////////
   vector<TString> xcuts; // all desired cut combinations
   // zll skim:  ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100))
-  // nleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
+  // nleps==2 && Max$(leps_pt)>40 
   if (sample=="zll") {
     xcuts.push_back("nleps==2 && met<50");
     xcuts.push_back("nleps==2 && met<50 && hig_drmax<2.2");
@@ -125,12 +126,10 @@ int main(int argc, char *argv[]){
   if (sample=="ttbar") {
     xcuts.push_back("nleps==1 && mt<100");
     xcuts.push_back("nleps==1 && mt<100 && hig_drmax<2.2");
-    xcuts.push_back("nleps==1 && mt<100 && hig_drmax<2.2 && ntks==0 && !low_dphi");
   } 
   // search skim - met>100 && nvleps==0 && (njets==4||njets==5) && nbm>=2
   if (sample=="search") {
     xcuts.push_back("nvleps==0");
-    xcuts.push_back("nvleps==0 && ntks==0 && !low_dphi");
     xcuts.push_back("nvleps==0 && ntks==0 && !low_dphi && hig_drmax<2.2");
   }
 
@@ -165,13 +164,14 @@ int main(int argc, char *argv[]){
   size_t Nabcd = abcdcuts.size();
 
   PlotMaker pm;
+  NamedFunc wgt = "weight" * Higfuncs::eff_higtrig;
   vector<vector<vector<TString> > > allcuts(plotcuts.size(), vector<vector<TString> > (Nabcd));
   for(size_t iplot=0; iplot<plotcuts.size(); iplot++){
     for(size_t iabcd=0; iabcd<abcdcuts.size(); iabcd++){
       vector<TableRow> table_cuts;
       for(size_t ibin=0; ibin<plotcuts[iplot].bincuts.size(); ibin++){
         TString totcut=plotcuts[iplot].baseline+" && "+plotcuts[iplot].bincuts[ibin]+" && "+abcdcuts[iabcd];
-        table_cuts.push_back(TableRow("", totcut.Data()));
+        table_cuts.push_back(TableRow("", totcut.Data(),0,0,wgt));
         allcuts[iplot][iabcd].push_back(totcut);
       } // Loop over bins
       TString tname = "rmj"; tname += iplot; tname += iabcd;

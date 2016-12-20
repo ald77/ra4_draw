@@ -113,7 +113,7 @@ int main(int argc, char *argv[]){
   NamedFunc wgt = "weight" * Higfuncs::eff_higtrig;
   string base_func("njets>=4 && njets<=5 && met/met_calo<5"); //met/met_calo
   // zll skim: ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && 
-  // nleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
+  // nleps==2 && Max$(leps_pt)>40
   if (sample=="zll") base_func = base_func+"&& nleps==2 && met<50";
   // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
   if (sample=="qcd") base_func = base_func+"&& nvleps==0 && ntks==0 && low_dphi";
