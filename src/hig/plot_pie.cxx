@@ -170,10 +170,6 @@ int main(int argc, char *argv[]){
       table_cuts.push_back(TableRow("", icut, 0, 0, wgt));  
       pnames.push_back("pie_"+sample+"_"+tag+"_"+CodeToPlainText(icut)+"_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
     }
-    pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m_{jj}> [GeV]", {100., 140.}),
-      base_func && ixcut, procs_ntrub, plt_types).Weight(wgt).Tag("trub");
-    pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m_{jj}> [GeV]", {100., 140.}),
-      base_func && ixcut, procs_ntrub_sample, plt_types).Weight(wgt).Tag(sample+"_trub");
   }
   pm.Push<Table>(sample+"_"+tag,  table_cuts, procs_ntrub, true, true, true);
   sm.AddSlide(pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts");  

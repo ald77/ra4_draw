@@ -230,7 +230,7 @@ int main(int argc, char *argv[]){
               ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&hig_dm<40 && hig_drmax<=2.2", 
               procs, all_plot_types).Weight(wgt).Tag(sample);
               string tmp_seln = ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb];
-              if (!do_note) {
+              if (!do_note || sample=="search") {
                 pm.Push<Hist1D>(Axis(20,0,2000,"ht", "H_{T} [GeV]"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
                 pm.Push<Hist1D>(Axis(18,150,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
                 pm.Push<Hist1D>(Axis(15,0,150,"hig_dm", "#Deltam [GeV]", {40.}), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);

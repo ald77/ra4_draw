@@ -9,6 +9,14 @@ using namespace std;
 
 namespace Higfuncs{
 
+const NamedFunc ntrub("ntrub",[](const Baby &b) -> NamedFunc::ScalarType{
+  int tmp_ntrub(0);
+  for (unsigned i(0); i<b.jets_pt()->size(); i++){
+    if (!b.jets_h1()->at(i) && !b.jets_h2()->at(i)) continue;
+    if (b.jets_hflavor()->at(i)==5) tmp_ntrub++;
+  }
+  return tmp_ntrub;
+});
 
 const NamedFunc trig_hig("trig_hig", [](const Baby &b) -> NamedFunc::ScalarType{
 	if ( b.trig()->at(13)||b.trig()->at(33)||b.trig()->at(14)||b.trig()->at(15)||b.trig()->at(30)||b.trig()->at(31)

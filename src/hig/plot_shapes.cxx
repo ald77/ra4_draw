@@ -1,259 +1,273 @@
-///// plot_closure: Compares 2b, 3b, and 4b Higgs distributions
-
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <chrono>
+#include <ctime>
 
-#include <unistd.h>
-#include <stdlib.h>
 #include <getopt.h>
 
 #include "TError.h" // Controls error level reporting
+#include "TColor.h" // Controls error level reporting
 
 #include "core/utilities.hpp"
 #include "core/baby.hpp"
 #include "core/process.hpp"
+#include "core/named_func.hpp"
 #include "core/plot_maker.hpp"
-#include "core/plot_opt.hpp"
-#include "core/hist1d.hpp"
 #include "core/palette.hpp"
+#include "core/table.hpp"
+#include "core/hist1d.hpp"
+#include "core/plot_opt.hpp"
+#include "core/functions.hpp"
+#include "hig/hig_functions.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
 
+void GetOptions(int argc, char *argv[]);
+
 namespace{
-  // pick only specific breakdowns to reduce output; possible options: 
-  // {"procs","all_btag", "tt_ntrub","tt_btag", "tt_1lntrub","tt_1lbtag","vjets_2lntrub"};
-  vector<string> proclist = {"all_btag"};
+	bool do_allbkg = false;
+  string sample = "search";
+  string json = "4p0";
+  bool unblind = false;
+  bool do_note = false;
 }
 
-int main(){
+int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
+  GetOptions(argc, argv);
 
-  chrono::high_resolution_clock::time_point begTime;
-  begTime = chrono::high_resolution_clock::now();
+  time_t begtime, endtime;
+  time(&begtime);
 
-  PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
-  log_lumi.Title(TitleType::preliminary)
+  PlotOpt lin_shapes_info("txt/plot_styles.txt", "CMSPaper");
+  lin_shapes_info.Title(TitleType::info)
     .Bottom(BottomType::ratio)
-    .YAxis(YAxisType::log)
-    .Stack(StackType::data_norm);
-  PlotOpt lin_lumi = log_lumi().YAxis(YAxisType::linear);
-  PlotOpt log_shapes = log_lumi().Stack(StackType::shapes)
-    .ShowBackgroundError(false);
-  PlotOpt lin_shapes = log_shapes().YAxis(YAxisType::linear);
-  PlotOpt log_lumi_info = log_lumi().Title(TitleType::info);
-  PlotOpt lin_lumi_info = lin_lumi().Title(TitleType::info);
-  PlotOpt log_shapes_info = log_shapes().Title(TitleType::info);
-  PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info);
-  vector<PlotOpt> all_plot_types = {lin_shapes_info};
-  Palette colors("txt/colors.txt", "default");
+    .YAxis(YAxisType::linear)
+    .Stack(StackType::shapes);
+  // PlotOpt log_shapes_info = lin_shapes_info.YAxis(YAxisType::log);
+  vector<PlotOpt> plt_types = {lin_shapes_info};
 
-
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////        Skims        //////////////////////////////////////////
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/");
+  string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
+  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
+  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_nj4zcandl40/";
+  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
+  string folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higloose/";
+  if (sample=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1/";
+  if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_nj4zcandl40/";
+  if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_nl0nj4met150/";
 
-  set<string> filetags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
-                          "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root",
-                          "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root",
-                          "*_ST_*.root",
-                          // "*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root",
-                          "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
-                          "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"};
-  set<string> allfiles = attach_folder(foldermc, filetags);
+  set<string> alltags; 
+  if (sample=="ttbar" || sample=="search") alltags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root",
+                                      "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", 
+                                      "*_ttHJetTobb*.root","*_TTTT*.root"};
+  if (sample=="zll") alltags = {"*DYJetsToLL*.root"};
+  if (sample=="qcd") alltags = {//"*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*",
+                                //"*QCD_HT300to500_Tune*", 
+                                 "*QCD_HT500to700_Tune*",
+                                 "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
+                                 "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*"};
+  if (do_allbkg) { // don't include QCD MC unless in QCD control sample
+    if(sample=="qcd") alltags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root", 
+            "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root",
+            "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root", "*_ST_*.root",
+            "*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root",
+            "*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"};
+    else  alltags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root", 
+            "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root",
+            "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root", "*_ST_*.root",
+            "*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"};
+  }
+  set<string> allfiles = attach_folder(foldermc,alltags);
 
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////     Defining cuts   //////////////////////////////////////////
-  // Cuts in baseline speed up the yield finding
-  string baseline = "pass && stitch && weight<1 && njets>=4 && njets<=5";
-  NamedFunc basefunc(baseline);
+  // Baseline definitions
+  string baseline("njets>=4 && njets<=5 && met/met_calo<5"); //met/met_calo
+  // zll skim: ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && 
+  // nleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
+  if (sample=="zll") baseline = baseline+"&& nleps==2 && met<50";
+  // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
+  if (sample=="qcd") baseline = baseline+"&& nvleps==0 && low_dphi";
+  // ttbar skim - met>100 && nleps==1 && (njets==4||njets==5) && nbm>=2
+  if (sample=="ttbar") baseline = baseline+"&& nleps==1 && mt<100";
+  // search skim - met>100 && nvleps==0 && (njets==4||njets==5) && nbm>=2
+  if (sample=="search") baseline = baseline+"&& nvleps==0";
+    
 
   ////// Nb cuts
-  string c_2b="nbt==2&&nbm==2";
-  string c_3b="nbt>=2&&nbm==3&&nbl==3";
-  string c_4b="nbt>=2&&nbm>=3&&nbl>=4";
+  vector<string> nbcuts;
+  unsigned firstnb = 0;
+  nbcuts.push_back("nbm==0");
+  nbcuts.push_back("nbm==1");
+  nbcuts.push_back("nbt==2&&nbm==2");
+  if (sample=="ttbar" || sample=="search") {
+    firstnb = 2;
+    nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
+    nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
+  } else if (sample=="qcd") {
+    nbcuts.push_back("nbt>=2&&nbm>=3");
+  }
 
-  NamedFunc ntrub("ntrub",[](const Baby &b) -> NamedFunc::ScalarType{
-    int tmp_ntrub(0);
-    for (unsigned i(0); i<b.jets_pt()->size(); i++){
-      if (!b.jets_h1()->at(i) && !b.jets_h2()->at(i)) continue;
-      if (b.jets_hflavor()->at(i)==5) tmp_ntrub++;
+  string samplename = "t#bar{t}+X";
+  if (sample=="qcd") samplename = "QCD";
+  if (sample=="zll") samplename = "Z#rightarrow ll";
+  if (do_allbkg) samplename = "All bkg.";
+
+  vector<int> colors = {kGreen+3, kGreen+1, kOrange, kAzure+1, kBlue+1};
+
+  vector<shared_ptr<Process> > procs = vector<shared_ptr<Process> >();
+  for (unsigned inb(firstnb); inb<nbcuts.size(); inb++){
+    // if (sample=="qcd" && inb==nbcuts.size()-1) continue;
+    procs.push_back(Process::MakeShared<Baby_full>(samplename+" ("+RoundNumber(inb,0).Data()+"b)", 
+      Process::Type::background, colors[inb], allfiles, baseline+"&& pass && stitch &&"+nbcuts[inb]));
+  }
+  vector<int> colors_trub = {kAzure-4, kTeal-8, kOrange-4, kPink+2, kMagenta-1};
+  vector<shared_ptr<Process> > procs_trub = vector<shared_ptr<Process> >();
+  for (unsigned inb(firstnb); inb<nbcuts.size(); inb++){
+    if ((sample=="zll" || sample=="qcd") && inb==nbcuts.size()-1) { // merge 4b into 3b
+      procs_trub.push_back(Process::MakeShared<Baby_full>(samplename+" (#geq"+RoundNumber(inb,0).Data()+" B-hadrons)", 
+        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub>=inb && baseline+"&& pass && stitch"));
+    } else {
+      procs_trub.push_back(Process::MakeShared<Baby_full>(samplename+" ("+RoundNumber(inb,0).Data()+" B-hadrons)", 
+        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub==inb && baseline+"&& pass && stitch"));
     }
-    return tmp_ntrub;
-  });
+  }
 
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////// Defining processes //////////////////////////////////////////
-  map<string, vector<shared_ptr<Process> > > procs;
+  string jsonCuts = "json4p0";
+  float lumi = 4.3;
+  if(json=="12p9"){
+    lumi = 12.9;
+    jsonCuts = "json12p9";
+  } else if (json=="36p2"){
+    lumi = 36.2;
+    jsonCuts = "1";
+  }
+  string lumi_s=RoundNumber(lumi,1).Data();
 
-  // comparison by process
-  //---------------------------------------------------
-  // procs["procs"] = vector<shared_ptr<Process> >();
-  // procs["procs"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (2b)", Process::Type::background, kBlack,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root", 
-  //   foldermc+"*_TTZ*.root", foldermc+"*_TTW*.root", foldermc+"*_TTGJets*.root"
-  // }, baseline+"&& nvleps==0 &&"+c_2b+"&& ntruleps>=1"));
-  // procs["procs"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (3b)", Process::Type::background, colors("tt_1l"),
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root", 
-  //   foldermc+"*_TTZ*.root", foldermc+"*_TTW*.root", foldermc+"*_TTGJets*.root"
-  // }, baseline+"&& nvleps==0 &&"+c_3b+"&& ntruleps>=1"));
-  // procs["procs"].push_back(Process::MakeShared<Baby_full>("V+jets (3b)", Process::Type::background, kOrange+1,
-  //   {foldermc+"*_ZJet*.root", foldermc+"*_WJetsToLNu*.root"}, 
-  //   baseline+"&& nvleps==0 &&"+c_3b));
-  // procs["procs"].push_back(Process::MakeShared<Baby_full>("Single t (3b)", Process::Type::background, colors("single_t"),
-  //   {foldermc+"*_ST_*.root"}, 
-  //   baseline+"&& nvleps==0 &&"+c_3b));
-  // procs["procs"].push_back(Process::MakeShared<Baby_full>("Other (3b)", Process::Type::background, kPink-2,
-  //   {foldermc+"*DYJetsToLL*.root", foldermc+"*_TTTT*.root", foldermc+"*_ttHJetTobb*.root", 
-  //   foldermc+"*_WH_HToBB*.root", foldermc+"*_ZH_HToBB*.root", foldermc+"*_WWTo*.root", 
-  //   foldermc+"*_WZ*.root", foldermc+"*_ZZ_*.root",
-  //   foldermc+"*QCD_HT*0_Tune*.root", foldermc+"*QCD_HT*Inf_Tune*.root"},
-    // baseline+"&& nvleps==0 &&"+c_3b));
+  vector<vector<string>> combos;
+  int color_data = kBlue-7;
+  if (sample=="zll") { // do 0b vs 1b
+    color_data = kOrange+1;
+    combos.push_back({"nbm==1","nbm==0"});
+  } else if (sample=="qcd") { // do 0b vs 1b and 2b vs 3+b
+    color_data = kOrange;
+    combos.push_back({"nbm==1","nbm==0"});
+    combos.push_back({"nbt>=2&&nbm>=3","nbt==2&&nbm==2"});
+  } else if (sample=="search" || sample=="ttbar") {
+    if (json=="4p0") { // at low lumi, do 2b vs 3+b
+      combos.push_back({"nbt>=2&&nbm>=3","nbt==2&&nbm==2"});
+    } else { // at higher lumi, do 2b vs 3b and 2b vs 4b
+      combos.push_back({"nbt>=2&&nbm==3&&nbl==3","nbt==2&&nbm==2"});
+      combos.push_back({"nbt>=2&&nbm>=3&&nbl>=4","nbt==2&&nbm==2"});
+    }
+  }
 
-  // comparison by b-tag category for ttbar
-  //---------------------------------------------------
-  procs["all_btag"] = vector<shared_ptr<Process> >();
-  procs["all_btag"].push_back(Process::MakeShared<Baby_full>("All bkg (2b)", Process::Type::background, kBlack,
-                              allfiles, baseline+"&& nvleps==0 &&"+c_2b));
-  procs["all_btag"].push_back(Process::MakeShared<Baby_full>("All bkg (3b)", Process::Type::background, kAzure+1,
-                              allfiles, baseline+"&& nvleps==0 &&"+c_3b));
-  procs["all_btag"].push_back(Process::MakeShared<Baby_full>("All bkg (4b)", Process::Type::background, kPink+2,
-                              allfiles, baseline+"&& nvleps==0 &&"+c_4b));
+  vector<vector<shared_ptr<Process> >> procs_data;
+  for (auto &icomb: combos){
+    procs_data.push_back(vector<shared_ptr<Process> >());
+    vector<string> combos_label = {"2b","#geq 3b"};
+    if (Contains(icomb[0],"nbm==1")) combos_label = {"1b","0b"};
+    if (Contains(icomb[0],"nbl>=4")) combos_label = {"2b","4b"};
+    if (Contains(icomb[0],"nbl==3")) combos_label = {"2b","3b"};
+    string tmpcuts = "pass && met/met_calo<5 &&"+jsonCuts+"&&"+icomb[0]; //if not cast here, it crashes
+    procs_data.back().push_back(Process::MakeShared<Baby_full>(combos_label[0]+" Data "+lumi_s+" fb^{-1}", 
+      Process::Type::data, kBlack, {folderdata+"*RunB*root"}, Higfuncs::trig_hig && tmpcuts));
+    tmpcuts = "pass && met/met_calo<5 &&"+jsonCuts+"&&"+icomb[1];
+    procs_data.back().push_back(Process::MakeShared<Baby_full>(combos_label[1]+" Data "+lumi_s+" fb^{-1}", 
+      Process::Type::background, kBlack, {folderdata+"*RunB*root"}, Higfuncs::trig_hig && tmpcuts));
+    procs_data.back().back()->SetFillColor(color_data);
+    procs_data.back().back()->SetLineColor(color_data);
+    procs_data.back().back()->SetLineWidth(2);
+  }
 
-  // comparison by b-tag category for ttbar
-  //---------------------------------------------------
-  // procs["tt_btag"] = vector<shared_ptr<Process> >();
-  // procs["tt_btag"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (2b)", Process::Type::background, kBlack,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, baseline+"&& nvleps==0 && ntruleps>=1 &&"+c_2b));
-  // procs["tt_btag"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (3b)", Process::Type::background, kAzure+1,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, baseline+"&& nvleps==0 && ntruleps>=1 &&"+c_3b));
-  // procs["tt_btag"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (4b)", Process::Type::background, kPink+2,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, baseline+"&& nvleps==0 && ntruleps>=1 &&"+c_4b));
 
-  // comparison by # true b-tags category for ttbar
-  //---------------------------------------------------
-  // procs["tt_ntrub"] = vector<shared_ptr<Process> >();
-  // procs["tt_ntrub"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (2 true b)", Process::Type::background, kOrange-4,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, basefunc && "ntruleps>=1" && ntrub==2));
-  // procs["tt_ntrub"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (3 true b)", Process::Type::background, kTeal-8,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, basefunc && "ntruleps>=1" && ntrub==3));
-  // procs["tt_ntrub"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (#geq4 true b)", Process::Type::background, kAzure-4,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, basefunc && "ntruleps>=1" && ntrub>=4));
+  string metdef = "met";
+  if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
+  
 
-  // comparison 0 to 1 lep by b-tag category for ttbar
-  //---------------------------------------------------
-  // procs["tt_1lbtag"] = vector<shared_ptr<Process> >();
-  // procs["tt_1lbtag"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (2b)", Process::Type::background, kBlack,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, baseline+"&& nvleps==0 && ntruleps>=1 &&"+c_2b));
-  // procs["tt_1lbtag"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (3b)", Process::Type::background, kAzure+1,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, baseline+"&& nvleps==0 && ntruleps>=1 &&"+c_3b));
-  // procs["tt_1lbtag"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (4b)", Process::Type::background, kPink+2,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, baseline+"&& nvleps==0 && ntruleps>=1 &&"+c_4b));
-  // procs["tt_1lbtag"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (1l, 2b)", Process::Type::background, kBlack,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, baseline+"&& nvleps==1 && ntruleps>=1 &&"+c_2b)); procs["tt_1lbtag"].back()->SetLineStyle(2);
-  // procs["tt_1lbtag"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (1l, 3b)", Process::Type::background, kAzure+1,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, baseline+"&& nvleps==1 && ntruleps>=1 &&"+c_3b)); procs["tt_1lbtag"].back()->SetLineStyle(2);
-  // procs["tt_1lbtag"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (1l, 4b)", Process::Type::background, kPink+2,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, baseline+"&& nvleps==1 && ntruleps>=1 &&"+c_4b)); procs["tt_1lbtag"].back()->SetLineStyle(2);
+  vector<string> xcuts;
+  if (!do_note) xcuts.push_back(metdef+">150");
+  xcuts.push_back(metdef+">150 && hig_dm<40 && hig_am<200");
+  xcuts.push_back(metdef+">150 && hig_dm<40 && hig_am<200 && hig_drmax<2.2");
 
-  // comparison by # true b-tags category for ttbar
-  //---------------------------------------------------
-  // procs["tt_1lntrub"] = vector<shared_ptr<Process> >();
-  // procs["tt_1lntrub"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (2 true b)", Process::Type::background, kOrange-4,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, basefunc && "nvleps==0 && ntruleps>=1" && ntrub==2));
-  // procs["tt_1lntrub"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (3 true b)", Process::Type::background, kTeal-8,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, basefunc && "nvleps==0 && ntruleps>=1" && ntrub==3));
-  // procs["tt_1lntrub"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (#geq4 true b)", Process::Type::background, kAzure-4,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, basefunc && "nvleps==0 && ntruleps>=1" && ntrub>=4));
-  // procs["tt_1lntrub"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (1l, 2 true b)", Process::Type::background, kOrange-4,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, basefunc && "nvleps==1 && ntruleps>=1" && ntrub==2)); procs["tt_1lntrub"].back()->SetLineStyle(2);
-  // procs["tt_1lntrub"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (1l, 3 true b)", Process::Type::background, kTeal-8,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, basefunc && "nvleps==1 && ntruleps>=1" && ntrub==3)); procs["tt_1lntrub"].back()->SetLineStyle(2);
-  // procs["tt_1lntrub"].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X (1l, #geq4 true b)", Process::Type::background, kAzure-4,
-  //   {foldermc+"*_TTJets*SingleLept*.root", foldermc+"*_TTJets*DiLept*.root", foldermc+"*_TTJets_HT*.root"
-  // }, basefunc && "nvleps==1 && ntruleps>=1" && ntrub>=4)); procs["tt_1lntrub"].back()->SetLineStyle(2);
+  vector<string> scuts; //additional sample specific options
+  scuts.push_back("1");
+  if (!do_note) {
+    if (sample=="qcd") scuts.push_back("ntks==0");
+    if (sample=="search") scuts.push_back("ntks==0 && !low_dphi");
+  }
 
-  // comparison by # true b-tags category for vjets
-  //---------------------------------------------------
-  // procs["vjets_2lntrub"] = vector<shared_ptr<Process> >();
-  // procs["vjets_2lntrub"].push_back(Process::MakeShared<Baby_full>("V+jets (2 true b)", Process::Type::background, kOrange,
-  //   {foldermc+"*_ZJet*.root", foldermc+"*_WJetsToLNu*.root", foldermc+"*_DYJetsToLL*.root"
-  // }, basefunc && "nvleps==0" && ntrub==2));
-  // procs["vjets_2lntrub"].push_back(Process::MakeShared<Baby_full>("V+jets (3 true b)", Process::Type::background, kOrange+7,
-  //   {foldermc+"*_ZJet*.root", foldermc+"*_WJetsToLNu*.root", foldermc+"*_DYJetsToLL*.root"
-  // }, basefunc && "nvleps==0" && ntrub==3));
-  // procs["vjets_2lntrub"].push_back(Process::MakeShared<Baby_full>("V+jets (#geq4 true b)", Process::Type::background, kRed+1,
-  //   {foldermc+"*_ZJet*.root", foldermc+"*_WJetsToLNu*.root", foldermc+"*_DYJetsToLL*.root"
-  // }, basefunc && "nvleps==0" && ntrub>=4));
-  // procs["vjets_2lntrub"].push_back(Process::MakeShared<Baby_full>("V+jets (2l, 2 true b)", Process::Type::background, kOrange,
-  //   {foldermc+"*_ZJet*.root", foldermc+"*_WJetsToLNu*.root", foldermc+"*_DYJetsToLL*.root"
-  // }, basefunc && "nvleps==2 && (mumu_m*(mumu_m>0)+elel_m*(elel_m>0))>80&&(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))<100" && ntrub==2)); procs["vjets_2lntrub"].back()->SetLineStyle(2);
-  // procs["vjets_2lntrub"].push_back(Process::MakeShared<Baby_full>("V+jets (2l, 3 true b)", Process::Type::background, kOrange+7,
-  //   {foldermc+"*_ZJet*.root", foldermc+"*_WJetsToLNu*.root", foldermc+"*_DYJetsToLL*.root"
-  // }, basefunc && "nvleps==2 && (mumu_m*(mumu_m>0)+elel_m*(elel_m>0))>80&&(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))<100" && ntrub==3)); procs["vjets_2lntrub"].back()->SetLineStyle(2);
-  // procs["vjets_2lntrub"].push_back(Process::MakeShared<Baby_full>("V+jets (2l, #geq4 true b)", Process::Type::background, kRed+1,
-  //   {foldermc+"*_ZJet*.root", foldermc+"*_WJetsToLNu*.root", foldermc+"*_DYJetsToLL*.root"
-  // }, basefunc && "nvleps==2 && (mumu_m*(mumu_m>0)+elel_m*(elel_m>0))>80&&(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))<100" && ntrub>=4)); procs["vjets_2lntrub"].back()->SetLineStyle(2);
-
-  vector<TString> metcuts;
-  metcuts.push_back("met>150");
-  metcuts.push_back("met>150 && met<=200");
-  metcuts.push_back("met>200 && met<=300");
-  metcuts.push_back("met>300");
-
-  vector<TString> higcuts;
-  higcuts.push_back("1");
-  higcuts.push_back("ntks==0 && !low_dphi && hig_drmax<2.2");
-
-  //// Adding plots
   PlotMaker pm;
 
-  // TString base_pretty(baseline); base_pretty.ReplaceAll("pass &&","").ReplaceAll("stitch &&","").ReplaceAll("&& weight<1","");
-
-  for (auto &ipr: proclist){
-    if (procs.find(ipr)==procs.end()) {cout<<"Breakdown "<<ipr<<" not coded in."<<endl; exit(0);}
-    for (auto &imet: metcuts){
-      for (auto &ihig: higcuts){
-        pm.Push<Hist1D>(Axis(11,0,110,"hig_dm", "#Delta m_{jj} [GeV]", {40.}),
-                        baseline+"&&"+ihig+"&&"+imet, procs[ipr], all_plot_types).Tag(ipr);
-        pm.Push<Hist1D>(Axis(12,0,240,"hig_am", "<m_{jj}> [GeV]", {100., 140.}),
-                        baseline+"&&"+ihig+"&&"+imet, procs[ipr], all_plot_types).Tag(ipr);
-        if (!ihig.Contains("hig_drmax"))
-          pm.Push<Hist1D>(Axis(25,0,5,"hig_drmax", "#Delta R_{max}", {2.2}),
-                        baseline+"&&"+ihig+"&&"+imet, procs[ipr], all_plot_types).Tag(ipr);
+  for (unsigned is(0); is<scuts.size(); is++){
+    for (unsigned ic(0); ic<xcuts.size(); ic++){
+      if (sample!="search" || unblind) {
+        for (unsigned i(0); i<combos.size(); i++)
+          pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
+            baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_data[i], plt_types).Tag(sample+"_datavdata"+to_string(i));
       }
+
+      pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
+        baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Tag(sample+"_shape_bcats");
+
+      pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
+        baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Tag(sample+"_shape_trub");
     }
   }
 
   pm.min_print_ = true;
   pm.MakePlots(40.);
 
-  double seconds = (chrono::duration<double>(chrono::high_resolution_clock::now() - begTime)).count();
-  TString hhmmss = HoursMinSec(seconds);
-  cout<<endl<<"Making plots took "<<round(seconds)<<" seconds ("<<hhmmss<<")"<<endl<<endl;
+  time(&endtime);
+  cout<<endl<<"Making plots took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
 } // main
 
+void GetOptions(int argc, char *argv[]){
+  while(true){
+    static struct option long_options[] = {
+      {"json", required_argument, 0, 'j'},
+      {"sample", required_argument, 0, 's'},    
+      {"unblind", no_argument, 0, 'u'},   
+      {"note", no_argument, 0, 0},    
+      {0, 0, 0, 0}
+    };
+
+    char opt = -1;
+    int option_index;
+    opt = getopt_long(argc, argv, "js:tau", long_options, &option_index);
+    if(opt == -1) break;
+
+    string optname;
+    switch(opt){
+    case 'u':
+      unblind = true;
+      break;
+    case 'a':
+      do_allbkg = true;
+      break;
+    case 's':
+      sample = optarg;
+      break;
+    case 'j':
+      json = optarg;
+      break;
+    case 0:
+      optname = long_options[option_index].name;
+      if(optname == "note"){
+        do_note = true;
+      }else{
+        printf("Bad option! Found option name %s\n", optname.c_str());
+        exit(1);
+      }
+      break;
+
+    default:
+      printf("Bad option! getopt_long returned character code 0%o\n", opt);
+      break;
+    }
+  }
+}
