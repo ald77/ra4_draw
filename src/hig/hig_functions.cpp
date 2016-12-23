@@ -30,7 +30,7 @@ const NamedFunc eff_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::Scala
     float errup, errdown; // Not used, but for reference
     float eff = 1., met = b.met(), ht = b.ht();
     errup=0;errdown=0;
-    cout<<errup<<errdown<<endl;
+    errup+=errdown;
     if(b.type() < 1000) eff = 1;
 
     //// Efficiency of the MET[100||110||120] triggers in all 36.2 ifb
