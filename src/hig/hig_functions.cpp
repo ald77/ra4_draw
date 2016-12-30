@@ -270,10 +270,35 @@ const NamedFunc eff_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::Scala
       //// MET || Ele27 || Ele105 || Ele115
       //// "(trig[13]||trig[33]||trig[14]||trig[15]||trig[30]||trig[31]||trig[22]||trig[40]||trig[24]||trig[41])"
     } else if(b.nels()==1 && b.nmus()==0){
-    	vector<float> leps_pt; 
-    	if (b.leps_pt()->size()>0) leps_pt.push_back(b.leps_pt()->at(0));
-    	else leps_pt.push_back(0);
-      if(leps_pt[0]>  20 && leps_pt[0]<=  25 && met> 150 && met<= 160) {eff = 0.643; errup=0.037; errdown=0.039;}
+      vector<float> leps_pt; 
+      if (b.leps_pt()->size()>0) leps_pt.push_back(b.leps_pt()->at(0));
+      else leps_pt.push_back(0);
+      if(leps_pt[0]>  20 && leps_pt[0]<=  25 && met> 100 && met<= 110) {eff=0.160; errup=0.019; errdown = 0.017;}
+      else if(leps_pt[0]> 25 && leps_pt[0]<=  30 && met>100 && met<= 110) {eff=0.400; errup=0.024; errdown=0.024;}
+      else if(leps_pt[0]> 30 && leps_pt[0]<= 110 && met>100 && met<= 110) {eff=0.728; errup=0.006; errdown=0.006;}
+      else if(leps_pt[0]>110 && leps_pt[0]<= 120 && met>100 && met<= 110) {eff=0.880; errup=0.017; errdown=0.019;}
+      else if(leps_pt[0]>120 && leps_pt[0]<=9999 && met>100 && met<= 110) {eff=0.950; errup=0.003; errdown=0.003;}
+      else if(leps_pt[0]> 20 && leps_pt[0]<=  25 && met>110 && met<= 120) {eff=0.244; errup=0.024; errdown=0.023;}
+      else if(leps_pt[0]> 25 && leps_pt[0]<=  30 && met>110 && met<= 120) {eff=0.420; errup=0.027; errdown=0.027;}
+      else if(leps_pt[0]> 30 && leps_pt[0]<= 110 && met>110 && met<= 120) {eff=0.761; errup=0.007; errdown=0.007;}
+      else if(leps_pt[0]>110 && leps_pt[0]<= 120 && met>110 && met<= 120) {eff=0.918; errup=0.015; errdown=0.017;}
+      else if(leps_pt[0]>120 && leps_pt[0]<=9999 && met>110 && met<= 120) {eff=0.958; errup=0.003; errdown=0.003;}
+      else if(leps_pt[0]> 20 && leps_pt[0]<=  25 && met>120 && met<= 130) {eff=0.331; errup=0.030; errdown=0.029;}
+      else if(leps_pt[0]> 25 && leps_pt[0]<=  30 && met>120 && met<= 130) {eff=0.500; errup=0.031; errdown=0.031;}
+      else if(leps_pt[0]> 30 && leps_pt[0]<= 110 && met>120 && met<= 130) {eff=0.800; errup=0.007; errdown=0.007;}
+      else if(leps_pt[0]>110 && leps_pt[0]<= 120 && met>120 && met<= 130) {eff=0.928; errup=0.015; errdown=0.018;}
+      else if(leps_pt[0]>120 && leps_pt[0]<=9999 && met>120 && met<= 130) {eff=0.960; errup=0.003; errdown=0.003;}
+      else if(leps_pt[0]> 20 && leps_pt[0]<=  25 && met>130 && met<= 140) {eff=0.491; errup=0.031; errdown=0.031;}
+      else if(leps_pt[0]> 25 && leps_pt[0]<=  30 && met>130 && met<= 140) {eff=0.608; errup=0.033; errdown=0.034;}
+      else if(leps_pt[0]> 30 && leps_pt[0]<= 110 && met>130 && met<= 140) {eff=0.831; errup=0.007; errdown=0.007;}
+      else if(leps_pt[0]>110 && leps_pt[0]<= 120 && met>130 && met<= 140) {eff=0.931; errup=0.016; errdown=0.020;}
+      else if(leps_pt[0]>120 && leps_pt[0]<=9999 && met>130 && met<= 140) {eff=0.967; errup=0.003; errdown=0.003;}
+      else if(leps_pt[0]> 20 && leps_pt[0]<=  25 && met>140 && met<= 150) {eff=0.573; errup=0.033; errdown=0.033;}
+      else if(leps_pt[0]> 25 && leps_pt[0]<=  30 && met>140 && met<= 150) {eff=0.677; errup=0.035; errdown=0.037;}
+      else if(leps_pt[0]> 30 && leps_pt[0]<= 110 && met>140 && met<= 150) {eff=0.856; errup=0.007; errdown=0.007;}
+      else if(leps_pt[0]>110 && leps_pt[0]<= 120 && met>140 && met<= 150) {eff=0.923; errup=0.018; errdown=0.022;}
+      else if(leps_pt[0]>120 && leps_pt[0]<=9999 && met>140 && met<= 150) {eff=0.971; errup=0.003; errdown=0.004;}
+      else if(leps_pt[0]> 20 && leps_pt[0]<=  25 && met>150 && met<= 160) {eff=0.643; errup=0.037; errdown=0.039;}
       else if(leps_pt[0]> 25 && leps_pt[0]<=  30 && met> 150 && met<= 160) {eff=0.738; errup=0.033; errdown=0.036;}
       else if(leps_pt[0]> 30 && leps_pt[0]<= 110 && met> 150 && met<= 160) {eff=0.871; errup=0.007; errdown=0.007;}
       else if(leps_pt[0]>110 && leps_pt[0]<= 120 && met> 150 && met<= 160) {eff=0.935; errup=0.016; errdown=0.021;}
@@ -312,10 +337,30 @@ const NamedFunc eff_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::Scala
       //// MET || Mu24 || Mu50
       //// "(trig[13]||trig[33]||trig[14]||trig[15]||trig[30]||trig[31]||trig[19]||trig[55]||trig[21])"
     } else if(b.nels()==0 && b.nmus()==1){
-    	vector<float> leps_pt; 
-    	if (b.leps_pt()->size()>0) leps_pt.push_back(b.leps_pt()->at(0));
-    	else leps_pt.push_back(0);
-      if(leps_pt[0]>20 && leps_pt[0]<=  25 && met> 150 && met<= 160) {eff=0.778; errup=0.024; errdown=0.026;}
+      vector<float> leps_pt; 
+      if (b.leps_pt()->size()>0) leps_pt.push_back(b.leps_pt()->at(0));
+      else leps_pt.push_back(0);
+      if(leps_pt[0]>  20 && leps_pt[0]<=  25 && met> 100 && met<= 110) {eff=0.271; errup=0.017; errdown = 0.016;}
+      else if(leps_pt[0]>25 && leps_pt[0]<=  30 && met> 100 && met<= 110) {eff=0.725; errup=0.017; errdown=0.018;}
+      else if(leps_pt[0]>30 && leps_pt[0]<=  50 && met> 100 && met<= 110) {eff=0.814; errup=0.008; errdown=0.009;}
+      else if(leps_pt[0]>50 && leps_pt[0]<=9999 && met> 100 && met<= 110) {eff=0.964; errup=0.002; errdown=0.002;}
+      else if(leps_pt[0]>20 && leps_pt[0]<=  25 && met> 110 && met<= 120) {eff=0.363; errup=0.020; errdown=0.020;}
+      else if(leps_pt[0]>25 && leps_pt[0]<=  30 && met> 110 && met<= 120) {eff=0.755; errup=0.018; errdown=0.019;}
+      else if(leps_pt[0]>30 && leps_pt[0]<=  50 && met> 110 && met<= 120) {eff=0.842; errup=0.009; errdown=0.009;}
+      else if(leps_pt[0]>50 && leps_pt[0]<=9999 && met> 110 && met<= 120) {eff=0.969; errup=0.002; errdown=0.002;}
+      else if(leps_pt[0]>20 && leps_pt[0]<=  25 && met> 120 && met<= 130) {eff=0.452; errup=0.022; errdown=0.022;}
+      else if(leps_pt[0]>25 && leps_pt[0]<=  30 && met> 120 && met<= 130) {eff=0.824; errup=0.018; errdown=0.019;}
+      else if(leps_pt[0]>30 && leps_pt[0]<=  50 && met> 120 && met<= 130) {eff=0.869; errup=0.009; errdown=0.009;}
+      else if(leps_pt[0]>50 && leps_pt[0]<=9999 && met> 120 && met<= 130) {eff=0.971; errup=0.002; errdown=0.002;}
+      else if(leps_pt[0]>20 && leps_pt[0]<=  25 && met> 130 && met<= 140) {eff=0.590; errup=0.025; errdown=0.025;}
+      else if(leps_pt[0]>25 && leps_pt[0]<=  30 && met> 130 && met<= 140) {eff=0.875; errup=0.017; errdown=0.019;}
+      else if(leps_pt[0]>30 && leps_pt[0]<=  50 && met> 130 && met<= 140) {eff=0.904; errup=0.008; errdown=0.009;}
+      else if(leps_pt[0]>50 && leps_pt[0]<=9999 && met> 130 && met<= 140) {eff=0.972; errup=0.002; errdown=0.002;}
+      else if(leps_pt[0]>20 && leps_pt[0]<=  25 && met> 140 && met<= 150) {eff=0.660; errup=0.026; errdown=0.027;}
+      else if(leps_pt[0]>25 && leps_pt[0]<=  30 && met> 140 && met<= 150) {eff=0.891; errup=0.017; errdown=0.019;}
+      else if(leps_pt[0]>30 && leps_pt[0]<=  50 && met> 140 && met<= 150) {eff=0.938; errup=0.007; errdown=0.008;}
+      else if(leps_pt[0]>50 && leps_pt[0]<=9999 && met> 140 && met<= 150) {eff=0.980; errup=0.002; errdown=0.002;}
+      else if(leps_pt[0]>20 && leps_pt[0]<=  25 && met> 150 && met<= 160) {eff=0.778; errup=0.024; errdown=0.026;}
       else if(leps_pt[0]>25 && leps_pt[0]<=  30 && met> 150 && met<= 160) {eff=0.915; errup=0.016; errdown=0.019;}
       else if(leps_pt[0]>30 && leps_pt[0]<=  50 && met> 150 && met<= 160) {eff=0.940; errup=0.008; errdown=0.009;}
       else if(leps_pt[0]>50 && leps_pt[0]<=9999 && met> 150 && met<= 160) {eff=0.984; errup=0.002; errdown=0.002;}

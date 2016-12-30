@@ -161,7 +161,7 @@ int main(int argc, char *argv[]){
                                    "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
                                    "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
   
-  vector<string> sigMasses({"225"});//, "300", "400", "700"});
+  vector<string> sigMasses({"225", "300", "400", "700"});
   vector<shared_ptr<Process> > proc_sigs;
   for(size_t ind=0; ind<sigMasses.size(); ind++)
     proc_sigs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigMasses[ind]+")", Process::Type::signal, 2,

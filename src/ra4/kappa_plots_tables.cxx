@@ -159,7 +159,7 @@ int main(int argc, char *argv[]){
   Palette colors("txt/colors.txt", "default");
 
   // Cuts in baseline speed up the yield finding
-  string baseline_s = "mj14>250 && nleps>=1 && met>100 && njets>=5 && st<10000";
+  string baseline_s = "mj14>250 && nleps>=1 && met>100 && njets>=5 && st<10000 && pass_ra2_badmu && met/met_calo<5";
   if(skim.Contains("mj12")) ReplaceAll(baseline_s, "mj14","mj");
   if(skim.Contains("met100")) ReplaceAll(baseline_s, "150","100");
 
@@ -324,9 +324,10 @@ int main(int argc, char *argv[]){
 				 "m5j", "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
  
   vector<TString> methods_std = {"signalmet100onebin", "m5jmet100onebin", 
-   				 "m2lvetoonebin", "nb1l", "njets1lmet100x200", "njets1lmet200x500",
-                                 "njets2lveto", "inclvetoonly"};  
-  //vector<TString> methods_std = {"njets1l", "njets2lveto"};
+    				 "m2lvetoonebin", "nb1l", "njets1lmet100x200", "njets1lmet200x500",
+				 "njets2lveto", "inclvetoonly"};  
+  // vector<TString> methods_std = {"signal200", "signal350", "signal500", 
+  // 				 "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
 
   vector<TString> methods = methods_std;
 
@@ -482,6 +483,9 @@ int main(int argc, char *argv[]){
 	caption = "Signal search regions plus $100<\\met\\leq200$ GeV";
 	firstSigBin = 2;
       } // allmetsignal
+      if(method.Contains("200")) metcuts = vector<TString>{c_lowmet};
+      if(method.Contains("350")) metcuts = vector<TString>{c_midmet};
+      if(method.Contains("500")) metcuts = vector<TString>{c_higmet};
       if(method.Contains("nb0")) {
 	metcuts = vector<TString>{c_vvlowmet, c_vlowmet, c_lowmet, c_midmet, c_higmet};
 	bincuts = vector<TString>{"nbm==0&&njets>=6"};
