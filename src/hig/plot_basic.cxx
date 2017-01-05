@@ -31,7 +31,6 @@ namespace{
   string sample = "search";
   float lumi = 4.3;
   string json = "json4p0";
-  bool do_note = true;
   bool do_data = true;
   bool unblind = false;
   bool do_loose = false; // removes track veto and delta phi requirement for the search region to make dphi "N-1" plots
@@ -88,12 +87,12 @@ int main(int argc, char *argv[]){
 
   string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
   if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
-  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_nj4zcandl40/";
+  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
   if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higloose/");
   if (sample=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1/";
-  if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_nj4zcandl40/";
-  if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_nl0nj4met150/";
+  if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep2/";
+  if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higqcd/";
   string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/TChiHH/merged_higmc_higloose/");
 
   map<string, set<string>> mctags; 
@@ -113,13 +112,13 @@ int main(int argc, char *argv[]){
   NamedFunc wgt = "weight" * Higfuncs::eff_higtrig;
   string base_func("njets>=4 && njets<=5 && met/met_calo<5"); //met/met_calo
   // zll skim: ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && 
-  // nleps==2 && Max$(leps_pt)>40
+  // nleps==2 && Max$(leps_pt)>40 && (njets==4||njets==5)
   if (sample=="zll") base_func = base_func+"&& nleps==2 && met<50";
   // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
   if (sample=="qcd") base_func = base_func+"&& nvleps==0 && ntks==0 && low_dphi";
-  // ttbar skim - met>100 && nleps==1 && (njets==4||njets==5) && nbm>=2
+  // ttbar skim - met>100 && nleps==1 && (njets==4||njets==5) && nbt>=2
   if (sample=="ttbar") base_func = base_func+"&& nleps==1 && mt<100";
-  // search skim - met>100 && nvleps==0 && (njets==4||njets==5) && nbm>=2
+  // search skim - met>100 && nvleps==0 && (njets==4||njets==5) && nbt>=2
   if (sample=="search") {
     if (do_loose) base_func = base_func+"&& nvleps==0";
     else base_func = base_func+"&& nvleps==0 && ntks==0 && !low_dphi";
@@ -141,12 +140,11 @@ int main(int argc, char *argv[]){
     procs.push_back(Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
       {folderdata+"*RunB*root"},  Higfuncs::trig_hig>0. && " pass &&"+json+"&&"+base_func)); 
   }
-  // need to modify base_func to use this
-  // if (sample == "search") {
-  //   for (unsigned isig(0); isig<sigm.size(); isig++)
-  //     procs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
-  //       sig_colors[isig], {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, ));
-  // }
+  if (sample == "search") {
+    for (unsigned isig(0); isig<sigm.size(); isig++)
+      procs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
+        sig_colors[isig], {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, base_func));
+  }
 
   PlotMaker pm;
 
@@ -154,6 +152,7 @@ int main(int argc, char *argv[]){
   string metdef = "met";
   if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
   if (do_metg150_metg200) {
+    if (sample=="zll") metcuts.push_back(metdef+">0");
     metcuts.push_back(metdef+">150");
     // metcuts.push_back(metdef+">200");
   } else {
@@ -192,134 +191,88 @@ int main(int argc, char *argv[]){
   // xcuts["drmax"] = base_func+"&& hig_dm<=40 && hig_am<200 && hig_drmax<=2.2";
   // xcuts["hig"] = "hig_am>100 && hig_am<=140 && hig_dm <= 40 && hig_drmax<=2.2";
   // xcuts["sbd"] = "(hig_am<=100 || (hig_am>140 && hig_am<=200)) && hig_dm <= 40 && hig_drmax<=2.2";
-
-
-  // Temporary funcs for other b-tag category options
-  //-----------------------------------------------------
-  // const NamedFunc hig_nb_mmmm("hig_nb_mmmm",[](const Baby &b) -> NamedFunc::ScalarType{
-  //   if (b.nbm()>=2) return min(4,b.nbm());
-  //   else return 0;
-  // });
-  // const NamedFunc hig_nb_ttll("hig_nb_ttll",[](const Baby &b) -> NamedFunc::ScalarType{
-  //   if (b.nbt()==2 && b.nbl()==2) return 2;
-  //   else if (b.nbt()>=2 && b.nbl()==3) return 3;
-  //   else if (b.nbt()>=2 && b.nbl()>=4) return 4;
-  //   else return 0;
-  // });
-  // const NamedFunc hig_nb_tmml("hig_nb_tmml",[](const Baby &b) -> NamedFunc::ScalarType{
-  //   if (b.nbt()>=1 && b.nbm()==2) return 2;
-  //   else if (b.nbt()>=1 && b.nbm()==3 && b.nbl()==3) return 3;
-  //   else if (b.nbt()>=1 && b.nbm()>=3 && b.nbl()>=4) return 4;
-  //   else return 0;
-  // });
-  // vector<NamedFunc> btag_xopts = {hig_nb_mmmm, hig_nb_tmml, hig_nb_ttll};
-
-  //    1D distributions with data
-  //----------------------------------------
-  if (do_data) {
-    for (auto &ixcut: xcuts) {
-      for(unsigned imet(0); imet<metcuts.size(); imet++) { 
-        for(unsigned inb(0); inb<nbcuts.size(); inb++) {
-          if (sample=="search" && !unblind && inb>0) continue;         
-          if (!do_loose) {
-            if (ixcut.first=="nm1") { // do only in the loosest selection
-              pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m> [GeV]", {100., 140.}),
-              ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&hig_dm<40", 
-              procs, all_plot_types).Weight(wgt).Tag(sample);
-              pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m> [GeV]", {100., 140.}),
-              ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&hig_dm<40 && hig_drmax<=2.2", 
-              procs, all_plot_types).Weight(wgt).Tag(sample);
-              string tmp_seln = ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb];
-              if (!do_note || sample=="search") {
-                pm.Push<Hist1D>(Axis(20,0,2000,"ht", "H_{T} [GeV]"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-                pm.Push<Hist1D>(Axis(18,150,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-                pm.Push<Hist1D>(Axis(15,0,150,"hig_dm", "#Deltam [GeV]", {40.}), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-              }
-            }
-            if (ixcut.first=="base") // do only with the trimmed selection
-              pm.Push<Hist1D>(Axis(20,0,4,"hig_drmax", "#DeltaR_{max}", {2.2}),
-              ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb], 
-              procs, all_plot_types).Weight(wgt).Tag(sample);
-            // pm.Push<Hist1D>(Axis(15,0,600,"jets_pt[0]", "Jet 1 p_{T} [GeV]"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-            // pm.Push<Hist1D>(Axis(17,0,340,"jets_pt[1]", "Jet 2 p_{T} [GeV]"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-            // pm.Push<Hist1D>(Axis(12,0,240,"jets_pt[2]", "Jet 3 p_{T} [GeV]"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-            // pm.Push<Hist1D>(Axis(12,0,240,"jets_pt[3]", "Jet 4 p_{T} [GeV]"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-            // if (sample=="ttbar"){
-            //   string tmp_seln = ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb];
-            //   pm.Push<Hist1D>(Axis(18,150,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln+"&&nels==1", procs, all_plot_types).Weight(wgt).Tag(sample);
-            //   pm.Push<Hist1D>(Axis(18,150,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln+"&&nmus==1", procs, all_plot_types).Weight(wgt).Tag(sample);
-            // }
-          } else if (sample=="search" && do_loose) {
-            // if (imet>0) continue; 
-            // string tmp_seln = ixcut.second+"&& ntks==0 && !low_dphi && met>100 &&"+nbcuts[inb];
-            // pm.Push<Hist1D>(Axis(10,100,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-            // tmp_seln = ixcut.second+"&& !low_dphi && met>150 &&"+nbcuts[inb];
-            // pm.Push<Hist1D>(Axis(5,-0.5,4.5,"ntks", "N_{tks}"),
-            //   tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-            // tmp_seln = ixcut.second+"&& ntks==0 && met>150 &&"+nbcuts[inb];
-            // pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi2", "#Delta#phi_{2}",{0.5}),
-            //   tmp_seln+"&& dphi1>0.5", procs, all_plot_types).Weight(wgt).Tag(sample);
-            // pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi3", "#Delta#phi_{3}",{0.3}),
-            //   tmp_seln+"&& dphi1>0.5 && dphi2>0.5", procs, all_plot_types).Weight(wgt).Tag(sample);
-            // pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi4", "#Delta#phi_{4}",{0.3}),
-            //   tmp_seln+"&& dphi1>0.5 && dphi2>0.5 && dphi3>0.3", procs, all_plot_types).Weight(wgt).Tag(sample);
-          }
-        }
-      }
-    }
-  }
-
-  //     N-1 and other 1D MC-only distributions
-  //----------------------------------------
-  else {
-    wgt = "weight";
+ 
+  string tmp_seln;
+  for (auto &ixcut: xcuts) {
+    tmp_seln = base_func;
     for(unsigned imet(0); imet<metcuts.size(); imet++) { 
-      // if (!do_loose) {
-      //   string tmp_seln = metcuts[imet]+"&& nbm>=2 &&" + xcuts["hig"];
-      //   pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbl", "N_{b}^{L}"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-      //   pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbm", "N_{b}^{M}"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-      //   pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbt", "N_{b}^{T}"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-      //   tmp_seln = metcuts[imet]+"&& nbm>=2 && hig_dm<=40 && hig_drmax<=2.2 && hig_am<=200";
-      //   pm.Push<Hist1D>(Axis(5,0.5,5.5,Functions::hig_nb, "b-tag category (TTML)"), tmp_seln && Functions::hig_nb>0., procs, all_plot_types).Weight(wgt).Tag(sample);
-      //   pm.Push<Hist1D>(Axis(5,0.5,5.5,hig_nb_ttll, "b-tag category (TTLL)"), tmp_seln && hig_nb_ttll>0., procs, all_plot_types).Weight(wgt).Tag(sample);
-      //   pm.Push<Hist1D>(Axis(5,0.5,5.5,hig_nb_tmml, "b-tag category (TMML)"), tmp_seln && hig_nb_tmml>0., procs, all_plot_types).Weight(wgt).Tag(sample);
-      //   pm.Push<Hist1D>(Axis(5,0.5,5.5,hig_nb_mmmm, "b-tag category (MMMM)"), tmp_seln && hig_nb_mmmm>0., procs, all_plot_types).Weight(wgt).Tag(sample);
-      // }
       for(unsigned inb(0); inb<nbcuts.size(); inb++) {
-        if (!do_loose) {
-          // pm.Push<Hist1D>(Axis(15,0,150,"hig_dm", "#Deltam [GeV]", {40.}),
-          //   metcuts[imet]+"&&"+nbcuts[inb]+"&&hig_am>100 && hig_am<=140 && hig_drmax<=2.2", 
-          //   procs, all_plot_types).Weight(wgt).Tag(sample);
+        if (sample=="search" && !unblind && inb>0) continue;         
+        if (ixcut.first=="nm1") { // do only in the loosest selection
           pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m> [GeV]", {100., 140.}),
-            metcuts[imet]+"&&"+nbcuts[inb]+"&&hig_dm<=40 && hig_drmax<=2.2", 
-            procs, all_plot_types).Weight(wgt).Tag(sample);
-          pm.Push<Hist1D>(Axis(20,0,4,"hig_drmax", "#DeltaR_{max}", {2.2}),
-            metcuts[imet]+"&&"+nbcuts[inb]+"&&hig_am>100 && hig_am<=140 && hig_dm <= 40", 
-            procs, all_plot_types).Weight(wgt).Tag(sample);
-          // string tmp_seln = metcuts[imet]+"&&"+nbcuts[inb]+"&&" + xcuts["hig"];
-          // pm.Push<Hist1D>(Axis(15,0,600,"jets_pt[0]", "Jet 1 p_{T} [GeV]"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-          // pm.Push<Hist1D>(Axis(17,0,340,"jets_pt[1]", "Jet 2 p_{T} [GeV]"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-          // pm.Push<Hist1D>(Axis(12,0,240,"jets_pt[2]", "Jet 3 p_{T} [GeV]"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-          // pm.Push<Hist1D>(Axis(12,0,240,"jets_pt[3]", "Jet 4 p_{T} [GeV]"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-          pm.Push<Hist1D>(Axis(10,100,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), metcuts[imet]+"&&"+nbcuts[inb], procs, all_plot_types).Weight(wgt).Tag(sample);
-        } else if (sample=="search" && do_loose) {
-          // if (imet>0) continue; 
-          // string tmp_seln = "ntks==0 && !low_dphi && met>100 &&"+nbcuts[inb];
-          // pm.Push<Hist1D>(Axis(10,100,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-          // tmp_seln = "!low_dphi && met>150 &&"+nbcuts[inb];
-          // pm.Push<Hist1D>(Axis(5,-0.5,4.5,"ntks", "N_{tks}"),
-          //   tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
-          // tmp_seln = "ntks==0 && met>150 &&"+nbcuts[inb];
-          // pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi2", "#Delta#phi_{2}",{0.5}),
-          //   tmp_seln+"&& dphi1>0.5", procs, all_plot_types).Weight(wgt).Tag(sample);
-          // pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi3", "#Delta#phi_{3}",{0.3}),
-          //   tmp_seln+"&& dphi1>0.5 && dphi2>0.5", procs, all_plot_types).Weight(wgt).Tag(sample);
-          // pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi4", "#Delta#phi_{4}",{0.3}),
-          //   tmp_seln+"&& dphi1>0.5 && dphi2>0.5 && dphi3>0.3", procs, all_plot_types).Weight(wgt).Tag(sample);
+          ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&hig_dm<40", 
+          procs, all_plot_types).Weight(wgt).Tag(sample);
+          pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m> [GeV]", {100., 140.}),
+          ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&hig_dm<40 && hig_drmax<=2.2", 
+          procs, all_plot_types).Weight(wgt).Tag(sample);
+          tmp_seln = ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb];
         }
+        pm.Push<Hist1D>(Axis(20,0,2000,"ht", "H_{T} [GeV]"), 
+          tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
+        if (sample=="zll") pm.Push<Hist1D>(Axis(24,0,600,metdef, "p_{T}^{Z} [GeV]",{150,200,300}), 
+          tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
+        else pm.Push<Hist1D>(Axis(24,0,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), 
+          tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
+        pm.Push<Hist1D>(Axis(15,0,150,"hig_dm", "#Deltam [GeV]", {40.}), 
+          tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
+        
+        if (sample=="search") {
+          pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb, "b-tag category (TTML)"), 
+            tmp_seln && Higfuncs::hig_nb>0., procs, all_plot_types).Weight(wgt).Tag(sample);
+          pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb_ttll, "b-tag category (TTLL)"), 
+            tmp_seln && Higfuncs::hig_nb_ttll>0., procs, all_plot_types).Weight(wgt).Tag(sample);
+          pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb_tmml, "b-tag category (TMML)"), 
+            tmp_seln && Higfuncs::hig_nb_tmml>0., procs, all_plot_types).Weight(wgt).Tag(sample);
+          pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb_mmmm, "b-tag category (MMMM)"), 
+            tmp_seln && Higfuncs::hig_nb_mmmm>0., procs, all_plot_types).Weight(wgt).Tag(sample);
+        } else { 
+          tmp_seln = metcuts[imet]+"&& nbm>=2";
+          pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbl", "N_{b}^{L}"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
+          pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbm", "N_{b}^{M}"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
+          pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbt", "N_{b}^{T}"), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
+          tmp_seln = metcuts[imet]+"&& hig_dm<=40 && hig_drmax<=2.2 && hig_am<=200";
+          pm.Push<Hist1D>(Axis(6,-0.5,5.5,Higfuncs::hig_nb_extended, "Extended b-tag categories (TTML)"), 
+            tmp_seln && Higfuncs::hig_nb_extended<6, procs, all_plot_types).Weight(wgt).Tag(sample);
+        }  
+        if (ixcut.first=="base") // do only with the trimmed selection
+          pm.Push<Hist1D>(Axis(20,0,4,"hig_drmax", "#DeltaR_{max}", {2.2}),
+          ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb], 
+          procs, all_plot_types).Weight(wgt).Tag(sample);
+        // pm.Push<Hist1D>(Axis(15,0,600,"jets_pt[0]", "Jet 1 p_{T} [GeV]"), 
+        //   tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
+        // pm.Push<Hist1D>(Axis(17,0,340,"jets_pt[1]", "Jet 2 p_{T} [GeV]"), 
+        //   tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
+        // pm.Push<Hist1D>(Axis(12,0,240,"jets_pt[2]", "Jet 3 p_{T} [GeV]"), 
+        //   tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
+        // pm.Push<Hist1D>(Axis(12,0,240,"jets_pt[3]", "Jet 4 p_{T} [GeV]"), 
+        //   tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
+        // if (sample=="ttbar" && !do_note){
+        //   tmp_seln = ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb];
+        //   pm.Push<Hist1D>(Axis(18,150,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), 
+        //     tmp_seln+"&&nels==1", procs, all_plot_types).Weight(wgt).Tag(sample);
+        //   pm.Push<Hist1D>(Axis(18,150,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), 
+        //     tmp_seln+"&&nmus==1", procs, all_plot_types).Weight(wgt).Tag(sample);
+        // }
+        
+          // else if (sample=="search" && do_loose) {
+        //   if (imet>0) continue; 
+        //   tmp_seln = ixcut.second+"&& ntks==0 && !low_dphi && met>100 &&"+nbcuts[inb];
+        //   pm.Push<Hist1D>(Axis(10,100,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
+        //   tmp_seln = ixcut.second+"&& !low_dphi && met>150 &&"+nbcuts[inb];
+        //   pm.Push<Hist1D>(Axis(5,-0.5,4.5,"ntks", "N_{tks}"),
+        //     tmp_seln, procs, all_plot_types).Weight(wgt).Tag(sample);
+        //   tmp_seln = ixcut.second+"&& ntks==0 && met>150 &&"+nbcuts[inb];
+        //   pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi2", "#Delta#phi_{2}",{0.5}),
+        //     tmp_seln+"&& dphi1>0.5", procs, all_plot_types).Weight(wgt).Tag(sample);
+        //   pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi3", "#Delta#phi_{3}",{0.3}),
+        //     tmp_seln+"&& dphi1>0.5 && dphi2>0.5", procs, all_plot_types).Weight(wgt).Tag(sample);
+        //   pm.Push<Hist1D>(Axis(32,0.,3.2,"dphi4", "#Delta#phi_{4}",{0.3}),
+        //     tmp_seln+"&& dphi1>0.5 && dphi2>0.5 && dphi3>0.3", procs, all_plot_types).Weight(wgt).Tag(sample);
+        // }
       }
     }
   }
+  
 
   pm.min_print_ = true;
   pm.MakePlots(lumi);

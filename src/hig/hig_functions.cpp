@@ -18,6 +18,82 @@ const NamedFunc ntrub("ntrub",[](const Baby &b) -> NamedFunc::ScalarType{
   return tmp_ntrub;
 });
 
+const NamedFunc hig_nb("hig_nb",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.nbt()==2 && b.nbm()==2) return 2;
+  else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) return 3;
+  else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) return 4;
+  else return 0;
+});
+
+const NamedFunc hig_nb_extended("hig_nb_extended",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.nbm()==0) return 0;
+  else if (b.nbm()==1) return 1;
+  else if (b.nbt()==2 && b.nbm()==2) return 2;
+  else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) return 3;
+  else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) return 4;
+  else return 99;
+});
+
+const NamedFunc hig_nb_mmmm("hig_nb_mmmm",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.nbm()>=2) return min(4,b.nbm());
+  else return 0;
+});
+const NamedFunc hig_nb_ttll("hig_nb_ttll",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.nbt()==2 && b.nbl()==2) return 2;
+  else if (b.nbt()>=2 && b.nbl()==3) return 3;
+  else if (b.nbt()>=2 && b.nbl()>=4) return 4;
+  else return 0;
+});
+const NamedFunc hig_nb_tmml("hig_nb_tmml",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.nbt()>=1 && b.nbm()==2) return 2;
+  else if (b.nbt()>=1 && b.nbm()==3 && b.nbl()==3) return 3;
+  else if (b.nbt()>=1 && b.nbm()>=3 && b.nbl()>=4) return 4;
+  else return 0;
+});
+
+// calculate effect of systematics calculated for each background 
+// in the data control regions on the total bkg. kappa
+const NamedFunc wgt_syst_ttx("wgt_syst_ttx",[](const Baby &b) -> NamedFunc::ScalarType{
+  if ( (b.type()>=1000 && b.type()<2000) ||  // ttbar
+    // (b.type()>=3000 && b.type()<4000) ||     // single top
+    (b.type()>=4000 && b.type()<6000) ||     // ttw and ttz
+    b.type()==9000  ||                       // ttH
+    b.type()==10000  ||                      // ttgamma
+    b.type()==11000) {                       // tttt
+    if (b.hig_am()<=100 || (b.hig_am()>140 && b.hig_am()<=200)) {
+      if (b.nbt()>=1 && b.nbm()==3 && b.nbl()==3) return 0.19;
+      else if (b.nbt()>=1 && b.nbm()>=3 && b.nbl()>=4) return 0.30;
+    }
+  }
+  return 0;
+});
+
+const NamedFunc wgt_syst_vjets("wgt_syst_vjets",[](const Baby &b) -> NamedFunc::ScalarType{
+  if ( (b.type()>=8000 && b.type()<9000) || // zjets
+    (b.type()>=2000 && b.type()<3000) ||    // wjets
+    (b.type()>=6000 && b.type()<7000)) {    // dyjets  
+    if (b.hig_am()<=100 || (b.hig_am()>140 && b.hig_am()<=200))
+      if (b.nbt()>=2 && b.nbm()>=3) return 0.34;
+  }
+  return 0;
+});
+
+const NamedFunc wgt_syst_qcd("wgt_syst_qcd",[](const Baby &b) -> NamedFunc::ScalarType{
+  if ( (b.type()>=7000 && b.type()<8000)) { // qcd
+    if (b.hig_am()<=100 || (b.hig_am()>140 && b.hig_am()<=200))
+      if (b.nbt()>=2 && b.nbm()>=3) return 0.12;
+  }
+  return 0;
+});
+
+// estimate the systematic due to limited knowledge on composition
+const NamedFunc wgt_2xhighnb_zjets("wgt_2xhighnb_zjets",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.type()>=8000 && b.type()<9000)
+    if (b.nbt()>=2 && b.nbm()>=3) return 2.;
+  return 1;
+});
+
+// defintion of analysis trigger
 const NamedFunc trig_hig("trig_hig", [](const Baby &b) -> NamedFunc::ScalarType{
 	if ( b.trig()->at(13)||b.trig()->at(33)||b.trig()->at(14)||b.trig()->at(15)||b.trig()->at(30)||b.trig()->at(31)
 		||b.trig()->at(22)||b.trig()->at(40)||b.trig()->at(24)||b.trig()->at(41)

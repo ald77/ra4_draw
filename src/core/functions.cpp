@@ -172,14 +172,6 @@ namespace Functions{
       return 0;
     });
 
-  const NamedFunc hig_nb("hig_nb",[](const Baby &b) -> NamedFunc::ScalarType{
-    if (b.nbt()==2 && b.nbm()==2) return 2;
-    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) return 3;
-    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) return 4;
-    else return 0;
-  });
-
-
   bool IsGoodJet(const Baby &b, size_t ijet){
     return ijet<b.jets_pt()->size()
       && b.jets_pt()->at(ijet) > 30.

@@ -190,9 +190,9 @@ int main(int argc, char *argv[]){
   
 
   vector<string> xcuts;
-  if (!do_note) xcuts.push_back(metdef+">150");
-  xcuts.push_back(metdef+">150 && hig_dm<40 && hig_am<200");
-  xcuts.push_back(metdef+">150 && hig_dm<40 && hig_am<200 && hig_drmax<2.2");
+  if (!do_note) xcuts.push_back(metdef+">100");
+  xcuts.push_back(metdef+">100 && hig_dm<40 && hig_am<200");
+  xcuts.push_back(metdef+">100 && hig_dm<40 && hig_am<200 && hig_drmax<2.2");
 
   vector<string> scuts; //additional sample specific options
   scuts.push_back("1");
@@ -216,6 +216,17 @@ int main(int argc, char *argv[]){
 
       pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
         baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Tag(sample+"_shape_trub");
+
+      if (sample=="ttbar") {
+        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
+          baseline+"&& ntruleps==1 &&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Tag(sample+"1l_shape_bcats");
+        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
+          baseline+"&& ntruleps==1 &&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Tag(sample+"1l_shape_trub");
+        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
+          baseline+"&& ntruleps==2 &&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Tag(sample+"2l_shape_bcats");
+        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
+          baseline+"&& ntruleps==2 &&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Tag(sample+"2l_shape_trub");
+      }
     }
   }
 

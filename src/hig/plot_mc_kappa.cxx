@@ -75,7 +75,7 @@ int main(int argc, char *argv[]){
 
   string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
   if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
-  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_nj4zcandl40/";
+  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
   if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
 
   set<string> alltags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root", 
@@ -137,9 +137,9 @@ int main(int argc, char *argv[]){
   string metdef = "met";
   if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
   // if (sample!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
+  if (sample!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
-  // metcuts.push_back(metdef+">300&&"+metdef+"<=400");
   metcuts.push_back(metdef+">300");
 
   // Makes a plot for each vector in plotcuts

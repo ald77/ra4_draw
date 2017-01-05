@@ -66,6 +66,9 @@ namespace{
   string mm_scen = "";
   float lumi=36.2;
   bool quick_test = false;
+  // for office use only
+  vector<TString> syst_names;
+  vector<vector<float>> syst_values;
 }
 
 string GetScenario(const string &method);
@@ -79,6 +82,7 @@ vector<vector<float> > findPreds(abcd_method &abcd, vector<vector<GammaParams> >
                                  vector<vector<vector<float> > > &kappas, 
                                  vector<vector<vector<float> > > &kappas_mm, 
                                  vector<vector<vector<float> > > &kmcdat, 
+                                 vector<vector<vector<float> > > &datapreds,
                                  vector<vector<vector<float> > > &preds);
 void printDebug(abcd_method &abcd, vector<vector<GammaParams> > &allyields, TString baseline,
                 vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &kappas_mm, 
@@ -127,6 +131,45 @@ int main(int argc, char *argv[]){
       weights.emplace(scen, w*Functions::MismeasurementWeight(sys_wgts_file, scen));
       corrections.emplace(scen, Functions::MismeasurementCorrection(sys_wgts_file, scen, central));
     }
+  }else if(mm_scen == "totunc"){
+    scenarios = vector<string>();
+
+    // scenarios.push_back("syst_ttx_up");
+    // weights.emplace("syst_ttx_up", w*1/(1+Higfuncs::wgt_syst_ttx));
+    // corrections.emplace("syst_ttx_up", w);
+    // scenarios.push_back("syst_ttx_dn");
+    // weights.emplace("syst_ttx_dn", w*1/(1-Higfuncs::wgt_syst_ttx));
+    // corrections.emplace("syst_ttx_dn", w);
+
+    // scenarios.push_back("syst_vjets_up");
+    // weights.emplace("syst_vjets_up", w*1/(1+Higfuncs::wgt_syst_vjets));
+    // corrections.emplace("syst_vjets_up", w);
+    // scenarios.push_back("syst_vjets_dn");
+    // weights.emplace("syst_vjets_dn", w*1/(1-Higfuncs::wgt_syst_vjets));
+    // corrections.emplace("syst_vjets_dn", w);
+
+    // scenarios.push_back("syst_qcd_up");
+    // weights.emplace("syst_qcd_up", w*1/(1+Higfuncs::wgt_syst_qcd));
+    // corrections.emplace("syst_qcd_up", w);
+    // scenarios.push_back("syst_qcd_dn");
+    // weights.emplace("syst_qcd_dn", w*1/(1-Higfuncs::wgt_syst_qcd));
+    // corrections.emplace("syst_qcd_dn", w);
+
+    // scenarios.push_back("syst_comp");
+    // weights.emplace("syst_comp", w*(Higfuncs::wgt_2xhighnb_zjets)); 
+    // corrections.emplace("syst_comp", w);
+
+    // scenarios.push_back("syst_bctag");
+    // weights.emplace("syst_bctag", w*"sys_bctag[0]");
+    // corrections.emplace("syst_bctag", w);
+
+    // scenarios.push_back("syst_udsgtag");
+    // weights.emplace("syst_udsgtag", w*"sys_udsgtag[0]");
+    // corrections.emplace("syst_udsgtag", w);
+
+    scenarios.push_back("syst_mcstat");
+    weights.emplace("syst_mcstat", w);
+    corrections.emplace("syst_mcstat", w);
   }else if(mm_scen == "data"){
     scenarios = vector<string>{mm_scen};
   }else if(mm_scen != "no_mismeasurement"){
@@ -138,12 +181,12 @@ int main(int argc, char *argv[]){
   //// Capybara
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/");
   if (skim=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
-  if (skim=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_nj4zcandl40/";
+  if (skim=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
   if (skim=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higloose/");
   if (skim=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1/";
-  if (skim=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_nj4zcandl40/";
-  if (skim=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_nl0nj4met150/";
+  if (skim=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep2/";
+  if (skim=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higqcd/";
   string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/TChiHH/merged_higmc_higloose/");
 
   Palette colors("txt/colors.txt", "default");
@@ -242,9 +285,16 @@ int main(int argc, char *argv[]){
   ////// MET cuts
   string metdef = "met";
   if (skim=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
-  if (do_onemet) metcuts.push_back(metdef+">150");
-  else {
-    metcuts.push_back(metdef+">150&&"+metdef+"<=200");
+  if (skim=="qcd" || skim=="search") {
+    if (do_onemet) metcuts.push_back(metdef+">150");
+  } else {
+    if (do_onemet) metcuts.push_back(metdef+">100");
+    metcuts.push_back(metdef+">100&&"+metdef+"<=150");
+  }
+  metcuts.push_back(metdef+">150&&"+metdef+"<=200");
+  if (json=="4p3" && (skim=="ttbar" || (skim=="qcd" && do_highnb))) {
+    metcuts.push_back(metdef+">200");
+  } else {
     metcuts.push_back(metdef+">200&&"+metdef+"<=300");
     metcuts.push_back(metdef+">300");
   }
@@ -334,12 +384,7 @@ int main(int argc, char *argv[]){
       caption = "Search bins";
       abcd_title = "Search bins";
     }
-
-    if(mm_scen=="data"){
-      metcuts.clear();
-      metcuts.push_back(metdef+">150&&"+metdef+"<=200");
-      metcuts.push_back(metdef+">200");
-    }
+    if (do_loose) abcd_title += " (no #DeltaR#lower[-0.1]{_{max}} cut)";
 
     if(method.Contains("MMMM")){
       caption = "MMMM method: all medium b-tags";
@@ -414,8 +459,8 @@ int main(int argc, char *argv[]){
       }
 
     //// Calculating kappa and Total bkg prediction
-    vector<vector<vector<float> > > kappas, kappas_mm, kmcdat, preds;
-    vector<vector<float> > yieldsPlane = findPreds(abcds[imethod], allyields, kappas, kappas_mm, kmcdat, preds);
+    vector<vector<vector<float> > > kappas, kappas_mm, kmcdat, datapreds, preds;
+    vector<vector<float> > yieldsPlane = findPreds(abcds[imethod], allyields, kappas, kappas_mm, kmcdat, datapreds, preds);
 
     //// Print MC/Data yields, cuts applied, kappas, preds
     if(debug) printDebug(abcds[imethod], allyields, TString(baseline.Name()), kappas, kappas_mm, preds);
@@ -427,9 +472,65 @@ int main(int argc, char *argv[]){
     }
 
     //// Plotting kappa
+    syst_names.push_back(mm_scen);
+    syst_values.push_back(vector<float>());
     plotKappa(abcds[imethod], kappas, kappas_mm, kmcdat);
-
+    // piggy back on one of the scenarios to get the expected data stat unc.
+    if (mm_scen=="syst_mcstat"){
+      syst_names.push_back("syst_datastat_up");
+      syst_values.push_back(vector<float>());
+      syst_names.push_back("syst_datastat_dn");
+      syst_values.push_back(vector<float>());
+      unsigned nsys = syst_values.size();
+      for (auto &iplane: datapreds) {
+        for (auto &ibin: iplane) {
+          if (ibin[0]==0) ibin[0] = 1e-6; 
+          syst_values[nsys-1].push_back(ibin[1]/ibin[0]);
+          syst_values[nsys-2].push_back(ibin[2]/ibin[0]);
+        }
+      }
+    }  
   } // Loop over ABCD methods
+
+  // print AN systematics table
+  if (Contains(mm_scen,"syst")) {
+    cout<<endl<<"===== AN systematics table rows:"<<endl;
+    for (unsigned isys(0); isys<syst_names.size(); isys++) {
+      if (syst_names[isys].Contains("_ttx")) cout<<setw(20)<<"$t\\bar{t}$+X closure";
+      else if (syst_names[isys].Contains("_vjets")) cout<<setw(20)<<"V+jets closure";
+      else if (syst_names[isys].Contains("_qcd")) cout<<setw(20)<<"QCD closure";
+      else if (syst_names[isys].Contains("_comp")) cout<<setw(20)<<"Background composition";
+      else if (syst_names[isys].Contains("_bctag")) cout<<setw(20)<<"B-tag SFs";
+      else if (syst_names[isys].Contains("_udsgtag")) cout<<setw(20)<<"Mistag SFs";
+      else if (syst_names[isys].Contains("_mcstat")) cout<<setw(20)<<"MC stat.";
+      else if (syst_names[isys].Contains("_datastat")) cout<<setw(20)<<"Data stat.";
+      else cout<<setw(20)<<syst_names[isys];
+      if (syst_names[isys].EndsWith("_up")) {
+        if (isys>=syst_names.size()) {
+          cout<<"Variation up without matching variation down "<<syst_names[isys]<<endl;
+        } else {
+          for (unsigned ibin(0); ibin<syst_values[isys].size(); ibin++) {
+            float up(syst_values[isys][ibin]), dn(syst_values[isys+1][ibin]);
+            float isysval = (up>0 ? 1 : -1)*max(up>0 ? up: 1/(1+up)-1, dn>0 ? dn: 1/(1+dn)-1);
+            if (fabs(isysval)>0.01)
+              cout<<" & "<<setw(7)<<RoundNumber(isysval*100,0);
+            else 
+              cout<<" & "<<setw(7)<<"$<$ 1";
+          }
+          isys++;
+        }
+        cout<<" \\\\"<<endl;
+      } else { 
+        for (unsigned ibin(0); ibin<syst_values[isys].size(); ibin++) {
+          if (fabs(syst_values[isys][ibin])>0.01)
+            cout<<" & "<<setw(7)<<RoundNumber((1/(1-syst_values[isys][ibin])-1)*100,0);
+          else 
+            cout<<" & "<<setw(7)<<"$<$ 1";
+        }
+        cout<<" \\\\"<<endl;
+      }
+    }
+  }
 
   if(!only_kappa){
     //// Printing names of ouput files
@@ -810,19 +911,25 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
             vexl_mm[indb].push_back(0);
             vexh_mm[indb].push_back(0);
             vy_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[0]);
-            // veyh_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[1]);
-            // veyl_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[2]);
-            veyh_mm[indb].push_back(0);
-            veyl_mm[indb].push_back(0);
+            if(!(only_mc && abcd.method.Contains("TTML")) || mm_scen=="mc_as_data") {
+              veyh_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[1]);
+              veyl_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[2]);         
+            } else {     
+              veyh_mm[indb].push_back(0);
+              veyl_mm[indb].push_back(0);
+            }
 
             //// Printing difference between kappa and kappa_mm
             float kap = k_ordered[iplane][ibin][ib].kappa[0], kap_mm = k_ordered_mm[iplane][ibin][ib].kappa[0];
             TString text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
+            if (mm_scen!="syst_mcstat") syst_values.back().push_back((kap_mm-kap)/kap);
+            if(!(only_mc && abcd.method.Contains("TTML"))) text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-1)*100,0,1)+"%";
             if((abcd.method.Contains("signal")&&iplane>=2) || (abcd.method.Contains("njets1lmet200")&&iplane>=1)
                || (abcd.method.Contains("nb1l")&&iplane>=1) ) 
               klab.SetTextColor(cSignal);
             else klab.SetTextColor(1);
             klab.SetTextSize(0.045);
+            if (k_ordered.size()*k_ordered[iplane].size()>6) klab.SetTextSize(0.03);
             if(mm_scen!="mc_as_data") klab.DrawLatex(xval, 0.952*maxy, text);
             //// Printing stat uncertainty of kappa_mm/kappa
             float kapUp = k_ordered[iplane][ibin][ib].kappa[1], kapDown = k_ordered[iplane][ibin][ib].kappa[2];
@@ -834,8 +941,18 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
               ekmdDown = k_ordered[iplane][ibin][ib].kappa[2];
             }
             text = "#sigma_{stat} = "+RoundNumber(errStat*100,0, kap)+"%";
-            text = "#sigma_{stat} = ^{+"+RoundNumber(ekmdUp*100,0, kap)+"%}_{-"+RoundNumber(ekmdDown*100,0, kap)+"%}";
+            if(!(only_mc && abcd.method.Contains("TTML")) || mm_scen=="mc_as_data") {              
+              text = "#sigma_{stat} = ^{+"+RoundNumber(kap_mmUp*100,0, kap)+"%}_{-"+RoundNumber(kap_mmDown*100,0, kap)+"%}";
+            } else {
+              text = "#sigma_{stat} = ^{+"+RoundNumber(ekmdUp*100,0, kap)+"%}_{-"+RoundNumber(ekmdDown*100,0, kap)+"%}";
+              if (mm_scen=="syst_mcstat") {
+                float up(ekmdUp/kap), dn(-1*ekmdDown/kap);
+                float isysval = (up>0 ? 1 : -1)*max(up>0 ? up: 1/(1+up)-1, dn>0 ? dn: 1/(1+dn)-1);
+                syst_values.back().push_back(isysval);
+              }
+            }
             klab.SetTextSize(0.05);
+            if (k_ordered.size()*k_ordered[iplane].size()>6) klab.SetTextSize(0.035);
             klab.DrawLatex(xval, 0.888*maxy, text);
 
            xval += binw;
@@ -845,7 +962,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     } // Loop over bin cuts
 
     // Drawing line separating MET planes
-    line.SetLineStyle(2); line.SetLineWidth(2);
+    if (iplane==0 && do_onemet) {line.SetLineStyle(1); line.SetLineWidth(2); line.SetLineColor(kOrange+3);}
+    else {line.SetLineStyle(2); line.SetLineWidth(2); line.SetLineColor(kBlack);}
     if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
     // Drawing MET labels
     if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
@@ -876,7 +994,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     graph_kmd[indb].SetMarkerStyle(ind_bcuts[indb].style); graph_kmd[indb].SetMarkerSize(markerSize);
     graph_kmd[indb].SetMarkerColor(ind_bcuts[indb].color);
     graph_kmd[indb].SetLineColor(1); graph_kmd[indb].SetLineWidth(2);
-    if(!(only_mc && abcd.method.Contains("TTML")) || mm_scen=="mc_as_data") graph_kmd[indb].Draw("p0 same");
+    if(mm_scen=="mc_as_data") graph_kmd[indb].Draw("p0 same");
 
     graph[indb] = TGraphAsymmErrors(vx[indb].size(), &(vx[indb][0]), &(vy[indb][0]),
                                     &(vexl[indb][0]), &(vexh[indb][0]), &(veyl[indb][0]), &(veyh[indb][0]));
@@ -935,12 +1053,14 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
 vector<vector<float> > findPreds(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &kappas_mm, 
-               vector<vector<vector<float> > > &kmcdat, vector<vector<vector<float> > > &preds){
+               vector<vector<vector<float> > > &kmcdat, vector<vector<vector<float> > > &datapreds,
+               vector<vector<vector<float> > > &preds){
   // Powers for kappa:   ({R1, R2, D3, R4})
   vector<float> pow_kappa({ 1, -1, -1,  1});
   vector<float> pow_kk({ 1, -1, -1,  1});
   // Powers for TotBkg pred:({R1, R2, D3,  R1, R2, D3, D4})
   vector<float> pow_totpred( {-1,  1,  1,   1, -1, -1,  1});
+  vector<float> pow_datapred( {-1,  1,  1});
 
   float val(1.), valup(1.), valdown(1.);
   vector<vector<float> > yieldsPlane;
@@ -967,6 +1087,7 @@ vector<vector<float> > findPreds(abcd_method &abcd, vector<vector<GammaParams> >
     kmcdat.push_back(vector<vector<float> >());
     kappas_mm.push_back(vector<vector<float> >());
     preds.push_back(vector<vector<float> >());
+    datapreds.push_back(vector<vector<float> >());
     for(size_t ibin=0; ibin < abcd.bincuts[iplane].size(); ibin++){
       vector<vector<float> > entries;
       vector<vector<float> > weights;
@@ -978,6 +1099,11 @@ vector<vector<float> > findPreds(abcd_method &abcd, vector<vector<GammaParams> >
         entries.back().push_back(allyields[0][index].Yield());
         weights.back().push_back(1.);
       } // Loop over ABCD cuts
+
+      // Throwing toys to find predictions with no kappa -> used for data stat. unc. in systematics table
+      val = calcKappa(entries, weights, pow_datapred, valdown, valup);
+      if(valdown<0) valdown = 0;
+      datapreds[iplane].push_back(vector<float>({val, valup, valdown}));
 
       vector<vector<float> > kentries;
       vector<vector<float> > kweights;
