@@ -21,6 +21,9 @@ namespace Higfuncs{
 	extern const NamedFunc hig_nb_ttll;
 	extern const NamedFunc hig_nb_tmml;
 
+	// weight that allows subtracting ttbar from data
+	NamedFunc::ScalarType wgt_subtr_ttx(const Baby &b, std::string json);
+
 	// calculate effect of systematics calculated for each background 
 	// in the data control regions on the total bkg. kappa
 	extern const NamedFunc wgt_syst_ttx;

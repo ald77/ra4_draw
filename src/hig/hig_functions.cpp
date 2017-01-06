@@ -51,6 +51,40 @@ const NamedFunc hig_nb_tmml("hig_nb_tmml",[](const Baby &b) -> NamedFunc::Scalar
   else return 0;
 });
 
+// weight used to subtract ttbar based on MC prediction reweighted to data in 1l CR
+// since ttbar has to be combined in the same process def with data, also apply stitch here
+NamedFunc::ScalarType wgt_subtr_ttx(const Baby &b, string json){
+  if ( (b.type()>=1000 && b.type()<2000) ||  // ttbar
+    // (b.type()>=3000 && b.type()<4000) ||     // single top
+    (b.type()>=4000 && b.type()<6000) ||     // ttw and ttz
+    b.type()==9000  ||                       // ttH
+    b.type()==10000  ||                      // ttgamma
+    b.type()==11000) {
+    float wgt = -1; 
+    // apply lumi 
+    if (json=="json4p0") wgt*= 4.3;
+    else wgt*= 36.2;
+    // apply weights derived from 1l CR: normalization*ratio(data/mc)
+    if (b.nbt()==2 && b.nbm()==2) return wgt*=1.13;
+    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) return wgt*=1.29;
+    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) return wgt*=1.41;
+    // apply stitch
+    if (b.stitch()) return wgt;
+    else return 0;
+  } else if (b.type()>0 && b.type()<1000){ // apply trigger and json for data
+    if (b.trig()->at(13)||b.trig()->at(33)||b.trig()->at(14)||b.trig()->at(15)||b.trig()->at(30)||b.trig()->at(31)
+      ||b.trig()->at(22)||b.trig()->at(40)||b.trig()->at(24)||b.trig()->at(41)
+      ||b.trig()->at(19)||b.trig()->at(55)||b.trig()->at(21)) {
+      if (json=="json4p0") return b.json4p0() ? 1:0;
+      else return 1;
+    } else {
+      return 0;
+    }
+  }
+  // for all other backgrounds, chill
+  return 1;
+};
+
 // calculate effect of systematics calculated for each background 
 // in the data control regions on the total bkg. kappa
 const NamedFunc wgt_syst_ttx("wgt_syst_ttx",[](const Baby &b) -> NamedFunc::ScalarType{

@@ -134,38 +134,38 @@ int main(int argc, char *argv[]){
   }else if(mm_scen == "totunc"){
     scenarios = vector<string>();
 
-    // scenarios.push_back("syst_ttx_up");
-    // weights.emplace("syst_ttx_up", w*1/(1+Higfuncs::wgt_syst_ttx));
-    // corrections.emplace("syst_ttx_up", w);
-    // scenarios.push_back("syst_ttx_dn");
-    // weights.emplace("syst_ttx_dn", w*1/(1-Higfuncs::wgt_syst_ttx));
-    // corrections.emplace("syst_ttx_dn", w);
+    scenarios.push_back("syst_ttx_up");
+    weights.emplace("syst_ttx_up", w*1/(1+Higfuncs::wgt_syst_ttx));
+    corrections.emplace("syst_ttx_up", w);
+    scenarios.push_back("syst_ttx_dn");
+    weights.emplace("syst_ttx_dn", w*1/(1-Higfuncs::wgt_syst_ttx));
+    corrections.emplace("syst_ttx_dn", w);
 
-    // scenarios.push_back("syst_vjets_up");
-    // weights.emplace("syst_vjets_up", w*1/(1+Higfuncs::wgt_syst_vjets));
-    // corrections.emplace("syst_vjets_up", w);
-    // scenarios.push_back("syst_vjets_dn");
-    // weights.emplace("syst_vjets_dn", w*1/(1-Higfuncs::wgt_syst_vjets));
-    // corrections.emplace("syst_vjets_dn", w);
+    scenarios.push_back("syst_vjets_up");
+    weights.emplace("syst_vjets_up", w*1/(1+Higfuncs::wgt_syst_vjets));
+    corrections.emplace("syst_vjets_up", w);
+    scenarios.push_back("syst_vjets_dn");
+    weights.emplace("syst_vjets_dn", w*1/(1-Higfuncs::wgt_syst_vjets));
+    corrections.emplace("syst_vjets_dn", w);
 
-    // scenarios.push_back("syst_qcd_up");
-    // weights.emplace("syst_qcd_up", w*1/(1+Higfuncs::wgt_syst_qcd));
-    // corrections.emplace("syst_qcd_up", w);
-    // scenarios.push_back("syst_qcd_dn");
-    // weights.emplace("syst_qcd_dn", w*1/(1-Higfuncs::wgt_syst_qcd));
-    // corrections.emplace("syst_qcd_dn", w);
+    scenarios.push_back("syst_qcd_up");
+    weights.emplace("syst_qcd_up", w*1/(1+Higfuncs::wgt_syst_qcd));
+    corrections.emplace("syst_qcd_up", w);
+    scenarios.push_back("syst_qcd_dn");
+    weights.emplace("syst_qcd_dn", w*1/(1-Higfuncs::wgt_syst_qcd));
+    corrections.emplace("syst_qcd_dn", w);
 
-    // scenarios.push_back("syst_comp");
-    // weights.emplace("syst_comp", w*(Higfuncs::wgt_2xhighnb_zjets)); 
-    // corrections.emplace("syst_comp", w);
+    scenarios.push_back("syst_comp");
+    weights.emplace("syst_comp", w*(Higfuncs::wgt_2xhighnb_zjets)); 
+    corrections.emplace("syst_comp", w);
 
-    // scenarios.push_back("syst_bctag");
-    // weights.emplace("syst_bctag", w*"sys_bctag[0]");
-    // corrections.emplace("syst_bctag", w);
+    scenarios.push_back("syst_bctag");
+    weights.emplace("syst_bctag", w*"sys_bctag[0]");
+    corrections.emplace("syst_bctag", w);
 
-    // scenarios.push_back("syst_udsgtag");
-    // weights.emplace("syst_udsgtag", w*"sys_udsgtag[0]");
-    // corrections.emplace("syst_udsgtag", w);
+    scenarios.push_back("syst_udsgtag");
+    weights.emplace("syst_udsgtag", w*"sys_udsgtag[0]");
+    corrections.emplace("syst_udsgtag", w);
 
     scenarios.push_back("syst_mcstat");
     weights.emplace("syst_mcstat", w);
@@ -399,7 +399,15 @@ int main(int argc, char *argv[]){
     vector<TString> bincuts = vector<TString>(nbcuts.begin()+1, nbcuts.end());
 
     //////// Pushing all cuts to then find the yields
-    abcds.push_back(abcd_method(method, metcuts, bincuts, abcdcuts, caption, basecuts, abcd_title));
+    if (Contains(mm_scen,"syst_qcd")){ 
+      // loosen selection for propagating qcd systematics by: removing delta phi and using only 3b
+      // nbcut filled twice to avoid complications with printing table
+      vector<TString> bincuts_tmp = vector<TString>({"nbt>=2&&nbm>=3", "nbt>=2&&nbm>=3"});
+      TString basecuts_tmp = basecuts; basecuts_tmp.ReplaceAll("!low_dphi","1");
+      abcds.push_back(abcd_method(method, metcuts, bincuts_tmp, abcdcuts, caption, basecuts_tmp, abcd_title));
+    } else {
+      abcds.push_back(abcd_method(method, metcuts, bincuts, abcdcuts, caption, basecuts, abcd_title));
+    }
     if(method.Contains("noint")) abcds.back().setIntNbNj(false);
 
     vector<TableRow> table_cuts, table_cuts_mm;
@@ -499,7 +507,7 @@ int main(int argc, char *argv[]){
       if (syst_names[isys].Contains("_ttx")) cout<<setw(20)<<"$t\\bar{t}$+X closure";
       else if (syst_names[isys].Contains("_vjets")) cout<<setw(20)<<"V+jets closure";
       else if (syst_names[isys].Contains("_qcd")) cout<<setw(20)<<"QCD closure";
-      else if (syst_names[isys].Contains("_comp")) cout<<setw(20)<<"Background composition";
+      else if (syst_names[isys].Contains("_comp")) cout<<setw(20)<<"Bkg. composition";
       else if (syst_names[isys].Contains("_bctag")) cout<<setw(20)<<"B-tag SFs";
       else if (syst_names[isys].Contains("_udsgtag")) cout<<setw(20)<<"Mistag SFs";
       else if (syst_names[isys].Contains("_mcstat")) cout<<setw(20)<<"MC stat.";
