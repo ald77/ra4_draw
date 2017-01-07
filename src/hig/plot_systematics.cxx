@@ -1,7 +1,7 @@
 // Cheatsheet:
 //    To obtain plots with no mismeasurement and kappa's with expected data stats:
 //         ./run/hig/plot_systematics.exe --mm mc_as_data -l 36.2
-//    There are 4 possibilities for the sample, requested with option -s. These are: search, zll, qcd, ttbar
+//    There are 4 possibilities for the skim, requested with option -s. These are: search, zll, qcd, ttbar
 //    Option -t plots the kappas with a tighter selection, see basecuts below, e.g.
 //         ./run/hig/plot_systematics.exe --mm mc_as_data -t -s zll -l 36.2
 
@@ -57,6 +57,7 @@ namespace{
   bool do_loose = true;
   bool do_trim = true;
   bool do_highnb = false;
+  bool do_midnb = false;
   bool do_onemet = false;
   TString skim = "search";
   TString json = "2p6";
@@ -110,6 +111,7 @@ int main(int argc, char *argv[]){
     only_mc = true;
   }else if(mm_scen == "data"){
     cout << " ======== Comparing MC and actual DATA ======== \n" << endl;
+    only_mc = false;
   }else if(mm_scen == "no_mismeasurement" || mm_scen == "off" || mm_scen == "mc_as_data"){
     cout << " ======== No mismeasurement applied ======== \n" << endl;
     // if(mm_scen == "mc_as_data") only_mc = true;
@@ -133,43 +135,47 @@ int main(int argc, char *argv[]){
     }
   }else if(mm_scen == "totunc"){
     scenarios = vector<string>();
+    do_correction = true;
+    // scenarios.push_back("syst_ttx_up");
+    // weights.emplace("syst_ttx_up", w*(Higfuncs::wgt_comp)*1/(1+Higfuncs::wgt_syst_ttx));
+    // corrections.emplace("syst_ttx_up", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_ttx_dn");
+    // weights.emplace("syst_ttx_dn", w*(Higfuncs::wgt_comp)*1/(1-Higfuncs::wgt_syst_ttx));
+    // corrections.emplace("syst_ttx_dn", Higfuncs::wgt_comp);
 
-    scenarios.push_back("syst_ttx_up");
-    weights.emplace("syst_ttx_up", w*1/(1+Higfuncs::wgt_syst_ttx));
-    corrections.emplace("syst_ttx_up", w);
-    scenarios.push_back("syst_ttx_dn");
-    weights.emplace("syst_ttx_dn", w*1/(1-Higfuncs::wgt_syst_ttx));
-    corrections.emplace("syst_ttx_dn", w);
-
-    scenarios.push_back("syst_vjets_up");
-    weights.emplace("syst_vjets_up", w*1/(1+Higfuncs::wgt_syst_vjets));
-    corrections.emplace("syst_vjets_up", w);
-    scenarios.push_back("syst_vjets_dn");
-    weights.emplace("syst_vjets_dn", w*1/(1-Higfuncs::wgt_syst_vjets));
-    corrections.emplace("syst_vjets_dn", w);
+    // scenarios.push_back("syst_vjets_up");
+    // weights.emplace("syst_vjets_up", w*(Higfuncs::wgt_comp)*1/(1+Higfuncs::wgt_syst_vjets));
+    // corrections.emplace("syst_vjets_up", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_vjets_dn");
+    // weights.emplace("syst_vjets_dn", w*(Higfuncs::wgt_comp)*1/(1-Higfuncs::wgt_syst_vjets));
+    // corrections.emplace("syst_vjets_dn", Higfuncs::wgt_comp);
 
     scenarios.push_back("syst_qcd_up");
-    weights.emplace("syst_qcd_up", w*1/(1+Higfuncs::wgt_syst_qcd));
-    corrections.emplace("syst_qcd_up", w);
+    weights.emplace("syst_qcd_up", w*(Higfuncs::wgt_comp)*1/(1+Higfuncs::wgt_syst_qcd));
+    corrections.emplace("syst_qcd_up", Higfuncs::wgt_comp);
     scenarios.push_back("syst_qcd_dn");
-    weights.emplace("syst_qcd_dn", w*1/(1-Higfuncs::wgt_syst_qcd));
-    corrections.emplace("syst_qcd_dn", w);
+    weights.emplace("syst_qcd_dn", w*(Higfuncs::wgt_comp)*1/(1-Higfuncs::wgt_syst_qcd));
+    corrections.emplace("syst_qcd_dn", Higfuncs::wgt_comp);
 
     scenarios.push_back("syst_comp");
-    weights.emplace("syst_comp", w*(Higfuncs::wgt_2xhighnb_zjets)); 
-    corrections.emplace("syst_comp", w);
+    weights.emplace("syst_comp", w*(Higfuncs::wgt_comp)); 
+    corrections.emplace("syst_comp", 1.);
 
-    scenarios.push_back("syst_bctag");
-    weights.emplace("syst_bctag", w*"sys_bctag[0]");
-    corrections.emplace("syst_bctag", w);
+    // scenarios.push_back("syst_comp_alldphi"); // this will be with looser selection
+    // weights.emplace("syst_comp_alldphi", w*(Higfuncs::wgt_comp)); 
+    // corrections.emplace("syst_comp_alldphi", w);
 
-    scenarios.push_back("syst_udsgtag");
-    weights.emplace("syst_udsgtag", w*"sys_udsgtag[0]");
-    corrections.emplace("syst_udsgtag", w);
+    // scenarios.push_back("syst_bctag");
+    // weights.emplace("syst_bctag", w*"sys_bctag[0]");
+    // corrections.emplace("syst_bctag", w);
 
-    scenarios.push_back("syst_mcstat");
-    weights.emplace("syst_mcstat", w);
-    corrections.emplace("syst_mcstat", w);
+    // scenarios.push_back("syst_udsgtag");
+    // weights.emplace("syst_udsgtag", w*"sys_udsgtag[0]");
+    // corrections.emplace("syst_udsgtag", w);
+
+    // scenarios.push_back("syst_mcstat");
+    // weights.emplace("syst_mcstat", w);
+    // corrections.emplace("syst_mcstat", w);
   }else if(mm_scen == "data"){
     scenarios = vector<string>{mm_scen};
   }else if(mm_scen != "no_mismeasurement"){
@@ -180,11 +186,11 @@ int main(int argc, char *argv[]){
 
   //// Capybara
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/");
-  if (skim=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
+  if (skim=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1met0/";
   if (skim=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
   if (skim=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higloose/");
-  if (skim=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1/";
+  if (skim=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1met0/";
   if (skim=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep2/";
   if (skim=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higqcd/";
   string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/TChiHH/merged_higmc_higloose/");
@@ -208,14 +214,14 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > proc_sigs;
   for(size_t ind=0; ind<sigMasses.size(); ind++)
     proc_sigs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigMasses[ind]+")", Process::Type::signal, 2,
-      {foldersig+"*mGluino-"+sigMasses[ind]+"_*.root"}, baseline && "stitch"));
+      {foldersig+"*mGluino-"+sigMasses[ind]+"_*.root"}, baseline && "stitch && pass_ra2_badmu"));
 
   auto proc_tt1l = Process::MakeShared<Baby_full>("tt+X", Process::Type::background, colors("tt_1l"),
-    attach_folder(foldermc, mctags["ttx"]), baseline && "stitch && pass");
+    attach_folder(foldermc, mctags["ttx"]), baseline && "stitch && pass && pass_ra2_badmu");
   auto proc_tt2l = Process::MakeShared<Baby_full>("V+jets", Process::Type::background, kOrange+1,
-    attach_folder(foldermc, mctags["vjets"]), baseline && "stitch && pass");
+    attach_folder(foldermc, mctags["vjets"]), baseline && "stitch && pass && pass_ra2_badmu");
   auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    attach_folder(foldermc, mctags["other"]), baseline && "stitch && pass");
+    attach_folder(foldermc, mctags["other"]), baseline && "stitch && pass && pass_ra2_badmu");
 
   //// All MC files to make pseudodata
   set<string> names_allmc;
@@ -227,43 +233,31 @@ int main(int argc, char *argv[]){
   else if(json=="0p869"){
     lumi = 0.869;
     jsonCuts = "nonblind";
-  } else if(json=="2p8"){
-    lumi = 2.8;
-    jsonCuts = "json2p6";
-  } else if(json=="1p5"){
-    lumi = 1.5;
-    jsonCuts = "json4p0&&!json2p6";
-  } else if(json=="4p3"){
-    lumi = 4.3;
-    jsonCuts = "json4p0";
-  } else if(json=="3p4"){
-    lumi = 3.4;
-    jsonCuts = "json7p65&&!json4p0";
-  } else if(json=="7p7"){
-    lumi = 7.7;
-    jsonCuts = "json7p65";
   } else if(json=="12p9"){
     lumi = 12.9;
     jsonCuts = "json12p9";
-  }
+  } else if(json=="full"){
+    lumi = 36.2;
+    jsonCuts = "1";
+  } 
   if(mc_lumi!="") lumi = mc_lumi.Atof();
 
-  set<string> names_data({folderdata+"*RunB*.root"});
+  set<string> names_data({folderdata+"*.root"});
   if(only_mc){
     names_data = attach_folder(foldermc, names_allmc);
     if(quick_test) names_data = set<string>({foldermc+"*_TTJets_SingleLeptFromT_*.root"});
   }
 
-  NamedFunc base_data = baseline && Higfuncs::trig_hig>0. && jsonCuts+"&& pass";
-  if (only_mc) base_data = baseline && "stitch && pass";
+  NamedFunc base_data = baseline && Higfuncs::trig_hig>0. && jsonCuts+"&& pass && pass_ra2_badmu";
+  if (only_mc) base_data = baseline && "stitch && pass && pass_ra2_badmu";
    if(mm_scen == "data")
-     cout<<"Data files are "<<*(names_data.begin())<<" with cuts "<<baseline<<"&&"<< Higfuncs::trig_hig << "&&pass"<<endl<<endl;
+     cout<<"Data files are "<<*(names_data.begin())<<" with cuts "<<baseline<<"&&"<< Higfuncs::trig_hig << "&&pass&&pass_ra2_badmu"<<endl<<endl;
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     names_data,base_data);
 
   //// Use this process to make quick plots. Requires being run without split_bkg
   auto proc_bkg = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets_SingleLeptFromT_*.root"}, baseline && " pass");
+    {foldermc+"*_TTJets_SingleLeptFromT_*.root"}, baseline && " pass && pass_ra2_badmu");
 
   vector<shared_ptr<Process> > all_procs;
   if(!quick_test) all_procs = vector<shared_ptr<Process> >{proc_tt1l, proc_tt2l, proc_other};
@@ -287,26 +281,28 @@ int main(int argc, char *argv[]){
   if (skim=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
   if (skim=="qcd" || skim=="search") {
     if (do_onemet) metcuts.push_back(metdef+">150");
-  } else {
-    if (do_onemet) metcuts.push_back(metdef+">100");
+  } else if (skim=="ttbar" || skim=="zll"){
+    if (do_onemet) metcuts.push_back(metdef+">0");
+    metcuts.push_back(metdef+">0&&"+metdef+"<=50");
+    metcuts.push_back(metdef+">50&&"+metdef+"<=100");
     metcuts.push_back(metdef+">100&&"+metdef+"<=150");
   }
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
-  if (json=="4p3" && (skim=="ttbar" || (skim=="qcd" && do_highnb))) {
-    metcuts.push_back(metdef+">200");
-  } else {
-    metcuts.push_back(metdef+">200&&"+metdef+"<=300");
-    metcuts.push_back(metdef+">300");
-  }
+  metcuts.push_back(metdef+">200&&"+metdef+"<=300");
+  metcuts.push_back(metdef+">300");
+  
 
   ////// Nb cuts
-  if ((skim=="qcd" && !do_highnb) ||skim=="zll"){// 
-    nbcuts.push_back("nbm==0");
-    nbcuts.push_back("nbm==1");
-  } else {
+  if (skim=="ttbar" || skim=="search" || do_highnb){
     nbcuts.push_back("nbt==2&&nbm==2");
     nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
     nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
+  } else if (do_midnb){
+    nbcuts.push_back("nbm==1");
+    nbcuts.push_back("nbt==2&&nbm==2");
+  } else {
+    nbcuts.push_back("nbm==0");
+    nbcuts.push_back("nbm==1");
   }
 
   ////// CR, SR cuts
@@ -399,11 +395,11 @@ int main(int argc, char *argv[]){
     vector<TString> bincuts = vector<TString>(nbcuts.begin()+1, nbcuts.end());
 
     //////// Pushing all cuts to then find the yields
-    if (Contains(mm_scen,"syst_qcd")){ 
+    if (Contains(mm_scen,"syst_qcd") || Contains(mm_scen,"syst_comp")){ 
       // loosen selection for propagating qcd systematics by: removing delta phi and using only 3b
       // nbcut filled twice to avoid complications with printing table
       vector<TString> bincuts_tmp = vector<TString>({"nbt>=2&&nbm>=3", "nbt>=2&&nbm>=3"});
-      TString basecuts_tmp = basecuts; basecuts_tmp.ReplaceAll("!low_dphi","1");
+      TString basecuts_tmp = basecuts; basecuts_tmp.ReplaceAll("!low_dphi","!(dphi1<0.3 || dphi2<0.3)");
       abcds.push_back(abcd_method(method, metcuts, bincuts_tmp, abcdcuts, caption, basecuts_tmp, abcd_title));
     } else {
       abcds.push_back(abcd_method(method, metcuts, bincuts, abcdcuts, caption, basecuts, abcd_title));
@@ -507,6 +503,7 @@ int main(int argc, char *argv[]){
       if (syst_names[isys].Contains("_ttx")) cout<<setw(20)<<"$t\\bar{t}$+X closure";
       else if (syst_names[isys].Contains("_vjets")) cout<<setw(20)<<"V+jets closure";
       else if (syst_names[isys].Contains("_qcd")) cout<<setw(20)<<"QCD closure";
+      else if (syst_names[isys].Contains("_comp_alldphi")) cout<<setw(20)<<"Bkg. composition (no $\\Delta\\phi$ cut)";
       else if (syst_names[isys].Contains("_comp")) cout<<setw(20)<<"Bkg. composition";
       else if (syst_names[isys].Contains("_bctag")) cout<<setw(20)<<"B-tag SFs";
       else if (syst_names[isys].Contains("_udsgtag")) cout<<setw(20)<<"Mistag SFs";
@@ -601,6 +598,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   TString outname = "tables/table_pred_"+skim+"_tight_lumi"+lumi_s; outname.ReplaceAll(".","p");
   if (do_loose) outname = "tables/table_pred_"+skim+"_loose_lumi"+lumi_s; outname.ReplaceAll(".","p");
   if (do_highnb) outname +="_highnb";
+  if (do_midnb) outname +="_midnb";
   if(unblind) outname += "_unblind";
   else outname += "_blind";
   if(do_ht) outname += "_ht500";
@@ -1048,6 +1046,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   TString fname="plots/kappa_"+skim+"_tight_" +abcd.method;
   if (do_loose) fname="plots/kappa_"+skim+"_loose_"+abcd.method;
   if (do_highnb) fname +="_highnb";
+  if (do_midnb) fname +="_midnb";
   if(do_ht) fname  += "_ht500";
   lumi_s.ReplaceAll(".","p");
   fname += "_lumi"+lumi_s;
@@ -1222,6 +1221,7 @@ void GetOptions(int argc, char *argv[]){
       {"quick", no_argument, 0, 0},           // Used inclusive ttbar for quick testing
       {"zbi", no_argument, 0, 0},             // Use Zbi instead of toys
       {"highnb", no_argument, 0, 0},             // Do 3b and 4b for QCD CR
+      {"midnb", no_argument, 0, 0},             // Do 3b and 4b for QCD CR
       {"onemet", no_argument, 0, 0},             
       {0, 0, 0, 0}
     };
@@ -1289,6 +1289,8 @@ void GetOptions(int argc, char *argv[]){
         actualZbi = true;
       }else if(optname == "highnb"){
         do_highnb = true;
+      }else if(optname == "midnb"){
+        do_midnb = true;
       }else if(optname == "onemet"){
         do_onemet = true;
       }else{

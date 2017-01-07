@@ -31,7 +31,7 @@ namespace Higfuncs{
 	extern const NamedFunc wgt_syst_qcd;
 
 	// estimate the systematic due to limited knowledge on composition
-	extern const NamedFunc wgt_2xhighnb_zjets;
+	extern const NamedFunc wgt_comp;
 
 	// analysis trigger and its efficiency
 	extern const NamedFunc trig_hig;

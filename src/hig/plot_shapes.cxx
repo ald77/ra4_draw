@@ -28,7 +28,7 @@ void GetOptions(int argc, char *argv[]);
 namespace{
 	bool do_allbkg = false;
   string sample = "search";
-  string json = "4p0";
+  string json = "full";
   bool unblind = false;
   bool do_note = false;
 }
@@ -55,12 +55,12 @@ int main(int argc, char *argv[]){
 
   string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
   if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
-  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_nj4zcandl40/";
+  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
   if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
   string folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higloose/";
   if (sample=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1/";
-  if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_nj4zcandl40/";
-  if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_nl0nj4met150/";
+  if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep2/";
+  if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higqcd/";
 
   set<string> alltags; 
   if (sample=="ttbar" || sample=="search") alltags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root",
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]){
   unsigned firstnb = 0;
   nbcuts.push_back("nbm==0");
   nbcuts.push_back("nbm==1");
-  nbcuts.push_back("nbt==2&&nbm==2");
+  // nbcuts.push_back("nbt==2&&nbm==2");
   if (sample=="ttbar" || sample=="search") {
     firstnb = 2;
     nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
@@ -123,17 +123,17 @@ int main(int argc, char *argv[]){
   for (unsigned inb(firstnb); inb<nbcuts.size(); inb++){
     // if (sample=="qcd" && inb==nbcuts.size()-1) continue;
     procs.push_back(Process::MakeShared<Baby_full>(samplename+" ("+RoundNumber(inb,0).Data()+"b)", 
-      Process::Type::background, colors[inb], allfiles, baseline+"&& pass && stitch &&"+nbcuts[inb]));
+      Process::Type::background, colors[inb], allfiles, baseline+"&& pass && pass_ra2_badmu && stitch &&"+nbcuts[inb]));
   }
   vector<int> colors_trub = {kAzure-4, kTeal-8, kOrange-4, kPink+2, kMagenta-1};
   vector<shared_ptr<Process> > procs_trub = vector<shared_ptr<Process> >();
   for (unsigned inb(firstnb); inb<nbcuts.size(); inb++){
     if ((sample=="zll" || sample=="qcd") && inb==nbcuts.size()-1) { // merge 4b into 3b
       procs_trub.push_back(Process::MakeShared<Baby_full>(samplename+" (#geq"+RoundNumber(inb,0).Data()+" B-hadrons)", 
-        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub>=inb && baseline+"&& pass && stitch"));
+        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub>=inb && baseline+"&& pass && pass_ra2_badmu && stitch"));
     } else {
       procs_trub.push_back(Process::MakeShared<Baby_full>(samplename+" ("+RoundNumber(inb,0).Data()+" B-hadrons)", 
-        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub==inb && baseline+"&& pass && stitch"));
+        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub==inb && baseline+"&& pass && pass_ra2_badmu && stitch"));
     }
   }
 
@@ -142,7 +142,7 @@ int main(int argc, char *argv[]){
   if(json=="12p9"){
     lumi = 12.9;
     jsonCuts = "json12p9";
-  } else if (json=="36p2"){
+  } else if (json=="full"){
     lumi = 36.2;
     jsonCuts = "1";
   }
@@ -153,10 +153,12 @@ int main(int argc, char *argv[]){
   if (sample=="zll") { // do 0b vs 1b
     color_data = kOrange+1;
     combos.push_back({"nbm==1","nbm==0"});
+    combos.push_back({"nbt==2&&nbm==2","nbm==1"});
   } else if (sample=="qcd") { // do 0b vs 1b and 2b vs 3+b
     color_data = kOrange;
     combos.push_back({"nbm==1","nbm==0"});
     combos.push_back({"nbt>=2&&nbm>=3","nbt==2&&nbm==2"});
+    combos.push_back({"nbt==2&&nbm==2","nbm==1"});
   } else if (sample=="search" || sample=="ttbar") {
     if (json=="4p0") { // at low lumi, do 2b vs 3+b
       combos.push_back({"nbt>=2&&nbm>=3","nbt==2&&nbm==2"});
@@ -173,26 +175,27 @@ int main(int argc, char *argv[]){
     if (Contains(icomb[0],"nbm==1")) combos_label = {"1b","0b"};
     if (Contains(icomb[0],"nbl>=4")) combos_label = {"2b","4b"};
     if (Contains(icomb[0],"nbl==3")) combos_label = {"2b","3b"};
-    string tmpcuts = "pass && met/met_calo<5 &&"+jsonCuts+"&&"+icomb[0]; //if not cast here, it crashes
+    if (Contains(icomb[0],"nbt==2")) combos_label = {"2b","1b"};
+    string tmpcuts = "pass && pass_ra2_badmu && met/met_calo<5 &&"+jsonCuts+"&&"+icomb[0]; //if not cast here, it crashes
     procs_data.back().push_back(Process::MakeShared<Baby_full>(combos_label[0]+" Data "+lumi_s+" fb^{-1}", 
-      Process::Type::data, kBlack, {folderdata+"*RunB*root"}, Higfuncs::trig_hig && tmpcuts));
-    tmpcuts = "pass && met/met_calo<5 &&"+jsonCuts+"&&"+icomb[1];
+      Process::Type::data, kBlack, {folderdata+"*root"}, Higfuncs::trig_hig && tmpcuts));
+    tmpcuts = "pass && pass_ra2_badmu && met/met_calo<5 &&"+jsonCuts+"&&"+icomb[1];
     procs_data.back().push_back(Process::MakeShared<Baby_full>(combos_label[1]+" Data "+lumi_s+" fb^{-1}", 
-      Process::Type::background, kBlack, {folderdata+"*RunB*root"}, Higfuncs::trig_hig && tmpcuts));
+      Process::Type::background, kBlack, {folderdata+"*root"}, Higfuncs::trig_hig && tmpcuts));
     procs_data.back().back()->SetFillColor(color_data);
     procs_data.back().back()->SetLineColor(color_data);
     procs_data.back().back()->SetLineWidth(2);
   }
 
 
-  string metdef = "met";
-  if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
-  
+  string metcut = "met>150";
+  if (sample=="zll") metcut = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>0";
+  else if (sample=="ttbar") metcut = "met>100";
 
   vector<string> xcuts;
-  if (!do_note) xcuts.push_back(metdef+">100");
-  xcuts.push_back(metdef+">100 && hig_dm<40 && hig_am<200");
-  xcuts.push_back(metdef+">100 && hig_dm<40 && hig_am<200 && hig_drmax<2.2");
+  if (!do_note) xcuts.push_back(metcut);
+  xcuts.push_back(metcut+"&& hig_dm<40 && hig_am<200");
+  xcuts.push_back(metcut+"&& hig_dm<40 && hig_am<200 && hig_drmax<2.2");
 
   vector<string> scuts; //additional sample specific options
   scuts.push_back("1");

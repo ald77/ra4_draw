@@ -89,8 +89,8 @@ int main(int argc, char *argv[]){
             "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root"};
 
   // Baseline definitions
-  string baseline="pass && stitch";
-  NamedFunc base_func("pass && stitch && njets>=4 && njets<=5 && met/met_calo<5");
+  string baseline="pass && pass_ra2_badmu && stitch";
+  NamedFunc base_func("pass && pass_ra2_badmu && stitch && njets>=4 && njets<=5 && met/met_calo<5");
   if (do_trim) base_func = base_func && "hig_dm<40 && hig_am<200";
 
   vector<shared_ptr<Process> > procs;

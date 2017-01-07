@@ -65,9 +65,9 @@ NamedFunc::ScalarType wgt_subtr_ttx(const Baby &b, string json){
     if (json=="json4p0") wgt*= 4.3;
     else wgt*= 36.2;
     // apply weights derived from 1l CR: normalization*ratio(data/mc)
-    if (b.nbt()==2 && b.nbm()==2) return wgt*=1.13;
-    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) return wgt*=1.29;
-    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) return wgt*=1.41;
+    if (b.nbt()==2 && b.nbm()==2) return wgt*=1.07;
+    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) return wgt*=1.21;
+    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) return wgt*=1.50;
     // apply stitch
     if (b.stitch()) return wgt;
     else return 0;
@@ -95,8 +95,8 @@ const NamedFunc wgt_syst_ttx("wgt_syst_ttx",[](const Baby &b) -> NamedFunc::Scal
     b.type()==10000  ||                      // ttgamma
     b.type()==11000) {                       // tttt
     if (b.hig_am()<=100 || (b.hig_am()>140 && b.hig_am()<=200)) {
-      if (b.nbt()>=1 && b.nbm()==3 && b.nbl()==3) return 0.19;
-      else if (b.nbt()>=1 && b.nbm()>=3 && b.nbl()>=4) return 0.30;
+      if (b.nbt()>=1 && b.nbm()==3 && b.nbl()==3) return 0.13;
+      else if (b.nbt()>=1 && b.nbm()>=3 && b.nbl()>=4) return 0.09;
     }
   }
   return 0;
@@ -105,9 +105,10 @@ const NamedFunc wgt_syst_ttx("wgt_syst_ttx",[](const Baby &b) -> NamedFunc::Scal
 const NamedFunc wgt_syst_vjets("wgt_syst_vjets",[](const Baby &b) -> NamedFunc::ScalarType{
   if ( (b.type()>=8000 && b.type()<9000) || // zjets
     (b.type()>=2000 && b.type()<3000) ||    // wjets
-    (b.type()>=6000 && b.type()<7000)) {    // dyjets  
+    (b.type()>=6000 && b.type()<7000) ||  // dyjets  
+    b.type()<0) {   
     if (b.hig_am()<=100 || (b.hig_am()>140 && b.hig_am()<=200))
-      if (b.nbt()>=2 && b.nbm()>=3) return 0.34;
+      if (b.nbt()>=2 && b.nbm()>=3) return 0.13;
   }
   return 0;
 });
@@ -115,16 +116,55 @@ const NamedFunc wgt_syst_vjets("wgt_syst_vjets",[](const Baby &b) -> NamedFunc::
 const NamedFunc wgt_syst_qcd("wgt_syst_qcd",[](const Baby &b) -> NamedFunc::ScalarType{
   if ( (b.type()>=7000 && b.type()<8000)) { // qcd
     if (b.hig_am()<=100 || (b.hig_am()>140 && b.hig_am()<=200))
-      if (b.nbt()>=2 && b.nbm()>=3) return 0.12;
+      if (b.nbt()>=2 && b.nbm()>=3) return 0.13;
   }
   return 0;
 });
 
 // estimate the systematic due to limited knowledge on composition
-const NamedFunc wgt_2xhighnb_zjets("wgt_2xhighnb_zjets",[](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.type()>=8000 && b.type()<9000)
-    if (b.nbt()>=2 && b.nbm()>=3) return 2.;
-  return 1;
+// by reweighting b-category distribution to data for each bkg
+const NamedFunc wgt_comp("wgt_comp",[](const Baby &b) -> NamedFunc::ScalarType{
+  float wgt = 1;
+  if ( (b.type()>=1000 && b.type()<2000) ||  // ttbar
+    // (b.type()>=3000 && b.type()<4000) ||     // single top
+    (b.type()>=4000 && b.type()<6000) ||     // ttw and ttz
+    b.type()==9000  ||                       // ttH
+    b.type()==10000  ||                      // ttgamma
+    b.type()==11000) {                       // tttt
+    //apply normalization factor from MET distribution
+    wgt = 1.10;
+    if (b.met()>150 && b.met()<=200) wgt*=1.008;
+    else if (b.met()>200 && b.met()<=300) wgt*=0.936;
+    else if (b.met()>300) wgt*=0.984;
+    // nb correction from nb distribution data/mc, inclusive in MET
+    if (b.nbt()==2 && b.nbm()==2) wgt*=0.973;
+    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.092;
+    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.471;
+  } else if ( (b.type()>=8000 && b.type()<9000) || // zjets
+    (b.type()>=2000 && b.type()<3000) ||    // wjets
+    (b.type()>=6000 && b.type()<7000) ||  // dyjets  
+    b.type()<0) {   
+    //apply normalization factor from MET distribution
+    wgt = 1.277;
+    if (b.met()>150 && b.met()<=200) wgt*=1.022;
+    else if (b.met()>200 && b.met()<=300) wgt*=0.849;
+    else if (b.met()>300) wgt*=0.810;
+    // nb correction from nb distribution data/mc, inclusive in MET
+    if (b.nbt()==2 && b.nbm()==2) wgt*=0.970;
+    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.225;
+    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.254;
+  } else if ( (b.type()>=7000 && b.type()<8000)) { // qcd
+    //apply normalization factor from MET distribution
+    wgt = 2.218;
+    if (b.met()>150 && b.met()<=200) wgt*=1.058;
+    else if (b.met()>200 && b.met()<=300) wgt*=0.861;
+    else if (b.met()>300) wgt*=0.797;
+    // nb correction from nb distribution data/mc, inclusive in MET
+    if (b.nbt()==2 && b.nbm()==2) wgt*=0.953;
+    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.112;
+    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.477;
+  }
+  return wgt;
 });
 
 // defintion of analysis trigger
@@ -141,7 +181,7 @@ const NamedFunc eff_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::Scala
     float eff = 1., met = b.met(), ht = b.ht();
     errup=0;errdown=0;
     errup+=errdown;
-    if(b.type() < 1000) eff = 1;
+    if(b.type()>0 && b.type()<1000) eff = 1;
 
     //// Efficiency of the MET[100||110||120] triggers in all 36.2 ifb
     //// "(trig[13]||trig[33]||trig[14]||trig[15]||trig[30]||trig[31])";
@@ -383,11 +423,11 @@ const NamedFunc eff_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::Scala
       vector<float> leps_pt; 
       if (b.leps_pt()->size()>0) leps_pt.push_back(b.leps_pt()->at(0));
       else leps_pt.push_back(0);
-      if(leps_pt[0]>  20 && leps_pt[0]<=  25 && met> 100 && met<= 110) {eff=0.160; errup=0.019; errdown = 0.017;}
-      else if(leps_pt[0]> 25 && leps_pt[0]<=  30 && met>100 && met<= 110) {eff=0.400; errup=0.024; errdown=0.024;}
-      else if(leps_pt[0]> 30 && leps_pt[0]<= 110 && met>100 && met<= 110) {eff=0.728; errup=0.006; errdown=0.006;}
-      else if(leps_pt[0]>110 && leps_pt[0]<= 120 && met>100 && met<= 110) {eff=0.880; errup=0.017; errdown=0.019;}
-      else if(leps_pt[0]>120 && leps_pt[0]<=9999 && met>100 && met<= 110) {eff=0.950; errup=0.003; errdown=0.003;}
+      if(leps_pt[0]>  20 && leps_pt[0]<=  25 && met>=0 && met<= 110) {eff=0.160; errup=0.019; errdown = 0.017;}
+      else if(leps_pt[0]> 25 && leps_pt[0]<=  30 && met>=0 && met<= 110) {eff=0.400; errup=0.024; errdown=0.024;}
+      else if(leps_pt[0]> 30 && leps_pt[0]<= 110 && met>=0 && met<= 110) {eff=0.728; errup=0.006; errdown=0.006;}
+      else if(leps_pt[0]>110 && leps_pt[0]<= 120 && met>=0 && met<= 110) {eff=0.880; errup=0.017; errdown=0.019;}
+      else if(leps_pt[0]>120 && leps_pt[0]<=9999 && met>=0 && met<= 110) {eff=0.950; errup=0.003; errdown=0.003;}
       else if(leps_pt[0]> 20 && leps_pt[0]<=  25 && met>110 && met<= 120) {eff=0.244; errup=0.024; errdown=0.023;}
       else if(leps_pt[0]> 25 && leps_pt[0]<=  30 && met>110 && met<= 120) {eff=0.420; errup=0.027; errdown=0.027;}
       else if(leps_pt[0]> 30 && leps_pt[0]<= 110 && met>110 && met<= 120) {eff=0.761; errup=0.007; errdown=0.007;}
@@ -450,10 +490,10 @@ const NamedFunc eff_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::Scala
       vector<float> leps_pt; 
       if (b.leps_pt()->size()>0) leps_pt.push_back(b.leps_pt()->at(0));
       else leps_pt.push_back(0);
-      if(leps_pt[0]>  20 && leps_pt[0]<=  25 && met> 100 && met<= 110) {eff=0.271; errup=0.017; errdown = 0.016;}
-      else if(leps_pt[0]>25 && leps_pt[0]<=  30 && met> 100 && met<= 110) {eff=0.725; errup=0.017; errdown=0.018;}
-      else if(leps_pt[0]>30 && leps_pt[0]<=  50 && met> 100 && met<= 110) {eff=0.814; errup=0.008; errdown=0.009;}
-      else if(leps_pt[0]>50 && leps_pt[0]<=9999 && met> 100 && met<= 110) {eff=0.964; errup=0.002; errdown=0.002;}
+      if(leps_pt[0]>  20 && leps_pt[0]<=  25 && met>= 0 && met<= 110) {eff=0.271; errup=0.017; errdown = 0.016;}
+      else if(leps_pt[0]>25 && leps_pt[0]<=  30 && met>= 0 && met<= 110) {eff=0.725; errup=0.017; errdown=0.018;}
+      else if(leps_pt[0]>30 && leps_pt[0]<=  50 && met>= 0 && met<= 110) {eff=0.814; errup=0.008; errdown=0.009;}
+      else if(leps_pt[0]>50 && leps_pt[0]<=9999 && met>= 0 && met<= 110) {eff=0.964; errup=0.002; errdown=0.002;}
       else if(leps_pt[0]>20 && leps_pt[0]<=  25 && met> 110 && met<= 120) {eff=0.363; errup=0.020; errdown=0.020;}
       else if(leps_pt[0]>25 && leps_pt[0]<=  30 && met> 110 && met<= 120) {eff=0.755; errup=0.018; errdown=0.019;}
       else if(leps_pt[0]>30 && leps_pt[0]<=  50 && met> 110 && met<= 120) {eff=0.842; errup=0.009; errdown=0.009;}
