@@ -26,7 +26,7 @@ using namespace PlotOptTypes;
 void GetOptions(int argc, char *argv[]);
 
 namespace{
-	bool do_allbkg = false;
+  bool do_allbkg = false;
   string sample = "search";
   string json = "full";
   bool unblind = false;
@@ -54,11 +54,11 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
-  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
+  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1met0/";
   if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
   if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
   string folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higloose/";
-  if (sample=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1/";
+  if (sample=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1met0/";
   if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep2/";
   if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higqcd/";
 
@@ -86,13 +86,13 @@ int main(int argc, char *argv[]){
   set<string> allfiles = attach_folder(foldermc,alltags);
 
   // Baseline definitions
-  string baseline("njets>=4 && njets<=5 && met/met_calo<5"); //met/met_calo
+  string baseline("njets>=4 && njets<=5"); 
   // zll skim: ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && 
   // nleps==2 && nleps>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
   if (sample=="zll") baseline = baseline+"&& nleps==2 && met<50";
   // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
   if (sample=="qcd") baseline = baseline+"&& nvleps==0 && low_dphi";
-  // ttbar skim - met>100 && nleps==1 && (njets==4||njets==5) && nbm>=2
+  // ttbar skim - nleps==1 && (njets==4||njets==5) && nbm>=2
   if (sample=="ttbar") baseline = baseline+"&& nleps==1 && mt<100";
   // search skim - met>100 && nvleps==0 && (njets==4||njets==5) && nbm>=2
   if (sample=="search") baseline = baseline+"&& nvleps==0";
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]){
   unsigned firstnb = 0;
   nbcuts.push_back("nbm==0");
   nbcuts.push_back("nbm==1");
-  // nbcuts.push_back("nbt==2&&nbm==2");
+  nbcuts.push_back("nbt==2&&nbm==2");
   if (sample=="ttbar" || sample=="search") {
     firstnb = 2;
     nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
@@ -119,21 +119,24 @@ int main(int argc, char *argv[]){
 
   vector<int> colors = {kGreen+3, kGreen+1, kOrange, kAzure+1, kBlue+1};
 
+  // Cuts applied to all processes but not shown in plot title
+  string cutsProcs = "pass && pass_ra2_badmu && met/met_calo<5"; 
+
   vector<shared_ptr<Process> > procs = vector<shared_ptr<Process> >();
   for (unsigned inb(firstnb); inb<nbcuts.size(); inb++){
     // if (sample=="qcd" && inb==nbcuts.size()-1) continue;
     procs.push_back(Process::MakeShared<Baby_full>(samplename+" ("+RoundNumber(inb,0).Data()+"b)", 
-      Process::Type::background, colors[inb], allfiles, baseline+"&& pass && pass_ra2_badmu && stitch &&"+nbcuts[inb]));
+      Process::Type::background, colors[inb], allfiles, baseline +"&&stitch&&" + cutsProcs +"&&"+ nbcuts[inb]));
   }
   vector<int> colors_trub = {kAzure-4, kTeal-8, kOrange-4, kPink+2, kMagenta-1};
   vector<shared_ptr<Process> > procs_trub = vector<shared_ptr<Process> >();
   for (unsigned inb(firstnb); inb<nbcuts.size(); inb++){
     if ((sample=="zll" || sample=="qcd") && inb==nbcuts.size()-1) { // merge 4b into 3b
       procs_trub.push_back(Process::MakeShared<Baby_full>(samplename+" (#geq"+RoundNumber(inb,0).Data()+" B-hadrons)", 
-        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub>=inb && baseline+"&& pass && pass_ra2_badmu && stitch"));
+        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub>=inb &&baseline+"&&stitch&&"+cutsProcs));
     } else {
       procs_trub.push_back(Process::MakeShared<Baby_full>(samplename+" ("+RoundNumber(inb,0).Data()+" B-hadrons)", 
-        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub==inb && baseline+"&& pass && pass_ra2_badmu && stitch"));
+        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub==inb && baseline +"&&stitch&&"+cutsProcs));
     }
   }
 
@@ -176,10 +179,10 @@ int main(int argc, char *argv[]){
     if (Contains(icomb[0],"nbl>=4")) combos_label = {"2b","4b"};
     if (Contains(icomb[0],"nbl==3")) combos_label = {"2b","3b"};
     if (Contains(icomb[0],"nbt==2")) combos_label = {"2b","1b"};
-    string tmpcuts = "pass && pass_ra2_badmu && met/met_calo<5 &&"+jsonCuts+"&&"+icomb[0]; //if not cast here, it crashes
+    string tmpcuts = cutsProcs + " &&"+jsonCuts+"&&"+icomb[0]; //if not cast here, it crashes
     procs_data.back().push_back(Process::MakeShared<Baby_full>(combos_label[0]+" Data "+lumi_s+" fb^{-1}", 
       Process::Type::data, kBlack, {folderdata+"*root"}, Higfuncs::trig_hig && tmpcuts));
-    tmpcuts = "pass && pass_ra2_badmu && met/met_calo<5 &&"+jsonCuts+"&&"+icomb[1];
+    tmpcuts = cutsProcs + " &&"+jsonCuts+"&&"+icomb[1];
     procs_data.back().push_back(Process::MakeShared<Baby_full>(combos_label[1]+" Data "+lumi_s+" fb^{-1}", 
       Process::Type::background, kBlack, {folderdata+"*root"}, Higfuncs::trig_hig && tmpcuts));
     procs_data.back().back()->SetFillColor(color_data);
@@ -190,7 +193,7 @@ int main(int argc, char *argv[]){
 
   string metcut = "met>150";
   if (sample=="zll") metcut = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>0";
-  else if (sample=="ttbar") metcut = "met>100";
+  else if (sample=="ttbar") metcut = "1";
 
   vector<string> xcuts;
   if (!do_note) xcuts.push_back(metcut);
@@ -210,25 +213,25 @@ int main(int argc, char *argv[]){
     for (unsigned ic(0); ic<xcuts.size(); ic++){
       if (sample!="search" || unblind) {
         for (unsigned i(0); i<combos.size(); i++)
-          pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
+          pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
             baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_data[i], plt_types).Tag(sample+"_datavdata"+to_string(i));
       }
 
-      pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
+      pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
         baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Tag(sample+"_shape_bcats");
 
-      pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
+      pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
         baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Tag(sample+"_shape_trub");
 
       if (sample=="ttbar") {
-        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
-          baseline+"&& ntruleps==1 &&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Tag(sample+"1l_shape_bcats");
-        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
-          baseline+"&& ntruleps==1 &&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Tag(sample+"1l_shape_trub");
-        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
-          baseline+"&& ntruleps==2 &&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Tag(sample+"2l_shape_bcats");
-        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "<m> [GeV]", {100., 140.}),
-          baseline+"&& ntruleps==2 &&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Tag(sample+"2l_shape_trub");
+        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
+          "njets>=4 && njets<=5 && ntruleps==1 &&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Tag(sample+"1l_shape_bcats");
+        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
+          "njets>=4 && njets<=5 && ntruleps==1 &&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Tag(sample+"1l_shape_trub");
+        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
+          "njets>=4 && njets<=5 && ntruleps==2 &&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Tag(sample+"2l_shape_bcats");
+        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
+          "njets>=4 && njets<=5 && ntruleps==2 &&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Tag(sample+"2l_shape_trub");
       }
     }
   }
