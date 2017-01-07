@@ -145,15 +145,20 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > procs;
   if (!subtr_ttx) 
     procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", 
-      Process::Type::background, colors("tt_1l"),    attach_folder(foldermc,mctags["ttx"]),     base_func+"&& pass && pass_ra2_badmu && stitch"));
+      Process::Type::background, colors("tt_1l"),    attach_folder(foldermc,mctags["ttx"]),     
+      base_func+"&& pass && pass_ra2_badmu && stitch"));
   procs.push_back(Process::MakeShared<Baby_full>("V+jets",     
-    Process::Type::background, kOrange+1,          attach_folder(foldermc,mctags["vjets"]),   base_func+"&& pass && pass_ra2_badmu && stitch"));
+    Process::Type::background, kOrange+1,          attach_folder(foldermc,mctags["vjets"]),   
+    base_func+"&& pass && pass_ra2_badmu && stitch"));
   procs.push_back(Process::MakeShared<Baby_full>("Single t",   
-    Process::Type::background, colors("single_t"), attach_folder(foldermc,mctags["singlet"]), base_func+"&& pass && pass_ra2_badmu && stitch"));
+    Process::Type::background, colors("single_t"), attach_folder(foldermc,mctags["singlet"]), 
+    base_func+"&& pass && pass_ra2_badmu && stitch"));
   procs.push_back(Process::MakeShared<Baby_full>("QCD",        
-    Process::Type::background, colors("other"),    attach_folder(foldermc,mctags["qcd"]),     base_func+"&& pass && pass_ra2_badmu && stitch")); 
+    Process::Type::background, colors("other"),    attach_folder(foldermc,mctags["qcd"]),     
+    base_func+"&& pass && pass_ra2_badmu && stitch")); 
   procs.push_back(Process::MakeShared<Baby_full>("Other",      
-    Process::Type::background, kGreen+1,           attach_folder(foldermc,mctags["other"]),   base_func+"&& pass && pass_ra2_badmu && stitch"));      
+    Process::Type::background, kGreen+1,           attach_folder(foldermc,mctags["other"]),   
+    base_func+"&& pass && pass_ra2_badmu && stitch"));      
 
   if (do_data) {
     if (subtr_ttx) {
@@ -239,17 +244,23 @@ int main(int argc, char *argv[]){
     pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb, "b-tag categories (TTML)"), 
       tmp_seln && Higfuncs::hig_nb>0., procs, linplotprint).Weight(wgt).Tag(sample); 
     pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb, "b-tag categories (TTML)"), 
-      tmp_seln && Higfuncs::hig_nb>0. && "hig_dm<=40 && hig_am<=200", procs, linplotprint).Weight(wgt).Tag(sample);            
+      tmp_seln && Higfuncs::hig_nb>0. && "hig_dm<=40 && hig_am<=200", procs, linplot).Weight(wgt).Tag(sample);            
     pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb, "b-tag categories (TTML)"), 
-      tmp_seln && Higfuncs::hig_nb>0. && "hig_dm<=40 && hig_am<=200 && hig_drmax<=2.2", procs, linplotprint).Weight(wgt).Tag(sample);    
+      tmp_seln && Higfuncs::hig_nb>0. && "hig_dm<=40 && hig_am<=200 && hig_drmax<=2.2", procs, linplot).Weight(wgt).Tag(sample);    
     cout<<tmp_seln<<endl;
   }
   if (sample!="search") {
     vector<double> metbins = {150, 200, 300, 600};
+    vector<double> metbins_ext = {0,50, 100, 150, 200, 300, 600};
     if (sample=="zll") pm.Push<Hist1D>(Axis(metbins,metdef, "p_{T}^{Z} [GeV]",{150,200,300}), 
       tmp_seln && "nbt>=2" && metdef+">150", procs, logplotprint).Weight(wgt).Tag(sample+"_norm");
-    else pm.Push<Hist1D>(Axis(metbins,"met", "E_{T}^{miss} [GeV]",{150,200,300}), 
-      tmp_seln && "nbt>=2" && metdef+">150", procs, logplotprint).Weight(wgt).Tag(sample+"_norm");
+    else {
+      if (sample=="ttbar") 
+        pm.Push<Hist1D>(Axis(metbins_ext,"met", "E_{T}^{miss} [GeV]",{150,200,300}), 
+          tmp_seln && "nbt>=2", procs, logplotprint).Weight(wgt).Tag(sample+"_normext");
+        pm.Push<Hist1D>(Axis(metbins,"met", "E_{T}^{miss} [GeV]",{150,200,300}), 
+          tmp_seln && "nbt>=2" && metdef+">"+to_string(metbins[0]), procs, logplotprint).Weight(wgt).Tag(sample+"_norm");
+    }
   }
 
 

@@ -21,8 +21,12 @@ namespace Higfuncs{
 	extern const NamedFunc hig_nb_ttll;
 	extern const NamedFunc hig_nb_tmml;
 
-	// weight that allows subtracting ttbar from data
+	// weights derived in data/MC comparisons of MET and nb in CRs
+	NamedFunc::ScalarType wgt_nb_met(const Baby &b, bool ttonly);
+	// weight that allows subtracting the reweighted ttbar from the data histogram
 	NamedFunc::ScalarType wgt_subtr_ttx(const Baby &b, std::string json);
+	// namedfunc to apply the weights in wgt_nb_met to all bkg. processes
+	extern const NamedFunc wgt_comp;
 
 	// calculate effect of systematics calculated for each background 
 	// in the data control regions on the total bkg. kappa
@@ -30,8 +34,6 @@ namespace Higfuncs{
 	extern const NamedFunc wgt_syst_vjets;
 	extern const NamedFunc wgt_syst_qcd;
 
-	// estimate the systematic due to limited knowledge on composition
-	extern const NamedFunc wgt_comp;
 
 	// analysis trigger and its efficiency
 	extern const NamedFunc trig_hig;

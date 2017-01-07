@@ -489,7 +489,7 @@ string PlotOpt::TypeString() const{
 void PlotOpt::MakeSane(){
   if(!BackgroundsStacked()){
     if(ShowBackgroundError()){
-      DBG("Don't know how to show total MC uncertainty with unstacked MC. Turning off MC uncertainty band.");
+      // DBG("Don't know how to show total MC uncertainty with unstacked MC. Turning off MC uncertainty band.");
       show_background_error_ = false;
     }
   }

@@ -51,8 +51,59 @@ const NamedFunc hig_nb_tmml("hig_nb_tmml",[](const Baby &b) -> NamedFunc::Scalar
   else return 0;
 });
 
-// weight used to subtract ttbar based on MC prediction reweighted to data in 1l CR
-// since ttbar has to be combined in the same process def with data, also apply stitch here
+// apply weights found from the nb and MET data/MC comparisons
+NamedFunc::ScalarType wgt_nb_met(const Baby &b, bool ttonly){
+  float wgt = 1;
+  if ( (b.type()>=1000 && b.type()<2000) ||  // ttbar
+    // (b.type()>=3000 && b.type()<4000) ||     // single top
+    (b.type()>=4000 && b.type()<6000) ||     // ttw and ttz
+    b.type()==9000  ||                       // ttH
+    b.type()==10000  ||                      // ttgamma
+    b.type()==11000) {                       // tttt
+    //apply normalization factor from MET distribution
+    wgt = 1.087;
+    if (b.met()<=50) wgt*=0.989;
+    else if (b.met()>50 && b.met()<=100) wgt*=1.012;
+    else if (b.met()>100 && b.met()<=150) wgt*=1.026;
+    else if (b.met()>150 && b.met()<=200) wgt*=0.979;
+    else if (b.met()>200 && b.met()<=300) wgt*=0.943;
+    else if (b.met()>300) wgt*=1.007;
+    // nb correction from nb distribution data/mc, inclusive in MET
+    if (b.nbt()==2 && b.nbm()==2) wgt*=0.975;
+    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.103;
+    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.419;
+  } else if (!ttonly) {
+    if ( (b.type()>=8000 && b.type()<9000) || // zjets
+    (b.type()>=2000 && b.type()<3000) ||    // wjets
+    (b.type()>=6000 && b.type()<7000) ||  // dyjets  
+    b.type()<0) {   
+      //apply normalization factor from MET distribution
+      wgt = 1.166;
+      if (b.met()>150 && b.met()<=200) wgt*=1.094;
+      else if (b.met()>200 && b.met()<=300) wgt*=0.933;
+      else if (b.met()>300) wgt*=0.889;
+      // nb correction from nb distribution data/mc, inclusive in MET
+      if (b.nbt()==2 && b.nbm()==2) wgt*=0.970;
+      else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.224;
+      else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.241;
+    } else if ( (b.type()>=7000 && b.type()<8000)) { // qcd
+    //apply normalization factor from MET distribution
+      wgt = 2.248;
+      if (b.met()>150 && b.met()<=200) wgt*=1.050;
+      else if (b.met()>200 && b.met()<=300) wgt*=0.877;
+      else if (b.met()>300) wgt*=0.850;
+      // nb correction from nb distribution data/mc, inclusive in MET
+      if (b.nbt()==2 && b.nbm()==2) wgt*=0.953;
+      else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.114;
+      else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.469;
+    }
+  }
+  return wgt;
+};
+
+// subtract ttbar based on MC prediction reweighted to data in 1l CR
+// since ttbar has to be combined in the same process def with data, 
+// also apply stitch, json and trigger here
 NamedFunc::ScalarType wgt_subtr_ttx(const Baby &b, string json){
   if ( (b.type()>=1000 && b.type()<2000) ||  // ttbar
     // (b.type()>=3000 && b.type()<4000) ||     // single top
@@ -64,10 +115,8 @@ NamedFunc::ScalarType wgt_subtr_ttx(const Baby &b, string json){
     // apply lumi 
     if (json=="json4p0") wgt*= 4.3;
     else wgt*= 36.2;
-    // apply weights derived from 1l CR: normalization*ratio(data/mc)
-    if (b.nbt()==2 && b.nbm()==2) return wgt*=1.07;
-    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) return wgt*=1.21;
-    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) return wgt*=1.50;
+    // apply ttx weights derived from 1l CR
+    wgt *= wgt_nb_met(b, true);
     // apply stitch
     if (b.stitch()) return wgt;
     else return 0;
@@ -81,9 +130,14 @@ NamedFunc::ScalarType wgt_subtr_ttx(const Baby &b, string json){
       return 0;
     }
   }
-  // for all other backgrounds, chill
+  // for all other backgrounds, chill (they are not in the "data" process so no need to apply lumi)
   return 1;
 };
+
+// namedfunc to apply the weights from wgt_nb_met to all bkg. processes
+const NamedFunc wgt_comp("wgt_comp",[](const Baby &b) -> NamedFunc::ScalarType{
+  return wgt_nb_met(b,false);
+});
 
 // calculate effect of systematics calculated for each background 
 // in the data control regions on the total bkg. kappa
@@ -95,8 +149,8 @@ const NamedFunc wgt_syst_ttx("wgt_syst_ttx",[](const Baby &b) -> NamedFunc::Scal
     b.type()==10000  ||                      // ttgamma
     b.type()==11000) {                       // tttt
     if (b.hig_am()<=100 || (b.hig_am()>140 && b.hig_am()<=200)) {
-      if (b.nbt()>=1 && b.nbm()==3 && b.nbl()==3) return 0.13;
-      else if (b.nbt()>=1 && b.nbm()>=3 && b.nbl()>=4) return 0.09;
+      if (b.nbt()>=1 && b.nbm()==3 && b.nbl()==3) return 0.03;
+      else if (b.nbt()>=1 && b.nbm()>=3 && b.nbl()>=4) return 0.05;
     }
   }
   return 0;
@@ -119,52 +173,6 @@ const NamedFunc wgt_syst_qcd("wgt_syst_qcd",[](const Baby &b) -> NamedFunc::Scal
       if (b.nbt()>=2 && b.nbm()>=3) return 0.13;
   }
   return 0;
-});
-
-// estimate the systematic due to limited knowledge on composition
-// by reweighting b-category distribution to data for each bkg
-const NamedFunc wgt_comp("wgt_comp",[](const Baby &b) -> NamedFunc::ScalarType{
-  float wgt = 1;
-  if ( (b.type()>=1000 && b.type()<2000) ||  // ttbar
-    // (b.type()>=3000 && b.type()<4000) ||     // single top
-    (b.type()>=4000 && b.type()<6000) ||     // ttw and ttz
-    b.type()==9000  ||                       // ttH
-    b.type()==10000  ||                      // ttgamma
-    b.type()==11000) {                       // tttt
-    //apply normalization factor from MET distribution
-    wgt = 1.10;
-    if (b.met()>150 && b.met()<=200) wgt*=1.008;
-    else if (b.met()>200 && b.met()<=300) wgt*=0.936;
-    else if (b.met()>300) wgt*=0.984;
-    // nb correction from nb distribution data/mc, inclusive in MET
-    if (b.nbt()==2 && b.nbm()==2) wgt*=0.973;
-    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.092;
-    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.471;
-  } else if ( (b.type()>=8000 && b.type()<9000) || // zjets
-    (b.type()>=2000 && b.type()<3000) ||    // wjets
-    (b.type()>=6000 && b.type()<7000) ||  // dyjets  
-    b.type()<0) {   
-    //apply normalization factor from MET distribution
-    wgt = 1.277;
-    if (b.met()>150 && b.met()<=200) wgt*=1.022;
-    else if (b.met()>200 && b.met()<=300) wgt*=0.849;
-    else if (b.met()>300) wgt*=0.810;
-    // nb correction from nb distribution data/mc, inclusive in MET
-    if (b.nbt()==2 && b.nbm()==2) wgt*=0.970;
-    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.225;
-    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.254;
-  } else if ( (b.type()>=7000 && b.type()<8000)) { // qcd
-    //apply normalization factor from MET distribution
-    wgt = 2.218;
-    if (b.met()>150 && b.met()<=200) wgt*=1.058;
-    else if (b.met()>200 && b.met()<=300) wgt*=0.861;
-    else if (b.met()>300) wgt*=0.797;
-    // nb correction from nb distribution data/mc, inclusive in MET
-    if (b.nbt()==2 && b.nbm()==2) wgt*=0.953;
-    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.112;
-    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.477;
-  }
-  return wgt;
 });
 
 // defintion of analysis trigger

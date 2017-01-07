@@ -24,14 +24,14 @@
   UseCMYK = 0
 
 [Kappa]
-  CanvasW	  = 1100
+  CanvasW	  = 1600
   CanvasH	  = 700
   TitleSize	  = 0.076
   LabelSize	  = 0.054
   xTitleOffset	  = 1.
-  yTitleOffset	  = 0.8
-  PadLeftMargin	  = 0.12
-  PadRightMargin  = 0.05
+  yTitleOffset	  = 0.3
+  PadLeftMargin	  = 0.06
+  PadRightMargin  = 0.01
   PadTopMargin	  = 0.09
   PadBottomMargin = 0.15
   LegendEntrySize = 0.043

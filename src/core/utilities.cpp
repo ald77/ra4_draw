@@ -161,6 +161,8 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "ht1l_stave2l", "1l: H_{T}>500, 2l: H_{T} + p_{T}^{l,ave}");
   ReplaceAll(code, "st", "S_{T}");
 
+  ReplaceAll(code, "met>0&&met<=50", "met<=50");
+  ReplaceAll(code, "met>50&&met<=100", "50<met<=100");
   ReplaceAll(code, "met>100&&met<=150", "100<met<=150");
   ReplaceAll(code, "met>100&&met<=200", "100<met<=200");
   ReplaceAll(code, "met>150&&met<=200", "150<met<=200");
@@ -193,6 +195,10 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "nvmus==2&&nmus>=1","N_{#mu}#geq1, N^{veto}_{#mu}=2");
   ReplaceAll(code, "nvels==2&&nels>=1","N_{e}#geq1, N^{veto}_{e}=2");
   ReplaceAll(code, "(nvmus>=2||nvels>=2)","N^{veto}_{lep} #geq 2");
+  ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>0&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=50",
+                   "0<p_{T}^{Z}#leq50");  
+  ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>50&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=100",
+                   "50<p_{T}^{Z}#leq100");
   ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>100&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=150",
                    "100<p_{T}^{Z}#leq150");
   ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>150&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=200",

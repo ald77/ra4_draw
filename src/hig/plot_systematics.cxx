@@ -136,19 +136,19 @@ int main(int argc, char *argv[]){
   }else if(mm_scen == "totunc"){
     scenarios = vector<string>();
     do_correction = true;
-    // scenarios.push_back("syst_ttx_up");
-    // weights.emplace("syst_ttx_up", w*(Higfuncs::wgt_comp)*1/(1+Higfuncs::wgt_syst_ttx));
-    // corrections.emplace("syst_ttx_up", Higfuncs::wgt_comp);
-    // scenarios.push_back("syst_ttx_dn");
-    // weights.emplace("syst_ttx_dn", w*(Higfuncs::wgt_comp)*1/(1-Higfuncs::wgt_syst_ttx));
-    // corrections.emplace("syst_ttx_dn", Higfuncs::wgt_comp);
+    scenarios.push_back("syst_ttx_up");
+    weights.emplace("syst_ttx_up", w*(Higfuncs::wgt_comp)*1/(1+Higfuncs::wgt_syst_ttx));
+    corrections.emplace("syst_ttx_up", Higfuncs::wgt_comp);
+    scenarios.push_back("syst_ttx_dn");
+    weights.emplace("syst_ttx_dn", w*(Higfuncs::wgt_comp)*1/(1-Higfuncs::wgt_syst_ttx));
+    corrections.emplace("syst_ttx_dn", Higfuncs::wgt_comp);
 
-    // scenarios.push_back("syst_vjets_up");
-    // weights.emplace("syst_vjets_up", w*(Higfuncs::wgt_comp)*1/(1+Higfuncs::wgt_syst_vjets));
-    // corrections.emplace("syst_vjets_up", Higfuncs::wgt_comp);
-    // scenarios.push_back("syst_vjets_dn");
-    // weights.emplace("syst_vjets_dn", w*(Higfuncs::wgt_comp)*1/(1-Higfuncs::wgt_syst_vjets));
-    // corrections.emplace("syst_vjets_dn", Higfuncs::wgt_comp);
+    scenarios.push_back("syst_vjets_up");
+    weights.emplace("syst_vjets_up", w*(Higfuncs::wgt_comp)*1/(1+Higfuncs::wgt_syst_vjets));
+    corrections.emplace("syst_vjets_up", Higfuncs::wgt_comp);
+    scenarios.push_back("syst_vjets_dn");
+    weights.emplace("syst_vjets_dn", w*(Higfuncs::wgt_comp)*1/(1-Higfuncs::wgt_syst_vjets));
+    corrections.emplace("syst_vjets_dn", Higfuncs::wgt_comp);
 
     scenarios.push_back("syst_qcd_up");
     weights.emplace("syst_qcd_up", w*(Higfuncs::wgt_comp)*1/(1+Higfuncs::wgt_syst_qcd));
@@ -161,21 +161,17 @@ int main(int argc, char *argv[]){
     weights.emplace("syst_comp", w*(Higfuncs::wgt_comp)); 
     corrections.emplace("syst_comp", 1.);
 
-    // scenarios.push_back("syst_comp_alldphi"); // this will be with looser selection
-    // weights.emplace("syst_comp_alldphi", w*(Higfuncs::wgt_comp)); 
-    // corrections.emplace("syst_comp_alldphi", w);
-
     // scenarios.push_back("syst_bctag");
     // weights.emplace("syst_bctag", w*"sys_bctag[0]");
-    // corrections.emplace("syst_bctag", w);
+    // corrections.emplace("syst_bctag", 1.);
 
     // scenarios.push_back("syst_udsgtag");
     // weights.emplace("syst_udsgtag", w*"sys_udsgtag[0]");
-    // corrections.emplace("syst_udsgtag", w);
+    // corrections.emplace("syst_udsgtag", 1.);
 
-    // scenarios.push_back("syst_mcstat");
-    // weights.emplace("syst_mcstat", w);
-    // corrections.emplace("syst_mcstat", w);
+    scenarios.push_back("syst_mcstat");
+    weights.emplace("syst_mcstat", w);
+    corrections.emplace("syst_mcstat", 1.);
   }else if(mm_scen == "data"){
     scenarios = vector<string>{mm_scen};
   }else if(mm_scen != "no_mismeasurement"){
@@ -760,7 +756,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   PlotOpt opts("txt/plot_styles.txt", "Kappa");
   if(label_up) opts.BottomMargin(0.11);
   if(kappas.size() >= 1) { // Used to be 4
-    opts.CanvasWidth(1300);
+    opts.CanvasWidth(1600);
     markerSize = 1.5;
   }
   setPlotStyle(opts);
@@ -864,8 +860,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   histo.GetXaxis()->SetLabelOffset(0.008);
   TString ytitle = "#kappa";
   if(mm_scen!="data") ytitle += " (Scen. = "+mm_scen+")";
-  histo.SetTitleOffset(0.7,"y");
-  histo.SetTitleSize(0.07,"y");
+  histo.SetTitleOffset(0.45,"y");
+  histo.SetTitleSize(0.06,"y");
   histo.SetYTitle(ytitle);
   histo.Draw();
 
