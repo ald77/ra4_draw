@@ -162,7 +162,7 @@ const NamedFunc wgt_syst_vjets("wgt_syst_vjets",[](const Baby &b) -> NamedFunc::
     (b.type()>=6000 && b.type()<7000) ||  // dyjets  
     b.type()<0) {   
     if (b.hig_am()<=100 || (b.hig_am()>140 && b.hig_am()<=200))
-      if (b.nbt()>=2 && b.nbm()>=3) return 0.13;
+      if (b.nbt()>=2 && b.nbm()>=3) return 0.22;
   }
   return 0;
 });

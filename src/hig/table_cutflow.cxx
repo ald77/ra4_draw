@@ -145,16 +145,16 @@ int main(){
   xcuts["sbd"] = "(hig_am<=100 || (hig_am>140 && hig_am<=200)) && hig_dm <= 40";
   xcuts["fullsbd"] = "(hig_am<=100 || (hig_am>140 && hig_am<=200)) && hig_dm <= 40 && hig_drmax<=2.2";
 
-  string baseline = "pass && stitch && nvleps==0 && met>150 && met/met_calo<5";
+  string baseline = "pass && pass_ra2_badmu && stitch && nvleps==0 && met>150 && met/met_calo<5";
 
   //        Cutflow table
   //-------------------------------- 
   NamedFunc wgt = "weight" * Higfuncs::eff_higtrig;
   pm.Push<Table>("cutflow", vector<TableRow>{
       TableRow("No selection", "1",0,0, wgt),
-	TableRow("$E_{T}^{miss} > 150$, 2+ CSVM, $\\text{4-5 jets}$, $0\\ell$", 
-		 baseline + " && nbm>=2 &&"+njcut,0,0, wgt),
-	TableRow("2+ CSVT (2b + 3b + 4b)", 
+	TableRow("$E_{T}^{miss} > 150$, $\\text{4-5 jets}$, $0\\ell$", 
+		 baseline + " &&"+njcut,0,0, wgt),
+	TableRow("$N_{\\text{b,T}}$", 
 		 baseline + " && nbt>=2 &&"+njcut,0,0, wgt),
 	TableRow("Track veto", 
 		 baseline + " && ntks==0 && nbt>=2 &&"+njcut,0,0, wgt),
@@ -164,47 +164,18 @@ int main(){
 		 baseline + " && ntks==0 && nbt>=2 &&"+njcut+"&& !low_dphi && hig_dm<=40",0,0, wgt),
 	TableRow("$\\Delta R_{\\text{max}} < 2.2$",                    
 		 baseline +" && ntks==0 && nbt>=2 &&"+njcut+"&& !low_dphi && hig_drmax<=2.2 && hig_dm<=40",0,0,wgt),
-
-	TableRow("2b 150-200", 
-		 baseline + " && ntks==0 && hig_dm <= 40 && hig_am<=200 && hig_drmax<=2.2 && nbt==2 && nbm==2 && met>150 && met<=200 &&"+njcut+"&& !low_dphi",1,0, wgt),
-  TableRow("2b 200-300", 
-     baseline + " && ntks==0 && hig_dm <= 40 && hig_am<=200 && hig_drmax<=2.2 && nbt==2 && nbm==2 && met>200 && met<=300 &&"+njcut+"&& !low_dphi",1,0, wgt),
-  TableRow("2b 300", 
-     baseline + " && ntks==0 && hig_dm <= 40 && hig_am<=200 && hig_drmax<=2.2 && nbt==2 && nbm==2 && met>300 &&"+njcut+"&& !low_dphi",1,0, wgt),
+  TableRow("$100<\\left< m \\right>\\leq140$ (HIG)", 
+     baseline + " && ntks==0 && nbt>=2 &&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],1,0, wgt),
 	TableRow("3b + 4b", 
-		 baseline +" && ntks==0 && hig_dm <= 40 && hig_am<=200 && hig_drmax<=2.2 &&("+c_3b+"||"+c_4b+")&&"+njcut+"&& !low_dphi",0,0,wgt),
-	TableRow("4b", 
-		 baseline + " && ntks==0 && hig_dm <= 40 && hig_am<=200 && hig_drmax<=2.2 &&"+c_4b+"&&"+njcut+"&& !low_dphi",0,0, wgt),
-	TableRow("$E_{T}^{miss}>200$", 
-		 baseline + " && ntks==0 && hig_dm <= 40 && hig_am<=200 && hig_drmax<=2.2 && met>200 &&"+c_4b+"&&"+njcut+"&& !low_dphi",0,0,wgt),
-	TableRow("$E_{T}^{miss}>300$", 
-		 baseline + " && ntks==0 && hig_dm <= 40 && hig_am<=200 && hig_drmax<=2.2 && met>300 &&"+c_4b+"&&"+njcut+"&& !low_dphi",0,0,wgt),
-
-
-	// TableRow("HIG, 3b, $150<E_{T}^{miss}\\leq$200", 
-	// 	 baseline + " && met<=200 &&"+c_3b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0, wgt),
-	// TableRow("SBD, 3b, $150<E_{T}^{miss}\\leq$200", 
-	// 	 baseline + " && met<=200 &&"+c_3b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullsbd"],0,0, wgt),
-	// TableRow("HIG, 4b, $150<E_{T}^{miss}\\leq$200", 
-	// 	 baseline + " && met<=200 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0, wgt),
-	// TableRow("SBD, 4b, $150<E_{T}^{miss}\\leq$200", 
-	// 	 baseline + " && met<=200 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullsbd"],0,0, wgt),
-	// TableRow("HIG, 3b, $200<E_{T}^{miss}\\leq$300", 
-	// 	 baseline + "met>200 && met<=300 &&"+c_3b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0, wgt),
-	// TableRow("SBD, 3b, $200<E_{T}^{miss}\\leq$300", 
-	// 	 baseline + "met>200 && met<=300 &&"+c_3b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullsbd"],0,0, wgt),
-	// TableRow("HIG, 4b, $200<E_{T}^{miss}\\leq$300", 
-	// 	 baseline + "met>200 && met<=300 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0, wgt),
-	// TableRow("SBD, 4b, $200<E_{T}^{miss}\\leq$300", 
-	// 	 baseline + "met>200 && met<=300 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullsbd"],0,0, wgt),
-	// TableRow("HIG, 3b, $E_{T}^{miss}>$300",         
-	// 	 baseline + "met>300 &&"+c_3b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0, wgt),
-	// TableRow("SBD, 3b, $E_{T}^{miss}>$300",         
-	// 	 baseline + "met>300 &&"+c_3b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullsbd"],0,0, wgt),
-	// TableRow("HIG, 4b, $E_{T}^{miss}>$300",         
-	// 	 baseline + "met>300 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0, wgt),
-	// TableRow("SBD, 4b, $E_{T}^{miss}>$300",         
-	// 	 baseline + "met>300 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullsbd"],0,0, wgt),
+     baseline +" && ntks==0 &&("+c_3b+"||"+c_4b+")&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0,wgt),
+  TableRow("4b", 
+     baseline + " && ntks==0 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0, wgt),
+  TableRow("$E_{T}^{miss}>200$", 
+     baseline + " && ntks==0 && met>200 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0,wgt),
+  TableRow("$E_{T}^{miss}>300$", 
+     baseline + " && ntks==0 && met>300 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0,wgt),
+  TableRow("$E_{T}^{miss}>450$", 
+     baseline + " && ntks==0 && met>450 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0,wgt),
 	},procs["siglep0"],0);
 
 

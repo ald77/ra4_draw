@@ -186,7 +186,12 @@ int main(int argc, char *argv[]){
   // if (sample!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
-  metcuts.push_back(metdef+">300");
+  if (sample=="search") {
+    metcuts.push_back(metdef+">300&&"+metdef+"<=450");
+    metcuts.push_back(metdef+">450");
+  } else {
+    metcuts.push_back(metdef+">300");
+  }
 
   for(auto &ixcut: xcuts) {
     pnames.clear();
