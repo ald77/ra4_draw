@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
-  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
+  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1met0/";
   if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
   if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
 
@@ -136,11 +136,15 @@ int main(int argc, char *argv[]){
   vector<TString> metcuts;
   string metdef = "met";
   if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
-  // if (sample!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
+  if (sample=="zll" || sample=="ttbar") {
+    metcuts.push_back(metdef+"<=50");
+    metcuts.push_back(metdef+">50&&"+metdef+"<=100");
+  }
   if (sample!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
-  metcuts.push_back(metdef+">300");
+  metcuts.push_back(metdef+">300&&"+metdef+"<=400");
+  metcuts.push_back(metdef+">400");
 
   // Makes a plot for each vector in plotcuts
   vector<oneplot> plotcuts;

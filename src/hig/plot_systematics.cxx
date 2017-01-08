@@ -136,30 +136,34 @@ int main(int argc, char *argv[]){
   }else if(mm_scen == "totunc"){
     scenarios = vector<string>();
     do_correction = true;
-    scenarios.push_back("syst_ttx_up");
-    weights.emplace("syst_ttx_up", w*(Higfuncs::wgt_comp)*1/(1+Higfuncs::wgt_syst_ttx));
-    corrections.emplace("syst_ttx_up", Higfuncs::wgt_comp);
-    scenarios.push_back("syst_ttx_dn");
-    weights.emplace("syst_ttx_dn", w*(Higfuncs::wgt_comp)*1/(1-Higfuncs::wgt_syst_ttx));
-    corrections.emplace("syst_ttx_dn", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_ttx_up");
+    // weights.emplace("syst_ttx_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_ttx));
+    // corrections.emplace("syst_ttx_up", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_ttx_dn");
+    // weights.emplace("syst_ttx_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_ttx));
+    // corrections.emplace("syst_ttx_dn", Higfuncs::wgt_comp);
 
-    scenarios.push_back("syst_vjets_up");
-    weights.emplace("syst_vjets_up", w*(Higfuncs::wgt_comp)*1/(1+Higfuncs::wgt_syst_vjets));
-    corrections.emplace("syst_vjets_up", Higfuncs::wgt_comp);
-    scenarios.push_back("syst_vjets_dn");
-    weights.emplace("syst_vjets_dn", w*(Higfuncs::wgt_comp)*1/(1-Higfuncs::wgt_syst_vjets));
-    corrections.emplace("syst_vjets_dn", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_vjets_up");
+    // weights.emplace("syst_vjets_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_vjets));
+    // corrections.emplace("syst_vjets_up", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_vjets_dn");
+    // weights.emplace("syst_vjets_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_vjets));
+    // corrections.emplace("syst_vjets_dn", Higfuncs::wgt_comp);
 
-    scenarios.push_back("syst_qcd_up");
-    weights.emplace("syst_qcd_up", w*(Higfuncs::wgt_comp)*1/(1+Higfuncs::wgt_syst_qcd));
-    corrections.emplace("syst_qcd_up", Higfuncs::wgt_comp);
-    scenarios.push_back("syst_qcd_dn");
-    weights.emplace("syst_qcd_dn", w*(Higfuncs::wgt_comp)*1/(1-Higfuncs::wgt_syst_qcd));
-    corrections.emplace("syst_qcd_dn", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_qcd_up");
+    // weights.emplace("syst_qcd_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_qcd));
+    // corrections.emplace("syst_qcd_up", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_qcd_dn");
+    // weights.emplace("syst_qcd_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_qcd));
+    // corrections.emplace("syst_qcd_dn", Higfuncs::wgt_comp);
 
-    scenarios.push_back("syst_comp");
-    weights.emplace("syst_comp", w*(Higfuncs::wgt_comp)); 
-    corrections.emplace("syst_comp", 1.);
+    // scenarios.push_back("syst_comp");
+    // weights.emplace("syst_comp", w*(Higfuncs::wgt_comp)); 
+    // corrections.emplace("syst_comp", 1.);
+
+    scenarios.push_back("syst_mcstat");
+    weights.emplace("syst_mcstat", w);
+    corrections.emplace("syst_mcstat", 1.);
 
     // scenarios.push_back("syst_bctag");
     // weights.emplace("syst_bctag", w*"sys_bctag[0]");
@@ -168,10 +172,6 @@ int main(int argc, char *argv[]){
     // scenarios.push_back("syst_udsgtag");
     // weights.emplace("syst_udsgtag", w*"sys_udsgtag[0]");
     // corrections.emplace("syst_udsgtag", 1.);
-
-    scenarios.push_back("syst_mcstat");
-    weights.emplace("syst_mcstat", w);
-    corrections.emplace("syst_mcstat", 1.);
   }else if(mm_scen == "data"){
     scenarios = vector<string>{mm_scen};
   }else if(mm_scen != "no_mismeasurement"){
@@ -285,7 +285,8 @@ int main(int argc, char *argv[]){
   }
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
-  metcuts.push_back(metdef+">300");
+  metcuts.push_back(metdef+">300&&"+metdef+"<=450");
+  metcuts.push_back(metdef+">450");
   
 
   ////// Nb cuts
@@ -470,17 +471,23 @@ int main(int argc, char *argv[]){
       TString fullname = printTable(abcds[imethod], allyields, kappas, preds, yieldsPlane, proc_sigs);
       tablenames.push_back(fullname);
     }
+    
+    // reserve vectors to be filled in plotKappa()
+    if (mm_scen=="syst_mcstat"){
+      syst_names.push_back("syst_mcstat_up");   syst_values.push_back(vector<float>()); 
+      syst_names.push_back("syst_mcstat_dn");   syst_values.push_back(vector<float>()); 
+    } else {
+      syst_names.push_back(mm_scen);
+      syst_values.push_back(vector<float>());
+    }
 
     //// Plotting kappa
-    syst_names.push_back(mm_scen);
-    syst_values.push_back(vector<float>());
     plotKappa(abcds[imethod], kappas, kappas_mm, kmcdat);
+
     // piggy back on one of the scenarios to get the expected data stat unc.
     if (mm_scen=="syst_mcstat"){
-      syst_names.push_back("syst_datastat_up");
-      syst_values.push_back(vector<float>());
-      syst_names.push_back("syst_datastat_dn");
-      syst_values.push_back(vector<float>());
+      syst_names.push_back("syst_datastat_up"); syst_values.push_back(vector<float>());
+      syst_names.push_back("syst_datastat_dn"); syst_values.push_back(vector<float>());
       unsigned nsys = syst_values.size();
       for (auto &iplane: datapreds) {
         for (auto &ibin: iplane) {
@@ -489,7 +496,7 @@ int main(int argc, char *argv[]){
           syst_values[nsys-2].push_back(ibin[2]/ibin[0]);
         }
       }
-    }  
+    }
   } // Loop over ABCD methods
 
   // print AN systematics table
@@ -499,7 +506,6 @@ int main(int argc, char *argv[]){
       if (syst_names[isys].Contains("_ttx")) cout<<setw(20)<<"$t\\bar{t}$+X closure";
       else if (syst_names[isys].Contains("_vjets")) cout<<setw(20)<<"V+jets closure";
       else if (syst_names[isys].Contains("_qcd")) cout<<setw(20)<<"QCD closure";
-      else if (syst_names[isys].Contains("_comp_alldphi")) cout<<setw(20)<<"Bkg. composition (no $\\Delta\\phi$ cut)";
       else if (syst_names[isys].Contains("_comp")) cout<<setw(20)<<"Bkg. composition";
       else if (syst_names[isys].Contains("_bctag")) cout<<setw(20)<<"B-tag SFs";
       else if (syst_names[isys].Contains("_udsgtag")) cout<<setw(20)<<"Mistag SFs";
@@ -513,20 +519,27 @@ int main(int argc, char *argv[]){
           for (unsigned ibin(0); ibin<syst_values[isys].size(); ibin++) {
             float up(syst_values[isys][ibin]), dn(syst_values[isys+1][ibin]);
             float isysval = (up>0 ? 1 : -1)*max(up>0 ? up: 1/(1+up)-1, dn>0 ? dn: 1/(1+dn)-1);
-            if (fabs(isysval)>0.01)
+            if (fabs(isysval)>0.01) {
+              // the closure propagation come out negative because of the way we introduce the shift
+              if (syst_names[isys].Contains("syst_qcd") || syst_names[isys].Contains("syst_vjets")|| syst_names[isys].Contains("syst_"))
+                isysval *=-1;
               cout<<" & "<<setw(7)<<RoundNumber(isysval*100,0);
-            else 
+            } else {
               cout<<" & "<<setw(7)<<"$<$ 1";
+            }
           }
           isys++;
         }
         cout<<" \\\\"<<endl;
       } else { 
         for (unsigned ibin(0); ibin<syst_values[isys].size(); ibin++) {
-          if (fabs(syst_values[isys][ibin])>0.01)
-            cout<<" & "<<setw(7)<<RoundNumber((1/(1-syst_values[isys][ibin])-1)*100,0);
-          else 
+          float isysval = syst_values[isys][ibin];
+          if (fabs(isysval)>0.01) {
+            if (isysval<0) isysval = 1-1/(1+isysval);
+            cout<<" & "<<setw(7)<<RoundNumber(isysval*100,0);
+          } else { 
             cout<<" & "<<setw(7)<<"$<$ 1";
+          }
         }
         cout<<" \\\\"<<endl;
       }
@@ -852,14 +865,15 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
   float minx = 0.5, maxx = nbins+0.5, miny = 0;
   if(label_up) maxy = 2.6;
-  if(maxy > 6) maxy = 6;
+  if(maxy > 4) maxy = 4;
+  if(mm_scen=="syst_mcstat") maxy = 3;
   TH1D histo("histo", "", nbins, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
   histo.GetYaxis()->CenterTitle(true);
   histo.GetXaxis()->SetLabelOffset(0.008);
   TString ytitle = "#kappa";
-  if(mm_scen!="data") ytitle += " (Scen. = "+mm_scen+")";
+  if(mm_scen!="data" && mm_scen!="syst_mcstat") ytitle += " (Scen. = "+mm_scen+")";
   histo.SetTitleOffset(0.45,"y");
   histo.SetTitleSize(0.06,"y");
   histo.SetYTitle(ytitle);
@@ -913,7 +927,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
             vexl_mm[indb].push_back(0);
             vexh_mm[indb].push_back(0);
             vy_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[0]);
-            if(!(only_mc && abcd.method.Contains("TTML")) || mm_scen=="mc_as_data") {
+            if(mm_scen=="data" || mm_scen=="mc_as_data") {
               veyh_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[1]);
               veyl_mm[indb].push_back(k_ordered_mm[iplane][ibin][ib].kappa[2]);         
             } else {     
@@ -925,38 +939,31 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
             float kap = k_ordered[iplane][ibin][ib].kappa[0], kap_mm = k_ordered_mm[iplane][ibin][ib].kappa[0];
             TString text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
             if (mm_scen!="syst_mcstat") syst_values.back().push_back((kap_mm-kap)/kap);
-            if(!(only_mc && abcd.method.Contains("TTML"))) text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-1)*100,0,1)+"%";
+            if(mm_scen=="syst_mcstat") text = "#Delta_{#kappa} = "+RoundNumber((kap-1)*100,0,1)+"%";
+            else if(mm_scen=="data") text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-1)*100,0,1)+"%";
             if((abcd.method.Contains("signal")&&iplane>=2) || (abcd.method.Contains("njets1lmet200")&&iplane>=1)
                || (abcd.method.Contains("nb1l")&&iplane>=1) ) 
               klab.SetTextColor(cSignal);
             else klab.SetTextColor(1);
             klab.SetTextSize(0.045);
-            if (k_ordered.size()*k_ordered[iplane].size()>6) klab.SetTextSize(0.03);
+            if (k_ordered.size()*k_ordered[iplane].size()>8) klab.SetTextSize(0.03);
             if(mm_scen!="mc_as_data") klab.DrawLatex(xval, 0.952*maxy, text);
             //// Printing stat uncertainty of kappa_mm/kappa
             float kapUp = k_ordered[iplane][ibin][ib].kappa[1], kapDown = k_ordered[iplane][ibin][ib].kappa[2];
             float kap_mmUp = k_ordered_mm[iplane][ibin][ib].kappa[1];
             float kap_mmDown = k_ordered_mm[iplane][ibin][ib].kappa[2];
-            float errStat = (kap>kap_mm?sqrt(pow(kapDown,2)+pow(kap_mmUp,2)):sqrt(pow(kapUp,2)+pow(kap_mmDown,2)));
-            if(only_mc && abcd.method.Contains("TTML") && mm_scen!="mc_as_data") {
-              ekmdUp = k_ordered[iplane][ibin][ib].kappa[1];
-              ekmdDown = k_ordered[iplane][ibin][ib].kappa[2];
-            }
-            text = "#sigma_{stat} = "+RoundNumber(errStat*100,0, kap)+"%";
-            if(!(only_mc && abcd.method.Contains("TTML")) || mm_scen=="mc_as_data") {              
-              text = "#sigma_{stat} = ^{+"+RoundNumber(kap_mmUp*100,0, kap)+"%}_{-"+RoundNumber(kap_mmDown*100,0, kap)+"%}";
+            if(mm_scen=="data" || mm_scen=="mc_as_data") {              
+              text = "#sigma_{stat} = ^{+"+RoundNumber(kap_mmUp*100,0, 1)+"%}_{-"+RoundNumber(kap_mmDown*100,0, 1)+"%}";
             } else {
-              text = "#sigma_{stat} = ^{+"+RoundNumber(ekmdUp*100,0, kap)+"%}_{-"+RoundNumber(ekmdDown*100,0, kap)+"%}";
+              text = "#sigma_{stat} = ^{+"+RoundNumber(kapUp*100,0, 1)+"%}_{-"+RoundNumber(kapDown*100,0, 1)+"%}";
               if (mm_scen=="syst_mcstat") {
-                float up(ekmdUp/kap), dn(-1*ekmdDown/kap);
-                float isysval = (up>0 ? 1 : -1)*max(up>0 ? up: 1/(1+up)-1, dn>0 ? dn: 1/(1+dn)-1);
-                syst_values.back().push_back(isysval);
+                syst_values[syst_values.size()-2].push_back(kapUp/1);
+                syst_values[syst_values.size()-1].push_back(-1*kapDown/1);
               }
             }
             klab.SetTextSize(0.05);
-            if (k_ordered.size()*k_ordered[iplane].size()>6) klab.SetTextSize(0.035);
+            if (k_ordered.size()*k_ordered[iplane].size()>8) klab.SetTextSize(0.035);
             klab.DrawLatex(xval, 0.888*maxy, text);
-
            xval += binw;
           }
         } // Loop over nb cuts in ordered TGraphs
@@ -973,6 +980,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   } // Loop over plane cuts
 
   //// Drawing legend and TGraphs
+  if (debug) cout<<"Building up TGraphs"<<endl;
   int digits_lumi = 1;
   if(lumi < 1) digits_lumi = 3;
   if(lumi-floor(lumi)==0) digits_lumi = 0;
@@ -1011,11 +1019,11 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     graph_mm[indb].SetMarkerStyle(20); graph_mm[indb].SetMarkerSize(markerSize*1.2);
     graph_mm[indb].SetMarkerColor(1);
     graph_mm[indb].SetLineColor(1); graph_mm[indb].SetLineWidth(2);
-    if(mm_scen!="mc_as_data")graph_mm[indb].Draw("p0 same");
+    if(mm_scen!="mc_as_data" && mm_scen!="syst_mcstat") graph_mm[indb].Draw("p0 same");
 
     leg.AddEntry(&graph[indb], "MC", "p");
     TString data_s = (mm_scen=="data"||mm_scen=="off"||mm_scen=="no_mismeasurement"?"Data":"Pseudodata");
-    leg.AddEntry(&graph_mm[indb], data_s+" "+lumi_s+" fb^{-1}", "p");
+    if(mm_scen!="mc_as_data" && mm_scen!="syst_mcstat") leg.AddEntry(&graph_mm[indb], data_s+" "+lumi_s+" fb^{-1}", "p");
     //leg.AddEntry(&graph[indb], CodeToRootTex(ind_bcuts[indb].cut.Data()).c_str(), "p");
 
   } // Loop over TGraphs
