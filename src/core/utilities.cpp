@@ -161,12 +161,15 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "st", "S_{T}");
 
   ReplaceAll(code, "met>0&&met<=50", "met<=50");
+  ReplaceAll(code, "met>0&&met<=75", "met<=75");
   ReplaceAll(code, "met>50&&met<=100", "50<met<=100");
+  ReplaceAll(code, "met>75&&met<=150", "75<met<=150");
   ReplaceAll(code, "met>100&&met<=150", "100<met<=150");
   ReplaceAll(code, "met>100&&met<=200", "100<met<=200");
   ReplaceAll(code, "met>150&&met<=200", "150<met<=200");
   ReplaceAll(code, "met>200&&met<=300", "200<met<=300");
   ReplaceAll(code, "met>200&&met<=350", "200<met<=350");
+  ReplaceAll(code, "met>300&&met<=450", "300<met<=450");
   ReplaceAll(code, "met>300&&met<=500", "300<met<=500");
   ReplaceAll(code, "met>350&&met<=500", "350<met<=500");
   ReplaceAll(code, "met>200&&met<=500", "200<met<=500");
@@ -196,14 +199,20 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "(nvmus>=2||nvels>=2)","N^{veto}_{lep} #geq 2");
   ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>0&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=50",
                    "0<p_{T}^{Z}#leq50");  
+  ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>0&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=75",
+                   "0<p_{T}^{Z}#leq75");  
   ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>50&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=100",
                    "50<p_{T}^{Z}#leq100");
+  ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>75&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=150",
+                   "75<p_{T}^{Z}#leq150");
   ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>100&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=150",
                    "100<p_{T}^{Z}#leq150");
   ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>150&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=200",
                    "150<p_{T}^{Z}#leq200");
   ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>200&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=300",
                    "200<p_{T}^{Z}#leq300");
+  ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>300&&(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))<=450",
+                   "300<p_{T}^{Z}#leq450");
   ReplaceAll(code, "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))","p_{T}^{Z}");
 
   ReplaceAll(code, "(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))>80&&(mumu_m*(mumu_m>0)+elel_m*(elel_m>0))<100",

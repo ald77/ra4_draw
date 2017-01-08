@@ -279,9 +279,8 @@ int main(int argc, char *argv[]){
     if (do_onemet) metcuts.push_back(metdef+">150");
   } else if (skim=="ttbar" || skim=="zll"){
     if (do_onemet) metcuts.push_back(metdef+">0");
-    metcuts.push_back(metdef+">0&&"+metdef+"<=50");
-    metcuts.push_back(metdef+">50&&"+metdef+"<=100");
-    metcuts.push_back(metdef+">100&&"+metdef+"<=150");
+    metcuts.push_back(metdef+">0&&"+metdef+"<=75");
+    metcuts.push_back(metdef+">75&&"+metdef+"<=150");
   }
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");

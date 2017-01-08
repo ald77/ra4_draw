@@ -151,43 +151,54 @@ int main(int argc, char *argv[]){
   }
   string lumi_s=RoundNumber(lumi,1).Data();
 
-  vector<vector<string>> combos;
+  vector<vector<string>> combos, combos_labels;
   int color_data = kBlue-7;
   if (sample=="zll") { // do 0b vs 1b
     color_data = kOrange+1;
-    combos.push_back({"nbm==1","nbm==0"});
-    combos.push_back({"nbt==2&&nbm==2","nbm==1"});
+    combos.push_back({"nbm==0","nbm==1"});
+    combos.push_back({"nbm==1","nbt==2&&nbm==2"});
   } else if (sample=="qcd") { // do 0b vs 1b and 2b vs 3+b
     color_data = kOrange;
-    combos.push_back({"nbm==1","nbm==0"});
-    combos.push_back({"nbt>=2&&nbm>=3","nbt==2&&nbm==2"});
-    combos.push_back({"nbt==2&&nbm==2","nbm==1"});
+    combos.push_back({"nbm==0","nbm==1"});
+    combos.push_back({"nbt==2&&nbm==2","nbt>=2&&nbm>=3"});
+    combos.push_back({"nbm==1","nbt==2&&nbm==2"});
   } else if (sample=="search" || sample=="ttbar") {
     if (json=="4p0") { // at low lumi, do 2b vs 3+b
-      combos.push_back({"nbt>=2&&nbm>=3","nbt==2&&nbm==2"});
+      combos.push_back({"nbt==2&&nbm==2","nbt>=2&&nbm>=3"});
     } else { // at higher lumi, do 2b vs 3b and 2b vs 4b
-      combos.push_back({"nbt>=2&&nbm==3&&nbl==3","nbt==2&&nbm==2"});
-      combos.push_back({"nbt>=2&&nbm>=3&&nbl>=4","nbt==2&&nbm==2"});
+      combos.push_back({"nbt==2&&nbm==2", "nbt>=2&&nbm==3&&nbl==3"});
+      combos.push_back({"nbt==2&&nbm==2", "nbt>=2&&nbm>=3&&nbl>=4"});
     }
+  }
+  for (unsigned ind(0); ind<combos.size(); ind++){
+    vector<string> label;
+    for(unsigned lab=0; lab<2; lab++){
+      if (Contains(combos[ind][lab],"nbm==0")) label.push_back("0b");
+      if (Contains(combos[ind][lab],"nbm==1")) label.push_back("1b");
+      if (Contains(combos[ind][lab],"nbm==2")) label.push_back("2b");
+      if (Contains(combos[ind][lab],"nbm==3")) label.push_back("3b");
+      if (Contains(combos[ind][lab],"nbm>=3") && !Contains(combos[ind][lab],"nbl>=4")) label.push_back("#geq 3b");
+      if (Contains(combos[ind][lab],"nbl>=4")) label.push_back("4b");
+    }
+    combos_labels.push_back(label);
   }
 
   vector<vector<shared_ptr<Process> >> procs_data;
-  for (auto &icomb: combos){
+  for (unsigned ind(0); ind<combos.size(); ind++){
+    vector<string> icomb = combos[ind], ilab = combos_labels[ind];
     procs_data.push_back(vector<shared_ptr<Process> >());
-    vector<string> combos_label = {"2b","#geq 3b"};
-    if (Contains(icomb[0],"nbm==1")) combos_label = {"1b","0b"};
-    if (Contains(icomb[0],"nbl>=4")) combos_label = {"2b","4b"};
-    if (Contains(icomb[0],"nbl==3")) combos_label = {"2b","3b"};
-    if (Contains(icomb[0],"nbt==2")) combos_label = {"2b","1b"};
     string tmpcuts = cutsProcs + " &&"+jsonCuts+"&&"+icomb[0]; //if not cast here, it crashes
-    procs_data.back().push_back(Process::MakeShared<Baby_full>(combos_label[0]+" Data "+lumi_s+" fb^{-1}", 
-      Process::Type::data, kBlack, {folderdata+"*root"}, Higfuncs::trig_hig && tmpcuts));
-    tmpcuts = cutsProcs + " &&"+jsonCuts+"&&"+icomb[1];
-    procs_data.back().push_back(Process::MakeShared<Baby_full>(combos_label[1]+" Data "+lumi_s+" fb^{-1}", 
-      Process::Type::background, kBlack, {folderdata+"*root"}, Higfuncs::trig_hig && tmpcuts));
+    procs_data.back().push_back(Process::MakeShared<Baby_full>(ilab[0]+" Data "+lumi_s+" fb^{-1}", 
+							       Process::Type::background, kBlack, {folderdata+"*root"}, 
+							       Higfuncs::trig_hig && tmpcuts));
     procs_data.back().back()->SetFillColor(color_data);
     procs_data.back().back()->SetLineColor(color_data);
     procs_data.back().back()->SetLineWidth(2);
+
+    tmpcuts = cutsProcs + " &&"+jsonCuts+"&&"+icomb[1];
+    procs_data.back().push_back(Process::MakeShared<Baby_full>(ilab[1]+" Data "+lumi_s+" fb^{-1}", 
+							       Process::Type::data, kBlack, 
+      {folderdata+"*root"}, Higfuncs::trig_hig && tmpcuts));
   }
 
 
@@ -214,7 +225,8 @@ int main(int argc, char *argv[]){
       if (sample!="search" || unblind) {
         for (unsigned i(0); i<combos.size(); i++)
           pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
-            baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_data[i], plt_types).Tag(sample+"_datavdata"+to_string(i));
+            baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_data[i], plt_types)
+	    .Tag(sample+"_datavdata"+to_string(i)).RatioTitle(combos_labels[i][1],combos_labels[i][0]);
       }
 
       pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
