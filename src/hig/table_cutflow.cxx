@@ -25,18 +25,7 @@ using namespace PlotOptTypes;
 
 namespace{
   float lumi = 36.2;
-  string json = "json4p0";
-  bool do_data = false;
-  // choose processes to include, options are: "ttx", "vjets", "singlet", "qcd", "other", "ttonly"
-  set<string> proc_types = {"ttx", "vjets", "singlet", "qcd", "other"}; // for default data/MC
-  // set<string> proc_types = {}; // to make signal plots only
-  // set<string> proc_types = {"ttonly"};
-  // signal points to include and their colors
-  vector<string> sigm = {"225","350","700"}; 
-  vector<int> sig_colors = {kGreen, kRed, kBlue}; // need sigm.size() >= sig_colors.size()
-  //for signal plots only
-  // vector<string> sigm = {"175","225","350","700","1000"}; 
-  // vector<int> sig_colors = {kMagenta+2 , kGreen, kRed, kBlue, kAzure+10}; // need sigm.size() >= sig_colors.size()
+  vector<string> sigm = {"225","400","700"}; 
 }
   
 int main(){
@@ -45,138 +34,107 @@ int main(){
   time_t begtime, endtime;
   time(&begtime);
 
-  Palette colors("txt/colors.txt", "default");
-
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////// Defining processes //////////////////////////////////////////
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  set<string> skims;
-  skims = {"lep0"};
-
-  map<string, string> foldermc; //ordered in number of leptons
-  foldermc["lep0"] = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
-  foldermc["lep1"] = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_hig_nlep1/";
-  foldermc["lep2"] = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_hig_nlep2/";
+  string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
+  string foldersig = bfolder+"/cms2r0/babymaker/babies/2016_08_10/TCHiHH/merged_higmc_unskimmed/";
+  foldersig += "*TChiHH_mGluino-";
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({"*_TTJets*Lept*.root", "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
                                      "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root"});
-  mctags["ttonly"]  = set<string>({"*_TTJets*Lept*.root", "*_TTJets_HT*.root"});
   mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
   mctags["singlet"] = set<string>({"*_ST_*.root"});
   mctags["qcd"]     = set<string>({"*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root"});
   mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
                                      "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
-  set<string> allmctags;
-  for (auto &iset: mctags) {
-    if (proc_types.find(iset.first)!=proc_types.end()) 
-      allmctags.insert(iset.second.begin(), iset.second.end());
-  }
-
-  map<string, string> folderdata; //ordered in number of leptons
-  folderdata["lep0"] = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higloose/";
-  folderdata["lep1"] = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1/";
-  folderdata["lep2"] = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep2/";
-
-  string foldersig = bfolder+"/cms2r0/babymaker/babies/2016_08_10/TCHiHH/merged_higmc_unskimmed/";
-  foldersig += "*TChiHH_mGluino-";
-
+  
   string c_ps = "pass && stitch";
+  vector<shared_ptr<Process> > procs = vector<shared_ptr<Process> >();
+  procs.push_back(Process::MakeShared<Baby_full>("Other", Process::Type::background, 1,
+					    attach_folder(foldermc, mctags["other"]),c_ps));
+  procs.push_back(Process::MakeShared<Baby_full>("Single t", Process::Type::background, 1,
+					    attach_folder(foldermc,mctags["singlet"]),c_ps));
+  procs.push_back(Process::MakeShared<Baby_full>("QCD", Process::Type::background, 1,
+					    attach_folder(foldermc, mctags["qcd"]),c_ps)); 
+  procs.push_back(Process::MakeShared<Baby_full>("V+jets", Process::Type::background, 1,
+					    attach_folder(foldermc,mctags["vjets"]),c_ps));
+  procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", Process::Type::background,1,
+					    attach_folder(foldermc, mctags["ttx"]),c_ps));
+  for (unsigned isig(0); isig<sigm.size(); isig++)
+    procs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", 
+      Process::Type::signal, 1, {foldersig+sigm[isig]+"*.root"}, "1"));
 
-  map<string, vector<shared_ptr<Process> > > procs;
-  for (auto &iskim: skims){
-    procs[iskim] = vector<shared_ptr<Process> >();
-    if (proc_types.find("other")!=proc_types.end())       
-      procs[iskim].push_back(Process::MakeShared<Baby_full>("Other", Process::Type::background, kGreen+1,
-							    attach_folder(foldermc[iskim], mctags["other"]),c_ps));
-    if (proc_types.find("singlet")!=proc_types.end())       
-      procs[iskim].push_back(Process::MakeShared<Baby_full>("Single t", Process::Type::background, 1,
-							    attach_folder(foldermc[iskim],mctags["singlet"]),c_ps));
-    if (proc_types.find("qcd")!=proc_types.end())       
-      procs[iskim].push_back(Process::MakeShared<Baby_full>("QCD", Process::Type::background, colors("other"),
-							    attach_folder(foldermc[iskim], mctags["qcd"]),c_ps)); 
-    if (proc_types.find("vjets")!=proc_types.end())       
-      procs[iskim].push_back(Process::MakeShared<Baby_full>("V+jets", Process::Type::background, kOrange+1,
-							    attach_folder(foldermc[iskim],mctags["vjets"]),c_ps));
-    if (proc_types.find("ttx")!=proc_types.end()) 
-      procs[iskim].push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
-							    attach_folder(foldermc[iskim], mctags["ttx"]),c_ps));
-    if (proc_types.find("ttonly")!=proc_types.end()) 
-      procs[iskim].push_back(Process::MakeShared<Baby_full>("t#bar{t}", Process::Type::background, colors("tt_1l"),
-							    attach_folder(foldermc[iskim],mctags["ttonly"]),c_ps));
-    if (do_data) {
-      procs[iskim].push_back(Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-	{folderdata[iskim]+"*RunB*root"}, "trig_ra4 && pass &&"+json)); 
-    }
-    if (iskim == "lep0") {
-      procs["sig"+iskim] = vector<shared_ptr<Process> >(procs[iskim]);
-      if (proc_types.size()==0) { // have to pretend signal is background, otherwise crashes
-	for (unsigned isig(0); isig<sigm.size(); isig++)
-	  procs["sig"+iskim].push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)",
-								      Process::Type::background, 2,
-								      {foldersig+sigm[isig]+"*.root"}, "1"));
-      } else {
-	for (unsigned isig(0); isig<sigm.size(); isig++)
-	  procs["sig"+iskim].push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", 
-								      Process::Type::signal, 2,
-								      {foldersig+sigm[isig]+"*.root"}, "1"));
-      }
-    }
-  }
-
- 
-
-  PlotMaker pm;
-
-  //just to be pretty... already in skim...
-  string njcut = "njets>=4 && njets<=5";
   string c_2b = "nbt==2&&nbm==2";
   string c_3b = "nbt>=2&&nbm==3&&nbl==3";
   string c_4b = "nbt>=2&&nbm>=3&&nbl>=4";
+  string c_ge3b = "nbt>=2&&nbm>=3";
 
-  map<string, string> xcuts; // useful additional cut definitions
-  xcuts["drmax"] = "hig_drmax<=2.2";
-  xcuts["hig"] = "hig_am>100 && hig_am<=140 && hig_dm <= 40";
-  xcuts["fullhig"] = "hig_am>100 && hig_am<=140 && hig_dm <= 40 && hig_drmax<=2.2";
-  xcuts["sbd"] = "(hig_am<=100 || (hig_am>140 && hig_am<=200)) && hig_dm <= 40";
-  xcuts["fullsbd"] = "(hig_am<=100 || (hig_am>140 && hig_am<=200)) && hig_dm <= 40 && hig_drmax<=2.2";
+  string hig = "hig_drmax<=2.2 && hig_am<=200 && hig_dm <= 40 && (hig_am>100 && hig_am<=140)";
+  string sbd = "hig_drmax<=2.2 && hig_am<=200 && hig_dm <= 40 && !(hig_am>100 && hig_am<=140)";
 
-  string baseline = "pass && pass_ra2_badmu && stitch && nvleps==0 && met>150 && met/met_calo<5";
-
-  //        Cutflow table
-  //-------------------------------- 
+  string baseline = "pass_ra2_badmu && met/met_calo<5 && nvleps==0 && njets>=4 && njets<=5";
+  string sigonly = "type>100e3";
   NamedFunc wgt = "weight" * Higfuncs::eff_higtrig;
+
+  string ncols = to_string(procs.size()+2);  
+  PlotMaker pm;
   pm.Push<Table>("cutflow", vector<TableRow>{
-      TableRow("No selection", "1",0,0, wgt),
-	TableRow("$E_{T}^{miss} > 150$, $\\text{4-5 jets}$, $0\\ell$", 
-		 baseline + " &&"+njcut,0,0, wgt),
-	TableRow("$N_{\\text{b,T}}$", 
-		 baseline + " && nbt>=2 &&"+njcut,0,0, wgt),
+  TableRow("No selection                ", 
+    sigonly,0,0, wgt),
+  // TableRow("Filters                     ", 
+  //   sigonly+"&& pass_ra2_badmu && met/met_calo<5",0,0, wgt),
+  TableRow("$0\\ell$, $\\text{4-5 jets}$  ", 
+    baseline+"&&"+sigonly,0,0, wgt),
+  TableRow("$N_{\\text{b,T}}\\geq 2$      ", 
+    baseline+"&&"+sigonly + " && nbt>=2",0,0, wgt),
+	TableRow("$E_{T}^{miss} > 150$", 
+		baseline + " && met>150 && nbt>=2",0,0, wgt),
 	TableRow("Track veto", 
-		 baseline + " && ntks==0 && nbt>=2 &&"+njcut,0,0, wgt),
+		baseline + " && ntks==0 && met>150 && nbt>=2",0,0, wgt),
 	TableRow("$\\Delta\\phi_{1,2}>0.5,\\Delta\\phi_{3,4}>0.3$",        
-		 baseline + " && ntks==0 && nbt>=2 && nbt>=2 &&"+njcut+"&& !low_dphi",0,0, wgt),
+		baseline + " && ntks==0 && met>150 && nbt>=2   && !low_dphi",0,0, wgt),
 	TableRow("$|\\Delta m| < 40$",     
-		 baseline + " && ntks==0 && nbt>=2 &&"+njcut+"&& !low_dphi && hig_dm<=40",0,0, wgt),
+		baseline + " && ntks==0 && met>150 && nbt>=2   && !low_dphi && hig_dm<=40",0,0, wgt),
 	TableRow("$\\Delta R_{\\text{max}} < 2.2$",                    
-		 baseline +" && ntks==0 && nbt>=2 &&"+njcut+"&& !low_dphi && hig_drmax<=2.2 && hig_dm<=40",0,0,wgt),
-  TableRow("$100<\\left< m \\right>\\leq140$ (HIG)", 
-     baseline + " && ntks==0 && nbt>=2 &&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],1,0, wgt),
+		baseline +"  && ntks==0 && met>150 && nbt>=2   && !low_dphi && hig_dm<=40 && hig_drmax<=2.2",0,1,wgt),
+
+  TableRow("\\multicolumn{"+ncols+"}{c}{HIG: $100<\\left< m \\right>\\leq140$}\\\\%", 
+    "met>1e6",0,1, wgt),
+
+  TableRow("HIG", 
+    baseline + " && ntks==0 && met>150 && nbt>=2   && !low_dphi &&"+hig,0,0, wgt),
 	TableRow("3b + 4b", 
-     baseline +" && ntks==0 &&("+c_3b+"||"+c_4b+")&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0,wgt),
+    baseline +"  && ntks==0 && met>150 &&"+c_ge3b+"&& !low_dphi &&"+hig,0,0,wgt),
   TableRow("4b", 
-     baseline + " && ntks==0 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0, wgt),
+    baseline + " && ntks==0 && met>150 &&"+c_4b+"  && !low_dphi &&"+hig,0,0, wgt),
   TableRow("$E_{T}^{miss}>200$", 
-     baseline + " && ntks==0 && met>200 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0,wgt),
+    baseline + " && ntks==0 && met>200 &&"+c_4b+"  && !low_dphi &&"+hig,0,0,wgt),
   TableRow("$E_{T}^{miss}>300$", 
-     baseline + " && ntks==0 && met>300 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0,wgt),
+    baseline + " && ntks==0 && met>300 &&"+c_4b+"  && !low_dphi &&"+hig,0,0,wgt),
   TableRow("$E_{T}^{miss}>450$", 
-     baseline + " && ntks==0 && met>450 &&"+c_4b+"&&"+njcut+"&& !low_dphi &&"+xcuts["fullhig"],0,0,wgt),
-	},procs["siglep0"],0);
+    baseline + " && ntks==0 && met>450 &&"+c_4b+"  && !low_dphi &&"+hig,0,1,wgt),
+
+  TableRow("\\multicolumn{"+ncols+"}{c}{SBD: $\\left< m\\right> <100$ or $140<\\left< m\\right>\\leq200$}\\\\%", 
+    "met>1e6",0,1, wgt),
+
+  TableRow("SBD", 
+    baseline + " && ntks==0 && met>150 && nbt>=2   && !low_dphi &&"+sbd,0,0, wgt),
+  TableRow("3b + 4b", 
+    baseline +"  && ntks==0 && met>150 &&"+c_ge3b+"&& !low_dphi &&"+sbd,0,0,wgt),
+  TableRow("4b", 
+    baseline + " && ntks==0 && met>150 &&"+c_4b+"  && !low_dphi &&"+sbd,0,0, wgt),
+  TableRow("$E_{T}^{miss}>200$", 
+    baseline + " && ntks==0 && met>200 &&"+c_4b+"  && !low_dphi &&"+sbd,0,0,wgt),
+  TableRow("$E_{T}^{miss}>300$", 
+    baseline + " && ntks==0 && met>300 &&"+c_4b+"  && !low_dphi &&"+sbd,0,0,wgt),
+  TableRow("$E_{T}^{miss}>450$", 
+    baseline + " && ntks==0 && met>450 &&"+c_4b+"  && !low_dphi &&"+sbd,0,0,wgt),
+
+	},procs,0);
 
 
   pm.min_print_ = true;

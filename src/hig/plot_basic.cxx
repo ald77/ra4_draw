@@ -36,7 +36,6 @@ namespace{
   // simplify selection
   bool do_metint = true; // only integrated met>150 and met > 200
   bool do_ge3b = false;  // do btag cats: 2b and 3b+
-  bool do_23vs4b = false; // combine 2b with 3b, keep 4b separate
   bool subtr_ttx = false;
   // choose processes to include, options are: "ttx", "vjets", "singlet", "qcd", "other", "ttonly"
   set<string> proc_types = {"ttx", "vjets", "singlet", "qcd", "other"}; // for default data/MC
@@ -198,21 +197,13 @@ int main(int argc, char *argv[]){
     nbcuts.push_back("nbm==0");
     nbcuts.push_back("nbm==1");
   } 
-  if (do_data) {
-    nbcuts.push_back("nbt==2&&nbm==2");
-    nbcuts.push_back("nbt>=2&&nbm>=3");
-  } else {
-    if (do_23vs4b) {
-      nbcuts.push_back("((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3))");
-      nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
+  nbcuts.push_back("nbt==2&&nbm==2");
+  if (sample!="search" || unblind || !do_data) {
+    if (do_ge3b) {
+      nbcuts.push_back("nbt>=2&&nbm>=3");
     } else {
-      nbcuts.push_back("nbt==2&&nbm==2");
-      if (do_ge3b) {
-        nbcuts.push_back("nbt>=2&&nbm>=3");
-      } else {
-        nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
-        nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
-      }
+      nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
+      nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
     }
   }
 
@@ -230,14 +221,16 @@ int main(int argc, char *argv[]){
   // pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbm", "N_{b}^{M}"), tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
   // pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbt", "N_{b}^{T}"), tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
   if (sample=="search") {
-    pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb, "b-tag category (TTML)"), 
-      tmp_seln && Higfuncs::hig_nb>0., procs, linplot).Weight(wgt).Tag(sample);
-    pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb_ttll, "b-tag category (TTLL)"), 
-      tmp_seln && Higfuncs::hig_nb_ttll>0., procs, linplot).Weight(wgt).Tag(sample);
-    pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb_tmml, "b-tag category (TMML)"), 
-      tmp_seln && Higfuncs::hig_nb_tmml>0., procs, linplot).Weight(wgt).Tag(sample);
-    pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb_mmmm, "b-tag category (MMMM)"), 
-      tmp_seln && Higfuncs::hig_nb_mmmm>0., procs, linplot).Weight(wgt).Tag(sample);
+    if (!do_data || unblind) {
+      pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb, "b-tag category (TTML)"), 
+        tmp_seln && Higfuncs::hig_nb>0., procs, linplot).Weight(wgt).Tag(sample);
+      pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb_ttll, "b-tag category (TTLL)"), 
+        tmp_seln && Higfuncs::hig_nb_ttll>0., procs, linplot).Weight(wgt).Tag(sample);
+      pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb_tmml, "b-tag category (TMML)"), 
+        tmp_seln && Higfuncs::hig_nb_tmml>0., procs, linplot).Weight(wgt).Tag(sample);
+      pm.Push<Hist1D>(Axis(5,0.5,5.5,Higfuncs::hig_nb_mmmm, "b-tag category (MMMM)"), 
+        tmp_seln && Higfuncs::hig_nb_mmmm>0., procs, linplot).Weight(wgt).Tag(sample);
+    }
   } else { 
     pm.Push<Hist1D>(Axis(6,-0.5,5.5,Higfuncs::hig_nb_extended, "Extended b-tag categories (TTML)"), 
       tmp_seln && Higfuncs::hig_nb_extended<6, procs, linplot).Weight(wgt).Tag(sample);
@@ -270,7 +263,6 @@ int main(int argc, char *argv[]){
       for(unsigned imet(0); imet<metcuts.size(); imet++) { 
         tmp_seln = metcuts[imet];
         for(unsigned inb(0); inb<nbcuts.size(); inb++) {
-          if (sample=="search" && !unblind && inb>0) continue;         
           if (ixcut.first=="nm1") { 
             pm.Push<Hist1D>(Axis(25,0,250,"hig_am", "<m> [GeV]", {100., 140.}),
               ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&hig_dm<40", 
