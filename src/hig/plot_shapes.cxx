@@ -108,9 +108,7 @@ int main(int argc, char *argv[]){
     firstnb = 2;
     nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
     nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
-  } else if (sample=="qcd") {
-    nbcuts.push_back("nbt>=2&&nbm>=3");
-  }
+  } 
 
   string samplename = "t#bar{t}+X";
   if (sample=="qcd") samplename = "QCD";
@@ -160,8 +158,9 @@ int main(int argc, char *argv[]){
   } else if (sample=="qcd") { // do 0b vs 1b and 2b vs 3+b
     color_data = kOrange;
     combos.push_back({"nbm==0","nbm==1"});
-    combos.push_back({"nbt==2&&nbm==2","nbt>=2&&nbm>=3"});
     combos.push_back({"nbm==1","nbt==2&&nbm==2"});
+    combos.push_back({"nbt==2&&nbm==2","nbt>=2&&nbm==3"});
+    combos.push_back({"nbt==2&&nbm==2", "nbt>=2&&nbm>=3&&nbl>=4"});
   } else if (sample=="search" || sample=="ttbar") {
     if (json=="4p0") { // at low lumi, do 2b vs 3+b
       combos.push_back({"nbt==2&&nbm==2","nbt>=2&&nbm>=3"});
@@ -208,7 +207,7 @@ int main(int argc, char *argv[]){
 
   vector<string> xcuts;
   if (!do_note) xcuts.push_back(metcut);
-  xcuts.push_back(metcut+"&& hig_dm<40 && hig_am<200");
+  //xcuts.push_back(metcut+"&& hig_dm<40 && hig_am<200");
   xcuts.push_back(metcut+"&& hig_dm<40 && hig_am<200 && hig_drmax<2.2");
 
   vector<string> scuts; //additional sample specific options

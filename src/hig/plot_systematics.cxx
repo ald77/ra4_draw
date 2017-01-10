@@ -275,10 +275,7 @@ int main(int argc, char *argv[]){
   ////// MET cuts
   string metdef = "met";
   if (skim=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
-  if (skim=="qcd" || skim=="search") {
-    if (do_onemet) metcuts.push_back(metdef+">150");
-  } else if (skim=="ttbar" || skim=="zll"){
-    if (do_onemet) metcuts.push_back(metdef+">0");
+  if (skim=="ttbar" || skim=="zll"){
     metcuts.push_back(metdef+">0&&"+metdef+"<=75");
     metcuts.push_back(metdef+">75&&"+metdef+"<=150");
   }
@@ -286,6 +283,11 @@ int main(int argc, char *argv[]){
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
   metcuts.push_back(metdef+">300&&"+metdef+"<=450");
   metcuts.push_back(metdef+">450");
+  if (skim=="qcd" || skim=="search") {
+    if (do_onemet) metcuts.push_back(metdef+">150");
+  } else if (skim=="ttbar" || skim=="zll"){
+    if (do_onemet) metcuts.push_back(metdef+">0");
+  }
   
 
   ////// Nb cuts
@@ -970,7 +972,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     } // Loop over bin cuts
 
     // Drawing line separating MET planes
-    if (iplane==0 && do_onemet) {line.SetLineStyle(1); line.SetLineWidth(2); line.SetLineColor(kOrange+3);}
+    if (iplane==k_ordered.size()-2 && do_onemet) {line.SetLineStyle(1); line.SetLineWidth(2); line.SetLineColor(kOrange+3);}
     else {line.SetLineStyle(2); line.SetLineWidth(2); line.SetLineColor(kBlack);}
     if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
     // Drawing MET labels

@@ -34,7 +34,6 @@
 *.root
 *.log
 *.pdf
-*.txt
 *.fdb_latexmk
 *.fls
 !txt/variables/*
