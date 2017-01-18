@@ -19,7 +19,7 @@ using namespace PlotOptTypes;
 
 int main(){
   gErrorIgnoreLevel = 6000;
-
+  bool teddybear=true;
   double lumi = 1.0;
 
   Palette colors("txt/colors.txt", "default");
@@ -30,6 +30,7 @@ int main(){
   string prompt_dir2 = "/net/cms2/cms2r0/babymaker/babies/2016_10_26/data/skim_standard/";
  
 
+
   auto rereco = Process::MakeShared<Baby_full>("ReReco", Process::Type::data, kBlack,
     { rereco_dir+"*.root"},
     "pass && trig_ra4");
@@ -38,7 +39,18 @@ int main(){
     { prompt_dir+"*.root", prompt_dir2+"*.root"},
     "pass && trig_ra4");
 
-  vector<shared_ptr<Process> > procs_data = {rereco, promptreco};
+  auto rereco_singlelept = Process::MakeShared<Baby_full>("Moriond MC", Process::Type::data, kBlack,
+    { "/net/cms29/cms29r0/heller/teddybear/unskimmed/*.root"},
+    "pass");
+  
+  auto prompt_singlelept = Process::MakeShared<Baby_full>("Spring16 MC", Process::Type::background, kAzure+2,
+    { "/net/cms2/cms2r0/babymaker/babies/2016_08_10/mc/unskimmed/*SingleLeptFromT_*.root"},
+    "pass");
+  
+  vector<shared_ptr<Process> > procs;
+  if(!teddybear) procs = {rereco, promptreco};
+  else procs = {rereco_singlelept, prompt_singlelept};
+
   //
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
   log_lumi.Title(TitleType::preliminary)
@@ -62,10 +74,13 @@ int main(){
 
   
   vector<TString> runrange = {"mt<140&&run<=278808&&","mj14<400&&run<=278808&&","json12p9&&"};
-  vector<TString> sels = {"nleps==1&&nveto==0&&st>500&&","nleps==1&&nveto==0&&st>500&&mt>140&&",
-			  "nels==1&&nleps==1&&nveto==0&&st>500&&","nels==1&&nleps==1&&nveto==0&&st>500&&mt>140&&",
-			  "nmus==1&&nleps==1&&nveto==0&&st>500&&","nmus==1&&nleps==1&&nveto==0&&st>500&&mt>140&&"};
+  if(teddybear) runrange = {"1&&"};
+  vector<TString> sels = {"nleps==1&&nveto==0&&st>500&&","nleps==1&&nveto==0&&st>500&&mt>140&&","nleps==1&&nveto==0&&st>500&&mj14>400&&",
+			  "nels==1&&nleps==1&&nveto==0&&st>500&&","nels==1&&nleps==1&&nveto==0&&st>500&&mt>140&&","nels==1&&nleps==1&&nveto==0&&st>500&&mj14>400&&",
+			  "nmus==1&&nleps==1&&nveto==0&&st>500&&","nmus==1&&nleps==1&&nveto==0&&st>500&&mt>140&&","nmus==1&&nleps==1&&nveto==0&&st>500&&mj14>400&&"};
+
   vector<TString> filters = {"1","pass_ra2_badmu","pass_ra2_badmu&&(met/met_calo)<5"};
+  if(teddybear) filters = {"1"};
   for(auto irun : runrange) {
     //string baseline = "nleps==1&&nveto==0&&st>500";
     for(auto baseline: sels){
@@ -73,70 +88,190 @@ int main(){
       for(auto filter : filters){
 	pm.Push<Hist1D>(Axis(16, 400, 2000., "ht", "H_{T} [GeV]", {500.}),
 			irun+baseline+filter+"&&met>200&&njets>=6&&nbm>=1",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
 	pm.Push<Hist1D>(Axis(16, 500, 2100., "st", "S_{T} [GeV]", {500.}),
 			irun+baseline+filter+"&&met>200&&njets>=6&&nbm>=1",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
 
-	pm.Push<Hist1D>(Axis(20, 0, 1000., "jets_pt", "pT_{jets} [GeV]", {-999}),
+	pm.Push<Hist1D>(Axis(34, 0, 1020., "jets_pt", "pT_{jets} [GeV]", {-999}),
 			irun+baseline+filter+"&&met>200&&njets>=6&&nbm>=1&&!jets_islep",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
+
+        pm.Push<Hist1D>(Axis(33, 30, 1020., "jets_pt", "pT_{jets} [GeV]", {-999}),
+                        irun+baseline+filter+"&&met>200&&njets>=6&&nbm>=1&&!jets_islep&&jets_pt>30",
+                        procs, all_plot_types);
 
 	pm.Push<Hist1D>(Axis(20, 0, 1000., "leps_pt", "pT_{lep} [GeV]", {-999.}),
 			irun+baseline+filter+"&&met>200&&njets>=6&&nbm>=1",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
 
 
 	pm.Push<Hist1D>(Axis(15, 0, 600., "fjets14_m", "m_{J} [GeV]", {-999}),
 			irun+baseline+filter+"&&met>200&&njets>=6&&nbm>=1",
-			procs_data, all_plot_types);
-	pm.Push<Hist1D>(Axis(15, 0, 600., "fjets14_m[0]", "m_{J1} [GeV]", {-999}),
-			irun+baseline+filter+"&&met>200&&njets>=6&&nbm>=1",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
+	// pm.Push<Hist1D>(Axis(15, 0, 600., "fjets14_m[0]", "m_{J1} [GeV]", {-999}),
+	// 		irun+baseline+filter+"&&met>200&&njets>=6&&nbm>=1",
+	// 		procs, all_plot_types);
 	pm.Push<Hist1D>(Axis(24, 0, 1200., "mj14", "M_{J} [GeV]", {250.,400}),
 			irun+baseline+filter+"&&met>200&&njets>=6&&nbm>=1",
-			procs_data, all_plot_types);
-	pm.Push<Hist1D>(Axis(14, 150, 850., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
-			irun+baseline+filter+"&&met>150&&njets>=6&&nbm>=1",
-			procs_data, all_plot_types);
-	pm.Push<Hist1D>(Axis(20, 0, 700., "mt", "m_{T} [GeV]", {-999}),
+			procs, all_plot_types);
+	if(!teddybear){
+	  pm.Push<Hist1D>(Axis(14, 150, 850., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+			  irun+baseline+filter+"&&met>150&&njets>=6&&nbm>=1",
+			  procs, all_plot_types);}
+	
+	else{
+	  pm.Push<Hist1D>(Axis(17, 0, 850., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+			irun+baseline+filter+"&&njets>=6&&nbm>=1",
+			procs, all_plot_types);
+
+	}
+	pm.Push<Hist1D>(Axis(35, 0, 700., "mt", "m_{T} [GeV]", {-999}),
 			irun+baseline+filter+"&&met>200&&njets>=6&&nbm>=1",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
 	pm.Push<Hist1D>(Axis(16, -0.5, 15.5, "njets", "N_{jets}", {5.5, 8.5}),
 			irun+baseline+filter+"&&met>200&&nbm>=1",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
 	pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbm", "N_{b}", {-999}),
 			irun+baseline+filter+"&&met>200&&njets>=6",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
 	pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbl", "N_{l}", {-999}),
 			irun+baseline+filter+"&&met>200&&njets>=6",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
 	pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbt", "N_{t}", {-999}),
 			irun+baseline+filter+"&&met>200&&njets>=6",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
 
 	pm.Push<Hist1D>(Axis(20, 0.46, 1, "jets_csv", "CSV", {0.8,0.935}),
 			irun+baseline+filter+"&&met>200&&njets>=6&&jets_csv>0.46&&jets_pt>30&&!jets_islep",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
 	pm.Push<Hist1D>(Axis(40, 0, 1, "jets_csv", "CSV", {0.46,0.8,0.935}),
 			irun+baseline+filter+"&&met>200&&njets>=6&&jets_pt>30&&!jets_islep",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
 
 	pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "nels", "N_{e}", {0.5}),
 			irun+filter+"&&pass&&nleps>=1&&st>500&&met>200&&(nleps>1||mt<140)&&njets>=6&&nbm>=1",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
 	pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "nmus", "N_{mu}", {0.5}),
 			irun+filter+"&&pass&&nleps>=1&&st>500&&met>200&&(nleps>1||mt<140)&&njets>=6&&nbm>=1",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
 	pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "nleps", "N_{leps}", {0.5}),
 			irun+filter+"&&pass&&nleps>=1&&st>500&&met>200&&(nleps>1||mt<140)&&njets>=6&&nbm>=1",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
 	pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "nveto", "N_{veto}", {0.5}),
 			irun+filter+"&&pass&&nleps==1&&st>500&&met>200&&mt<140&&njets>=6&&nbm>=1",
-			procs_data, all_plot_types);
+			procs, all_plot_types);
       }
     }
   }
+
+  if(teddybear){
+
+    	pm.Push<Hist1D>(Axis(40, 0, 2000., "ht", "H_{T} [GeV]", {500.}),
+			"1",
+			procs, all_plot_types);
+	pm.Push<Hist1D>(Axis(40, 0, 2000., "st", "S_{T} [GeV]", {500.}),
+			"1",
+			procs, all_plot_types);
+
+	pm.Push<Hist1D>(Axis(34, 0, 1020., "jets_pt", "pT_{jets} [GeV]", {-999}),
+			"!jets_islep",
+			procs, all_plot_types);
+
+	pm.Push<Hist1D>(Axis(33, 30, 1020., "jets_pt", "pT_{jets} [GeV]", {-999}),
+                        "!jets_islep&&jets_pt>30",
+                        procs, all_plot_types);
+
+
+	pm.Push<Hist1D>(Axis(50, 0, 1000., "leps_pt", "pT_{lep} [GeV]", {-999.}),
+			"1",
+			procs, all_plot_types);
+	pm.Push<Hist1D>(Axis(50, 0, 1000., "els_pt", "pT_{lep} [GeV]", {-999.}),
+			"1",
+			procs, all_plot_types);
+	pm.Push<Hist1D>(Axis(50, 0, 1000., "mus_pt", "pT_{lep} [GeV]", {-999.}),
+			"1",
+			procs, all_plot_types);
+
+
+	pm.Push<Hist1D>(Axis(30, 0, 600., "fjets14_m", "m_{J} [GeV]", {-999}),
+			"1",
+			procs, all_plot_types);
+	//	pm.Push<Hist1D>(Axis(30, 0, 600., "fjets14_m[0]", "m_{J1} [GeV]", {-999}),
+	///		"1",
+	//		procs, all_plot_types);
+	pm.Push<Hist1D>(Axis(24, 0, 1200., "mj14", "M_{J} [GeV]", {250.,400}),
+			"1",
+			procs, all_plot_types);
+	pm.Push<Hist1D>(Axis(32, 0, 800., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+			"1",
+			procs, all_plot_types);
+
+	pm.Push<Hist1D>(Axis(32, 0, 800., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+			"mt>140",
+			procs, all_plot_types);
+
+	pm.Push<Hist1D>(Axis(32, 0, 800., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+			"nleps&&1&&nmus==1&&mt>140",
+			procs, all_plot_types);
+
+	pm.Push<Hist1D>(Axis(32, 0, 800., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+			"nleps&&1&&nels==1&&mt>140",
+			procs, all_plot_types);
+	
+	pm.Push<Hist1D>(Axis(35, 0, 700., "mt", "m_{T} [GeV]", {-999}),
+			"1",
+			procs, all_plot_types);
+
+	pm.Push<Hist1D>(Axis(35, 0, 700., "mt", "m_{T} [GeV]", {-999}),
+			"nleps==1&&nels==1",
+			procs, all_plot_types);
+
+	pm.Push<Hist1D>(Axis(35, 0, 700., "mt", "m_{T} [GeV]", {-999}),
+			"nleps==1&&nmus==1",
+			procs, all_plot_types);
+
+	pm.Push<Hist1D>(Axis(16, -0.5, 15.5, "njets", "N_{jets}", {5.5, 8.5}),
+			"1",
+			procs, all_plot_types);
+	pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbm", "N_{b}", {-999}),
+			"1",
+			procs, all_plot_types);
+	pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbl", "N_{l}", {-999}),
+			"1",
+			procs, all_plot_types);
+	pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbt", "N_{t}", {-999}),
+			"1",
+			procs, all_plot_types);
+
+	pm.Push<Hist1D>(Axis(20, 0.46, 1, "jets_csv", "CSV", {0.8,0.935}),
+			"jets_csv>0.46&&jets_pt>30&&!jets_islep",
+			procs, all_plot_types);
+	pm.Push<Hist1D>(Axis(40, 0, 1, "jets_csv", "CSV", {0.46,0.8,0.935}),
+			"jets_pt>30&&!jets_islep",
+			procs, all_plot_types);
+
+	pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "nels", "N_{e}", {0.5}),
+			"1",
+			procs, all_plot_types);
+	pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "nmus", "N_{mu}", {0.5}),
+			"1",
+			procs, all_plot_types);
+	pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "nleps", "N_{leps}", {0.5}),
+			"1",
+			procs, all_plot_types);
+	pm.Push<Hist1D>(Axis(5, -0.5, 4.5, "nveto", "N_{veto}", {0.5}),
+			"1",
+			procs, all_plot_types);
+
+
+
+
+
+
+
+  }
+
 
   /*for(int ilep=0; ilep<3; ilep++){
     NamedFunc lepcut(true);
@@ -292,7 +427,7 @@ int main(){
   }
   */
   
-
+  pm.min_print_ = true;
   pm.MakePlots(lumi);
 
 }

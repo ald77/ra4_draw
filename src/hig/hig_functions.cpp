@@ -99,7 +99,7 @@ NamedFunc::ScalarType wgt_nb_met(const Baby &b, bool ttonly){
     }
   }
   return wgt;
-};
+}
 
 // subtract ttbar based on MC prediction reweighted to data in 1l CR
 // since ttbar has to be combined in the same process def with data, 
@@ -132,7 +132,7 @@ NamedFunc::ScalarType wgt_subtr_ttx(const Baby &b, string json){
   }
   // for all other backgrounds, chill (they are not in the "data" process so no need to apply lumi)
   return 1;
-};
+}
 
 // namedfunc to apply the weights from wgt_nb_met to all bkg. processes
 const NamedFunc wgt_comp("wgt_comp",[](const Baby &b) -> NamedFunc::ScalarType{
