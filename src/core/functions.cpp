@@ -69,6 +69,16 @@ namespace Functions{
       return minphi;
     });
 
+  const NamedFunc nbm_moriond("nbm_moriond", [](const Baby &b) ->NamedFunc::ScalarType{
+      int nbm = 0;
+      for(size_t ijet = 0; ijet < b.jets_pt()->size(); ++ijet){
+        if(!IsGoodJet(b,ijet)) continue;
+	if(b.jets_csv()->at(ijet) > 0.8484) nbm++;
+	//if(b.jets_csv()->at(ijet) > 0.800) nbm++;
+      } // Loop over jets
+      return nbm;
+    });
+
   const NamedFunc max_dphi_lep_jet("max_dphi_lep_jet", [](const Baby &b) ->NamedFunc::ScalarType{
       double phi1, eta1, phi2, eta2;
       DileptonAngles(b, eta1, phi1, eta2, phi2);

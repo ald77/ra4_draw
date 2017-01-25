@@ -45,10 +45,12 @@ namespace{
   bool only_dilepton = false;
   bool do_leptons = false;
   bool do_signal = true;
+  bool ichep_nbm = false;
   bool unblind = false;
   bool debug = false;
   bool do_ht = false;
   bool do_correction = false;
+  bool table_preview = false;
   TString skim = "standard";
   TString json = "2p6";
   TString only_method = "";
@@ -84,6 +86,13 @@ const NamedFunc st("st", [](const Baby &b) -> NamedFunc::ScalarType{
     float stvar = b.ht();
     for (const auto &pt: *(b.leps_pt())) stvar += pt; 
     return stvar;
+  });
+
+//// Number of spurious muons
+const NamedFunc nbadmu("nbadmu", [](const Baby &b) -> NamedFunc::ScalarType{
+    int nbad=0;
+    for (const auto &bad: *(b.mus_bad())) nbad += bad; 
+    return nbad;
   });
 
 int main(int argc, char *argv[]){
@@ -141,8 +150,8 @@ int main(int argc, char *argv[]){
   //// Capybara
   string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/");
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
-  //string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_met100_stdnj5/");
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_database_standard/");
+  //string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_21/data/merged_database_stdnj5/");
 
   // Old 2015 data
   if(skim.Contains("2015")){
@@ -160,6 +169,7 @@ int main(int argc, char *argv[]){
 
   // Cuts in baseline speed up the yield finding
   string baseline_s = "mj14>250 && nleps>=1 && met>100 && njets>=5 && st<10000 && pass_ra2_badmu && met/met_calo<5";
+  //string baseline_s = "mj14>250 && nleps>=1 && met>100 && njets>=5 && st<10000";
   if(skim.Contains("mj12")) ReplaceAll(baseline_s, "mj14","mj");
   if(skim.Contains("met100")) ReplaceAll(baseline_s, "150","100");
 
@@ -325,9 +335,8 @@ int main(int argc, char *argv[]){
  
   vector<TString> methods_std = {"signalmet100onebin", "m5jmet100onebin", 
     				 "m2lvetoonebin", "nb1l", "njets1lmet100x200", "njets1lmet200x500",
-				 "njets2lveto", "inclvetoonly"};  
-  // vector<TString> methods_std = {"signal200", "signal350", "signal500", 
-  // 				 "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
+  				 "njets2lveto", "inclvetoonly"};  
+  //vector<TString> methods_std = {"signal200", "signal350", "signal500"};
 
   vector<TString> methods = methods_std;
 
@@ -571,12 +580,30 @@ int main(int argc, char *argv[]){
     if(method.Contains("_emu")) abcds.back().caption += ". Only $e/\\mu$ pairs in D3 and D4";
     //if(method.Contains("agg_")) abcds.back().int_nbnj = false; // Only changes caption since there is only 1 bin
 
+
     vector<TableRow> table_cuts, table_cuts_mm;
     NamedFunc correction = do_correction ? corrections.at(mm_scen) : NamedFunc(1.);
     for(size_t icut=0; icut < abcds.back().allcuts.size(); icut++){
-      table_cuts.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data(),
+      // Changing b-tag working point
+      string totcut = abcds.back().allcuts[icut].Data();
+      if(!ichep_nbm) ReplaceAll(totcut, "nbm", "nbm_moriond");
+      // NamedFunc totcut="1";
+      // if(Contains(totcut_s, "nbm==1")){
+      // 	ReplaceAll(totcut_s, "&&nbm==1", "");
+      // 	totcut = totcut_s && Functions::nbm_moriond == 1.;
+      // }
+      // if(Contains(totcut_s, "nbm==2")){
+      // 	ReplaceAll(totcut_s, "&&nbm==2", "");
+      // 	totcut = totcut_s && Functions::nbm_moriond == 2.;
+      // }
+      // if(Contains(totcut_s, "nbm>=3")){
+      // 	ReplaceAll(totcut_s, "&&nbm>=3", "");
+      // 	totcut = totcut_s && Functions::nbm_moriond >= 3.;
+      // }
+      //// Adding cuts to table for yield calculation
+      table_cuts.push_back(TableRow(abcds.back().allcuts[icut].Data(), totcut,
 				    0,0,weights.at("no_mismeasurement")*correction));
-      if(only_mc) table_cuts_mm.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data(),
+      if(only_mc) table_cuts_mm.push_back(TableRow(abcds.back().allcuts[icut].Data(), totcut,
 						   0,0,weights.at(mm_scen)));
     }
     TString tname = "preds"; tname += iabcd;
@@ -625,6 +652,9 @@ int main(int argc, char *argv[]){
     vector<vector<vector<float> > > kappas, kappas_mm, kmcdat, preds;
     vector<vector<float> > yieldsPlane = findPreds(abcds[imethod], allyields, kappas, kappas_mm, kmcdat, preds);
 
+    //// Print MC/Data yields, cuts applied, kappas, preds
+    if(debug) printDebug(abcds[imethod], allyields, TString(baseline.Name()), kappas, kappas_mm, preds);
+
     //// Makes table MC/Data yields, kappas, preds, Zbi
     if(!only_kappa) {
       TString fullname = printTable(abcds[imethod], allyields, kappas, preds, yieldsPlane);
@@ -636,9 +666,6 @@ int main(int argc, char *argv[]){
 
     //// Plotting MC kappa
     plotKappa(abcds[imethod], kappas);
-
-    //// Print MC/Data yields, cuts applied, kappas, preds
-    if(debug) printDebug(abcds[imethod], allyields, TString(baseline.Name()), kappas, kappas_mm, preds);
 
   } // Loop over ABCD methods
 
@@ -703,11 +730,12 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if(unblind) outname += "_unblind";
   else outname += "_blind";
   if(do_ht) outname += "_ht500";
+  if(ichep_nbm) outname += "_ichepnbm";
   outname += "_"+abcd.method+".tex";
   ofstream out(outname);
 
   //// Printing main table preamble
-  if(abcd.method.Contains("signal") && Ncol>7) out << "\\resizebox{\\textwidth}{!}{\n";
+  if(abcd.method.Contains("signal") && Ncol>7 && !table_preview) out << "\\resizebox{\\textwidth}{!}{\n";
   out << "\\begin{tabular}[tbp!]{ l ";
   if(do_signal) out << "|cc";
   if(split_bkg) out << "|ccc";
@@ -801,7 +829,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
 
   //// Printing footer and closing file
   out<< "\\end{tabular}"<<endl;
-  if(abcd.method.Contains("signal") && Ncol>7) out << "}\n"; // For resizebox
+  if(abcd.method.Contains("signal") && Ncol>7 && !table_preview) out << "}\n"; // For resizebox
   out.close();
 
   //// Copying header and table to the compilable file
@@ -812,12 +840,17 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   header.close();
   if(!abcd.method.Contains("signal")) full << "\\usepackage[landscape]{geometry}\n\n";
   full << "\\begin{document}\n\n";
-  full << "\\begin{table}\n\\centering\n";
-  full << "\\caption{" << abcd.caption <<".}\\vspace{0.1in}\n\\label{tab:"<<abcd.method<<"}\n";
+  if(table_preview){
+    full << "\\begin{preview}\n";
+  } else {
+    full << "\\begin{table}\n\\centering\n";
+    full << "\\caption{" << abcd.caption <<".}\\vspace{0.1in}\n\\label{tab:"<<abcd.method<<"}\n";
+  }
   ifstream outtab(outname);
   full << outtab.rdbuf();
   outtab.close();
-  full << "\\end{table}\n\n";
+  if(table_preview) full << "\\end{preview}\n\n";
+  else full << "\\end{table}\n\n";
   full << "\\end{document}\n";
   full.close();
 
@@ -1011,6 +1044,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
 
   TString fname="plots/kappa_" + abcd.method;
   if(do_ht) fname  += "_ht500";
+  if(ichep_nbm) fname += "_ichepnbm";
   fname += ".pdf";
   can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl;
@@ -1298,6 +1332,7 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
   TString fname="plots/dataKappa_" + abcd.method;
   if(do_ht) fname  += "_ht500";
+  if(ichep_nbm) fname += "_ichepnbm";
   lumi_s.ReplaceAll(".","p");
   fname += "_lumi"+lumi_s;
   fname += ".pdf";
@@ -1457,9 +1492,11 @@ void GetOptions(int argc, char *argv[]){
       {"only_kappa", no_argument, 0, 'k'},    // Only plots kappa (no table)
       {"debug", no_argument, 0, 'd'},         // Debug: prints yields and cuts used
       {"only_dilepton", no_argument, 0, '2'}, // Makes tables only for dilepton tests
-      {"ht", no_argument, 0, 0},            // Cuts on ht>500 instead of st>500
-      {"mm", required_argument, 0, 0},            // Mismeasurment scenario, 0 for data
+      {"ht", no_argument, 0, 0},              // Cuts on ht>500 instead of st>500
+      {"mm", required_argument, 0, 0},        // Mismeasurment scenario, 0 for data
       {"quick", no_argument, 0, 0},           // Used inclusive ttbar for quick testing
+      {"ichep_nbm", no_argument, 0, 0},       // Use ICHEP b-tagging working point
+      {"preview", no_argument, 0, 0},         // Table preview, no caption
       {0, 0, 0, 0}
     };
 
@@ -1517,6 +1554,10 @@ void GetOptions(int argc, char *argv[]){
         do_ht = true;
       } else if(optname == "mm"){
         mm_scen = optarg;
+      }else if(optname == "ichep_nbm"){
+	ichep_nbm = true;
+      }else if(optname == "preview"){
+	table_preview = true;
       }else if(optname == "quick"){
 	quick_test = true;
       }else{
