@@ -19,6 +19,7 @@ namespace Functions{
   extern const NamedFunc max_dphi_met_jet;
   extern const NamedFunc min_dr_lep_jet;
   extern const NamedFunc max_dr_lep_jet;
+  extern const NamedFunc nbm_moriond;
   extern const NamedFunc offshellw;
 
   bool IsGoodJet(const Baby &b, std::size_t ijet);

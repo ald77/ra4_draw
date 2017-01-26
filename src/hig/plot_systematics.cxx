@@ -306,7 +306,7 @@ int main(int argc, char *argv[]){
   ////// CR, SR cuts
   TString c_sr="hig_am>100&&hig_am<140&&hig_dm<40";
   TString c_cr="!("+c_sr+") && hig_am<200 && hig_dm<40";//"(hig_am<=100 || hig_am>=140) && hig_am<200 && hig_dm<40";
-  if (!do_trim) c_cr="hig_am<=100 || hig_am>=140 || hig_dm>=40";
+  if (!do_trim) c_cr="(hig_am<=100 || hig_am>=140 || hig_dm>=40)";
 
   ////// One loose and one tight selection option for each region
   TString basecuts("njets>=4 && njets<=5"); 
@@ -1222,11 +1222,12 @@ void GetOptions(int argc, char *argv[]){
       {"debug", no_argument, 0, 'd'},         // Debug: prints yields and cuts used
       {"only_dilepton", no_argument, 0, '2'}, // Makes tables only for dilepton tests
       {"ht", no_argument, 0, 0},              // Cuts on ht>500 instead of st>500
-      {"mm", required_argument, 0, 0},            // Mismeasurment scenario, 0 for data
+      {"mm", required_argument, 0, 0},        // Mismeasurment scenario, 0 for data
       {"quick", no_argument, 0, 0},           // Used inclusive ttbar for quick testing
+      {"no_trim", no_argument, 0, 0},         // No trimming of sideband
       {"zbi", no_argument, 0, 0},             // Use Zbi instead of toys
-      {"highnb", no_argument, 0, 0},             // Do 3b and 4b for QCD CR
-      {"midnb", no_argument, 0, 0},             // Do 3b and 4b for QCD CR
+      {"highnb", no_argument, 0, 0},          // Do 3b and 4b for QCD CR
+      {"midnb", no_argument, 0, 0},           // Do 3b and 4b for QCD CR
       {"onemet", no_argument, 0, 0},             
       {0, 0, 0, 0}
     };
@@ -1294,6 +1295,8 @@ void GetOptions(int argc, char *argv[]){
         actualZbi = true;
       }else if(optname == "highnb"){
         do_highnb = true;
+      }else if(optname == "no_trim"){
+        do_trim = false;
       }else if(optname == "midnb"){
         do_midnb = true;
       }else if(optname == "onemet"){

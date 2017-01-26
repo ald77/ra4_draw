@@ -25,6 +25,7 @@
 
 #include "core/utilities.hpp"
 #include "core/named_func.hpp"
+#include "core/functions.hpp"
 
 using namespace std;
 
@@ -178,8 +179,14 @@ void FunctionParser::CheckForUnknowns() const{
 void FunctionParser::ResolveVariables() const{
   for(auto &token: tokens_){
     if(token.type_ == Token::Type::variable_name){
-      token.function_ = Baby::GetFunction(token.string_rep_);
-      token.type_ = token.function_.IsScalar() ? Token::Type::resolved_scalar : Token::Type::resolved_vector;
+      // if(Functions::func_map.find(token.string_rep_) != Functions::func_map.end()){
+      // 	token = Functions::func_map.at(token.string_rep_);
+      if(token.string_rep_ == "nbm_moriond"){
+	token = Functions::nbm_moriond;
+      } else {
+	token.function_ = Baby::GetFunction(token.string_rep_);
+	token.type_ = token.function_.IsScalar() ? Token::Type::resolved_scalar : Token::Type::resolved_vector;
+      }
     }else if(token.type_ == Token::Type::number){
       char *cp = nullptr;
       NamedFunc::ScalarType val = strtod(&token.string_rep_[0], &cp);
