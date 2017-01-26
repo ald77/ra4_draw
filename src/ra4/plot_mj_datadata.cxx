@@ -40,20 +40,20 @@ int main(){
 
 
   auto data_highmt = Process::MakeShared<Baby_full>("Data 1l, m_{T} > 140", Process::Type::data, kBlack,
-    {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1");
+    {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm_moriond>=1");
   auto data_lowmt = Process::MakeShared<Baby_full>("Data 1l, m_{T} #leq 140", Process::Type::background, kBlack,
-    {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt<=140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1");
+    {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt<=140 && nleps==1 && nveto==0 && njets>=6 && nbm_moriond>=1");
   data_lowmt->SetFillColor(kWhite);
   data_lowmt->SetLineColor(kBlue-7);
   data_lowmt->SetLineWidth(2);
 
   auto data2lveto = Process::MakeShared<Baby_full>("Data 2l or l+trk", Process::Type::data, kBlue+2,
     {fdata+ntupletag},
-    "pass && trig_ra4 && st>500 && ((nleps==2 && njets>=5 && nbm<=2) || (nleps==1 && nveto==1 && njets>=6 && nbm>=1 && mt>140))");
+    "pass && trig_ra4 && st>500 && ((nleps==2 && njets>=5 && nbm_moriond<=2) || (nleps==1 && nveto==1 && njets>=6 && nbm_moriond>=1 && mt>140))");
 
   auto data2l = Process::MakeShared<Baby_full>("Data 2l", Process::Type::data, kMagenta+3,
     {fdata+ntupletag},
-    "pass && trig_ra4 && st>500 && (nleps==2 && njets>=5 && nbm<=2)");
+    "pass && trig_ra4 && st>500 && (nleps==2 && njets>=5 && nbm_moriond<=2)");
 
 
   auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
@@ -82,23 +82,23 @@ int main(){
   vector<PlotOpt> lin = {lin_lumi_info};
 
 
-  string baseline = "met>200 && nleps==1 && nveto==0 && st>500 && njets>=6 && nbm>=1";
+  string baseline = "met>200 && nleps==1 && nveto==0 && st>500 && njets>=6 && nbm_moriond>=1";
   PlotMaker pm;
 
   //data-to-data
   vector<string> metbins = {"met>150 && met<=500", "met>150 && met<=200", "met>200 && met<=350", "met>350 && met<=500", "met>200 && met<=500","met>500","met>200"};
   for (auto &imet: metbins){
     pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]",{250.,400.}),
-		    imet + "&&nbm==1", data1l_procs, lin).Tag("data1l1b");
+		    imet + "&&nbm_moriond==1", data1l_procs, lin).Tag("data1l1b").RatioTitle("Data m_{T} > 140","Data m_{T} #leq 140");
 
     pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]", {250.,400.}),
-		    imet + "&&nbm>=2", data1l_procs, lin).Tag("data1l2b");
+		    imet + "&&nbm_moriond>=2", data1l_procs, lin).Tag("data1l2b").RatioTitle("Data m_{T} > 140","Data m_{T} #leq 140");;
 
     pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]", {250.,400.}),
-		    imet,  data2l_procs, lin).Tag("data2l");
+		    imet,  data2l_procs, lin).Tag("data2l").RatioTitle("Data 2l","Data 1l, m_{T} #leq 140");
 
     pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]", {250.,400.}),
-		    imet, data2lveto_procs, lin).Tag("data2lveto");
+		    imet, data2lveto_procs, lin).Tag("data2lveto").RatioTitle("Data 2l","Data 1l, m_{T} #leq 140");
 
   } 
 

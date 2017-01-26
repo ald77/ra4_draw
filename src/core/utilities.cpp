@@ -278,6 +278,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "ht", "H_{T}");
   ReplaceAll(code, "mt", "m_{T}");
   ReplaceAll(code, "ntks_chg==0", " ITV");
+  ReplaceAll(code, "nbm_moriond","N_{b}");
   ReplaceAll(code, "nbm","N_{b}");
   ReplaceAll(code, "nbl","N_{b,l}");
   ReplaceAll(code, "mj", " M_{J}");
