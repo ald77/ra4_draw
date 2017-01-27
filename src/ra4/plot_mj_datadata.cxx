@@ -40,27 +40,36 @@ int main(){
 
 
   auto data_highmt = Process::MakeShared<Baby_full>("Data 1l, m_{T} > 140", Process::Type::data, kBlack,
-    {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm_moriond>=1");
+    {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm_moriond>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   auto data_lowmt = Process::MakeShared<Baby_full>("Data 1l, m_{T} #leq 140", Process::Type::background, kBlack,
-    {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt<=140 && nleps==1 && nveto==0 && njets>=6 && nbm_moriond>=1");
+    {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt<=140 && nleps==1 && nveto==0 && njets>=6 && nbm_moriond>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   data_lowmt->SetFillColor(kWhite);
   data_lowmt->SetLineColor(kBlue-7);
   data_lowmt->SetLineWidth(2);
 
   auto data2lveto = Process::MakeShared<Baby_full>("Data 2l or l+trk", Process::Type::data, kBlue+2,
     {fdata+ntupletag},
-    "pass && trig_ra4 && st>500 && ((nleps==2 && njets>=5 && nbm_moriond<=2) || (nleps==1 && nveto==1 && njets>=6 && nbm_moriond>=1 && mt>140))");
+    "pass && trig_ra4 && st>500 && ((nleps==2 && njets>=5 && nbm_moriond<=2) || (nleps==1 && nveto==1 && njets>=6 && nbm_moriond>=1 && mt>140)) && met/met_calo<5.0 && pass_ra2_badmu");
 
   auto data2l = Process::MakeShared<Baby_full>("Data 2l", Process::Type::data, kMagenta+3,
     {fdata+ntupletag},
-    "pass && trig_ra4 && st>500 && (nleps==2 && njets>=5 && nbm_moriond<=2)");
+    "pass && trig_ra4 && st>500 && (nleps==2 && njets>=5 && nbm_moriond<=2) && met/met_calo<5.0 && pass_ra2_badmu");
+
+
+  auto t1tttt = Process::MakeShared<Baby_full>("T1tttt(1800,100)", Process::Type::signal, colors("t1tttt"),
+    {bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm_moriond>=1 && met/met_calo<5.0 && pass_ra2_badmu");
+  t1tttt->SetLineWidth(2);
+  auto t1ttttc = Process::MakeShared<Baby_full>("T1tttt(1400,1000)", Process::Type::signal, colors("t1tttt"),
+    {bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/*SMS-T1tttt_mGluino-1400_mLSP-1000_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm_moriond>=1 && met/met_calo<5.0 && pass_ra2_badmu");
+  t1ttttc->SetLineWidth(2);
+  t1ttttc->SetLineStyle(2);
 
 
   auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     {fdata+ntupletag},"pass && trig_ra4");
 
 
-  vector<shared_ptr<Process> > data1l_procs = {data_highmt, data_lowmt};
+  vector<shared_ptr<Process> > data1l_procs = {data_highmt,data_lowmt,t1tttt,t1ttttc};
   vector<shared_ptr<Process> > data2lveto_procs = {data2lveto, data_lowmt};
   vector<shared_ptr<Process> > data2l_procs = {data2l, data_lowmt};
 
@@ -78,15 +87,14 @@ int main(){
   PlotOpt lin_lumi_info = lin_lumi().Title(TitleType::info);
   PlotOpt log_shapes_info = log_shapes().Title(TitleType::info);
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info);
-  vector<PlotOpt> log = {log_lumi_info};
-  vector<PlotOpt> lin = {lin_lumi_info};
+  vector<PlotOpt> log = {log_lumi_info,log_lumi};
+  vector<PlotOpt> lin = {lin_lumi_info,lin_lumi};
 
 
-  string baseline = "met>200 && nleps==1 && nveto==0 && st>500 && njets>=6 && nbm_moriond>=1";
   PlotMaker pm;
 
   //data-to-data
-  vector<string> metbins = {"met>150 && met<=500", "met>150 && met<=200", "met>200 && met<=350", "met>350 && met<=500", "met>200 && met<=500","met>500","met>200"};
+  vector<string> metbins = {"met>150 && met<=500", "met>150 && met<=200", "met>200 && met<=350", "met>350 && met<=500", "met>200 && met<=500","met>500","met>200","met>350"};
   for (auto &imet: metbins){
     pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]",{250.,400.}),
 		    imet + "&&nbm_moriond==1", data1l_procs, lin).Tag("data1l1b").RatioTitle("Data m_{T} > 140","Data m_{T} #leq 140");
