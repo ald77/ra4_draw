@@ -9,6 +9,9 @@
  
 namespace Functions{
   extern const NamedFunc n_isr_match;
+  extern const NamedFunc n_mus_bad;
+  extern const NamedFunc n_mus_bad_dupl;
+  extern const NamedFunc n_mus_bad_trkmu;
   extern const NamedFunc njets_weights_ttisr;
   extern const NamedFunc njets_weights_visr;
   extern const NamedFunc min_dphi_lep_met;

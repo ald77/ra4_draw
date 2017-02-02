@@ -8,6 +8,34 @@
 using namespace std;
 
 namespace Functions{
+
+  const NamedFunc n_mus_bad("n_mus_bad", [](const Baby &b) -> NamedFunc::ScalarType{
+      int n=0;
+      for(unsigned int i=0; i< b.mus_pt()->size(); i++){
+	if(b.mus_bad()->at(i)) n++;
+      }
+      return n;
+    });
+
+  const NamedFunc n_mus_bad_dupl("n_mus_bad_dupl", [](const Baby &b) -> NamedFunc::ScalarType{
+      int n=0;
+      for(unsigned int i=0; i< b.mus_pt()->size(); i++){
+	if(b.mus_bad_dupl()->at(i)) n++;
+      }
+      return n;
+    });
+
+  const NamedFunc n_mus_bad_trkmu("n_mus_bad_trkmu", [](const Baby &b) -> NamedFunc::ScalarType{
+      int n=0;
+      for(unsigned int i=0; i< b.mus_pt()->size(); i++){
+	if(b.mus_bad_trkmu()->at(i)) n++;
+      }
+      return n;
+    });
+
+
+
+
   const NamedFunc n_isr_match("n_isr_match", NISRMatch);
 
   const NamedFunc njets_weights_ttisr("njets_weights_ttisr", [](const Baby &b){

@@ -13,14 +13,16 @@
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
 #include "core/hist1d.hpp"
+#include "core/functions.hpp"
 
 using namespace std;
+using namespace Functions;
 using namespace PlotOptTypes;
 NamedFunc::ScalarType DilepMass(const Baby &b);
 NamedFunc::ScalarType DilepMassWindow(const Baby &b);
 int main(){
   gErrorIgnoreLevel = 6000;
-  double lumi = 7.72;
+  double lumi =1.0;
   cout<<"Luminosity is "<<lumi<<endl;
 
   //Only produces plots that correspond to predefined lumis. Options are:
@@ -28,11 +30,11 @@ int main(){
 
   Palette colors("txt/colors.txt", "default");
 
-  string rereco_dir = "/net/cms2/cms2r0/babymaker/babies/2016_11_08/data/merged_database_standard/";
+  string rereco_dir = "/net/cms2/cms2r0/babymaker/babies/2017_01_27/data/merged_database_stdnj5/";
   string prompt_dir = "/net/cms2/cms2r0/babymaker/babies/2016_08_10/data/merged_database_standard/"; 
   string prompt_dir2 = "/net/cms2/cms2r0/babymaker/babies/2016_10_26/data/merged_database_standard/";
  
-  string rereco_2l_dir = "/net/cms2/cms2r0/babymaker/babies/2016_11_08/data/merged_database_zcand/";
+  string rereco_2l_dir = "/net/cms2/cms2r0/babymaker/babies/2017_01_27/data/merged_database_zcand/";
   string prompt_2l_dir = "/net/cms2/cms2r0/babymaker/babies/2016_08_10/data/merged_database_zcand/";
   string prompt_2l_dir2 = "/net/cms2/cms2r0/babymaker/babies/2016_10_26/data/merged_database_zcand/";
 
@@ -83,6 +85,24 @@ int main(){
   auto rereco_2l = Process::MakeShared<Baby_full>("ReReco", Process::Type::data, kBlack,
     { rereco_2l_dir+"*.root"},
     "trig_ra4");
+
+ auto rereco_2l_no_bad_any = Process::MakeShared<Baby_full>("ReReco, no bad, duplicate, or bad track muons", Process::Type::data, kBlack,
+    { rereco_2l_dir+"*.root"},
+    "trig_ra4"&&n_mus_bad==0.&&n_mus_bad_dupl==0.&&n_mus_bad_trkmu==0.);
+
+  auto rereco_2l_no_bad = Process::MakeShared<Baby_full>("ReReco, no bad or duplicate muons", Process::Type::data, kBlack,
+    { rereco_2l_dir+"*.root"},
+    "trig_ra4"&&n_mus_bad==0.&&n_mus_bad_dupl==0.);
+
+  auto rereco_2l_no_bad_dupl = Process::MakeShared<Baby_full>("ReReco, no duplicate muons", Process::Type::data, kBlack,
+    { rereco_2l_dir+"*.root"},
+    "trig_ra4"&&n_mus_bad_dupl==0.);
+
+  auto rereco_2l_no_bad_trk = Process::MakeShared<Baby_full>("ReReco, no bad track muons", Process::Type::data, kBlack,
+    { rereco_2l_dir+"*.root"},
+    "trig_ra4"&&n_mus_bad_trkmu==0.);
+
+
 
   auto rereco_2lBF = Process::MakeShared<Baby_full>("ReReco, Runs B-F", Process::Type::data, kBlack,
     { rereco_2l_dir+"*RunB*.root", rereco_2l_dir+"*RunC*.root", rereco_2l_dir+"*RunD*.root", rereco_2l_dir+"*RunE*.root", rereco_2l_dir+"*RunF*.root"},
@@ -168,20 +188,26 @@ int main(){
   vector<shared_ptr<Process> > rr_mc_GH = {rerecoGH, /*t1tttt_nc, t1tttt_c,*/ tt1l, tt2l, wjets, single_t, ttv, other};
 
   vector<shared_ptr<Process> > pr_mc_BF = {promptrecoBF, /*t1tttt_nc, t1tttt_c,*/ tt1l, tt2l, wjets, single_t, ttv, other};
+
   vector<shared_ptr<Process> > pr_mc_G = {promptrecoG, /*t1tttt_nc, t1tttt_c,*/ tt1l, tt2l, wjets, single_t, ttv, other};     
 
 
   vector<shared_ptr<Process> > rr_pr_2l = {rereco_2l, promptreco_2l};
+  vector<shared_ptr<Process> > rr_pr_2l_no_bad_any = {rereco_2l_no_bad_any, promptreco_2l};
+  vector<shared_ptr<Process> > rr_pr_2l_no_bad = {rereco_2l_no_bad, promptreco_2l};
+  vector<shared_ptr<Process> > rr_pr_2l_no_bad_dupl = {rereco_2l_no_bad_dupl, promptreco_2l};
+  vector<shared_ptr<Process> > rr_pr_2l_no_bad_trk = {rereco_2l_no_bad_trk, promptreco_2l};
+
   vector<shared_ptr<Process> > rr_pr = {rereco, promptreco};
 
 
   
-  vector<double> lumis = {1.0  ,  20.2        ,  20.2        , 7.72        ,  16.6};
-  vector<string> tags = {"data","prompt_mc_BF","rereco_mc_BF","prompt_mc_G","rereco_mc_GH"};
-  vector<string> numers = {"ReReco","Data","Data","Data","Data"};
-  vector<string> denoms = {"Prompt","MC","MC","MC","MC"};
+  vector<double> lumis = { 1.0  ,  1.0  ,  1.0  ,  1.0  ,  1.0  ,  20.2        ,  20.2        , 7.72        ,  16.6};
+  vector<string> tags =  {"data", "data_no_bad_any", "data_no_bad", "data_no_bad_dupl", "data_no_bad_trk", "prompt_mc_BF","rereco_mc_BF","prompt_mc_G","rereco_mc_GH"};
+  vector<string> numers = {"ReReco","ReReco","ReReco","ReReco","ReReco","Data","Data","Data","Data"};
+  vector<string> denoms = {"Prompt","Prompt","Prompt","Prompt","Prompt","MC","MC","MC","MC"};
 
-  vector< vector<shared_ptr<Process> > > DY = {rr_pr_2l,pr_mc_2l_BF,rr_mc_2l_BF,pr_mc_2l_G,rr_mc_2l_GH};
+  vector< vector<shared_ptr<Process> > > DY = {rr_pr_2l,rr_pr_2l_no_bad_any,rr_pr_2l_no_bad,rr_pr_2l_no_bad_dupl,rr_pr_2l_no_bad_trk, pr_mc_2l_BF,rr_mc_2l_BF,pr_mc_2l_G,rr_mc_2l_GH};
   // vector< vector<shared_ptr<Process> > > DY_mc_H = {pr_mc_2l_H,rr_mc_2l_H};
 
   vector< vector<shared_ptr<Process> > > single = {rr_pr,pr_mc_BF,rr_mc_BF,pr_mc_G,rr_mc_GH};
@@ -233,18 +259,18 @@ int main(){
   vector<NamedFunc> njets_sels = {"1","njets==0","njets==1","njets>=2"};
 
 
-  vector<NamedFunc> filters = {"1","pass","pass&&pass_ra2_badmu","pass&&pass_ra2_badmu&&(met/met_calo)<5"};
+  vector<NamedFunc> filters = {"pass","pass&&pass_ra2_badmu&&(met/met_calo)<5"};
 
 
   for(unsigned iproc=0;iproc<DY.size();iproc++){
     if(lumis[iproc]!=lumi) continue;
     for(unsigned int irun=0; irun < runrange.size();irun++) {
-      if(iproc>0&&irun>0) continue;
+      //  if(iproc>0&&irun>0) continue;
       for(auto baseline: DY_sels){
 	for(auto njets : njets_sels){
 	  for(auto filter : filters){
 
-	 
+	    continue;
 
 	    pm.Push<Hist1D>(Axis(8, 70, 110., ll_m, "Dilepton invariant mass [GeV]",{80,100}),
 			    runrange[irun]&&njets&&filter,
@@ -284,47 +310,47 @@ int main(){
   };
 
 
-  vector<NamedFunc> filtered = {"1","pass","pass&&!pass_ra2_badmu","pass&&!(met/met_calo)<5"};
+  vector<NamedFunc> filtered = {/*"1","pass","pass&&!pass_ra2_badmu",*/"pass","pass&&pass_ra2_badmu&&(met/met_calo)<5"};
   for(unsigned iproc=0;iproc<single.size();iproc++){
     if(lumis[iproc]!=lumi) continue;
     for(unsigned int irun=0; irun < runrange.size();irun++) {
-      if(iproc>0&&irun>0) continue;
+      //if(iproc>0&&irun>0) continue;
       for(auto baseline: sels){
 	for(auto filter : filtered){
 
-
+	  
 
 	  	pm.Push<Hist1D>(Axis(16, 500, 2100., "st", "S_{T} [GeV]", {500.}),
-			runrange[irun]&&baseline&&filter&&"met>200&&njets>=6&&nbm>=1",
+			runrange[irun]&&baseline&&filter&&"met>200&&njets>=6&&nbm_moriond>=1",
 			single[iproc], all_plot_types).Tag(tags[iproc]).RatioTitle(numers[iproc],denoms[iproc]);
 	
 
 	pm.Push<Hist1D>(Axis(20, 0, 1000., "leps_pt", "pT_{lep} [GeV]", {-999.}),
-			runrange[irun]&&baseline&&filter&&"met>200&&njets>=6&&nbm>=1",
+			runrange[irun]&&baseline&&filter&&"met>200&&njets>=6&&nbm_moriond>=1",
 			single[iproc], all_plot_types).Tag(tags[iproc]).RatioTitle(numers[iproc],denoms[iproc]);
 	  
 	pm.Push<Hist1D>(Axis(16, 0, 8., "met/met_calo", "E_{T}^{miss} / Calo MET"),
-			runrange[irun]&&baseline&&filter&&"met>200&&njets>=6&&nbm>=1",
+			runrange[irun]&&baseline&&filter&&"met>200&&njets>=6&&nbm_moriond>=1",
 			single[iproc], all_plot_types).Tag(tags[iproc]).RatioTitle(numers[iproc],denoms[iproc]);
 	// pm.Push<Hist1D>(Axis(15, 0, 600., "fjets14_m", "m_{J} [GeV]", {-999}),
-	// 		runrange[irun]&&baseline&&filter&&"met>200&&njets>=6&&nbm>=1",
+	// 		runrange[irun]&&baseline&&filter&&"met>200&&njets>=6&&nbm_moriond>=1",
 	// 		single[iproc], all_plot_types).Tag(proctag);
 	
 	pm.Push<Hist1D>(Axis(24, 0, 1200., "mj14", "M_{J} [GeV]", {250.,400}),
-			runrange[irun]&&baseline&&filter&&"met>200&&njets>=6&&nbm>=1",
+			runrange[irun]&&baseline&&filter&&"met>200&&njets>=6&&nbm_moriond>=1",
 			single[iproc], all_plot_types).Tag(tags[iproc]).RatioTitle(numers[iproc],denoms[iproc]);
 	
-	pm.Push<Hist1D>(Axis(14, 150, 850., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
-			runrange[irun]&&baseline&&filter&&"met>150&&njets>=6&&nbm>=1",
+	pm.Push<Hist1D>(Axis(15, 100, 850., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+			runrange[irun]&&baseline&&filter&&"met>100&&njets>=6&&nbm_moriond>=1",
 			single[iproc], all_plot_types).Tag(tags[iproc]).RatioTitle(numers[iproc],denoms[iproc]);
 	
 	pm.Push<Hist1D>(Axis(35, 0, 700., "mt", "m_{T} [GeV]", {-999}),
-			runrange[irun]&&baseline&&filter&&"met>200&&njets>=6&&nbm>=1",
+			runrange[irun]&&baseline&&filter&&"met>200&&njets>=6&&nbm_moriond>=1",
 			single[iproc], all_plot_types).Tag(tags[iproc]).RatioTitle(numers[iproc],denoms[iproc]);
 	pm.Push<Hist1D>(Axis(16, -0.5, 15.5, "njets", "N_{jets}", {5.5, 8.5}),
-			runrange[irun]&&baseline&&filter&&"met>200&&nbm>=1",
+			runrange[irun]&&baseline&&filter&&"met>200&&nbm_moriond>=1",
 			single[iproc], all_plot_types).Tag(tags[iproc]).RatioTitle(numers[iproc],denoms[iproc]);
-	pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbm", "N_{b}", {-999}),
+	pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbm_moriond", "N_{b}", {-999}),
 			runrange[irun]&&baseline&&filter&&"met>200&&njets>=6",
 			single[iproc], all_plot_types).Tag(tags[iproc]).RatioTitle(numers[iproc],denoms[iproc]);
 	

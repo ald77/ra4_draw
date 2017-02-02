@@ -98,6 +98,11 @@ string execute(const string &cmd){
 
 string CodeToPlainText(string code){
   ReplaceAll(code, " ", "");
+  ReplaceAll(code, "run<=276811", "RunsBD");
+  ReplaceAll(code, "run>=276831&&run<=278801", "RunsEF1");
+  ReplaceAll(code, "run>=278802&&run<=280385", "RunsF2G");
+  ReplaceAll(code, "run>=280919&&run<284044", "RunH");
+  ReplaceAll(code, "run<280919", "RunsBG");
   ReplaceAll(code, "((leps_pt[0]>30&&leps_eta[0]<2.1&&leps_eta[0]>-2.1)||(leps_pt[1]>30&&leps_eta[1]<2.1&&leps_eta[1]>-2.1))", "SLtrig");
   ReplaceAll(code, "(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))>80&&(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))<100", "zmasswindow");
   ReplaceAll(code, "nbt==2&&nbm==2","2b");
@@ -144,6 +149,11 @@ string CodeToPlainText(string code){
 
 string CodeToRootTex(string code){
   ReplaceAll(code, " ", "");
+  ReplaceAll(code, "run<=276811", "Runs B-D");
+  ReplaceAll(code, "run>=276831&&run<=278801", "Runs E-F1");
+  ReplaceAll(code, "run>=278802&&run<=280385", "Runs F2-G");
+  ReplaceAll(code, "run>=280919&&run<284044", "Run H");
+  ReplaceAll(code, "run<280919", "Runs B-G");
   ReplaceAll(code, "pass&&stitch", "ps");
   ReplaceAll(code, "&&1", "");
   ReplaceAll(code, "weight", "w");

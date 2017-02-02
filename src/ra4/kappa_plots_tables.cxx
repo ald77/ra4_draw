@@ -150,7 +150,7 @@ int main(int argc, char *argv[]){
   //// Capybara
   string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/");
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_database_standard/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_database_stdnj5/");
   //string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_21/data/merged_database_stdnj5/");
 
   // Old 2015 data
@@ -240,7 +240,7 @@ int main(int argc, char *argv[]){
     lumi = 12.9;
     jsonCuts = "json12p9";
   } else if(json=="full"){
-    lumi = 36.2;
+    lumi = 36.8;
     jsonCuts = "1";
   }
   if(mc_lumi!="") lumi = mc_lumi.Atof();
@@ -257,7 +257,8 @@ int main(int argc, char *argv[]){
   }
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     names_data,baseline && trigs && "pass");
-
+  //No bad muons: "pass && n_mus_bad==0. && n_mus_bad_dupl==0. && n_mus_bad_trkmu==0."
+  
   //// Use this process to make quick plots. Requires being run without split_bkg
   auto proc_bkg = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
     {foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"}, baseline && " pass");
@@ -333,10 +334,10 @@ int main(int argc, char *argv[]){
                                  "m2lvetomet150", "m2lonlymet150", "mvetoonlymet150", "m1lmet150",
 				 "m5j", "agg_himet", "agg_mixed", "agg_himult", "agg_1b"};
  
-  vector<TString> methods_std = {"signalmet100onebin", "m5jmet100onebin", 
-    				 "m2lvetoonebin", "nb1l", "njets1lmet100x200", "njets1lmet200x500",
-  				 "njets2lveto", "inclvetoonly"};  
-  //vector<TString> methods_std = {"signal200", "signal350", "signal500"};
+  //vector<TString> methods_std = {"signalmet100onebin", "m5jmet100onebin", 
+  //			 "m2lvetoonebin", "nb1l", "njets1lmet100x200", "njets1lmet200x500",
+  //			 "njets2lveto", "inclvetoonly"};  
+  vector<TString> methods_std = {"signal200", "signal350", "signal500"};
 
   vector<TString> methods = methods_std;
 

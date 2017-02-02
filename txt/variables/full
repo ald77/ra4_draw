@@ -168,6 +168,9 @@ std::vector<float> mus_miniso
 std::vector<float> mus_reliso
 std::vector<float> mus_dz
 std::vector<float> mus_d0
+std::vector<bool> mus_bad
+std::vector<bool> mus_bad_dupl
+std::vector<bool> mus_bad_trkmu
 std::vector<bool> mus_sig
 std::vector<bool> mus_sigid
 std::vector<bool> mus_tight

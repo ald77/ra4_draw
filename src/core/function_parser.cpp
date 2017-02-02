@@ -183,7 +183,17 @@ void FunctionParser::ResolveVariables() const{
       // 	token = Functions::func_map.at(token.string_rep_);
       if(token.string_rep_ == "nbm_moriond"){
 	token = Functions::nbm_moriond;
-      } else {
+      } 
+      else if(token.string_rep_ == "n_mus_bad"){
+	token = Functions::n_mus_bad;
+      }
+      else if(token.string_rep_ == "n_mus_bad_trkmu"){
+	token = Functions::n_mus_bad_trkmu;
+      }
+      else if(token.string_rep_ == "n_mus_bad_dupl"){
+	token = Functions::n_mus_bad_dupl;
+      }
+      else {
 	token.function_ = Baby::GetFunction(token.string_rep_);
 	token.type_ = token.function_.IsScalar() ? Token::Type::resolved_scalar : Token::Type::resolved_vector;
       }

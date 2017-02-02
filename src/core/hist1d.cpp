@@ -900,7 +900,8 @@ vector<shared_ptr<TLatex> > Hist1D::GetTitleTexts() const{
     out.back()->SetTextFont(this_opt_.Font());
 
     ostringstream oss;
-    oss << luminosity_ << " fb^{-1} (13 TeV)" << flush;
+    if(luminosity_ != 1.0) oss << luminosity_ << " fb^{-1} (13 TeV)" << flush;
+    else oss << 36.8 << " fb^{-1} (13 TeV)" << flush; // In the future I may be murdered in my sleep for this offense- Ryan
     out.push_back(make_shared<TLatex>(right, 0.5*(bottom+top),
                                       oss.str().c_str()));
     out.back()->SetNDC();
@@ -1239,9 +1240,12 @@ vector<shared_ptr<TLegend> > Hist1D::GetLegends(){
   if(this_opt_.DisplayLumiEntry()){
     auto &leg = legends.at(GetLegendIndex(entries_added, n_entries, legends.size()));
     ostringstream label;
-    label << fixed << setprecision(1) << "L=" << luminosity_ << " fb^{-1}";
+    if(luminosity_ != 1.0) label << fixed << setprecision(1) << "L=" << luminosity_ << " fb^{-1}";
+    else label << fixed << setprecision(1);
+    //else label << fixed << setprecision(1) << "L=" << 36.8 << " fb^{-1}";
     if(this_opt_.Stack() == StackType::data_norm && datas_.size() > 0){
-      label << ", (" << 100.*mc_scale_ << "#pm" << 100.*mc_scale_error_ << ")%";
+      if(luminosity_ != 1.0) label << ", (" << 100.*mc_scale_ << "#pm" << 100.*mc_scale_error_ << ")%";
+      else label << "Normalization ratio = " << 100.*mc_scale_ << "#pm" << 100.*mc_scale_error_ << "%";
     }
     auto entry = leg->AddEntry(&blank_, label.str().c_str(), "f");
     entry->SetFillStyle(0);
