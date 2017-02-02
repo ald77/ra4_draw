@@ -36,8 +36,7 @@ TString RoundNumber(double num, int decimals, double denom=1.){
 
 void table_badmuons(){
 
-  TString folder = "/cms2r0/babymaker/babies/2017_01_21/";
-  vector<TString> sfolders({"data/merged_database_stdnj4/*root", "T1tttt/unskimmed/*root"});
+  vector<TString> sfolders({"/cms2r0/babymaker/babies/2017_01_27/data/merged_database_standard/*root", "/cms2r0/babymaker/babies/2017_01_27/mc/unprocessed/fullbaby_SMS-T1tttt_mGluino-1200_mLSP-800*.root"});
   vector<TString> names({"Data", "T1tttt(1200,800)"});
 
   // TString baseline = "st>500&&nbm>=1&&njets>=4&&pass"; // Table we presented
@@ -67,11 +66,11 @@ void table_badmuons(){
   
   cout<<endl<<endl;
   for(size_t ind=0; ind<sfolders.size(); ind++){
-    cout<<endl<<"Doing "<<folder+sfolders[ind]<<endl;
+    cout<<endl<<"Doing "<<sfolders[ind]<<endl;
     file<<" \\hline \n";
     file<<" \\multicolumn{5}{c}{"<<names[ind]<<"} \\\\ \n";
     file<<" \\hline \n";
-    TChain ntu("tree"); ntu.Add(folder+sfolders[ind]);
+    TChain ntu("tree"); ntu.Add(sfolders[ind]);
     TString fullbase = baseline;
     if (sfolders[ind].Contains("data")) fullbase += "&&trig_ra4";
     for(unsigned imet(0); imet<mets.size(); imet++){

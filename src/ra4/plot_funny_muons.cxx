@@ -31,6 +31,7 @@ int main(){
   Palette colors("txt/colors.txt", "default");
 
   string rereco_dir = "/net/cms2/cms2r0/babymaker/babies/2017_01_27/data/merged_database_stdnj5/";
+  //string rereco_dir = "/net/cms2/cms2r0/babymaker/babies/2016_11_08/data/merged_database_standard/";
   string prompt_dir = "/net/cms2/cms2r0/babymaker/babies/2016_08_10/data/merged_database_standard/"; 
   string prompt_dir2 = "/net/cms2/cms2r0/babymaker/babies/2016_10_26/data/merged_database_standard/";
  
@@ -246,12 +247,17 @@ int main(){
 
   vector<NamedFunc> runrange = {"1","run<=278808","run>=278820&&run<=280385"};
 
-  vector<NamedFunc> sels = {"nleps==1&&nveto==0&&st>500",
-			  "nels==1&&nleps==1&&nveto==0&&st>500",
-			  "nmus==1&&nleps==1&&nveto==0&&st>500",
-			  "nleps==1&&nveto==0&&st>500&&mt>140",
-			  "nels==1&&nleps==1&&nveto==0&&st>500&&mt>140",
-			  "nmus==1&&nleps==1&&nveto==0&&st>500&&mt>140"};
+  // vector<NamedFunc> sels = {"nleps==1&&nveto==0&&st>500",
+  // 			  "nels==1&&nleps==1&&nveto==0&&st>500",
+  // 			  "nmus==1&&nleps==1&&nveto==0&&st>500",
+  // 			  "nleps==1&&nveto==0&&st>500&&mt>140",
+  // 			  "nels==1&&nleps==1&&nveto==0&&st>500&&mt>140",
+  // 			  "nmus==1&&nleps==1&&nveto==0&&st>500&&mt>140"};
+
+  vector<NamedFunc> sels = {"nleps==1&&nveto==0&&st>500&&njets>=6",
+		  "nels==1&&nleps==1&&nveto==0&&st>500&&njets>=6",
+		  "nmus==1&&nleps==1&&nveto==0&&st>500&&njets>=6",};
+
 
   NamedFunc ll_m("ll_m", DilepMass);
   NamedFunc ll_window("ll_window", DilepMassWindow);
@@ -259,7 +265,7 @@ int main(){
   vector<NamedFunc> njets_sels = {"1","njets==0","njets==1","njets>=2"};
 
 
-  vector<NamedFunc> filters = {"pass","pass&&pass_ra2_badmu&&(met/met_calo)<5"};
+  vector<NamedFunc> filters = {"pass","pass&&(met/met_calo)<5"};
 
 
   for(unsigned iproc=0;iproc<DY.size();iproc++){
@@ -310,14 +316,15 @@ int main(){
   };
 
 
-  vector<NamedFunc> filtered = {/*"1","pass","pass&&!pass_ra2_badmu",*/"pass","pass&&pass_ra2_badmu&&(met/met_calo)<5"};
+  vector<NamedFunc> filtered = {/*"1","pass","pass&&!pass_ra2_badmu",*/"pass","pass&&(met/met_calo)<5"};
   for(unsigned iproc=0;iproc<single.size();iproc++){
+    if(iproc>0) continue;
     if(lumis[iproc]!=lumi) continue;
     for(unsigned int irun=0; irun < runrange.size();irun++) {
       //if(iproc>0&&irun>0) continue;
       for(auto baseline: sels){
 	for(auto filter : filtered){
-
+   
 	  
 
 	  	pm.Push<Hist1D>(Axis(16, 500, 2100., "st", "S_{T} [GeV]", {500.}),
@@ -340,8 +347,8 @@ int main(){
 			runrange[irun]&&baseline&&filter&&"met>200&&njets>=6&&nbm_moriond>=1",
 			single[iproc], all_plot_types).Tag(tags[iproc]).RatioTitle(numers[iproc],denoms[iproc]);
 	
-	pm.Push<Hist1D>(Axis(15, 100, 850., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
-			runrange[irun]&&baseline&&filter&&"met>100&&njets>=6&&nbm_moriond>=1",
+	pm.Push<Hist1D>(Axis(14, 150, 850., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
+			runrange[irun]&&baseline&&filter&&"met>150&&njets>=6&&nbm_moriond>=1",
 			single[iproc], all_plot_types).Tag(tags[iproc]).RatioTitle(numers[iproc],denoms[iproc]);
 	
 	pm.Push<Hist1D>(Axis(35, 0, 700., "mt", "m_{T} [GeV]", {-999}),
