@@ -4,52 +4,22 @@ int run
 int lumiblock
 Long64_t event
 int type
-bool nonblind
-bool json2p6
 bool json4p0
-bool json7p65
 bool json12p9
 ## stitch is used to stitch an MC sample with its corresponding HT-bin sample
 bool stitch
+bool stitch_met
+## stitch_ht = stitch, but also adds an ht_me_isr<=600 cut on the inc. TTJets sample (*TTJets_Tune*)
+bool stitch_ht
 
 float nisr
 
-####################   Mismeasurement   ###################
-std::vector<int> mm_njets
-std::vector<int> mm_nleps
-std::vector<int> mm_nmus 
-std::vector<int> mm_nels 
-std::vector<int> mm_nbm  
-std::vector<float> mm_jet_pt
-std::vector<float> mm_jet_eta
-std::vector<float> mm_jet_phi
-std::vector<float> mm_jet_m
-std::vector<float> mm_lep_pt
-std::vector<float> mm_mu_pt
-std::vector<float> mm_el_pt
-std::vector<float> mm_mu_miniso
-std::vector<float> mm_el_miniso
-std::vector<float> mm_mt
-std::vector<float> mm_ht
-std::vector<float> mm_met
-std::vector<float> mm_met_phi
-std::vector<float> mm_mj14_lep
-std::vector<float> mm_mj14_nolep
-std::vector<bool> mm
- 
 ####################   Global   ###################
 int npv
 int ntrupv
 float ntrupv_mean
 float ht
-float ht40
-float ht50
-float htx
-float htx40
-float htx50
 float st
-float st40
-float st50
 float ht_ra2
 float ht_clean
 float ht_hlt
@@ -66,6 +36,7 @@ float mt_rebal
 float mt2
 float mt2_0mass
 float mct
+float mctd
 float dphi_wlep
 bool jetmismeas
 
@@ -91,27 +62,19 @@ int   hig_bin
 float hig_dm
 float hig_am
 float hig_drmax
-float hig_dphi
-float hig1_pt
-float hig1_eta
-float hig1_phi
-float hig1_m
-float hig2_pt
-float hig2_eta
-float hig2_phi
-float hig2_m
+int   higd_bin
+float higd_dm
+float higd_am
+float higd_drmax
 
 ###################   Jets   ##################
 int njets
-int njets20
-int njets40
-int njets50
 int nbl
 int nbm
-int nbm20
-int nbm40
-int nbm50
 int nbt
+int nbdl
+int nbdm
+int nbdt
 
 int njets_ra2
 int njets_clean
@@ -129,24 +92,52 @@ float jetsys_nob_pt
 float jetsys_nob_eta
 float jetsys_nob_phi
 float jetsys_nob_m
+float jetsys_nobd_pt
+float jetsys_nobd_eta
+float jetsys_nobd_phi
+float jetsys_nobd_m
 
 std::vector<float> jets_pt
 std::vector<float> jets_eta
 std::vector<float> jets_phi
 std::vector<float> jets_m
 std::vector<float> jets_csv
+std::vector<float> jets_csvd
 std::vector<float> jets_pt_res
 std::vector<bool>  jets_islep
 std::vector<bool>  jets_isisr
+std::vector<int>   jets_gs_index
+std::vector<int>   jets_ntrub
+std::vector<int>   jets_ntruc
 std::vector<int>   jets_fjet14_nolep_index
 std::vector<int>   jets_fjet08_index
 std::vector<int>   jets_fjet12_index
 std::vector<int>   jets_fjet14_index
-std::vector<int>   jets_fjet40_index
-std::vector<int>   jets_fjet50_index
 std::vector<int>   jets_hflavor
 std::vector<bool>  jets_h1
+std::vector<bool>  jets_h1d
 std::vector<bool>  jets_h2
+std::vector<bool>  jets_h2d
+
+######### b-jet pairs ###########
+std::vector<float> dr_bb
+std::vector<float> bb_pt
+std::vector<float> bb_m
+int bb_highcsv_idx
+std::vector<int> bb_jet_idx1
+std::vector<int> bb_jet_idx2
+std::vector<int> bb_gs_idx
+std::vector<int> bb_gs_flavor
+
+std::vector<float> dr_bb_deep
+std::vector<float> bb_pt_deep
+std::vector<float> bb_m_deep
+int bb_highcsv_idx_deep
+std::vector<int> bb_jet_idx1_deep
+std::vector<int> bb_jet_idx2_deep
+std::vector<int> bb_gs_idx_deep
+std::vector<int> bb_gs_flavor_deep
+
 
 ##################   Leptons   ################
 int nleps
@@ -161,6 +152,7 @@ int nmus
 int nvmus
 std::vector<bool> mus_bad
 std::vector<bool> mus_bad_dupl
+std::vector<bool> mus_bad_trkmu
 std::vector<float> mus_pt
 std::vector<float> mus_eta
 std::vector<float> mus_phi
@@ -168,9 +160,6 @@ std::vector<float> mus_miniso
 std::vector<float> mus_reliso
 std::vector<float> mus_dz
 std::vector<float> mus_d0
-std::vector<bool> mus_bad
-std::vector<bool> mus_bad_dupl
-std::vector<bool> mus_bad_trkmu
 std::vector<bool> mus_sig
 std::vector<bool> mus_sigid
 std::vector<bool> mus_tight
@@ -194,6 +183,7 @@ int nels
 int nvels
 std::vector<float> els_pt
 std::vector<float> els_eta
+std::vector<float> els_scpt
 std::vector<float> els_sceta
 std::vector<float> els_phi
 std::vector<float> els_miniso
@@ -316,9 +306,6 @@ std::vector<float> els_vvvl_phi
 
 ###################   Quality   ##################
 bool pass_jets;
-bool pass_jets20;
-bool pass_jets40;
-bool pass_jets50;
 bool pass_jets_tight;
 bool pass_jets_nohf;
 bool pass_jets_ra2;
@@ -329,10 +316,10 @@ bool pass_goodv;
 bool pass_cschalo;
 bool pass_eebadsc;
 bool pass_ecaldeadcell;
+bool pass_fsmet;
+bool pass_badpfmu;
+bool pass_badchhad;
 bool pass;
-bool pass20;
-bool pass40;
-bool pass50;
 bool pass_ra2;
 bool pass_nohf;
 bool pass_ra2_badmu;
@@ -351,15 +338,12 @@ std::vector<float> fjets14_phi
 std::vector<float> fjets14_m
 std::vector<int> fjets14_nconst
 
-int nfjets40
-float mj40
-std::vector<float> fjets40_pt
-std::vector<float> fjets40_eta
-std::vector<float> fjets40_phi
-std::vector<float> fjets40_m
-std::vector<int> fjets40_nconst
-
-float mj50
+int nfjets08
+std::vector<float> fjets08_pt
+std::vector<float> fjets08_eta
+std::vector<float> fjets08_phi
+std::vector<float> fjets08_m
+std::vector<int> fjets08_nconst
 
 ################  Truth   ##################
 int nisr_me
@@ -371,8 +355,17 @@ std::vector<float> mc_mass
 std::vector<int>   mc_id
 std::vector<int>   mc_mom
 std::vector<int>   mc_momidx
+std::vector<int>   mc_num_dau
 std::vector<int>   mc_status
+std::vector<int>   mc_jetidx
+std::vector<bool>  mc_gs
+std::vector<int>   mc_gs_dau_jetmatch
+std::vector<float> mc_gs_dau_dr
+
+
 float m_tt
+float top_pt
+float antitop_pt
 bool fromGS
 int ntruleps
 int ntrumus
@@ -391,30 +384,40 @@ float weight_rpv
 float w_lumi
 float w_pu
 float w_btag
-float w_btag40
+float w_btag_deep
 float w_btag_loose
+float w_btag_loose_deep
+float w_btag_tight
+float w_btag_tight_deep
+float w_bhig
+float w_bhig_deep
+float w_btag_proc
+float w_btag_deep_proc
+float w_btag_loose_proc
+float w_btag_loose_deep_proc
+float w_btag_tight_proc
+float w_btag_tight_deep_proc
+float w_bhig_proc
+float w_bhig_deep_proc
 float w_toppt
 float w_isr
 float w_lep
 float w_fs_lep
+std::vector<float> w_pdf
 float eff_trig
 float eff_jetid
 
 ################  Systematic variations   ##################
 # variations have index 0 (JER smearing), 1 (JEC up) and 2 (JEC down)
 std::vector<float> sys_ht
-std::vector<float> sys_ht40
 std::vector<float> sys_st
-std::vector<float> sys_st40
 std::vector<int>   sys_njets
-std::vector<int>   sys_njets40
 std::vector<int>   sys_nbm
-std::vector<int>   sys_nbm40
+std::vector<int>   sys_nbdm
 std::vector<bool>  sys_pass
-std::vector<bool>  sys_pass40
 std::vector<float> sys_mj14_nolep
+std::vector<float> sys_mj12
 std::vector<float> sys_mj14
-std::vector<float> sys_mj40
 std::vector<float> sys_met
 std::vector<float> sys_mt
 
@@ -422,18 +425,72 @@ std::vector<float> sys_mt
 std::vector<float> sys_mur
 std::vector<float> sys_muf
 std::vector<float> sys_murf
+std::vector<float> sys_pdf
 std::vector<float> sys_bctag
+std::vector<float> sys_bctag_deep
 std::vector<float> sys_udsgtag
-std::vector<float> sys_bctag40
-std::vector<float> sys_udsgtag40
+std::vector<float> sys_udsgtag_deep
 std::vector<float> sys_bctag_loose
+std::vector<float> sys_bctag_loose_deep
 std::vector<float> sys_udsgtag_loose
+std::vector<float> sys_udsgtag_loose_deep
+std::vector<float> sys_bctag_tight
+std::vector<float> sys_bctag_tight_deep
+std::vector<float> sys_udsgtag_tight
+std::vector<float> sys_udsgtag_tight_deep
+std::vector<float> sys_bchig
+std::vector<float> sys_bchig_deep
+std::vector<float> sys_udsghig
+std::vector<float> sys_udsghig_deep
+std::vector<float> sys_bctag_proc
+std::vector<float> sys_bctag_deep_proc
+std::vector<float> sys_udsgtag_proc
+std::vector<float> sys_udsgtag_deep_proc
+std::vector<float> sys_bctag_loose_proc
+std::vector<float> sys_bctag_loose_deep_proc
+std::vector<float> sys_udsgtag_loose_proc
+std::vector<float> sys_udsgtag_loose_deep_proc
+std::vector<float> sys_bctag_tight_proc
+std::vector<float> sys_bctag_tight_deep_proc
+std::vector<float> sys_udsgtag_tight_proc
+std::vector<float> sys_udsgtag_tight_deep_proc
+std::vector<float> sys_bchig_proc
+std::vector<float> sys_bchig_deep_proc
+std::vector<float> sys_udsghig_proc
+std::vector<float> sys_udsghig_deep_proc
 std::vector<float> sys_isr
 std::vector<float> sys_lep
 std::vector<float> sys_fs_lep
 std::vector<float> sys_fs_bctag
+std::vector<float> sys_fs_bctag_deep
 std::vector<float> sys_fs_udsgtag
-std::vector<float> sys_fs_bctag40
-std::vector<float> sys_fs_udsgtag40
+std::vector<float> sys_fs_udsgtag_deep
+std::vector<float> sys_fs_bchig
+std::vector<float> sys_fs_bchig_deep
+std::vector<float> sys_fs_udsghig
+std::vector<float> sys_fs_udsghig_deep
 std::vector<float> sys_trig
 std::vector<float> sys_pu
+
+####################   Mismeasurement   ###################
+std::vector<int> mm_njets
+std::vector<int> mm_nleps
+std::vector<int> mm_nmus 
+std::vector<int> mm_nels 
+std::vector<int> mm_nbm  
+std::vector<float> mm_jet_pt
+std::vector<float> mm_jet_eta
+std::vector<float> mm_jet_phi
+std::vector<float> mm_jet_m
+std::vector<float> mm_lep_pt
+std::vector<float> mm_mu_pt
+std::vector<float> mm_el_pt
+std::vector<float> mm_mu_miniso
+std::vector<float> mm_el_miniso
+std::vector<float> mm_mt
+std::vector<float> mm_ht
+std::vector<float> mm_met
+std::vector<float> mm_met_phi
+std::vector<float> mm_mj14_lep
+std::vector<float> mm_mj14_nolep
+std::vector<bool> mm

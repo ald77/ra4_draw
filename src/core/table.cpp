@@ -245,6 +245,7 @@ void Table::PrintHeader(ofstream &file, double luminosity) const{
   file << "\\usepackage{graphicx,xspace,amssymb,amsmath,colordvi,colortbl,verbatim,multicol}\n";
   file << "\\usepackage{multirow, rotating}\n\n";
   file << "\\usepackage[active,tightpage]{preview}\n\n";
+  file << "\\renewcommand{\\arraystretch}{1.1}\n\n";
 
   file << "\\begin{document}\n";
   file << "\\begin{preview}\n";

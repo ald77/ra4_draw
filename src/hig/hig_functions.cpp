@@ -18,36 +18,43 @@ const NamedFunc ntrub("ntrub",[](const Baby &b) -> NamedFunc::ScalarType{
   return tmp_ntrub;
 });
 
-const NamedFunc hig_nb("hig_nb",[](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc hig_bcat("hig_bcat",[](const Baby &b) -> NamedFunc::ScalarType{
   if (b.nbt()==2 && b.nbm()==2) return 2;
   else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) return 3;
   else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) return 4;
   else return 0;
 });
 
-const NamedFunc hig_nb_extended("hig_nb_extended",[](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.nbm()==0) return 0;
-  else if (b.nbm()==1) return 1;
-  else if (b.nbt()==2 && b.nbm()==2) return 2;
-  else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) return 3;
-  else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) return 4;
+const NamedFunc higd_bcat("higd_bcat",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.nbdt()==2 && b.nbdm()==2) return 2;
+  else if (b.nbdt()>=2 && b.nbdm()==3 && b.nbdl()==3) return 3;
+  else if (b.nbdt()>=2 && b.nbdm()>=3 && b.nbdl()>=4) return 4;
+  else return 0;
+});
+
+const NamedFunc higd_bcat_extended("higd_bcat_extended",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.nbdm()==0) return 0;
+  else if (b.nbdm()==1) return 1;
+  else if (b.nbdt()==2 && b.nbdm()==2) return 2;
+  else if (b.nbdt()>=2 && b.nbdm()==3 && b.nbdl()==3) return 3;
+  else if (b.nbdt()>=2 && b.nbdm()>=3 && b.nbdl()>=4) return 4;
   else return 99;
 });
 
-const NamedFunc hig_nb_mmmm("hig_nb_mmmm",[](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.nbm()>=2) return min(4,b.nbm());
+const NamedFunc higd_bcat_mmmm("higd_bcat_mmmm",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.nbdm()>=2) return min(4,b.nbdm());
   else return 0;
 });
-const NamedFunc hig_nb_ttll("hig_nb_ttll",[](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.nbt()==2 && b.nbl()==2) return 2;
-  else if (b.nbt()>=2 && b.nbl()==3) return 3;
-  else if (b.nbt()>=2 && b.nbl()>=4) return 4;
+const NamedFunc higd_bcat_ttll("higd_bcat_ttll",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.nbdt()==2 && b.nbdl()==2) return 2;
+  else if (b.nbdt()>=2 && b.nbdl()==3) return 3;
+  else if (b.nbdt()>=2 && b.nbdl()>=4) return 4;
   else return 0;
 });
-const NamedFunc hig_nb_tmml("hig_nb_tmml",[](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.nbt()>=1 && b.nbm()==2) return 2;
-  else if (b.nbt()>=1 && b.nbm()==3 && b.nbl()==3) return 3;
-  else if (b.nbt()>=1 && b.nbm()>=3 && b.nbl()>=4) return 4;
+const NamedFunc higd_bcat_tmml("higd_bcat_tmml",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.nbdt()>=1 && b.nbdm()==2) return 2;
+  else if (b.nbdt()>=1 && b.nbdm()==3 && b.nbdl()==3) return 3;
+  else if (b.nbdt()>=1 && b.nbdm()>=3 && b.nbdl()>=4) return 4;
   else return 0;
 });
 
@@ -61,41 +68,40 @@ NamedFunc::ScalarType wgt_nb_met(const Baby &b, bool ttonly){
     b.type()==10000  ||                      // ttgamma
     b.type()==11000) {                       // tttt
     //apply normalization factor from MET distribution
-    wgt = 1.087;
-    if (b.met()<=50) wgt*=0.989;
-    else if (b.met()>50 && b.met()<=100) wgt*=1.012;
-    else if (b.met()>100 && b.met()<=150) wgt*=1.026;
-    else if (b.met()>150 && b.met()<=200) wgt*=0.979;
-    else if (b.met()>200 && b.met()<=300) wgt*=0.943;
-    else if (b.met()>300) wgt*=1.007;
+    wgt = 1.061;
+    if (b.met()<=50)                      wgt*=1.045;
+    else if (b.met()>50 && b.met()<=100)  wgt*=0.984;
+    else if (b.met()>100 && b.met()<=150) wgt*=0.938;
+    else if (b.met()>150 && b.met()<=200) wgt*=0.885;
+    else if (b.met()>200 && b.met()<=300) wgt*=0.820;
+    else if (b.met()>300)                 wgt*=0.831;
     // nb correction from nb distribution data/mc, inclusive in MET
-    if (b.nbt()==2 && b.nbm()==2) wgt*=0.975;
-    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.103;
-    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.419;
+    if (b.nbt()==2 && b.nbm()==2)                    wgt*=0.992;
+    else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.051;
+    else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.140;
   } else if (!ttonly) {
-    if ( (b.type()>=8000 && b.type()<9000) || // zjets
-    (b.type()>=2000 && b.type()<3000) ||    // wjets
-    (b.type()>=6000 && b.type()<7000) ||  // dyjets  
-    b.type()<0) {   
+    if((b.type()>=8000 && b.type()<9000) || // zjets
+    (b.type()>=2000 && b.type()<3000) ||      // wjets
+    (b.type()>=6000 && b.type()<7000)) {      // dyjets
       //apply normalization factor from MET distribution
-      wgt = 1.166;
-      if (b.met()>150 && b.met()<=200) wgt*=1.094;
-      else if (b.met()>200 && b.met()<=300) wgt*=0.933;
-      else if (b.met()>300) wgt*=0.889;
+      wgt = 1.237;
+      if (b.met()>150 && b.met()<=200)      wgt*=1.113;
+      else if (b.met()>200 && b.met()<=300) wgt*=0.954;
+      else if (b.met()>300)                 wgt*=0.741;
       // nb correction from nb distribution data/mc, inclusive in MET
-      if (b.nbt()==2 && b.nbm()==2) wgt*=0.970;
-      else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.224;
-      else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.241;
+      if (b.nbt()==2 && b.nbm()==2)                    wgt*=0.990;
+      else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.130;
+      else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.012;
     } else if ( (b.type()>=7000 && b.type()<8000)) { // qcd
     //apply normalization factor from MET distribution
-      wgt = 2.248;
-      if (b.met()>150 && b.met()<=200) wgt*=1.050;
-      else if (b.met()>200 && b.met()<=300) wgt*=0.877;
-      else if (b.met()>300) wgt*=0.850;
+      wgt = 1.605;
+      if (b.met()>150 && b.met()<=200)      wgt*=1.057;
+      else if (b.met()>200 && b.met()<=300) wgt*=0.879;
+      else if (b.met()>300)                 wgt*=0.675;
       // nb correction from nb distribution data/mc, inclusive in MET
-      if (b.nbt()==2 && b.nbm()==2) wgt*=0.953;
+      if (b.nbt()==2 && b.nbm()==2)                    wgt*=0.983;
       else if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) wgt*=1.114;
-      else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.469;
+      else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) wgt*=1.101;
     }
   }
   return wgt;
@@ -114,7 +120,7 @@ NamedFunc::ScalarType wgt_subtr_ttx(const Baby &b, string json){
     float wgt = -1; 
     // apply lumi 
     if (json=="json4p0") wgt*= 4.3;
-    else wgt*= 36.2;
+    else wgt*= 36.8;
     // apply ttx weights derived from 1l CR
     wgt *= wgt_nb_met(b, true);
     // apply stitch
@@ -150,7 +156,7 @@ const NamedFunc wgt_syst_ttx("wgt_syst_ttx",[](const Baby &b) -> NamedFunc::Scal
     b.type()==11000) {                       // tttt
     if (b.hig_am()<=100 || (b.hig_am()>140 && b.hig_am()<=200)) {
       if (b.nbt()>=1 && b.nbm()==3 && b.nbl()==3) return 0.03;
-      else if (b.nbt()>=1 && b.nbm()>=3 && b.nbl()>=4) return 0.05;
+      else if (b.nbt()>=1 && b.nbm()>=3 && b.nbl()>=4) return 0.06;
     }
   }
   return 0;
@@ -162,7 +168,7 @@ const NamedFunc wgt_syst_vjets("wgt_syst_vjets",[](const Baby &b) -> NamedFunc::
     (b.type()>=6000 && b.type()<7000) ||  // dyjets  
     b.type()<0) {   
     if (b.hig_am()<=100 || (b.hig_am()>140 && b.hig_am()<=200))
-      if (b.nbt()>=2 && b.nbm()>=3) return 0.22;
+      if (b.nbt()>=2 && b.nbm()>=3) return 0.20;
   }
   return 0;
 });
@@ -581,5 +587,54 @@ const NamedFunc eff_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::Scala
     }
     return eff;
   });
+
+const NamedFunc weight_hig("weight_hig",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.type()>0 && b.type()<1000) return 1;
+  else if(b.type()==106000) {
+    float mass = -999;
+    for (unsigned i(0); i<b.mc_mass()->size(); i++){
+      if (b.mc_id()->at(i)==1000023) {
+        mass = b.mc_mass()->at(i);
+        break;
+      }
+    }
+    float w_lumi = 0;
+    if (mass> 224.9 && mass< 225.1) w_lumi = .5824*.5824*860.597/99208*1.047;
+    else if (mass> 399.9 && mass< 400.1) w_lumi = .5824*.5824*88.7325/106716*1.043;
+    else if (mass> 699.9 && mass< 700.1) w_lumi = .5824*.5824*6.89981/99027*1.038;
+    return b.weight()/b.w_lumi()/b.w_btag()*w_lumi*b.w_bhig();
+  }
+  else return b.weight()/b.w_btag()*b.w_bhig();
+});
+
+const NamedFunc weight_higd("weight_hig_deep",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.type()>0 && b.type()<1000) return 1;
+  else if(b.type()==106000) {
+    float mass = -999;
+    for (unsigned i(0); i<b.mc_mass()->size(); i++){
+      if (b.mc_id()->at(i)==1000023) {
+        mass = b.mc_mass()->at(i);
+        break;
+      }
+    }
+    float w_lumi = 0;
+    if (mass> 224.9 && mass< 225.1) w_lumi = .5824*.5824*860.597/99208*1.047;
+    else if (mass> 399.9 && mass< 400.1) w_lumi = .5824*.5824*88.7325/106716*1.043;
+    else if (mass> 699.9 && mass< 700.1) w_lumi = .5824*.5824*6.89981/99027*1.038;
+    return b.weight()/b.w_lumi()/b.w_btag()*w_lumi*b.w_bhig_deep();
+  }
+  else return b.weight()/b.w_btag()*b.w_bhig_deep();
+});
+
+const NamedFunc mhig("mhig",[](const Baby &b) -> NamedFunc::ScalarType{
+  float mass = -999;
+  for (unsigned i(0); i<b.mc_mass()->size(); i++){
+    if (b.mc_id()->at(i)==1000023) {
+      mass = b.mc_mass()->at(i);
+      break;
+    }
+  }
+  return mass;
+});
 
 }

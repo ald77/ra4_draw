@@ -26,11 +26,11 @@ using namespace PlotOptTypes;
 void GetOptions(int argc, char *argv[]);
 
 namespace{
-  bool do_allbkg = false;
+  bool do_allbkg = true;
   string sample = "search";
   string json = "full";
-  bool unblind = false;
-  bool do_note = false;
+  bool unblind = true;
+  bool note = true;
 }
 
 int main(int argc, char *argv[]){
@@ -53,19 +53,20 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
-  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1met0/";
-  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
-  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
-  string folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higloose/";
-  if (sample=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1met0/";
-  if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep2/";
-  if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higqcd/";
+  string foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/";
+  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
+  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep2/";
+  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higqcd/";
+  string folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higloose/";
+  if (sample=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep1/";
+  if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep2/";
+  if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higqcd/";
 
   set<string> alltags; 
-  if (sample=="ttbar" || sample=="search") alltags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root",
+  if (sample=="ttbar" || sample=="search") alltags = {"*TTJets_SingleLeptFromT_Tune*", "*TTJets_SingleLeptFromTbar_Tune*", 
+                                   "*TTJets_DiLept_Tune*", "*_TTJets_HT*.root",
                                       "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", 
-                                      "*_ttHJetTobb*.root","*_TTTT*.root"};
+                                      "*ttHTobb*.root","*_TTTT*.root"};
   if (sample=="zll") alltags = {"*DYJetsToLL*.root"};
   if (sample=="qcd") alltags = {//"*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*",
                                 //"*QCD_HT300to500_Tune*", 
@@ -73,13 +74,15 @@ int main(int argc, char *argv[]){
                                  "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
                                  "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*"};
   if (do_allbkg) { // don't include QCD MC unless in QCD control sample
-    if(sample=="qcd") alltags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root", 
-            "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root",
+    if(sample=="qcd") alltags = {"*TTJets_SingleLeptFromT_Tune*", "*TTJets_SingleLeptFromTbar_Tune*", 
+                                   "*TTJets_DiLept_Tune*", "*_TTJets_HT*.root", 
+            "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root",
             "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root", "*_ST_*.root",
             "*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root",
             "*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"};
-    else  alltags = {"*_TTJets*Lept*.root", "*_TTJets_HT*.root", 
-            "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root",
+    else  alltags = {"*TTJets_SingleLeptFromT_Tune*", "*TTJets_SingleLeptFromTbar_Tune*", 
+                                   "*TTJets_DiLept_Tune*", "*_TTJets_HT*.root", 
+            "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root",
             "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root", "*_ST_*.root",
             "*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"};
   }
@@ -101,13 +104,13 @@ int main(int argc, char *argv[]){
   ////// Nb cuts
   vector<string> nbcuts;
   unsigned firstnb = 0;
-  nbcuts.push_back("nbm==0");
-  nbcuts.push_back("nbm==1");
-  nbcuts.push_back("nbt==2&&nbm==2");
+  nbcuts.push_back("nbdm==0");
+  nbcuts.push_back("nbdm==1");
+  nbcuts.push_back("nbdt==2&&nbdm==2");
   if (sample=="ttbar" || sample=="search") {
     firstnb = 2;
-    nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
-    nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
+    nbcuts.push_back("nbdt>=2&&nbdm==3&&nbdl==3");
+    nbcuts.push_back("nbdt>=2&&nbdm>=3&&nbdl>=4");
   } 
 
   string samplename = "t#bar{t}+X";
@@ -144,7 +147,7 @@ int main(int argc, char *argv[]){
     lumi = 12.9;
     jsonCuts = "json12p9";
   } else if (json=="full"){
-    lumi = 36.2;
+    lumi = 36.8;
     jsonCuts = "1";
   }
   string lumi_s=RoundNumber(lumi,1).Data();
@@ -153,31 +156,31 @@ int main(int argc, char *argv[]){
   int color_data = kBlue-7;
   if (sample=="zll") { // do 0b vs 1b
     color_data = kOrange+1;
-    combos.push_back({"nbm==0","nbm==1"});
-    combos.push_back({"nbm==1","nbt==2&&nbm==2"});
+    combos.push_back({"nbdm==0","nbdm==1"});
+    combos.push_back({"nbdm==1","nbdt==2&&nbdm==2"});
   } else if (sample=="qcd") { // do 0b vs 1b and 2b vs 3+b
     color_data = kOrange;
-    combos.push_back({"nbm==0","nbm==1"});
-    combos.push_back({"nbm==1","nbt==2&&nbm==2"});
-    combos.push_back({"nbt==2&&nbm==2","nbt>=2&&nbm==3"});
-    combos.push_back({"nbt==2&&nbm==2", "nbt>=2&&nbm>=3&&nbl>=4"});
+    combos.push_back({"nbdm==0","nbdm==1"});
+    combos.push_back({"nbdm==1","nbdt==2&&nbdm==2"});
+    combos.push_back({"nbdt==2&&nbdm==2","nbdt>=2&&nbdm==3"});
+    combos.push_back({"nbdt==2&&nbdm==2", "nbdt>=2&&nbdm>=3&&nbdl>=4"});
   } else if (sample=="search" || sample=="ttbar") {
     if (json=="4p0") { // at low lumi, do 2b vs 3+b
-      combos.push_back({"nbt==2&&nbm==2","nbt>=2&&nbm>=3"});
+      combos.push_back({"nbdt==2&&nbdm==2","nbdt>=2&&nbdm>=3"});
     } else { // at higher lumi, do 2b vs 3b and 2b vs 4b
-      combos.push_back({"nbt==2&&nbm==2", "nbt>=2&&nbm==3&&nbl==3"});
-      combos.push_back({"nbt==2&&nbm==2", "nbt>=2&&nbm>=3&&nbl>=4"});
+      combos.push_back({"nbdt==2&&nbdm==2", "nbdt>=2&&nbdm==3&&nbdl==3"});
+      combos.push_back({"nbdt==2&&nbdm==2", "nbdt>=2&&nbdm>=3&&nbdl>=4"});
     }
   }
   for (unsigned ind(0); ind<combos.size(); ind++){
     vector<string> label;
     for(unsigned lab=0; lab<2; lab++){
-      if (Contains(combos[ind][lab],"nbm==0")) label.push_back("0b");
-      if (Contains(combos[ind][lab],"nbm==1")) label.push_back("1b");
-      if (Contains(combos[ind][lab],"nbm==2")) label.push_back("2b");
-      if (Contains(combos[ind][lab],"nbm==3")) label.push_back("3b");
-      if (Contains(combos[ind][lab],"nbm>=3") && !Contains(combos[ind][lab],"nbl>=4")) label.push_back("#geq 3b");
-      if (Contains(combos[ind][lab],"nbl>=4")) label.push_back("4b");
+      if (Contains(combos[ind][lab],"nbdm==0")) label.push_back("0b");
+      if (Contains(combos[ind][lab],"nbdm==1")) label.push_back("1b");
+      if (Contains(combos[ind][lab],"nbdm==2")) label.push_back("2b");
+      if (Contains(combos[ind][lab],"nbdm==3")) label.push_back("3b");
+      if (Contains(combos[ind][lab],"nbdm>=3") && !Contains(combos[ind][lab],"nbdl>=4")) label.push_back("#geq 3b");
+      if (Contains(combos[ind][lab],"nbdl>=4")) label.push_back("4b");
     }
     combos_labels.push_back(label);
   }
@@ -206,43 +209,43 @@ int main(int argc, char *argv[]){
   else if (sample=="ttbar") metcut = "1";
 
   vector<string> xcuts;
-  if (!do_note) xcuts.push_back(metcut);
-  //xcuts.push_back(metcut+"&& hig_dm<40 && hig_am<200");
-  xcuts.push_back(metcut+"&& hig_dm<40 && hig_am<200 && hig_drmax<2.2");
+  if (!note) xcuts.push_back(metcut);
+  //xcuts.push_back(metcut+"&& higd_dm<40 && higd_am<200");
+  xcuts.push_back(metcut+"&& higd_dm<40 && higd_am<200 && higd_drmax<2.2");
 
   vector<string> scuts; //additional sample specific options
   scuts.push_back("1");
-  if (!do_note) {
-    if (sample=="qcd") scuts.push_back("ntks==0");
-    if (sample=="search") scuts.push_back("ntks==0 && !low_dphi");
-  }
+  // if (sample=="qcd") scuts.push_back("ntks==0");
+  if (sample=="search") scuts.push_back("ntks==0 && !low_dphi");
+  
 
   PlotMaker pm;
+  NamedFunc wgt = Higfuncs::weight_higd*Higfuncs::eff_higtrig;
 
   for (unsigned is(0); is<scuts.size(); is++){
     for (unsigned ic(0); ic<xcuts.size(); ic++){
       if (sample!="search" || unblind) {
         for (unsigned i(0); i<combos.size(); i++)
-          pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
+          pm.Push<Hist1D>(Axis(10,0,200,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
             baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_data[i], plt_types)
 	    .Tag(sample+"_datavdata"+to_string(i)).RatioTitle(combos_labels[i][1],combos_labels[i][0]);
       }
 
-      pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
-        baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Tag(sample+"_shape_bcats");
+      pm.Push<Hist1D>(Axis(10,0,200,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
+        baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Weight(wgt).Tag(sample+"_shape_bcats");
 
-      pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
-        baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Tag(sample+"_shape_trub");
+      pm.Push<Hist1D>(Axis(10,0,200,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
+        baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Weight(wgt).Tag(sample+"_shape_trub");
 
-      if (sample=="ttbar") {
-        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
-          "njets>=4 && njets<=5 && ntruleps==1 &&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Tag(sample+"1l_shape_bcats");
-        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
-          "njets>=4 && njets<=5 && ntruleps==1 &&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Tag(sample+"1l_shape_trub");
-        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
-          "njets>=4 && njets<=5 && ntruleps==2 &&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Tag(sample+"2l_shape_bcats");
-        pm.Push<Hist1D>(Axis(10,0,200,"hig_am", "#LTm#GT [GeV]", {100., 140.}),
-          "njets>=4 && njets<=5 && ntruleps==2 &&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Tag(sample+"2l_shape_trub");
+      if (sample=="ttbar" && !note) {
+        pm.Push<Hist1D>(Axis(10,0,200,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
+          "njets>=4 && njets<=5 && ntruleps==1 &&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Weight(wgt).Tag(sample+"1l_shape_bcats");
+        pm.Push<Hist1D>(Axis(10,0,200,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
+          "njets>=4 && njets<=5 && ntruleps==1 &&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Weight(wgt).Tag(sample+"1l_shape_trub");
+        pm.Push<Hist1D>(Axis(10,0,200,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
+          "njets>=4 && njets<=5 && ntruleps==2 &&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Weight(wgt).Tag(sample+"2l_shape_bcats");
+        pm.Push<Hist1D>(Axis(10,0,200,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
+          "njets>=4 && njets<=5 && ntruleps==2 &&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Weight(wgt).Tag(sample+"2l_shape_trub");
       }
     }
   }
@@ -286,7 +289,7 @@ void GetOptions(int argc, char *argv[]){
     case 0:
       optname = long_options[option_index].name;
       if(optname == "note"){
-        do_note = true;
+        note = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
         exit(1);

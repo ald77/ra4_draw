@@ -29,11 +29,12 @@ void GetOptions(int argc, char *argv[]);
 
 namespace{
   //fixme:simplify options
-  float lumi = 36.2;
+  float lumi = 36.8;
   // options "zll", "qcd", "ttbar", "search"
   string sample = "search";
   bool do_trim = true;
   bool split_higsbd = false;
+  bool note = true;
 }
   
 int main(int argc, char *argv[]){
@@ -46,7 +47,7 @@ int main(int argc, char *argv[]){
   NamedFunc ntrub("ntrub",[](const Baby &b) -> NamedFunc::ScalarType{
     int tmp_ntrub(0);
     for (unsigned i(0); i<b.jets_pt()->size(); i++){
-      if (!b.jets_h1()->at(i) && !b.jets_h2()->at(i)) continue;
+      if (!b.jets_h1d()->at(i) && !b.jets_h2d()->at(i)) continue;
       if (b.jets_hflavor()->at(i)==5) tmp_ntrub++;
     }
     return tmp_ntrub;
@@ -69,14 +70,15 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
-  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1/";
-  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
-  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/");
+  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
+  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep2/";
+  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higqcd/";
 
   map<string, set<string>> mctags; 
-  mctags["ttx"]     = set<string>({"*_TTJets*Lept*.root", "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
-                                     "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root"});
+  mctags["ttx"]     = set<string>({"*TTJets_SingleLeptFromT_Tune*", "*TTJets_SingleLeptFromTbar_Tune*", 
+                                   "*TTJets_DiLept_Tune*",  "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
+                                     "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"});
   mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
   mctags["singlet"] = set<string>({"*_ST_*.root"});
   mctags["qcd"]     = set<string>({"*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root"});
@@ -88,18 +90,13 @@ int main(int argc, char *argv[]){
   }
 
   // Baseline definitions
-  NamedFunc wgt = "weight"* Higfuncs::eff_higtrig;
+  NamedFunc wgt = Higfuncs::weight_higd * Higfuncs::eff_higtrig;
   NamedFunc base_func("pass && pass_ra2_badmu && stitch && met/met_calo<5 && njets>=4 && njets<=5");
-  if (do_trim) base_func = base_func && "hig_dm<40 && hig_am<200";
-  // zll skim: ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && 
-  // nleps==2 && Max$(leps_pt)>40
-  if (sample=="zll") base_func = base_func && "met<50";
-  // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
-  if (sample=="qcd") base_func = base_func && "ntks==0 && low_dphi";
-  // ttbar skim - met>100 && nleps==1 && (njets==4||njets==5) && nbm>=2
-  if (sample=="ttbar") base_func = base_func && "mt<100 && met>150";
-  // search skim - met>100 && nvleps==0 && (njets==4||njets==5) && nbm>=2
-  if (sample=="search") base_func = base_func && "ntks==0 && !low_dphi";
+  if (do_trim) base_func = base_func && "higd_dm<=40 && higd_am<=200";
+  if (sample=="zll")    base_func = base_func && "met<50";
+  if (sample=="qcd")    base_func = base_func && "ntks==0 && low_dphi && met>=150";
+  if (sample=="ttbar")  base_func = base_func && "mt<100";
+  if (sample=="search") base_func = base_func && "nveto==0 && ntks==0 && !low_dphi && met>=150";
 
   vector<shared_ptr<Process> > procs;
   procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", 
@@ -116,7 +113,7 @@ int main(int argc, char *argv[]){
   set<string> allfiles = attach_folder(foldermc, allmctags);
   vector<shared_ptr<Process> > procs_ntrub;
   procs_ntrub.push_back(Process::MakeShared<Baby_full>
-    ("0 B-hadron",       Process::Type::background, kAzure-4,   allfiles, base_func && ntrub<=1));
+    ("0 B-hadron",       Process::Type::background, kAzure-4,   allfiles, base_func && ntrub<1));
   procs_ntrub.push_back(Process::MakeShared<Baby_full>
     ("1 B-hadron",       Process::Type::background, kTeal-8,    allfiles, base_func && ntrub==1));
   procs_ntrub.push_back(Process::MakeShared<Baby_full>
@@ -124,28 +121,11 @@ int main(int argc, char *argv[]){
   procs_ntrub.push_back(Process::MakeShared<Baby_full>
     ("3 B-hadrons",      Process::Type::background, kPink+2,    allfiles, base_func && ntrub==3));
   procs_ntrub.push_back(Process::MakeShared<Baby_full>
-    ("#geq 4 B-hadrons", Process::Type::background, kMagenta-1, allfiles, base_func && ntrub>=4));
-
-  set<string> samplefiles = {foldermc+"*_TTJets*Lept*.root", foldermc+"*_TTJets_HT*.root"};
-  if (sample=="qcd") samplefiles = {foldermc+"*QCD_HT*0_Tune*.root", foldermc+"*QCD_HT*Inf_Tune*.root"};
-  if (sample=="zll") samplefiles = {foldermc+"*DYJetsToLL*.root"};
-  vector<shared_ptr<Process> > procs_ntrub_sample;
-  if (sample!="ttbar" && sample!="search") {
-    procs_ntrub_sample.push_back(Process::MakeShared<Baby_full>
-      ("0 B-hadron",       Process::Type::background, kAzure-4,   samplefiles, base_func && ntrub<=1));
-    procs_ntrub_sample.push_back(Process::MakeShared<Baby_full>
-      ("1 B-hadron",       Process::Type::background, kTeal-8,    samplefiles, base_func && ntrub==1));
-  }
-  procs_ntrub_sample.push_back(Process::MakeShared<Baby_full>
-    ("2 B-hadrons",      Process::Type::background, kOrange-4,  samplefiles, base_func && ntrub==2));
-  procs_ntrub_sample.push_back(Process::MakeShared<Baby_full>
-    ("3 B-hadrons",      Process::Type::background, kPink+2,    samplefiles, base_func && ntrub==3));
-  procs_ntrub_sample.push_back(Process::MakeShared<Baby_full>
-    ("#geq 4 B-hadrons", Process::Type::background, kMagenta-1, samplefiles, base_func && ntrub>=4));
+    ("4 B-hadrons", Process::Type::background, kMagenta-1, allfiles, base_func && ntrub==4));
 
   vector<string> xcuts; // useful additional cut definitions
-  xcuts.push_back("1");
-  xcuts.push_back("hig_drmax<=2.2");
+  if (!note) xcuts.push_back("1");
+  xcuts.push_back("higd_drmax<=2.2");
   
   PlotMaker pm;
   SlideMaker sm("slide_pies_"+sample+".tex","1610");
@@ -156,12 +136,14 @@ int main(int argc, char *argv[]){
   //-------------------------------------------------
   vector<string> nbcuts;
   if (sample=="zll" || sample=="qcd") {
-    nbcuts.push_back("nbm==0");
-    nbcuts.push_back("nbm==1");
+    nbcuts.push_back("nbdm==0");
+    nbcuts.push_back("nbdm==1");
   }
-  nbcuts.push_back("nbt==2&&nbm==2");
-  nbcuts.push_back("nbt>=2&&nbm==3&&nbl==3");
-  nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
+  nbcuts.push_back("nbdt==2&&nbdm==2");
+  if (sample=="ttbar" || sample=="search" || !note) {
+    nbcuts.push_back("nbdt>=2&&nbdm==3&&nbdl==3");
+    nbcuts.push_back("nbdt>=2&&nbdm>=3&&nbdl>=4");
+  }
 
   string tag = "ntrub";
   for(auto &ixcut: xcuts) {
@@ -173,17 +155,21 @@ int main(int argc, char *argv[]){
   }
   pm.Push<Table>(sample+"_"+tag,  table_cuts, procs_ntrub, true, true, true);
   sm.AddSlide(pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts");  
-
   //push the table with the same cuts but different procs, so also have to change the pie chart names
-  pm.Push<Table>(sample+"_procs",  table_cuts, procs, true, true, true);
-  sm.AddSlideWithReplace(tag,"procs", pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts");
+  if (sample=="search" || !note) {
+    pm.Push<Table>(sample+"_procs",  table_cuts, procs, true, true, true);
+    sm.AddSlideWithReplace(tag,"procs", pnames, nbcuts.size(), "X-axis: Number of b-tags, Y-axis: additional cuts");
+  }
   
   // pie charts for the "met - nb cuts" plane, one slide per set of additional cuts
   //--------------------------------------------------------------------------------
   vector<string> metcuts;
   string metdef = "met";
   if (sample=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
-  // if (sample!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
+  if (sample=="ttbar" || sample=="zll"){
+    metcuts.push_back(metdef+">0&&"+metdef+"<=75");
+    metcuts.push_back(metdef+">75&&"+metdef+"<=150");
+  }
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
   if (sample=="search") {
@@ -193,6 +179,7 @@ int main(int argc, char *argv[]){
     metcuts.push_back(metdef+">300");
   }
 
+  table_cuts.clear();
   for(auto &ixcut: xcuts) {
     pnames.clear();
     string slide_ttl = "Additional cuts: $"+CodeToLatex(ixcut)+"$";
@@ -200,12 +187,12 @@ int main(int argc, char *argv[]){
     for(auto &inb: nbcuts) {
       for(auto &imet: metcuts) {
         string icut = inb+"&&"+imet+"&&"+ixcut;
-        if (split_higsbd) {
-          table_cuts.push_back(TableRow("", icut+"&&!(hig_am>100&&hig_am<=140)", 0, 0, wgt));  
-          pnames.push_back("pie_"+sample+"_procs_"+CodeToPlainText(icut+"&&!(hig_am>100&&hig_am<=140)")+
+        if (split_higsbd && !note) {
+          table_cuts.push_back(TableRow("", icut+"&&!(higd_am>100&&higd_am<=140)", 0, 0, wgt));  
+          pnames.push_back("pie_"+sample+"_procs_"+CodeToPlainText(icut+"&&!(higd_am>100&&higd_am<=140)")+
             "_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
-          table_cuts.push_back(TableRow("", icut+"&&(hig_am>100&&hig_am<=140)", 0, 0, wgt));  
-          pnames.push_back("pie_"+sample+"_procs_"+CodeToPlainText(icut+"&&(hig_am>100&&hig_am<=140)")+
+          table_cuts.push_back(TableRow("", icut+"&&(higd_am>100&&higd_am<=140)", 0, 0, wgt));  
+          pnames.push_back("pie_"+sample+"_procs_"+CodeToPlainText(icut+"&&(higd_am>100&&higd_am<=140)")+
             "_perc_lumi"+RoundNumber(lumi,0).Data()+".pdf");
         } else {
           // procs
@@ -217,10 +204,13 @@ int main(int argc, char *argv[]){
     if (split_higsbd) sm.AddSlide(pnames, metcuts.size()*2, slide_ttl);
     else sm.AddSlide(pnames, metcuts.size(), slide_ttl);
 
-    if (!split_higsbd) sm.AddSlideWithReplace("procs", tag, pnames, metcuts.size(), slide_ttl);
+    if (sample=="ttbar" || !note){
+      if (!split_higsbd) sm.AddSlideWithReplace("procs", tag, pnames, metcuts.size(), slide_ttl);
+    }
   }
   pm.Push<Table>(sample+"_procs",  table_cuts, procs, true, true, true);
-  if (!split_higsbd) pm.Push<Table>(sample+"_"+tag,  table_cuts, procs_ntrub, true, true, true);
+  if (!split_higsbd && (sample=="ttbar" || !note))
+      pm.Push<Table>(sample+"_"+tag,  table_cuts, procs_ntrub, true, true, true);
 
   pm.min_print_ = true;
   pm.multithreaded_ = true;

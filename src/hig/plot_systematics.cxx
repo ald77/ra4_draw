@@ -43,6 +43,7 @@
 using namespace std;
 
 namespace{
+  bool deep = true;
   bool actualZbi = false;
   bool only_mc = false;
   bool only_kappa = false;
@@ -65,7 +66,7 @@ namespace{
   TString mc_lumi = "";
   string sys_wgts_file = "txt/sys_weights.cfg";
   string mm_scen = "";
-  float lumi=36.2;
+  float lumi=36.8;
   bool quick_test = false;
   // for office use only
   vector<TString> syst_names;
@@ -123,7 +124,9 @@ int main(int argc, char *argv[]){
 
   vector<string> scenarios = ConfigParser::GetOptSets(sys_wgts_file);
   //NamedFunc w = "weight*eff_trig";
-  NamedFunc w = "weight" * Higfuncs::eff_higtrig;
+  NamedFunc w = Higfuncs::weight_higd * Higfuncs::eff_higtrig;
+  if (!deep) w = Higfuncs::weight_hig * Higfuncs::eff_higtrig;
+
   map<string, NamedFunc> weights, corrections;
   auto central = Functions::Variation::central;
   weights.emplace("no_mismeasurement", w);
@@ -136,30 +139,30 @@ int main(int argc, char *argv[]){
   }else if(mm_scen == "totunc"){
     scenarios = vector<string>();
     do_correction = true;
-    // scenarios.push_back("syst_ttx_up");
-    // weights.emplace("syst_ttx_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_ttx));
-    // corrections.emplace("syst_ttx_up", Higfuncs::wgt_comp);
-    // scenarios.push_back("syst_ttx_dn");
-    // weights.emplace("syst_ttx_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_ttx));
-    // corrections.emplace("syst_ttx_dn", Higfuncs::wgt_comp);
+    scenarios.push_back("syst_ttx_up");
+    weights.emplace("syst_ttx_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_ttx));
+    corrections.emplace("syst_ttx_up", Higfuncs::wgt_comp);
+    scenarios.push_back("syst_ttx_dn");
+    weights.emplace("syst_ttx_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_ttx));
+    corrections.emplace("syst_ttx_dn", Higfuncs::wgt_comp);
 
-    // scenarios.push_back("syst_vjets_up");
-    // weights.emplace("syst_vjets_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_vjets));
-    // corrections.emplace("syst_vjets_up", Higfuncs::wgt_comp);
-    // scenarios.push_back("syst_vjets_dn");
-    // weights.emplace("syst_vjets_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_vjets));
-    // corrections.emplace("syst_vjets_dn", Higfuncs::wgt_comp);
+    scenarios.push_back("syst_vjets_up");
+    weights.emplace("syst_vjets_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_vjets));
+    corrections.emplace("syst_vjets_up", Higfuncs::wgt_comp);
+    scenarios.push_back("syst_vjets_dn");
+    weights.emplace("syst_vjets_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_vjets));
+    corrections.emplace("syst_vjets_dn", Higfuncs::wgt_comp);
 
-    // scenarios.push_back("syst_qcd_up");
-    // weights.emplace("syst_qcd_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_qcd));
-    // corrections.emplace("syst_qcd_up", Higfuncs::wgt_comp);
-    // scenarios.push_back("syst_qcd_dn");
-    // weights.emplace("syst_qcd_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_qcd));
-    // corrections.emplace("syst_qcd_dn", Higfuncs::wgt_comp);
+    scenarios.push_back("syst_qcd_up");
+    weights.emplace("syst_qcd_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_qcd));
+    corrections.emplace("syst_qcd_up", Higfuncs::wgt_comp);
+    scenarios.push_back("syst_qcd_dn");
+    weights.emplace("syst_qcd_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_qcd));
+    corrections.emplace("syst_qcd_dn", Higfuncs::wgt_comp);
 
-    // scenarios.push_back("syst_comp");
-    // weights.emplace("syst_comp", w*(Higfuncs::wgt_comp)); 
-    // corrections.emplace("syst_comp", 1.);
+    scenarios.push_back("syst_comp");
+    weights.emplace("syst_comp", w*(Higfuncs::wgt_comp)); 
+    corrections.emplace("syst_comp", 1.);
 
     scenarios.push_back("syst_mcstat");
     weights.emplace("syst_mcstat", w);
@@ -181,15 +184,15 @@ int main(int argc, char *argv[]){
   }
 
   //// Capybara
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/");
-  if (skim=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1met0/";
-  if (skim=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
-  if (skim=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higloose/");
-  if (skim=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep1met0/";
-  if (skim=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higlep2/";
-  if (skim=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_higdata_higqcd/";
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/TChiHH/merged_higmc_higloose/");
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/");
+  if (skim=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
+  if (skim=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep2/";
+  if (skim=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higqcd/";
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higloose/");
+  if (skim=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep1/";
+  if (skim=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep2/";
+  if (skim=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higqcd/";
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_unsplit/");
 
   Palette colors("txt/colors.txt", "default");
 
@@ -198,23 +201,27 @@ int main(int argc, char *argv[]){
   NamedFunc baseline=baseline_s;
 
   map<string, set<string>> mctags; 
-  mctags["ttx"]     = set<string>({"*_TTJets*Lept*.root", "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
-                                     "*_TTGJets*.root", "*_ttHJetTobb*.root","*_TTTT*.root"});
+  mctags["ttx"]     = set<string>({"*TTJets_SingleLeptFromT_Tune*", "*TTJets_SingleLeptFromTbar_Tune*", 
+                                   "*TTJets_DiLept_Tune*",  "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
+                                     "*_TTGJets*.root", "*_ttHTobb*.root","*_TTTT*.root"});
   mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
   mctags["other"]   = set<string>({"*_ST_*.root",
                                    "*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root",
                                    "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
                                    "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
   
-  vector<string> sigMasses({"225", "300", "400", "700"});
+  vector<string> sigMasses({"225","400", "700"});
   vector<shared_ptr<Process> > proc_sigs;
-  for(size_t ind=0; ind<sigMasses.size(); ind++)
-    proc_sigs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigMasses[ind]+")", Process::Type::signal, 2,
-      {foldersig+"*mGluino-"+sigMasses[ind]+"_*.root"}, baseline && "stitch && pass_ra2_badmu"));
+  proc_sigs.push_back(Process::MakeShared<Baby_full>("TChiHH(225)", Process::Type::signal, 2,
+    {foldersig+"*TChiHH_HToBB_HToBB_Tun*.root"}, baseline && "stitch && pass_ra2_badmu" && Higfuncs::mhig>224 && Higfuncs::mhig<226  ));
+  proc_sigs.push_back(Process::MakeShared<Baby_full>("TChiHH(400)", Process::Type::signal, 2,
+    {foldersig+"*TChiHH_HToBB_HToBB_Tun*.root"}, baseline && "stitch && pass_ra2_badmu" && Higfuncs::mhig>399 && Higfuncs::mhig<401  ));
+  proc_sigs.push_back(Process::MakeShared<Baby_full>("TChiHH(700)", Process::Type::signal, 2,
+    {foldersig+"*TChiHH_HToBB_HToBB_Tun*.root"}, baseline && "stitch && pass_ra2_badmu" && Higfuncs::mhig>699 && Higfuncs::mhig<701  ));
 
-  auto proc_tt1l = Process::MakeShared<Baby_full>("tt+X", Process::Type::background, colors("tt_1l"),
+  auto proc_ttx = Process::MakeShared<Baby_full>("tt+X", Process::Type::background, colors("tt_1l"),
     attach_folder(foldermc, mctags["ttx"]), baseline && "stitch && pass && pass_ra2_badmu");
-  auto proc_tt2l = Process::MakeShared<Baby_full>("V+jets", Process::Type::background, kOrange+1,
+  auto proc_vjets = Process::MakeShared<Baby_full>("V+jets", Process::Type::background, kOrange+1,
     attach_folder(foldermc, mctags["vjets"]), baseline && "stitch && pass && pass_ra2_badmu");
   auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
     attach_folder(foldermc, mctags["other"]), baseline && "stitch && pass && pass_ra2_badmu");
@@ -233,7 +240,7 @@ int main(int argc, char *argv[]){
     lumi = 12.9;
     jsonCuts = "json12p9";
   } else if(json=="full"){
-    lumi = 36.2;
+    lumi = 36.8;
     jsonCuts = "1";
   } 
   if(mc_lumi!="") lumi = mc_lumi.Atof();
@@ -241,7 +248,7 @@ int main(int argc, char *argv[]){
   set<string> names_data({folderdata+"*.root"});
   if(only_mc){
     names_data = attach_folder(foldermc, names_allmc);
-    if(quick_test) names_data = set<string>({foldermc+"*_TTJets_SingleLeptFromT_*.root"});
+    if(quick_test) names_data = set<string>({foldermc+"*DYJetsToLL*.root"});
   }
 
   NamedFunc base_data = baseline && Higfuncs::trig_hig>0. && jsonCuts+"&& pass && pass_ra2_badmu";
@@ -253,10 +260,10 @@ int main(int argc, char *argv[]){
 
   //// Use this process to make quick plots. Requires being run without split_bkg
   auto proc_bkg = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets_SingleLeptFromT_*.root"}, baseline && " pass && pass_ra2_badmu");
+    {foldermc+"*_TTJets_SingleLeptFromT_g*.root"}, baseline && " pass && pass_ra2_badmu");
 
   vector<shared_ptr<Process> > all_procs;
-  if(!quick_test) all_procs = vector<shared_ptr<Process> >{proc_tt1l, proc_tt2l, proc_other};
+  if(!quick_test) all_procs = vector<shared_ptr<Process> >{proc_ttx, proc_vjets, proc_other};
   else {
     all_procs = vector<shared_ptr<Process> >{proc_bkg};
     split_bkg = false;
@@ -304,32 +311,36 @@ int main(int argc, char *argv[]){
   }
 
   ////// CR, SR cuts
-  TString c_sr="hig_am>100&&hig_am<140&&hig_dm<40";
-  TString c_cr="!("+c_sr+") && hig_am<200 && hig_dm<40";//"(hig_am<=100 || hig_am>=140) && hig_am<200 && hig_dm<40";
-  if (!do_trim) c_cr="(hig_am<=100 || hig_am>=140 || hig_dm>=40)";
+  TString c_sr="hig_am>100 && hig_am<=140 && hig_dm<=40";
+  TString c_cr="!(hig_am>100 && hig_am<=140) && hig_am<200 && hig_dm<=40";
+  if (deep) {
+    c_sr="higd_am>100 && higd_am<=140 && higd_dm<=40";
+    c_cr="!(higd_am>100 && higd_am<=140) && higd_am<200 && higd_dm<=40";
+  }
 
   ////// One loose and one tight selection option for each region
   TString basecuts("njets>=4 && njets<=5"); 
-  // zll skim:  ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100))
-  // nleps==2 && Max$(leps_pt)>40 
+  TString c_drmax = "hig_drmax<=2.2";
+  if (deep) c_drmax = "higd_drmax<=2.2";
+
   if (skim=="zll") {
-    if (do_loose) basecuts += " && nleps==2 && ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && met<50";
-    else basecuts += " && nleps==2 && ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && met<50 && hig_drmax<2.2";
+    if (do_loose) basecuts += " && nleps==2 && met<50";
+    else basecuts += " && nleps==2 && met<50 &&"+c_drmax;
   }
   // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
   if (skim=="qcd") {
     if (do_loose) basecuts += " && nvleps==0 && ntks==0 && low_dphi";
-    else basecuts += " && nvleps==0 && ntks==0 && low_dphi && hig_drmax<2.2";
+    else basecuts += " && nvleps==0 && ntks==0 && low_dphi &&"+c_drmax;
   }
   // ttbar skim - met>100 && nleps==1 && (njets==4||njets==5) && nbm>=2
   if (skim=="ttbar") {
     if (do_loose) basecuts += " && nleps==1 && mt<100";
-    else basecuts += " && nleps==1 && mt<100 && hig_drmax<2.2";
+    else basecuts += " && nleps==1 && mt<100 &&"+c_drmax;
   } 
   // search skim - met>100 && nvleps==0 && (njets==4||njets==5) && nbm>=2
   if (skim=="search") {
     if (do_loose) basecuts += " && nvleps==0 && ntks==0 && !low_dphi";
-    else basecuts += " && nvleps==0 && ntks==0 && !low_dphi && hig_drmax<2.2";
+    else basecuts += " && nvleps==0 && ntks==0 && !low_dphi &&"+c_drmax;
   }
 
   ////// ABCD cuts
@@ -387,16 +398,21 @@ int main(int argc, char *argv[]){
     } // MMMM
 
     //// General assignments to all methods
+    if (deep) 
+      for(auto &inb: nbcuts) 
+        if (!inb.Contains("nbd"))
+          inb.ReplaceAll("nb","nbd");
     abcdcuts = abcdcuts_std;
     for(size_t ind=0; ind<abcdcuts.size(); ind++)
       abcdcuts[ind].ReplaceAll("2bcuts", nbcuts[0]);
     vector<TString> bincuts = vector<TString>(nbcuts.begin()+1, nbcuts.end());
-
+    
     //////// Pushing all cuts to then find the yields
     if (Contains(mm_scen,"syst_qcd") || Contains(mm_scen,"syst_comp")){ 
       // loosen selection for propagating qcd systematics by: removing delta phi and using only 3b
       // nbcut filled twice to avoid complications with printing table
       vector<TString> bincuts_tmp = vector<TString>({"nbt>=2&&nbm>=3", "nbt>=2&&nbm>=3"});
+      if (deep) bincuts_tmp = vector<TString>({"nbdt>=2&&nbdm>=3", "nbdt>=2&&nbdm>=3"});
       TString basecuts_tmp = basecuts; basecuts_tmp.ReplaceAll("!low_dphi","!(dphi1<0.3 || dphi2<0.3)");
       abcds.push_back(abcd_method(method, metcuts, bincuts_tmp, abcdcuts, caption, basecuts_tmp, abcd_title));
     } else {
@@ -450,8 +466,8 @@ int main(int argc, char *argv[]){
     }
     if(split_bkg){
       allyields.push_back(yield_table->Yield(proc_other.get(), lumi));
-      allyields.push_back(yield_table->Yield(proc_tt1l.get(), lumi));
-      allyields.push_back(yield_table->Yield(proc_tt2l.get(), lumi));
+      allyields.push_back(yield_table->Yield(proc_ttx.get(), lumi));
+      allyields.push_back(yield_table->Yield(proc_vjets.get(), lumi));
     }
 
     if (debug) {
@@ -469,7 +485,7 @@ int main(int argc, char *argv[]){
 
     //// Makes table MC/Data yields, kappas, preds, Zbi
     if(!only_kappa) {
-      TString fullname = printTable(abcds[imethod], allyields, kappas, preds, yieldsPlane, proc_sigs);
+      TString fullname = printTable(abcds[imethod], allyields, kappas, datapreds, yieldsPlane, proc_sigs);
       tablenames.push_back(fullname);
     }
     
@@ -583,14 +599,15 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                    vector<vector<float> > yieldsPlane, vector<shared_ptr<Process> > &proc_sigs){
   //cout<<endl<<"Printing table (significance estimation can take a bit)"<<endl;
   //// Table general parameters
+  yieldsPlane.clear();
   int digits = 2;
   TString ump = " & ";
 
   size_t Nsig = proc_sigs.size(); // Number of signal points (for now it cannot be changed)
   bool do_zbi = true;
-  if(!unblind) do_zbi = false;
-  size_t Ncol = 6;
+  size_t Ncol = 5;
   if(do_signal) Ncol += Nsig;
+  if(do_signal &&do_zbi) Ncol += Nsig;
   if(split_bkg) Ncol += 3;
   if(only_mc) {
     Ncol -= 3;
@@ -611,7 +628,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if (do_midnb) outname +="_midnb";
   if(unblind) outname += "_unblind";
   else outname += "_blind";
-  if(do_ht) outname += "_ht500";
+  if (!deep) outname += "_csv";
   outname += "_"+abcd.method+".tex";
   ofstream out(outname);
 
@@ -620,43 +637,46 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   out << "\\begin{tabular}[tbp!]{ l ";
   if(split_bkg) out << "|ccc";
   out << "|cc";
-  if(!only_mc) {
-    out << "|ccc";
-    if(do_zbi) out<<"c";
-  } else {
-    if(do_signal)
-      for(size_t ind=0; ind<Nsig; ind++)
-        out<<"|c"<<(do_zbi?"c":"");
-  }
+  if(!only_mc) out << "|cc "<<(do_zbi?"c":"");
+  if(do_signal)
+    for(size_t ind=0; ind<Nsig; ind++)
+      out<<"|c"<<(do_zbi?"c":"");
+  
   out<<"}\\hline\\hline\n";
   out<<"${\\cal L}="<<lumi_s<<"$ fb$^{-1}$ ";
   if(split_bkg) out << " & Other & Single $t$ & $t\\bar{t}$ ";
   out << "& $\\kappa$ & MC bkg.";
-  if(!only_mc) out << " & Pred.& Obs. & Obs./MC "<<(do_zbi?"& Signi.":"");
-  else if(do_signal) 
+  if(!only_mc) out << " & Pred.& Obs. "<<(do_zbi?"& Signi.":"");
+  if(do_signal) {
     for(size_t ind=0; ind<Nsig; ind++) {
       TString signame = proc_sigs[ind]->name_.c_str();
       if(do_zbi) out << "& \\multicolumn{2}{c"<<(ind<Nsig-1?"|":"")<<"}{" << signame <<"}";
       else  out << "& " << signame;
     }
+  }
   out << " \\\\ \\hline\\hline\n";
 
-  vector<TString> binNames({"SBD, 2b", "SBD, xb", "HIG, 2b", "HIG, xb"});
+  vector<TString> binNames({"SBD, crb", "SBD, xb", "HIG, crb", "HIG, xb"});
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////// Printing results////////////////////////////////////////////////
   for(size_t iplane=0; iplane < abcd.planecuts.size(); iplane++) {
     out<<endl<< "\\multicolumn{"<<Ncol<<"}{c}{$"<<CodeToLatex(abcd.planecuts[iplane].Data())
-       <<"$ (Obs/MC = $"<<RoundNumber(yieldsPlane[iplane][0],2)<<"\\pm"<<RoundNumber(yieldsPlane[iplane][1],2)
-       <<"$)}  \\\\ \\hline\n";
-    for(size_t iabcd=0; iabcd < abcd.abcdcuts.size(); iabcd++){
-      for(size_t ibin=0; ibin < abcd.bincuts[iplane].size(); ibin++){
+       <<"$ }  \\\\ \\hline\n";
+    for(size_t ibin=0; ibin < abcd.bincuts[iplane].size(); ibin++){
+      for(auto iabcd:{0,2,1,3}){
         size_t index = abcd.indexBin(iplane, ibin, iabcd);
         if(abcd.int_nbnj && iabcd%2==0 && ibin>0) continue;
-        if(iabcd==3 && ibin==0) out << "\\hline" << endl;
+        if(iabcd==1) out << "\\hline" << endl;
         //// Printing bin name
         TString binName = binNames[iabcd];
-        if(ibin==0) binName.ReplaceAll("xb", "3b");
-        else binName.ReplaceAll("xb", "4b");
+        if (!do_highnb && (skim=="zll" || skim=="qcd")) {
+          if(do_midnb) binName.ReplaceAll("xb", "2b").ReplaceAll("crb", "1b");
+          else binName.ReplaceAll("xb", "1b").ReplaceAll("crb", "0b");
+        } else {
+          if(ibin==0) binName.ReplaceAll("xb", "3b");
+          else binName.ReplaceAll("xb", "4b");
+          binName.ReplaceAll("crb", "2b");
+        }
         out << binName;
         //// Printing Other, tt1l, tt2l
         if(split_bkg){
@@ -672,46 +692,33 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
                           << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits) <<"}$ ";
         //// Printing MC Bkg yields
         out << ump << RoundNumber(allyields[1][index].Yield(), digits);
-        // //// Printing background predictions
-        // if(iabcd==3) out << "$"    << RoundNumber(preds[iplane][ibin][0], digits)
-        //                  << "^{+"  << RoundNumber(preds[iplane][ibin][1], digits)
-        //                  << "}_{-" << RoundNumber(preds[iplane][ibin][2], digits) <<"}$ ";
-        if(!only_mc){
-          //// Printing observed events in data and Obs/MC ratio
-          if(!unblind && iabcd==3) out << ump << blind_s<< ump << blind_s;
-          else {
-            out << ump << RoundNumber(allyields[0][index].Yield(), 0);
-            TString ratio_s = "-";
-            double Nobs = allyields[0][index].Yield(), Nmc = allyields[1][index].Yield();
-            double Eobs = sqrt(Nobs), Emc = allyields[1][index].Uncertainty();
-            if(Nobs==0) Eobs=1;
-            if(Emc>0){
-              double ratio = Nobs/Nmc;
-              double Eratio = sqrt(pow(Eobs/Nmc,2) + pow(Nobs*Emc/Nmc/Nmc,2));
-              ratio_s = "$"+RoundNumber(ratio, 2)+"\\pm"+RoundNumber(Eratio,2)+"$";
-            }
-            out << ump << ratio_s;
-          }
-          //// Printing Zbi significance
-          if(do_zbi && iabcd==3) out << ump << Zbi(allyields[0][index].Yield(), preds[iplane][ibin][0], 
-                                                   preds[iplane][ibin][1], preds[iplane][ibin][2]);
-          //// Printing signal yields
-          if(do_signal)
-            for(size_t ind=0; ind<Nsig; ind++) 
-              out<<ump<<RoundNumber(allyields[2+ind][index].Yield(), digits);
-        } else {// if not only_mc
-          if(do_signal){
-            for(size_t ind=0; ind<Nsig; ind++) {
-              out<<ump<<RoundNumber(allyields[2+ind][index].Yield(), digits);
-              if(do_zbi){
-                out << ump;
-                if(iabcd==3) 
-                  out<<Zbi(allyields[0][index].Yield()+allyields[2+ind][index].Yield(),preds[iplane][ibin][0],
-                           preds[iplane][ibin][1], preds[iplane][ibin][2]);
-              } // if do_zbi
-            } // Loop over signals
-          } // if do_signal
+        //// Printing background predictions
+        out << ump;
+        if(iabcd==3) out << "$"    << RoundNumber(preds[iplane][ibin][0], digits)
+                         << "^{+"  << RoundNumber(preds[iplane][ibin][1], digits)
+                         << "}_{-" << RoundNumber(preds[iplane][ibin][2], digits) <<"}$ ";
+        //// Printing observed events in data and Obs/MC ratio
+        out << ump;
+        if(iabcd==3) out << (unblind ? RoundNumber(allyields[0][index].Yield(), 0) : blind_s);
+        else out << RoundNumber(allyields[0][index].Yield(), 0);
+        //// Printing Zbi significance
+        if(do_zbi) {
+          out << ump;
+          if(iabcd==3) out << Zbi(allyields[0][index].Yield(), preds[iplane][ibin][0], 
+                                                preds[iplane][ibin][1], preds[iplane][ibin][2]);
         }
+        //// Printing signal yields
+        if(do_signal){
+          for(size_t ind=0; ind<Nsig; ind++) {
+            out<<ump<<RoundNumber(allyields[2+ind][index].Yield(), digits);
+            if(do_zbi){
+              out << ump;
+              if(iabcd==3) 
+                out<<Zbi(preds[iplane][ibin][0]+allyields[2+ind][index].Yield(),preds[iplane][ibin][0],
+                         preds[iplane][ibin][1], preds[iplane][ibin][2]);
+            } // if do_zbi
+          } // Loop over signals
+        } // if do_signal
         out << "\\\\ \n";
       } // Loop over bin cuts
     } // Loop over ABCD cuts
@@ -733,7 +740,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if(!abcd.method.Contains("signal")) full << "\\usepackage[landscape]{geometry}\n\n";
   full << "\\begin{document}\n\n";
   full << "\\begin{table}\n\\centering\n";
-  full << "\\caption{" << abcd.caption <<".}\\vspace{0.1in}\n\\label{tab:"<<abcd.method<<"}\n";
+  // full << "\\caption{" << abcd.caption <<".}\\vspace{0.1in}\n\\label{tab:"<<abcd.method<<"}\n";
   ifstream outtab(outname);
   full << outtab.rdbuf();
   outtab.close();
@@ -866,7 +873,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
   float minx = 0.5, maxx = nbins+0.5, miny = 0;
   if(label_up) maxy = 2.6;
-  if(maxy > 4) maxy = 4;
+  maxy = 3;
   if(mm_scen=="syst_mcstat") maxy = 3;
   TH1D histo("histo", "", nbins, minx, maxx);
   histo.SetMinimum(miny);
@@ -1127,7 +1134,7 @@ vector<vector<float> > findPreds(abcd_method &abcd, vector<vector<GammaParams> >
       for(size_t iabcd=0; iabcd < 4; iabcd++){
         size_t index = abcd.indexBin(iplane, ibin, iabcd);
         // Renormalizing MC to data
-        allyields[1][index] *= dataMC;
+        // allyields[1][index] *= dataMC;
 
         // Yields for predictions
         entries.push_back(vector<float>());

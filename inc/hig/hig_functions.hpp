@@ -13,13 +13,14 @@ namespace Higfuncs{
 	extern const NamedFunc ntrub;
 
 	// nominal and control region b-tag categorization
-	extern const NamedFunc hig_nb;
-	extern const NamedFunc hig_nb_extended;
+	extern const NamedFunc hig_bcat;
+	extern const NamedFunc higd_bcat;
+	extern const NamedFunc higd_bcat_extended;
 
 	// alternative b-tag category options
-	extern const NamedFunc hig_nb_mmmm;
-	extern const NamedFunc hig_nb_ttll;
-	extern const NamedFunc hig_nb_tmml;
+	extern const NamedFunc higd_bcat_mmmm;
+	extern const NamedFunc higd_bcat_ttll;
+	extern const NamedFunc higd_bcat_tmml;
 
 	// weights derived in data/MC comparisons of MET and nb in CRs
 	NamedFunc::ScalarType wgt_nb_met(const Baby &b, bool ttonly);
@@ -38,6 +39,10 @@ namespace Higfuncs{
 	// analysis trigger and its efficiency
 	extern const NamedFunc trig_hig;
 	extern const NamedFunc eff_higtrig;
+	extern const NamedFunc weight_hig;
+	extern const NamedFunc weight_higd;
+
+	extern const NamedFunc mhig;
 }
 
 #endif
