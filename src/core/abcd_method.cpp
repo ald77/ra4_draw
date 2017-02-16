@@ -57,10 +57,13 @@ abcd_method::abcd_method(TString imethod, vector<TString> iplanecuts, vector<TSt
 
 //// Setting the planes that are signal
 void abcd_method::setFirstSignalBin(int firstSigBin){
-  if(firstSigBin<0 || firstSigBin>=static_cast<int>(planecuts.size())) {
+  if(firstSigBin>=static_cast<int>(planecuts.size())) {
+    cout<<"Tried to set firstSigBin to "<<firstSigBin<<", but there's only "<<planecuts.size()
+	<<" MET bins. Leaving all bins as signal"<<endl;
     return;
   }
   int lastBkgBin = firstSigBin-1;
+  if(lastBkgBin<0) lastBkgBin = static_cast<int>(planecuts.size())-1;
   for(int bin=0; bin<=lastBkgBin; bin++)
     signalplanes[bin] = false;
 }
