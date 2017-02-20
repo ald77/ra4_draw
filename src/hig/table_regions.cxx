@@ -27,8 +27,7 @@ using namespace PlotOptTypes;
 void GetOptions(int argc, char *argv[]);
 
 namespace{
-  float lumi = 36.8;
-  string sample = "search";
+  float lumi = 35.9;
   bool doSignal = true;
   bool csv = true;
 }
@@ -49,26 +48,19 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/");
-  if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
-  if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep2/";
-  if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higqcd/";
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higloose/");
-  if (sample=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep1/";
-  if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep2/";
-  if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higqcd/";
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_unsplit/");
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higtight/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_higtight/");
 
   map<string, set<string>> mctags; 
-  mctags["ttx"]     = set<string>({"*TTJets_SingleLeptFromT_Tune*", "*TTJets_SingleLeptFromTbar_Tune*", 
-                                   "*TTJets_DiLept_Tune*", "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
-                                     "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", "*_ST_*.root"});
+  mctags["ttx"]     = set<string>({"*TTJets_*Lept*", "*_TTZ*.root", "*_TTW*.root",
+                                     "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"});
   mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
   mctags["qcd"]     = set<string>({"*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root"});
-  mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+  mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_ST_*.root",
                                      "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
 
-  string c_ps = "pass && stitch";
+  string c_ps = "pass && stitch_met";
 
   vector<shared_ptr<Process> > procs;
   procs.push_back(Process::MakeShared<Baby_full>("Other", Process::Type::background, kGreen+1,
@@ -83,28 +75,22 @@ int main(int argc, char *argv[]){
                   {folderdata+"*root"}, Higfuncs::trig_hig>0. && "pass"));
 
   if (doSignal) {
-    procs.push_back(Process::MakeShared<Baby_full>("TCHi(225)", Process::Type::signal, 2,
-      {foldersig+"*TChiHH_HToBB_HToBB_Tun*.root"}, "stitch" && Higfuncs::mhig>224 && Higfuncs::mhig<226  ));
-    procs.push_back(Process::MakeShared<Baby_full>("TCHi(400)", Process::Type::signal, 2,
-      {foldersig+"*TChiHH_HToBB_HToBB_Tun*.root"}, "stitch" && Higfuncs::mhig>399 && Higfuncs::mhig<401  ));
-    procs.push_back(Process::MakeShared<Baby_full>("TCHi(700)", Process::Type::signal, 2,
-      {foldersig+"*TChiHH_HToBB_HToBB_Tun*.root"}, "stitch" && Higfuncs::mhig>699 && Higfuncs::mhig<701  ));
+    vector<string> sigm({"225","400", "700"});
+    for (unsigned isig(0); isig<sigm.size(); isig++)
+      procs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", 
+        Process::Type::signal, 1, {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, "pass_goodv&&pass_ecaldeadcell&&pass_hbhe&&pass_hbheiso&&pass_fsmet"));
   }
  
 
   string filters = "pass_ra2_badmu && met/met_calo<5";
-  string baseline = filters+"&& njets>=4 && njets<=5";
-  if (sample=="search") baseline +="&& nvleps==0 && ntks==0 && !low_dphi";
-  if (sample=="ttbar")  baseline +="&& nleps==1 && mt<100";
-  if (sample=="zll")    baseline +="&& nleps==2 && met<50";
-  if (sample=="qcd")    baseline +="&& nvleps==0 && ntks==0 && low_dphi";
+  string baseline = filters+"&& njets>=4 && njets<=5 && nvleps==0 && ntks==0 && !low_dphi";
 
   string c_2b = "nbdt==2&&nbdm==2";
   string c_3b = "nbdt>=2&&nbdm==3&&nbdl==3";
   string c_4b = "nbdt>=2&&nbdm>=3&&nbdl>=4";
   string hig = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && (higd_am>100 && higd_am<=140)";
   string sbd = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && !(higd_am>100 && higd_am<=140)";
-  NamedFunc wgt = Higfuncs::weight_higd * Higfuncs::eff_higtrig;
+  NamedFunc wgt = Higfuncs::weight_higd ;//* Higfuncs::eff_higtrig;//*(1+Higfuncs::wgt_syst_ttx);// * Higfuncs::wgt_comp;
   if (csv) {
     c_2b = "nbt==2&&nbm==2";
     c_3b = "nbt>=2&&nbm==3&&nbl==3";
@@ -120,37 +106,68 @@ int main(int argc, char *argv[]){
   string tabname = "regions";
   if (csv) tabname +="_csv";
   pm.Push<Table>(tabname, vector<TableRow>{
-  TableRow("$150\\leq E_{T}^{miss}<200$"),
   TableRow("SBD, 2b", baseline + " && met>150 && met<=200 &&" +c_2b+"&&"+sbd,0,0, wgt),
-  TableRow("HIG, 2b", baseline + " && met>150 && met<=200 &&" +c_2b+"&&"+hig,0,1, wgt),
   TableRow("SBD, 3b", baseline + " && met>150 && met<=200 &&" +c_3b+"&&"+sbd,0,0, wgt),
-  TableRow("HIG, 3b", baseline + " && met>150 && met<=200 &&" +c_3b+"&&"+hig,0,1, wgt),
   TableRow("SBD, 4b", baseline + " && met>150 && met<=200 &&" +c_4b+"&&"+sbd,0,0, wgt),
+  TableRow("HIG, 2b", baseline + " && met>150 && met<=200 &&" +c_2b+"&&"+hig,0,1, wgt),
+  TableRow("HIG, 3b", baseline + " && met>150 && met<=200 &&" +c_3b+"&&"+hig,0,1, wgt),
   TableRow("HIG, 4b", baseline + " && met>150 && met<=200 &&" +c_4b+"&&"+hig,0,1, wgt),
   
   TableRow("$200\\leq E_{T}^{miss}<300$"),
   TableRow("SBD, 2b", baseline + " && met>200 && met<=300 &&" +c_2b+"&&"+sbd,0,0, wgt),
-  TableRow("HIG, 2b", baseline + " && met>200 && met<=300 &&" +c_2b+"&&"+hig,0,1, wgt),
   TableRow("SBD, 3b", baseline + " && met>200 && met<=300 &&" +c_3b+"&&"+sbd,0,0, wgt),
-  TableRow("HIG, 3b", baseline + " && met>200 && met<=300 &&" +c_3b+"&&"+hig,0,1, wgt),
   TableRow("SBD, 4b", baseline + " && met>200 && met<=300 &&" +c_4b+"&&"+sbd,0,0, wgt),
+  TableRow("HIG, 2b", baseline + " && met>200 && met<=300 &&" +c_2b+"&&"+hig,0,1, wgt),
+  TableRow("HIG, 3b", baseline + " && met>200 && met<=300 &&" +c_3b+"&&"+hig,0,1, wgt),
   TableRow("HIG, 4b", baseline + " && met>200 && met<=300 &&" +c_4b+"&&"+hig,0,1, wgt),
   
   TableRow("$300\\leq E_{T}^{miss}<450$"),
   TableRow("SBD, 2b", baseline + " && met>300 && met<=450 &&" +c_2b+"&&"+sbd,0,0, wgt),
-  TableRow("HIG, 2b", baseline + " && met>300 && met<=450 &&" +c_2b+"&&"+hig,0,1, wgt),
   TableRow("SBD, 3b", baseline + " && met>300 && met<=450 &&" +c_3b+"&&"+sbd,0,0, wgt),
-  TableRow("HIG, 3b", baseline + " && met>300 && met<=450 &&" +c_3b+"&&"+hig,0,1, wgt),
   TableRow("SBD, 4b", baseline + " && met>300 && met<=450 &&" +c_4b+"&&"+sbd,0,0, wgt),
+  TableRow("HIG, 2b", baseline + " && met>300 && met<=450 &&" +c_2b+"&&"+hig,0,1, wgt),
+  TableRow("HIG, 3b", baseline + " && met>300 && met<=450 &&" +c_3b+"&&"+hig,0,1, wgt),
   TableRow("HIG, 4b", baseline + " && met>300 && met<=450 &&" +c_4b+"&&"+hig,0,1, wgt),
   
   TableRow("$E_{T}^{miss}>450$"),
   TableRow("SBD, 2b", baseline + " && met>450 &&"             +c_2b+"&&"+sbd,0,0, wgt),
-  TableRow("HIG, 2b", baseline + " && met>450 &&"             +c_2b+"&&"+hig,0,1, wgt),
   TableRow("SBD, 3b", baseline + " && met>450 &&"             +c_3b+"&&"+sbd,0,0, wgt),
-  TableRow("HIG, 3b", baseline + " && met>450 &&"             +c_3b+"&&"+hig,0,1, wgt),
   TableRow("SBD, 4b", baseline + " && met>450 &&"             +c_4b+"&&"+sbd,0,0, wgt),
+  TableRow("HIG, 2b", baseline + " && met>450 &&"             +c_2b+"&&"+hig,0,1, wgt),
+  TableRow("HIG, 3b", baseline + " && met>450 &&"             +c_3b+"&&"+hig,0,1, wgt),
   TableRow("HIG, 4b", baseline + " && met>450 &&"             +c_4b+"&&"+hig,0,1, wgt),
+
+  // TableRow("$150\\leq E_{T}^{miss}<200$"),
+  // TableRow("SBD, 2b", baseline + " && met>150 && met<=200 &&" +c_2b+"&&"+sbd,0,0, wgt),
+  // TableRow("HIG, 2b", baseline + " && met>150 && met<=200 &&" +c_2b+"&&"+hig,0,1, wgt),
+  // TableRow("SBD, 3b", baseline + " && met>150 && met<=200 &&" +c_3b+"&&"+sbd,0,0, wgt),
+  // TableRow("HIG, 3b", baseline + " && met>150 && met<=200 &&" +c_3b+"&&"+hig,0,1, wgt),
+  // TableRow("SBD, 4b", baseline + " && met>150 && met<=200 &&" +c_4b+"&&"+sbd,0,0, wgt),
+  // TableRow("HIG, 4b", baseline + " && met>150 && met<=200 &&" +c_4b+"&&"+hig,0,1, wgt),
+  
+  // TableRow("$200\\leq E_{T}^{miss}<300$"),
+  // TableRow("SBD, 2b", baseline + " && met>200 && met<=300 &&" +c_2b+"&&"+sbd,0,0, wgt),
+  // TableRow("HIG, 2b", baseline + " && met>200 && met<=300 &&" +c_2b+"&&"+hig,0,1, wgt),
+  // TableRow("SBD, 3b", baseline + " && met>200 && met<=300 &&" +c_3b+"&&"+sbd,0,0, wgt),
+  // TableRow("HIG, 3b", baseline + " && met>200 && met<=300 &&" +c_3b+"&&"+hig,0,1, wgt),
+  // TableRow("SBD, 4b", baseline + " && met>200 && met<=300 &&" +c_4b+"&&"+sbd,0,0, wgt),
+  // TableRow("HIG, 4b", baseline + " && met>200 && met<=300 &&" +c_4b+"&&"+hig,0,1, wgt),
+  
+  // TableRow("$300\\leq E_{T}^{miss}<450$"),
+  // TableRow("SBD, 2b", baseline + " && met>300 && met<=450 &&" +c_2b+"&&"+sbd,0,0, wgt),
+  // TableRow("HIG, 2b", baseline + " && met>300 && met<=450 &&" +c_2b+"&&"+hig,0,1, wgt),
+  // TableRow("SBD, 3b", baseline + " && met>300 && met<=450 &&" +c_3b+"&&"+sbd,0,0, wgt),
+  // TableRow("HIG, 3b", baseline + " && met>300 && met<=450 &&" +c_3b+"&&"+hig,0,1, wgt),
+  // TableRow("SBD, 4b", baseline + " && met>300 && met<=450 &&" +c_4b+"&&"+sbd,0,0, wgt),
+  // TableRow("HIG, 4b", baseline + " && met>300 && met<=450 &&" +c_4b+"&&"+hig,0,1, wgt),
+  
+  // TableRow("$E_{T}^{miss}>450$"),
+  // TableRow("SBD, 2b", baseline + " && met>450 &&"             +c_2b+"&&"+sbd,0,0, wgt),
+  // TableRow("HIG, 2b", baseline + " && met>450 &&"             +c_2b+"&&"+hig,0,1, wgt),
+  // TableRow("SBD, 3b", baseline + " && met>450 &&"             +c_3b+"&&"+sbd,0,0, wgt),
+  // TableRow("HIG, 3b", baseline + " && met>450 &&"             +c_3b+"&&"+hig,0,1, wgt),
+  // TableRow("SBD, 4b", baseline + " && met>450 &&"             +c_4b+"&&"+sbd,0,0, wgt),
+  // TableRow("HIG, 4b", baseline + " && met>450 &&"             +c_4b+"&&"+hig,0,1, wgt),
 	},procs,0);
 
 
@@ -165,7 +182,6 @@ int main(int argc, char *argv[]){
 void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
-      {"sample", required_argument, 0, 's'},    
       {"no_signal", no_argument, 0, 'n'},    
       {0, 0, 0, 0}
     };
@@ -179,9 +195,6 @@ void GetOptions(int argc, char *argv[]){
     switch(opt){
     case 'n':
       doSignal = false;
-      break;
-    case 's':
-      sample = optarg;
       break;
     case 0:
       // optname = long_options[option_index].name;

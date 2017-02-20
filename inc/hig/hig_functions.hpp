@@ -22,10 +22,9 @@ namespace Higfuncs{
 	extern const NamedFunc higd_bcat_ttll;
 	extern const NamedFunc higd_bcat_tmml;
 
-	// weights derived in data/MC comparisons of MET and nb in CRs
-	NamedFunc::ScalarType wgt_nb_met(const Baby &b, bool ttonly);
 	// weight that allows subtracting the reweighted ttbar from the data histogram
-	NamedFunc::ScalarType wgt_subtr_ttx(const Baby &b, std::string json);
+	extern const NamedFunc wgt_subtr_ttx;
+	extern const NamedFunc wgt_subtr_other;
 	// namedfunc to apply the weights in wgt_nb_met to all bkg. processes
 	extern const NamedFunc wgt_comp;
 

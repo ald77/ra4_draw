@@ -418,7 +418,7 @@ void Hist1D::Print(double luminosity,
       TH1D *hdata = (datas_.size() ? &(datas_[0]->scaled_hist_) : 0);
       TH1D *hmc = (backgrounds_.size() ? &(backgrounds_[0]->scaled_hist_) : 0);
       TH1D *hbot = (bot_plots.size() ? &(bot_plots[0]) : 0);
-      if(hdata==0 || hmc==0 || hbot==0) cout<<"Printing values not supported yet without Data, MC, or ratio"<<endl;
+      if(hdata==0 || hmc==0 || hbot==0 || hdata->Integral()==0 || hmc->Integral()==0 || hbot->Integral()==0) cout<<"Printing values failed: no histogram or no entries in histogram"<<endl;
       else {
 	int digits = floor(log10(max(hdata->GetBinContent(hdata->GetMaximumBin()), 
 				     hmc->GetBinContent(hmc->GetMaximumBin())))+1.);
@@ -428,7 +428,7 @@ void Hist1D::Print(double luminosity,
 	    <<RoundNumber(hdata->Integral(), 2,hmc->Integral()) <<endl;
 	for(int bin=1; bin<=hdata->GetNbinsX(); bin++){
 	  cout<<"Bin "<<setw(5)<<hdata->GetBinLowEdge(bin)<<","<<setw(5)<<hdata->GetBinLowEdge(bin+1)<<": Data = ";
-	  cout<<setw(digits)<<hdata->GetBinContent(bin)<<" +- "<<setw(edigits)<<RoundNumber(hdata->GetBinError(bin),1);
+	  cout<<setw(digits)<<RoundNumber(hdata->GetBinContent(bin),1)<<" +- "<<setw(edigits)<<RoundNumber(hdata->GetBinError(bin),1);
 	  cout<<", MC = "<<setw(digits+2)<<RoundNumber(hmc->GetBinContent(bin),1)<<" +- "
 	      <<setw(edigits)<<RoundNumber(hmc->GetBinError(bin),1);
 	  if(this_opt_.Bottom() != BottomType::off)

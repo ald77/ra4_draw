@@ -29,7 +29,7 @@ void GetOptions(int argc, char *argv[]);
 
 namespace{
   //fixme:simplify options
-  float lumi = 36.8;
+  float lumi = 35.9;
   // options "zll", "qcd", "ttbar", "search"
   string sample = "search";
   bool do_trim = true;
@@ -76,8 +76,7 @@ int main(int argc, char *argv[]){
   if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higqcd/";
 
   map<string, set<string>> mctags; 
-  mctags["ttx"]     = set<string>({"*TTJets_SingleLeptFromT_Tune*", "*TTJets_SingleLeptFromTbar_Tune*", 
-                                   "*TTJets_DiLept_Tune*",  "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
+  mctags["ttx"]     = set<string>({"*TTJets_*Lept*", "*_TTZ*.root", "*_TTW*.root",
                                      "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"});
   mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
   mctags["singlet"] = set<string>({"*_ST_*.root"});
@@ -91,7 +90,7 @@ int main(int argc, char *argv[]){
 
   // Baseline definitions
   NamedFunc wgt = Higfuncs::weight_higd * Higfuncs::eff_higtrig;
-  NamedFunc base_func("pass && pass_ra2_badmu && stitch && met/met_calo<5 && njets>=4 && njets<=5");
+  NamedFunc base_func("pass && pass_ra2_badmu && stitch_met && met/met_calo<5 && njets>=4 && njets<=5");
   if (do_trim) base_func = base_func && "higd_dm<=40 && higd_am<=200";
   if (sample=="zll")    base_func = base_func && "met<50";
   if (sample=="qcd")    base_func = base_func && "ntks==0 && low_dphi && met>=150";
@@ -172,12 +171,12 @@ int main(int argc, char *argv[]){
   }
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
-  if (sample=="search") {
+  // if (sample=="search") {
     metcuts.push_back(metdef+">300&&"+metdef+"<=450");
     metcuts.push_back(metdef+">450");
-  } else {
-    metcuts.push_back(metdef+">300");
-  }
+  // } else {
+  //   metcuts.push_back(metdef+">300");
+  // }
 
   table_cuts.clear();
   for(auto &ixcut: xcuts) {

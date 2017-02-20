@@ -57,14 +57,13 @@ int main(int argc, char *argv[]){
   if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
   if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep2/";
   if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higqcd/";
-  string folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higloose/";
-  if (sample=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep1/";
-  if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep2/";
-  if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higqcd/";
+  string folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
+  if (sample=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep1/";
+  if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep2/";
+  if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higqcd/";
 
   set<string> alltags; 
-  if (sample=="ttbar" || sample=="search") alltags = {"*TTJets_SingleLeptFromT_Tune*", "*TTJets_SingleLeptFromTbar_Tune*", 
-                                   "*TTJets_DiLept_Tune*", "*_TTJets_HT*.root",
+  if (sample=="ttbar" || sample=="search") alltags = {"*TTJets_*Lept*",
                                       "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", 
                                       "*ttHTobb*.root","*_TTTT*.root"};
   if (sample=="zll") alltags = {"*DYJetsToLL*.root"};
@@ -74,14 +73,16 @@ int main(int argc, char *argv[]){
                                  "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
                                  "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*"};
   if (do_allbkg) { // don't include QCD MC unless in QCD control sample
-    if(sample=="qcd") alltags = {"*TTJets_SingleLeptFromT_Tune*", "*TTJets_SingleLeptFromTbar_Tune*", 
-                                   "*TTJets_DiLept_Tune*", "*_TTJets_HT*.root", 
-            "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root",
-            "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root", "*_ST_*.root",
-            "*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root",
+    if(sample=="qcd") alltags = {"*TTJets_*Lept*", 
+                                 "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root",
+                                 "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root", "*_ST_*.root",
+                                 //"*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*",
+                                 //"*QCD_HT300to500_Tune*", 
+                                 "*QCD_HT500to700_Tune*",
+                                 "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
+                                 "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*"
             "*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"};
-    else  alltags = {"*TTJets_SingleLeptFromT_Tune*", "*TTJets_SingleLeptFromTbar_Tune*", 
-                                   "*TTJets_DiLept_Tune*", "*_TTJets_HT*.root", 
+    else  alltags = {"*TTJets_*Lept*",
             "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root",
             "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root", "*_ST_*.root",
             "*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"};
@@ -127,17 +128,17 @@ int main(int argc, char *argv[]){
   for (unsigned inb(firstnb); inb<nbcuts.size(); inb++){
     // if (sample=="qcd" && inb==nbcuts.size()-1) continue;
     procs.push_back(Process::MakeShared<Baby_full>(samplename+" ("+RoundNumber(inb,0).Data()+"b)", 
-      Process::Type::background, colors[inb], allfiles, baseline +"&&stitch&&" + cutsProcs +"&&"+ nbcuts[inb]));
+      Process::Type::background, colors[inb], allfiles, baseline +"&&stitch_met&&" + cutsProcs +"&&"+ nbcuts[inb]));
   }
   vector<int> colors_trub = {kAzure-4, kTeal-8, kOrange-4, kPink+2, kMagenta-1};
   vector<shared_ptr<Process> > procs_trub = vector<shared_ptr<Process> >();
   for (unsigned inb(firstnb); inb<nbcuts.size(); inb++){
     if ((sample=="zll" || sample=="qcd") && inb==nbcuts.size()-1) { // merge 4b into 3b
       procs_trub.push_back(Process::MakeShared<Baby_full>(samplename+" (#geq"+RoundNumber(inb,0).Data()+" B-hadrons)", 
-        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub>=inb &&baseline+"&&stitch&&"+cutsProcs));
+        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub>=inb &&baseline+"&&stitch_met&&"+cutsProcs));
     } else {
       procs_trub.push_back(Process::MakeShared<Baby_full>(samplename+" ("+RoundNumber(inb,0).Data()+" B-hadrons)", 
-        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub==inb && baseline +"&&stitch&&"+cutsProcs));
+        Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub==inb && baseline +"&&stitch_met&&"+cutsProcs));
     }
   }
 
@@ -147,7 +148,7 @@ int main(int argc, char *argv[]){
     lumi = 12.9;
     jsonCuts = "json12p9";
   } else if (json=="full"){
-    lumi = 36.8;
+    lumi = 35.9;
     jsonCuts = "1";
   }
   string lumi_s=RoundNumber(lumi,1).Data();

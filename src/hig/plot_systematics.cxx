@@ -43,7 +43,9 @@
 using namespace std;
 
 namespace{
+  bool test = false;
   bool deep = true;
+  bool rewgt = false;
   bool actualZbi = false;
   bool only_mc = false;
   bool only_kappa = false;
@@ -66,7 +68,7 @@ namespace{
   TString mc_lumi = "";
   string sys_wgts_file = "txt/sys_weights.cfg";
   string mm_scen = "";
-  float lumi=36.8;
+  float lumi=35.9;
   bool quick_test = false;
   // for office use only
   vector<TString> syst_names;
@@ -126,7 +128,7 @@ int main(int argc, char *argv[]){
   //NamedFunc w = "weight*eff_trig";
   NamedFunc w = Higfuncs::weight_higd * Higfuncs::eff_higtrig;
   if (!deep) w = Higfuncs::weight_hig * Higfuncs::eff_higtrig;
-
+  if (rewgt) w = w * Higfuncs::wgt_comp;
   map<string, NamedFunc> weights, corrections;
   auto central = Functions::Variation::central;
   weights.emplace("no_mismeasurement", w);
@@ -139,34 +141,34 @@ int main(int argc, char *argv[]){
   }else if(mm_scen == "totunc"){
     scenarios = vector<string>();
     do_correction = true;
-    scenarios.push_back("syst_ttx_up");
-    weights.emplace("syst_ttx_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_ttx));
-    corrections.emplace("syst_ttx_up", Higfuncs::wgt_comp);
-    scenarios.push_back("syst_ttx_dn");
-    weights.emplace("syst_ttx_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_ttx));
-    corrections.emplace("syst_ttx_dn", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_ttx_up");
+    // weights.emplace("syst_ttx_up", w*(1+Higfuncs::wgt_syst_ttx));
+    // corrections.emplace("syst_ttx_up", 1.);
+    // scenarios.push_back("syst_ttx_dn");
+    // weights.emplace("syst_ttx_dn", w*(1-Higfuncs::wgt_syst_ttx));
+    // corrections.emplace("syst_ttx_dn", 1.);
 
-    scenarios.push_back("syst_vjets_up");
-    weights.emplace("syst_vjets_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_vjets));
-    corrections.emplace("syst_vjets_up", Higfuncs::wgt_comp);
-    scenarios.push_back("syst_vjets_dn");
-    weights.emplace("syst_vjets_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_vjets));
-    corrections.emplace("syst_vjets_dn", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_vjets_up");
+    // weights.emplace("syst_vjets_up", w*(1+Higfuncs::wgt_syst_vjets));
+    // corrections.emplace("syst_vjets_up", 1.);
+    // scenarios.push_back("syst_vjets_dn");
+    // weights.emplace("syst_vjets_dn", w*(1-Higfuncs::wgt_syst_vjets));
+    // corrections.emplace("syst_vjets_dn", 1.);
 
-    scenarios.push_back("syst_qcd_up");
-    weights.emplace("syst_qcd_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_qcd));
-    corrections.emplace("syst_qcd_up", Higfuncs::wgt_comp);
-    scenarios.push_back("syst_qcd_dn");
-    weights.emplace("syst_qcd_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_qcd));
-    corrections.emplace("syst_qcd_dn", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_qcd_up");
+    // weights.emplace("syst_qcd_up", w*(1+Higfuncs::wgt_syst_qcd));
+    // corrections.emplace("syst_qcd_up", 1.);
+    // scenarios.push_back("syst_qcd_dn");
+    // weights.emplace("syst_qcd_dn", w*(1-Higfuncs::wgt_syst_qcd));
+    // corrections.emplace("syst_qcd_dn", 1.);
 
     scenarios.push_back("syst_comp");
     weights.emplace("syst_comp", w*(Higfuncs::wgt_comp)); 
     corrections.emplace("syst_comp", 1.);
 
-    scenarios.push_back("syst_mcstat");
-    weights.emplace("syst_mcstat", w);
-    corrections.emplace("syst_mcstat", 1.);
+    // scenarios.push_back("syst_mcstat");
+    // weights.emplace("syst_mcstat", w);
+    // corrections.emplace("syst_mcstat", 1.);
 
     // scenarios.push_back("syst_bctag");
     // weights.emplace("syst_bctag", w*"sys_bctag[0]");
@@ -178,21 +180,22 @@ int main(int argc, char *argv[]){
   }else if(mm_scen == "data"){
     scenarios = vector<string>{mm_scen};
   }else if(mm_scen != "no_mismeasurement"){
-    scenarios = vector<string>{mm_scen};
+    scenarios = vector<string>{mm_scen}; 
     weights.emplace(mm_scen, w*Functions::MismeasurementWeight(sys_wgts_file, mm_scen));
     corrections.emplace(mm_scen, Functions::MismeasurementCorrection(sys_wgts_file, mm_scen, central));
   }
 
   //// Capybara
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/");
+  if (test) foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higtight/";
   if (skim=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
   if (skim=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep2/";
   if (skim=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higqcd/";
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higloose/");
-  if (skim=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep1/";
-  if (skim=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep2/";
-  if (skim=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higqcd/";
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_unsplit/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/");
+  if (skim=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep1/";
+  if (skim=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep2/";
+  if (skim=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higqcd/";
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_higloose/");
 
   Palette colors("txt/colors.txt", "default");
 
@@ -201,26 +204,29 @@ int main(int argc, char *argv[]){
   NamedFunc baseline=baseline_s;
 
   map<string, set<string>> mctags; 
-  mctags["ttx"]     = set<string>({"*TTJets_SingleLeptFromT_Tune*", "*TTJets_SingleLeptFromTbar_Tune*", 
-                                   "*TTJets_DiLept_Tune*",  "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
-                                     "*_TTGJets*.root", "*_ttHTobb*.root","*_TTTT*.root"});
-  mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
+  mctags["ttx"]     = set<string>({"*TTJets_*Lept*", "*_TTZ*.root", "*_TTW*.root",
+                                    "*_TTGJets*.root", "*_ttHTobb*.root","*_TTTT*.root"});
+  mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"
+                                 });
   mctags["other"]   = set<string>({"*_ST_*.root",
-                                   "*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root",
+                                   "*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*",
+                                   "*QCD_HT300to500_Tune*", 
+                                   "*QCD_HT500to700_Tune*",
+                                   "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
+                                   "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*",
                                    "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
-                                   "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
+                                   "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"
+                                 });
   
   vector<string> sigMasses({"225","400", "700"});
   vector<shared_ptr<Process> > proc_sigs;
-  proc_sigs.push_back(Process::MakeShared<Baby_full>("TChiHH(225)", Process::Type::signal, 2,
-    {foldersig+"*TChiHH_HToBB_HToBB_Tun*.root"}, baseline && "stitch && pass_ra2_badmu" && Higfuncs::mhig>224 && Higfuncs::mhig<226  ));
-  proc_sigs.push_back(Process::MakeShared<Baby_full>("TChiHH(400)", Process::Type::signal, 2,
-    {foldersig+"*TChiHH_HToBB_HToBB_Tun*.root"}, baseline && "stitch && pass_ra2_badmu" && Higfuncs::mhig>399 && Higfuncs::mhig<401  ));
-  proc_sigs.push_back(Process::MakeShared<Baby_full>("TChiHH(700)", Process::Type::signal, 2,
-    {foldersig+"*TChiHH_HToBB_HToBB_Tun*.root"}, baseline && "stitch && pass_ra2_badmu" && Higfuncs::mhig>699 && Higfuncs::mhig<701  ));
+  for (unsigned isig(0); isig<sigMasses.size(); isig++)
+    proc_sigs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigMasses[isig]+",1)", 
+      Process::Type::signal, 1, {foldersig+"*TChiHH_mGluino-"+sigMasses[isig]+"*.root"}, 
+      baseline && "pass_ra2_badmu&&pass_goodv&&pass_ecaldeadcell&&pass_hbhe&&pass_hbheiso&&pass_fsmet"));
 
   auto proc_ttx = Process::MakeShared<Baby_full>("tt+X", Process::Type::background, colors("tt_1l"),
-    attach_folder(foldermc, mctags["ttx"]), baseline && "stitch && pass && pass_ra2_badmu");
+    attach_folder(foldermc, mctags["ttx"]), baseline && "stitch_met && pass && pass_ra2_badmu");
   auto proc_vjets = Process::MakeShared<Baby_full>("V+jets", Process::Type::background, kOrange+1,
     attach_folder(foldermc, mctags["vjets"]), baseline && "stitch && pass && pass_ra2_badmu");
   auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
@@ -231,7 +237,7 @@ int main(int argc, char *argv[]){
   for (auto &iset: mctags) names_allmc.insert(iset.second.begin(), iset.second.end());
 
   // Setting luminosity
-  string jsonCuts = "nonblind";
+  string jsonCuts = "1";
   if(skim.Contains("2015")) lumi = 2.3;
   else if(json=="0p869"){
     lumi = 0.869;
@@ -240,7 +246,7 @@ int main(int argc, char *argv[]){
     lumi = 12.9;
     jsonCuts = "json12p9";
   } else if(json=="full"){
-    lumi = 36.8;
+    lumi = 35.9;
     jsonCuts = "1";
   } 
   if(mc_lumi!="") lumi = mc_lumi.Atof();
@@ -252,7 +258,7 @@ int main(int argc, char *argv[]){
   }
 
   NamedFunc base_data = baseline && Higfuncs::trig_hig>0. && jsonCuts+"&& pass && pass_ra2_badmu";
-  if (only_mc) base_data = baseline && "stitch && pass && pass_ra2_badmu";
+  if (only_mc) base_data = baseline && "stitch_met && pass && pass_ra2_badmu";
    if(mm_scen == "data")
      cout<<"Data files are "<<*(names_data.begin())<<" with cuts "<<baseline<<"&&"<< Higfuncs::trig_hig << "&&pass&&pass_ra2_badmu"<<endl<<endl;
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
@@ -260,7 +266,7 @@ int main(int argc, char *argv[]){
 
   //// Use this process to make quick plots. Requires being run without split_bkg
   auto proc_bkg = Process::MakeShared<Baby_full>("All_bkg", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets_SingleLeptFromT_g*.root"}, baseline && " pass && pass_ra2_badmu");
+    {foldermc+"*TTJets_SingleLeptFromT_Tune*"}, baseline && "pass && pass_ra2_badmu");
 
   vector<shared_ptr<Process> > all_procs;
   if(!quick_test) all_procs = vector<shared_ptr<Process> >{proc_ttx, proc_vjets, proc_other};
@@ -411,10 +417,10 @@ int main(int argc, char *argv[]){
     if (Contains(mm_scen,"syst_qcd") || Contains(mm_scen,"syst_comp")){ 
       // loosen selection for propagating qcd systematics by: removing delta phi and using only 3b
       // nbcut filled twice to avoid complications with printing table
-      vector<TString> bincuts_tmp = vector<TString>({"nbt>=2&&nbm>=3", "nbt>=2&&nbm>=3"});
-      if (deep) bincuts_tmp = vector<TString>({"nbdt>=2&&nbdm>=3", "nbdt>=2&&nbdm>=3"});
+      // vector<TString> bincuts_tmp = vector<TString>({"nbt>=2&&nbm>=3", "nbt>=2&&nbm>=3"});
+      // if (deep) bincuts_tmp = vector<TString>({"nbdt>=2&&nbdm>=3", "nbdt>=2&&nbdm>=3"});
       TString basecuts_tmp = basecuts; basecuts_tmp.ReplaceAll("!low_dphi","!(dphi1<0.3 || dphi2<0.3)");
-      abcds.push_back(abcd_method(method, metcuts, bincuts_tmp, abcdcuts, caption, basecuts_tmp, abcd_title));
+      abcds.push_back(abcd_method(method, metcuts, bincuts, abcdcuts, caption, basecuts_tmp, abcd_title));
     } else {
       abcds.push_back(abcd_method(method, metcuts, bincuts, abcdcuts, caption, basecuts, abcd_title));
     }
@@ -425,8 +431,10 @@ int main(int argc, char *argv[]){
     for(size_t icut=0; icut < abcds.back().allcuts.size(); icut++){
       table_cuts.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data(),
                                     0,0,weights.at("no_mismeasurement")*correction));
-      if(only_mc) table_cuts_mm.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data(),
+      if(only_mc) {
+        table_cuts_mm.push_back(TableRow(abcds.back().allcuts[icut].Data(), abcds.back().allcuts[icut].Data(),
                                                    0,0,weights.at(mm_scen)));
+      }
     }
     TString tname = "preds"; tname += iabcd;
     pm.Push<Table>(tname.Data(),  table_cuts, all_procs, true, false);
@@ -535,11 +543,11 @@ int main(int argc, char *argv[]){
         } else {
           for (unsigned ibin(0); ibin<syst_values[isys].size(); ibin++) {
             float up(syst_values[isys][ibin]), dn(syst_values[isys+1][ibin]);
-            float isysval = (up>0 ? 1 : -1)*max(up>0 ? up: 1/(1+up)-1, dn>0 ? dn: 1/(1+dn)-1);
+            // float isysval = (up>0 ? 1 : -1)*max(up>0 ? up: 1/(1+up)-1, dn>0 ? dn: 1/(1+dn)-1);
+            float isysval = max(fabs(up), fabs(dn));
             if (fabs(isysval)>0.01) {
               // the closure propagation come out negative because of the way we introduce the shift
-              if (syst_names[isys].Contains("syst_qcd") || syst_names[isys].Contains("syst_vjets")|| syst_names[isys].Contains("syst_"))
-                isysval *=-1;
+              if (syst_names[isys].Contains("syst_qcd") || syst_names[isys].Contains("syst_vjets")|| syst_names[isys].Contains("syst_ttx"))
               cout<<" & "<<setw(7)<<RoundNumber(isysval*100,0);
             } else {
               cout<<" & "<<setw(7)<<"$<$ 1";
@@ -629,6 +637,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if(unblind) outname += "_unblind";
   else outname += "_blind";
   if (!deep) outname += "_csv";
+  if (rewgt) outname += "_rewgt";
   outname += "_"+abcd.method+".tex";
   ofstream out(outname);
 
@@ -1059,7 +1068,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   if (do_loose) fname="plots/kappa_"+skim+"_loose_"+abcd.method;
   if (do_highnb) fname +="_highnb";
   if (do_midnb) fname +="_midnb";
-  if(do_ht) fname  += "_ht500";
+  if(!deep) fname  += "_csv";
+  if(rewgt) fname  += "_rewgt";
   lumi_s.ReplaceAll(".","p");
   fname += "_lumi"+lumi_s;
   fname += ".pdf";
@@ -1231,6 +1241,7 @@ void GetOptions(int argc, char *argv[]){
       {"ht", no_argument, 0, 0},              // Cuts on ht>500 instead of st>500
       {"mm", required_argument, 0, 0},        // Mismeasurment scenario, 0 for data
       {"quick", no_argument, 0, 0},           // Used inclusive ttbar for quick testing
+      {"rewgt", no_argument, 0, 0},           // Used inclusive ttbar for quick testing
       {"no_trim", no_argument, 0, 0},         // No trimming of sideband
       {"zbi", no_argument, 0, 0},             // Use Zbi instead of toys
       {"highnb", no_argument, 0, 0},          // Do 3b and 4b for QCD CR
@@ -1298,6 +1309,8 @@ void GetOptions(int argc, char *argv[]){
         mm_scen = optarg;
       }else if(optname == "quick"){
         quick_test = true;
+      }else if(optname == "rewgt"){
+        rewgt = true;
       }else if(optname == "zbi"){
         actualZbi = true;
       }else if(optname == "highnb"){

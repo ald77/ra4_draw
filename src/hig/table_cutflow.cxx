@@ -24,7 +24,7 @@ using namespace std;
 using namespace PlotOptTypes;
 
 namespace{
-  float lumi = 36.8;
+  float lumi = 35.9;
   bool deep = true;
   // vector<string> sigm = {}; 
   vector<string> sigm = {"225","400","700"}; 
@@ -42,11 +42,10 @@ int main(){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/");
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_unsplit/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_unskimmed/");
 
   map<string, set<string>> mctags; 
-  mctags["ttx"]     = set<string>({"*TTJets_SingleLeptFromT_Tune*", "*TTJets_SingleLeptFromTbar_Tune*", 
-                                   "*TTJets_DiLept_Tune*", "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
+  mctags["ttx"]     = set<string>({"*TTJets_*Lep*", "*_TTZ*.root", "*_TTW*.root",
                                      "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"});
   mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
   mctags["singlet"] = set<string>({"*_ST_*.root"});
@@ -54,7 +53,7 @@ int main(){
   mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
                                      "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
   
-  string c_ps = "pass && stitch";
+  string c_ps = "pass && stitch_met";
   vector<shared_ptr<Process> > procs = vector<shared_ptr<Process> >();
   procs.push_back(Process::MakeShared<Baby_full>("Other", Process::Type::background, 1,
 					    attach_folder(foldermc, mctags["other"]),c_ps));
@@ -66,15 +65,9 @@ int main(){
 					    attach_folder(foldermc,mctags["vjets"]),c_ps));
   procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", Process::Type::background,1,
 					    attach_folder(foldermc, mctags["ttx"]),c_ps));
-  // for (unsigned isig(0); isig<sigm.size(); isig++)
-  //   procs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", 
-  //     Process::Type::signal, 1, {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, "1"));
-  procs.push_back(Process::MakeShared<Baby_full>("TChiHH(225)", Process::Type::signal, 2,
-    {foldersig+"*TChiHH_HToBB_HToBB_Tun*.root"}, "stitch" && Higfuncs::mhig>224 && Higfuncs::mhig<226  ));
-  procs.push_back(Process::MakeShared<Baby_full>("TChiHH(400)", Process::Type::signal, 2,
-    {foldersig+"*TChiHH_HToBB_HToBB_Tun*.root"}, "stitch" && Higfuncs::mhig>399 && Higfuncs::mhig<401  ));
-  procs.push_back(Process::MakeShared<Baby_full>("TChiHH(700)", Process::Type::signal, 2,
-    {foldersig+"*TChiHH_HToBB_HToBB_Tun*.root"}, "stitch" && Higfuncs::mhig>699 && Higfuncs::mhig<701  ));
+  for (unsigned isig(0); isig<sigm.size(); isig++)
+    procs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", 
+      Process::Type::signal, 1, {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, "1"));
 
 
   string c_2bt = "nbt>=2";
@@ -112,14 +105,12 @@ int main(){
   PlotMaker pm;
   pm.Push<Table>("cutflow", vector<TableRow>{
   TableRow("No selection                ", 
-    sigonly,0,0, wgt),
-  // TableRow("Filters                     ", 
-  //   sigonly+"&& pass_ra2_badmu && met/met_calo<5",0,0, wgt),
+    sigonly,0,0, Higfuncs::weight_higd * "1/eff_jetid"),
   TableRow("$0\\ell$, $\\text{4-5 jets}$  ", 
-    baseline+"&&"+sigonly,0,0, wgt),
+    baseline+"&&"+sigonly,0,0, Higfuncs::weight_higd * "1/eff_jetid"),
   TableRow("$N_{\\text{b,T}}\\geq 2$      ", 
-    baseline+"&&"+sigonly + " &&" +c_2bt,0,0, wgt),
-	TableRow("$E_{T}^{miss} > 150$", 
+    baseline+"&&"+sigonly + " &&" +c_2bt,0,0, Higfuncs::weight_higd * "1/eff_jetid"),
+	TableRow("$E_{T}^{miss} > 150$, trigger efficiency", 
 		baseline + " && met>150 &&" + c_2bt,0,0, wgt),
 	TableRow("Track veto", 
 		baseline + " && ntks==0 && met>150 &&" + c_2bt,0,0, wgt),

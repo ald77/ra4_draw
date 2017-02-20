@@ -22,7 +22,7 @@
 using namespace std;
 
 namespace{
-  TString lumi = "36p2";
+  TString lumi = "35p9";
   TString filename = "txt/limits/limits_TChiHH_lumi"+lumi+".txt";
   TString model = "TChiHH";
 }
@@ -124,26 +124,26 @@ int main(int argc, char *argv[]){
   histo.Draw();
 
   TLine line;
-  line.SetLineColor(4); line.SetLineStyle(2); line.SetLineWidth(4);
+  line.SetLineColor(kBlue); line.SetLineStyle(2); line.SetLineWidth(3);
   TLatex cmslabel;
   
   cmslabel.SetNDC(kTRUE);
 
   TGraphAsymmErrors grexp2(vmx.size(), &(vmx[0]), &(vexp[0]), &(zeroes[0]), &(zeroes[0]), &(v2down[0]), &(v2up[0]));
-  grexp2.SetLineColor(1); grexp2.SetFillColor(5); grexp2.SetLineWidth(3); grexp2.SetLineStyle(2);
+  grexp2.SetLineColor(1); grexp2.SetFillColor(kYellow); grexp2.SetLineWidth(3); grexp2.SetLineStyle(2);
   grexp2.Draw("e3 same");
   TGraphAsymmErrors grexp1(vmx.size(), &(vmx[0]), &(vexp[0]), &(zeroes[0]), &(zeroes[0]), &(vdown[0]), &(vup[0]));
-  grexp1.SetLineColor(1); grexp1.SetFillColor(3); grexp1.SetLineWidth(3); grexp1.SetLineStyle(2);
+  grexp1.SetLineColor(1); grexp1.SetFillColor(kGreen); grexp1.SetLineWidth(3); grexp1.SetLineStyle(2);
   grexp1.Draw("e3 same");
   TGraph grexp(vmx.size(), &(vmx[0]), &(vexp[0]));
   grexp.SetLineWidth(3); grexp.SetLineStyle(2);
   grexp.Draw("same"); 
   TGraph grobs(vmx.size(), &(vmx[0]), &(vobs[0]));
-  grobs.SetLineWidth(1); 
+  grobs.SetLineWidth(3); 
   grobs.Draw("same"); 
 
   //// Drawing CMS labels and line at 1
-  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";
+  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
   TString lumiEner = "#font[42]{"+lumi+" fb^{-1} (13 TeV)}"; lumiEner.ReplaceAll("p",".");
   TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.6]{"+chij+"}  #rightarrow hh#tilde{G}#tilde{G}";
   TString mChis = mass_+chi2n+"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}, "+mass_+"#tilde{G}}}} = 1 GeV";
@@ -153,19 +153,19 @@ int main(int argc, char *argv[]){
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
   line.DrawLine(minh, 1, maxh, 1);
   //// Drawing process and masses
-  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.045);
+  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.045);
   cmslabel.SetTextFont(132);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, opts.BottomMargin()+0.09, ppChiChi);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, opts.BottomMargin()+0.04, mChis);
+  cmslabel.DrawLatex(0.29, opts.BottomMargin()+0.65, ppChiChi);
+  cmslabel.DrawLatex(0.29, opts.BottomMargin()+0.6, mChis);
 
 
-  double legX(0.54), legY(1-opts.TopMargin()-0.04), legSingle = 0.05;
+  double legX(0.54), legY(1-opts.TopMargin()-0.24), legSingle = 0.05;
   double legW = 0.26, legH = legSingle*4;
   TLegend leg(legX-legW, legY-legH, legX, legY);
   leg.SetTextSize(0.04); leg.SetFillColor(0); 
   leg.SetFillStyle(0); leg.SetBorderSize(0);
   leg.AddEntry(&line, "NLO+NLL", "l");
-  leg.AddEntry(&grobs, "\"Observed\"", "l");
+  leg.AddEntry(&grobs, "Observed", "l");
   leg.AddEntry(&grexp1, "Expected #pm #sigma");
   leg.AddEntry(&grexp2, "Expected #pm 2#sigma");
   leg.Draw();
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]){
   gexp.SetLineWidth(3); gexp.SetLineStyle(2);
   gexp.Draw("same"); 
   TGraph gobs(vmx.size(), &(vmx[0]), &(vobs[0]));
-  gobs.SetLineWidth(1); 
+  gobs.SetLineWidth(3); 
   gobs.Draw("same"); 
   TGraph gxsec(vmx.size(), &(vmx[0]), &(vxsec[0]));
   gxsec.SetLineWidth(4); gxsec.SetLineColor(4); gxsec.SetLineStyle(2);
@@ -245,7 +245,7 @@ int main(int argc, char *argv[]){
   can.SetLogy(false);
   histo.GetXaxis()->SetLabelOffset(0.02);
   histo.SetMinimum(0);
-  histo.SetMaximum(3.5);
+  histo.SetMaximum(4.5);
   if(lumi=="40") histo.SetMaximum(4.5);
   histo.SetYTitle(" Expected discovery significance [#sigma]");
   histo.Draw();

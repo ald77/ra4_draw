@@ -28,16 +28,16 @@ void GetOptions(int argc, char *argv[]);
 
 namespace{
   //fixme:simplify options
-  bool note = true;
+  bool note = false;
+  bool rewgt = false;
   float lumi = 4.3;
   string sample = "search";
   string json = "1";
   bool do_data = true;
-  bool unblind = false;
   bool do_loose = false; // removes track veto and delta phi requirement for the search region to make dphi "N-1" plots
   // simplify selection
   bool do_metint = true; // only integrated met>150 and met > 200
-  bool do_ge3b = note;  // do btag cats: 2b and 3b+
+  bool do_ge3b = true;  // do btag cats: 2b and 3b+
   bool subtr_ttx = false;
   // choose processes to include, options are: "ttx", "vjets", "singlet", "qcd", "other", "ttonly"
   set<string> proc_types = {"ttx", "vjets", "singlet", "qcd", "other"}; // for default data/MC
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
   GetOptions(argc, argv);
   if (json=="json4p0") lumi = 4.3;
-  else if (json=="1") lumi = 36.8; 
+  else if (json=="1") lumi = 35.9; 
   else {
     cout<<"Json "<<json<<" has not been implemented!!"<<endl;
     exit(0);
@@ -103,19 +103,22 @@ int main(int argc, char *argv[]){
   if (sample=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
   if (sample=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep2/";
   if (sample=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higqcd/";
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higloose/");
-  if (sample=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep1/";
-  if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep2/";
-  if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higqcd/";
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/");
+  if (sample=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep1/";
+  if (sample=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep2/";
+  if (sample=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higqcd/";
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_split/");
 
   map<string, set<string>> mctags; 
-  mctags["ttx"]     = set<string>({"*TTJets_SingleLeptFromT_Tune*", "*TTJets_SingleLeptFromTbar_Tune*", 
-                                   "*TTJets_DiLept_Tune*", "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
+  mctags["ttx"]     = set<string>({"*TTJets_*Lept*", "*_TTZ*.root", "*_TTW*.root",
                                    "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"});
   mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
   mctags["singlet"] = set<string>({"*_ST_*.root"});
-  mctags["qcd"]     = set<string>({"*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root"});
+  mctags["qcd"]     = set<string>({//"*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*",
+                                   // "*QCD_HT300to500_Tune*", 
+                                   "*QCD_HT500to700_Tune*",
+                                   "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
+                                   "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*"});
   mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
                                      "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
   set<string> allmctags;
@@ -124,11 +127,9 @@ int main(int argc, char *argv[]){
   }
 
   // Baseline definitions
-  NamedFunc wgt_subtr("wgt_subtr",[&](const Baby &b){
-    return wgt_subtr_ttx(b, json);
-  });
   NamedFunc wgt = weight_higd * eff_higtrig;
-  if (subtr_ttx) wgt *= wgt_subtr;
+  if (subtr_ttx) wgt *= wgt_subtr_ttx;
+  if (rewgt) wgt *= wgt_comp;
 
   string base_func("njets>=4 && njets<=5 && met/met_calo<5"); //met/met_calo
   // zll skim: ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && 
@@ -148,19 +149,19 @@ int main(int argc, char *argv[]){
   if (!subtr_ttx) 
     procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", 
       Process::Type::background, colors("tt_1l"),    attach_folder(foldermc,mctags["ttx"]),     
-      base_func+"&& pass && pass_ra2_badmu && stitch"));
+      base_func+"&& pass && pass_ra2_badmu && stitch_met"));
   procs.push_back(Process::MakeShared<Baby_full>("V+jets",     
     Process::Type::background, kOrange+1,          attach_folder(foldermc,mctags["vjets"]),   
-    base_func+"&& pass && pass_ra2_badmu && stitch"));
+    base_func+"&& pass && pass_ra2_badmu && stitch_met"));
   procs.push_back(Process::MakeShared<Baby_full>("Single t",   
     Process::Type::background, colors("single_t"), attach_folder(foldermc,mctags["singlet"]), 
-    base_func+"&& pass && pass_ra2_badmu && stitch"));
+    base_func+"&& pass && pass_ra2_badmu && stitch_met"));
   procs.push_back(Process::MakeShared<Baby_full>("QCD",        
     Process::Type::background, colors("other"),    attach_folder(foldermc,mctags["qcd"]),     
-    base_func+"&& pass && pass_ra2_badmu && stitch" + (sample=="qcd" ? "&& weight<10":" && weight<5"))); 
+    base_func+"&& pass && pass_ra2_badmu && stitch_met" + ((sample=="qcd"&&!subtr_ttx) ? "&&weight<10":""))); 
   procs.push_back(Process::MakeShared<Baby_full>("Other",      
     Process::Type::background, kGreen+1,           attach_folder(foldermc,mctags["other"]),   
-    base_func+"&& pass && pass_ra2_badmu && stitch"));      
+    base_func+"&& pass && pass_ra2_badmu && stitch_met"));      
 
   if (do_data) {
     if (subtr_ttx) {
@@ -174,11 +175,11 @@ int main(int argc, char *argv[]){
         {folderdata+"*root"},  trig_hig>0. && " pass && pass_ra2_badmu &&"+json+"&&"+base_func)); 
     }
   }
-  if (sample == "search") {
-    for (unsigned isig(0); isig<sigm.size(); isig++)
-      procs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
-        sig_colors[isig], {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, base_func +" && pass_ra2_badmu"));
-  }
+  // if (sample == "search") {
+  //   for (unsigned isig(0); isig<sigm.size(); isig++)
+  //     procs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
+  //       sig_colors[isig], {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, base_func +" && pass_ra2_badmu"));
+  // }
 
   PlotMaker pm;
 
@@ -201,15 +202,13 @@ int main(int argc, char *argv[]){
     nbcuts.push_back("nbdm==0");
     nbcuts.push_back("nbdm==1");
   } 
-  if (!note || sample=="ttbar") {
+  if (!note || sample=="ttbar" || sample=="search") {
     nbcuts.push_back("nbdt==2&&nbdm==2");
-    if (sample!="search" || unblind || !do_data) {
-      if (do_ge3b) {
-        nbcuts.push_back("nbdt>=2&&nbdm>=3");
-      } else {
-        nbcuts.push_back("nbdt>=2&&nbdm==3&&nbdl==3");
-        nbcuts.push_back("nbdt>=2&&nbdm>=3&&nbdl>=4");
-      }
+    if (do_ge3b) {
+      nbcuts.push_back("nbdt>=2&&nbdm>=3");
+    } else {
+      nbcuts.push_back("nbdt>=2&&nbdm==3&&nbdl==3");
+      nbcuts.push_back("nbdt>=2&&nbdm>=3&&nbdl>=4");
     }
   }
 
@@ -233,16 +232,14 @@ int main(int argc, char *argv[]){
     pm.Push<Hist1D>(Axis(6,0.5,6.5,"nbdt", "N_{b}^{T}"), tmp_seln, procs, linplot).Weight(wgt).Tag(sample);
   }
   if (sample=="search") {
-    if (!do_data || unblind) {
       pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat, "b-tag category (TTML)"), 
         tmp_seln && higd_bcat>0., procs, linplot).Weight(wgt).Tag(sample);
-      pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat_ttll, "b-tag category (TTLL)"), 
-        tmp_seln && higd_bcat_ttll>0., procs, linplot).Weight(wgt).Tag(sample);
-      pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat_tmml, "b-tag category (TMML)"), 
-        tmp_seln && higd_bcat_tmml>0., procs, linplot).Weight(wgt).Tag(sample);
-      pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat_mmmm, "b-tag category (MMMM)"), 
-        tmp_seln && higd_bcat_mmmm>0., procs, linplot).Weight(wgt).Tag(sample);
-    }
+      // pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat_ttll, "b-tag category (TTLL)"), 
+      //   tmp_seln && higd_bcat_ttll>0., procs, linplot).Weight(wgt).Tag(sample);
+      // pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat_tmml, "b-tag category (TMML)"), 
+      //   tmp_seln && higd_bcat_tmml>0., procs, linplot).Weight(wgt).Tag(sample);
+      // pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat_mmmm, "b-tag category (MMMM)"), 
+      //   tmp_seln && higd_bcat_mmmm>0., procs, linplot).Weight(wgt).Tag(sample);
   } else { 
     if (!note) {
       pm.Push<Hist1D>(Axis(5,0.5,5.5,hig_bcat, "CSVv2 b-tag categories (TTML)"), 
@@ -274,7 +271,7 @@ int main(int argc, char *argv[]){
           tmp_seln && "nbdt>=2", procs, logplotprint).Weight(wgt).Tag(sample+"_normext");
       } else if (subtr_ttx || !note) {
         pm.Push<Hist1D>(Axis(metbins,"met", "E_{T}^{miss} [GeV]",{150,200,300}), 
-          tmp_seln && "nbt>=2" && metdef+">"+to_string(metbins[0]), procs, logplotprint).Weight(wgt).Tag(sample+"_norm");
+          tmp_seln && "nbdt>=2" && metdef+">"+to_string(metbins[0]), procs, logplotprint).Weight(wgt).Tag(sample+"_norm");
       }
     }
   }
@@ -287,11 +284,13 @@ int main(int argc, char *argv[]){
         if (note && imet>0) break;
         tmp_seln = metcuts[imet];
         for(unsigned inb(0); inb<nbcuts.size(); inb++) {
+          int div = 1;
+          if (inb>0) div = 2;
           if (ixcut.first=="nm1") { 
-            pm.Push<Hist1D>(Axis(25,0,250,"higd_am", "<m> [GeV]", {100., 140.}),
+            pm.Push<Hist1D>(Axis(24/div,0,240,"higd_am", "<m> [GeV]", {100., 140.}),
               ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&higd_dm<40", 
               procs, linplot).Weight(wgt).Tag(sample);
-            pm.Push<Hist1D>(Axis(25,0,250,"higd_am", "<m> [GeV]", {100., 140.}),
+            pm.Push<Hist1D>(Axis(24/div,0,240,"higd_am", "<m> [GeV]", {100., 140.}),
               ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&higd_dm<40 && higd_drmax<=2.2", 
               procs, linplot).Weight(wgt).Tag(sample);
             tmp_seln = ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb];
@@ -301,14 +300,14 @@ int main(int argc, char *argv[]){
           tmp_seln = ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb];
           if(!note) pm.Push<Hist1D>(Axis(20,0,2000,"ht", "H_{T} [GeV]"), 
             tmp_seln, procs, logplot).Weight(wgt).Tag(sample);
-          if (imet==0 && !note) {
+          if (imet==0) {
             if (sample=="zll") pm.Push<Hist1D>(Axis(24,0,600,metdef, "p_{T}^{Z} [GeV]",{150,200,300}), 
               tmp_seln, procs, logplot).Weight(wgt).Tag(sample);
-            else pm.Push<Hist1D>(Axis(24,0,600,"met", "E_{T}^{miss} [GeV]",{150,200,300}), 
+            else pm.Push<Hist1D>(Axis(18,150,600,"met", "E_{T}^{miss} [GeV]",{150,200,300,450}), 
               tmp_seln, procs, logplot).Weight(wgt).Tag(sample);
           }  
           if (ixcut.first=="base") // do only with the trimmed selection
-            pm.Push<Hist1D>(Axis(20,0,4,"higd_drmax", "#DeltaR_{max}", {2.2}),
+            pm.Push<Hist1D>(Axis(20/div,0,4,"higd_drmax", "#DeltaR_{max}", {2.2}),
             ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb], 
             procs, linplot).Weight(wgt).Tag(sample);
           if (!note) {
@@ -360,6 +359,7 @@ void GetOptions(int argc, char *argv[]){
       {"lumi", required_argument, 0, 'l'},    // Luminosity to normalize MC with (no data)
       {"sample", required_argument, 0, 's'},    // Which sample to use: standard, met150, 2015 data
       {"subttx", no_argument, 0, 0},             
+      {"rewgt", no_argument, 0, 0},             
       {0, 0, 0, 0}
     };
 
@@ -380,6 +380,8 @@ void GetOptions(int argc, char *argv[]){
       optname = long_options[option_index].name;
       if(optname == "subttx"){
         subtr_ttx = true;
+      } else if(optname == "rewgt"){
+        rewgt = true;
       }else {
         printf("Bad option! Found option name %s\n", optname.c_str());
         exit(1);
