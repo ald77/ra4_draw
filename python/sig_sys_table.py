@@ -39,9 +39,9 @@ def printHeader(out_file):
     print("  \\label{tab:unc:sig}", file=out_file)
     print("  \\resizebox{\\textwidth}{!}{", file=out_file)
     print("  \\renewcommand{\\arraystretch}{1.2}", file=out_file)
-    print("  \\begin{tabular}[tbp!]{l|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c}\\hline\\hline", file=out_file)
-    print("  \\multirow{3}{*}{Uncertainty [\\%]} & \\multicolumn{6}{c|}{$200<\\MET\\leq350$} & \\multicolumn{6}{c|}{$350<\\MET\\leq500$} & \\multicolumn{6}{c}{$\\MET>500$}\\\\", file=out_file)
-    print("  \\cline{2-19} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c|}{$\\njets\\geq9$} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c|}{$\\njets\\geq9$} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c}{$\\njets\\geq9$}\\\\", file=out_file)
+    print("  \\begin{tabular}[tbp!]{l||ccc|ccc||ccc|ccc||ccc|ccc}\\hline\\hline", file=out_file)
+    print("  \\multirow{3}{*}{Uncertainty [\\%]} & \\multicolumn{6}{c||}{$200<\\MET\\leq350$} & \\multicolumn{6}{c||}{$350<\\MET\\leq500$} & \\multicolumn{6}{c}{$\\MET>500$}\\\\", file=out_file)
+    print("  \\cline{2-19} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c||}{$\\njets\\geq9$} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c||}{$\\njets\\geq9$} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c}{$\\njets\\geq9$}\\\\", file=out_file)
     print("  \\cline{2-19} & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$\\\\", file=out_file)
 
 def prettySysName(sys_name):
