@@ -23,8 +23,8 @@ int main(){
   double lumi = 35.9;
 
   string trig_mc        = "/net/cms29/cms29r0/babymaker/babies/2017_01_27/mc/unskimmed/";
-  //string trig_skim1l_mc = "/net/cms29/cms29r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/";
-  string trig_skim1l_mc = "/net/cms29/cms29r0/babymaker/babies/2017_01_27/mc/skim_met100/";
+  string trig_skim1l_mc = "/net/cms29/cms29r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/";
+  //string trig_skim1l_mc = "/net/cms29/cms29r0/babymaker/babies/2017_01_27/mc/skim_met100/"; // for njets plots
   string trig_skim0l_mc = "/net/cms29/cms29r0/babymaker/babies/2017_01_27/mc/merged_qcd/"; // this does not exist
   string trig_skim2l_mc = "/net/cms29/cms29r0/babymaker/babies/2017_01_27/mc/merged_dy_ht300/"; // this does not exist 
 
@@ -55,8 +55,8 @@ int main(){
   t1tttt_c->SetLineStyle(2);
 
   auto data_1l = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    {"/net/cms29/cms29r0/babymaker/babies/2017_02_14/data/skim_met100/*.root"},"pass&&(met/met_calo<5.0)&&pass_ra2_badmu&&trig_ra4");
-    //{"/net/cms29/cms29r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/*.root"},"pass&&(met/met_calo<5.0)&&pass_ra2_badmu&&trig_ra4");
+    //{"/net/cms29/cms29r0/babymaker/babies/2017_02_14/data/skim_met100/*.root"},"pass&&(met/met_calo<5.0)&&pass_ra2_badmu&&trig_ra4"); // for njets plots
+    {"/net/cms29/cms29r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/*.root"},"pass&&(met/met_calo<5.0)&&pass_ra2_badmu&&trig_ra4");
   vector<shared_ptr<Process> > full_trig_skim_1l = {data_1l, t1tttt_nc, t1tttt_c, tt1l, tt2l, wjets, single_t, ttv, other};
 
   //
@@ -297,7 +297,6 @@ int main(){
           pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "nfjets14", "N_{J} [GeV]"),
                           lepcut&&lowmtcut&&njetscut&&nbcut&&nvetocut,
                           full_trig_skim_1l, all_plot_types);
-
         } //for(int inb=0; inb<2; inb++)
       } //for(int injets=0; injets<2; injets++)
     } //for(int inveto=0; inveto<2; inveto++)
@@ -451,7 +450,7 @@ int main(){
           "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(14, 0., 280., "mt", "m_{T} [GeV]", {140.}),
-          "st>500&&nleps==2&&njets>=5&&nbm>=0&&met>200&&met<500", 
+          "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
                   full_trig_skim_1l, all_plot_types);
 
   pm.MakePlots(lumi);
