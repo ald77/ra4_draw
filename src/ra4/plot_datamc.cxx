@@ -20,43 +20,44 @@ using namespace PlotOptTypes;
 int main(){
   gErrorIgnoreLevel = 6000;
 
-  double lumi = 36.2;
+  double lumi = 35.9;
 
-  // 80X (ttbar, qcd, dy[ht=100-600], wjets) + 74X (rest)
-  string trig_mc        = "/net/cms2/cms2r0/babymaker/babies/2016_08_10/mc/unskimmed/";
-  string trig_skim1l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_08_10/mc/skim_standard/";
-  string trig_skim0l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_08_10/mc/merged_qcd/";
-  string trig_skim2l_mc = "/net/cms2/cms2r0/babymaker/babies/2016_08_10/mc/merged_dy_ht300/";
+  string trig_mc        = "/net/cms29/cms29r0/babymaker/babies/2017_01_27/mc/unskimmed/";
+  //string trig_skim1l_mc = "/net/cms29/cms29r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/";
+  string trig_skim1l_mc = "/net/cms29/cms29r0/babymaker/babies/2017_01_27/mc/skim_met100/";
+  string trig_skim0l_mc = "/net/cms29/cms29r0/babymaker/babies/2017_01_27/mc/merged_qcd/"; // this does not exist
+  string trig_skim2l_mc = "/net/cms29/cms29r0/babymaker/babies/2017_01_27/mc/merged_dy_ht300/"; // this does not exist 
 
   Palette colors("txt/colors.txt", "default");
 
   auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
-    {trig_skim1l_mc+"*_TTJets*Lept*.root", trig_skim1l_mc+"*_TTJets_HT*.root"}, "ntruleps<=1&&stitch");
+    {trig_skim1l_mc+"*_TTJets*SingleLept*.root"}, "ntruleps<=1&&stitch_met");
   auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
-    {trig_skim1l_mc+"*_TTJets*Lept*.root", trig_skim1l_mc+"*_TTJets_HT*.root"}, "ntruleps>=2&&stitch");
+    {trig_skim1l_mc+"*_TTJets*DiLept*.root"}, "ntruleps>=2&&stitch_met");
   auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
-    {trig_skim1l_mc+"*_WJetsToLNu*.root"},"stitch");
+    {trig_skim1l_mc+"*_WJetsToLNu*.root"},"stitch_met");
   auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
     {trig_skim1l_mc+"*_ST_*.root"});
   auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
-    {trig_skim1l_mc+"*_TTWJets*.root", trig_skim1l_mc+"*_TTZTo*.root"});
+    {trig_skim1l_mc+"*_TTWJets*.root", trig_skim1l_mc+"*_TTZ*.root"});
   auto other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    {trig_skim1l_mc+"*DYJetsToLL*.root", trig_skim1l_mc+"*_QCD_HT*.root",
-        trig_skim1l_mc+"*_ZJet*.root", trig_skim1l_mc+"*_WWTo*.root",
-        trig_skim1l_mc+"*ggZH_HToBB*.root", trig_skim1l_mc+"*ttHJetTobb*.root",
+    {trig_skim1l_mc+"*DYJetsToLL*.root", trig_skim1l_mc+"*QCD_HT*0_Tune*.root", trig_skim1l_mc+"*QCD_HT*Inf_Tune*.root",
+        trig_skim1l_mc+"*_ZJet*.root", trig_skim1l_mc+"*_ttHTobb_M125_*.root",
         trig_skim1l_mc+"*_TTGJets*.root", trig_skim1l_mc+"*_TTTT_*.root",
-        trig_skim1l_mc+"*_WH_HToBB*.root", trig_skim1l_mc+"*_WZTo*.root",
-        trig_skim1l_mc+"*_ZH_HToBB*.root", trig_skim1l_mc+"_ZZ_*.root"});
+        trig_skim1l_mc+"*_WH_HToBB*.root", trig_skim1l_mc+"*_ZH_HToBB*.root", 
+        trig_skim1l_mc+"*_WWTo*.root", trig_skim1l_mc+"*_WZ*.root",
+        trig_skim1l_mc+"_ZZ_*.root"}, "stitch_met");
 
-  auto t1tttt_nc = Process::MakeShared<Baby_full>("T1tttt(1500,100)", Process::Type::signal, colors("t1tttt"),
-    {trig_mc+"*SMS-T1tttt_mGluino-1500_mLSP-100*.root"});
-  auto t1tttt_c = Process::MakeShared<Baby_full>("T1tttt(1200,800)", Process::Type::signal, colors("t1tttt"),
-    {trig_mc+"*SMS-T1tttt_mGluino-1200_mLSP-800*.root"});
+  auto t1tttt_nc = Process::MakeShared<Baby_full>("T1tttt(1800,100)", Process::Type::signal, colors("t1tttt"),
+    {"/net/cms29/cms29r0/babymaker/babies/2017_02_07/T1tttt/unskimmed/*SMS-T1tttt_mGluino-1800_mLSP-100*.root"});
+  auto t1tttt_c = Process::MakeShared<Baby_full>("T1tttt(1400,1000)", Process::Type::signal, colors("t1tttt"),
+    {"/net/cms29/cms29r0/babymaker/babies/2017_02_07/T1tttt/unskimmed/*SMS-T1tttt_mGluino-1400_mLSP-1000*.root"});
   t1tttt_c->SetLineStyle(2);
 
   auto data_1l = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    {"/net/cms2/cms2r0/babymaker/babies/2016_11_08/data/skim_standard/*.root"},"pass&&trig_ra4");
-  vector<shared_ptr<Process> > full_trig_skim_1l = {data_1l, /*t1tttt_nc, t1tttt_c,*/ tt1l, tt2l, wjets, single_t, ttv, other};
+    {"/net/cms29/cms29r0/babymaker/babies/2017_02_14/data/skim_met100/*.root"},"pass&&(met/met_calo<5.0)&&pass_ra2_badmu&&trig_ra4");
+    //{"/net/cms29/cms29r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/*.root"},"pass&&(met/met_calo<5.0)&&pass_ra2_badmu&&trig_ra4");
+  vector<shared_ptr<Process> > full_trig_skim_1l = {data_1l, t1tttt_nc, t1tttt_c, tt1l, tt2l, wjets, single_t, ttv, other};
 
   //
   // 0-lepton plots
@@ -123,8 +124,11 @@ int main(){
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info);
   vector<PlotOpt> all_plot_types = {log_lumi_info, lin_lumi_info};
 
-  NamedFunc lowmtcut = "st>500&&met>200&&mt<140";
-  NamedFunc lowmjcut = "st>500&&met>200&&mj14<400";
+  // No need to be blind anymore
+  //NamedFunc lowmtcut = "st>500&&met>200&&mt<140"; 
+  //NamedFunc lowmjcut = "st>500&&met>200&&mj14<400";
+  NamedFunc lowmtcut = "st>500&&met>200";
+  NamedFunc lowmjcut = "st>500&&met>200";
   PlotMaker pm;
 
   for(int ilep=0; ilep<3; ilep++){
@@ -358,46 +362,49 @@ int main(){
 
  // nleps==1 && nveto==1
   pm.Push<Hist1D>(Axis(10, 0, 1000., "fjets14_pt[0]", "p_{T}(J1) [GeV]"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(10, 0, 500., "fjets14_m[0]", "m_{J1} [GeV]"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "fjets14_eta[0]", "#eta(J1)"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "fjets14_nconst[0]", "N_{constituents}(J1)"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(10, 0, 1000., "fjets14_pt", "p_{T}(J) [GeV]"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(10, 0, 500., "fjets14_m", "m_{J} [GeV]"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(10, -2.5, 2.5, "fjets14_eta", "#eta(J)"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "fjets14_nconst", "N_{constituents}(J)"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(15, 0., 2000., "mj14", "M_{J} [GeV]", {400.}),
-                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&nbm<=2&&met>200&&met<500",
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200",
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(7, 0.5, 7.5, "nfjets14", "N_{J} [GeV]"),
-                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&nbm<=2&&met>200&&met<500", 
+                  "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200", 
                   full_trig_skim_1l, all_plot_types); 
   pm.Push<Hist1D>(Axis(15, 500, 2000., "st", "S_{T} [GeV]", {500.}),
-          "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&nbm<=2&&met>200&&met<500", 
+          "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(10, 200, 700., "met", "E_{T}^{miss} [GeV]", {200., 350., 500.}),
-          "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&nbm<=2&&met>200&&met<500", 
+          "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(16, -0.5, 15.5, "njets", "N_{jets}", {5.5, 8.5}),
-          "st>500&&nleps==1&&nveto==1&&mt>140&&nbm>=1&&nbm<=2&&met>200&&met<500", 
+          "st>500&&nleps==1&&nveto==1&&mt>140&&nbm>=1&&met>200", 
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbm", "N_{b}", {0.5, 1.5, 2.5}),
-          "st>500&&nleps==1&&nveto==1&&nbm<=2&&njets>=6&&mt>140&&met>200&&met<500", 
+          "st>500&&nleps==1&&nveto==1&&nbm>=0&&njets>=6&&mt>140&&met>200", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(14, 0., 280., "mt", "m_{T} [GeV]", {140.}),
+          "st>500&&nleps==1&&nveto==1&&njets>=6&&mt>140&&nbm>=1&&met>200",
                   full_trig_skim_1l, all_plot_types);
 
  // nleps==2
@@ -442,6 +449,9 @@ int main(){
                   full_trig_skim_1l, all_plot_types);
   pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nbm", "N_{b}", {0.5, 1.5, 2.5}),
           "st>500&&nleps==2&&njets>=5&&nbm<=2&&met>200&&met<500", 
+                  full_trig_skim_1l, all_plot_types);
+  pm.Push<Hist1D>(Axis(14, 0., 280., "mt", "m_{T} [GeV]", {140.}),
+          "st>500&&nleps==2&&njets>=5&&nbm>=0&&met>200&&met<500", 
                   full_trig_skim_1l, all_plot_types);
 
   pm.MakePlots(lumi);
