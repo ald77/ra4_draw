@@ -41,7 +41,7 @@ def printHeader(out_file):
     print("  \\renewcommand{\\arraystretch}{1.2}", file=out_file)
     print("  \\begin{tabular}[tbp!]{l|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c}\\hline\\hline", file=out_file)
     print("  \\multirow{3}{*}{Uncertainty [\\%]} & \\multicolumn{6}{c|}{$200<\\MET\\leq350$} & \\multicolumn{6}{c|}{$350<\\MET\\leq500$} & \\multicolumn{6}{c}{$\\MET>500$}\\\\", file=out_file)
-    print("  \\cline{2-19} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c|}{$\\njets\\geq9$} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c|}{$\\njets\\geq9$} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c|}{$\\njets\\geq9$}\\\\", file=out_file)
+    print("  \\cline{2-19} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c|}{$\\njets\\geq9$} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c|}{$\\njets\\geq9$} & \\multicolumn{3}{c|}{$6\\leq\\njets\\leq8$} & \\multicolumn{3}{c}{$\\njets\\geq9$}\\\\", file=out_file)
     print("  \\cline{2-19} & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$ & $\\nb=1$ & $\\nb=2$ & $\\nb\geq3$\\\\", file=out_file)
 
 def prettySysName(sys_name):
@@ -115,7 +115,7 @@ def recordValue(line, values):
 
 def modelName(path):
     name = os.path.basename(path)
-    regex = re.compile("^sys.*?_SMS-(.*?)_mGluino-(.*?)_mLSP-(.*?)_")
+    regex = re.compile("sys.*?_SMS-(.*?)_mGluino-(.*?)_mLSP-(.*?)_")
     result = regex.match(name)
     if result:
         return "{}({},{})".format(result.group(1), result.group(2), result.group(3))

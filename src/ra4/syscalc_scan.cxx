@@ -19,10 +19,17 @@
 
 using namespace std;
 namespace {
+  bool fake_PU = false;
   TString luminosity = "35.9";
-  TString nom_wgt = "weight*eff_trig"; // nominal weight to use, (no division in bcut yet...)
-  enum SysType {kConst, kWeight, kSmear, kCorr, kMetSwap};
+  TString nom_wgt = "weight*eff_trig"; // nominal weight to use
+  enum SysType {kConst, kWeight, kSmear, kCorr, kMetSwap, kPU};
   TString syst = "all";
+
+  const vector<double> v_data_npv{6.540e-06, 2.294e-05, 6.322e-05, 8.558e-05, 1.226e-04, 1.642e-04, 1.917e-04, 3.531e-04, 9.657e-04, 2.155e-03, 4.846e-03, 9.862e-03, 1.651e-02, 2.401e-02, 3.217e-02, 4.078e-02, 4.818e-02, 5.324e-02, 5.612e-02, 5.756e-02, 5.841e-02, 5.886e-02, 5.831e-02, 5.649e-02, 5.376e-02, 5.044e-02, 4.667e-02, 4.257e-02, 3.833e-02, 3.406e-02, 2.982e-02, 2.567e-02, 2.169e-02, 1.799e-02, 1.464e-02, 1.170e-02, 9.178e-03, 7.058e-03, 5.306e-03, 3.884e-03, 2.757e-03, 1.890e-03, 1.247e-03, 7.901e-04, 4.795e-04, 2.783e-04, 1.544e-04, 8.181e-05, 4.141e-05, 2.004e-05, 9.307e-06, 4.178e-06, 1.846e-06, 8.350e-07, 4.150e-07, 2.458e-07, 1.779e-07, 1.488e-07, 1.339e-07, 1.238e-07, 1.153e-07, 1.071e-07, 9.899e-08, 9.095e-08, 8.301e-08, 7.527e-08, 6.778e-08, 6.063e-08, 5.387e-08, 4.753e-08, 4.166e-08, 3.627e-08, 3.136e-08, 2.693e-08, 2.297e-08};
+  TH1D h_data_npv("h_data_npv", "Data;N_{PV};P(N_{PV})", v_data_npv.size(), -0.5, v_data_npv.size()-0.5);
+  TH1D h_mc_npv("h_mc_npv", "MC;N_{PV};P(N_{PV})", v_data_npv.size(), -0.5, v_data_npv.size()-0.5);
+  double pu_low = 0.;
+  double pu_high = 0.;
 }
 
 class bindef {
@@ -123,10 +130,9 @@ int main(int argc, char *argv[]){
   for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_isr["+to_string(i)+"]/w_isr");
   v_sys.push_back(sysdef("Jet ID FS", "jetid", kConst));
   v_sys.back().v_wgts.push_back("0.01");
-  v_sys.push_back(sysdef("Pile up", "pu", kConst));
-  v_sys.back().v_wgts.push_back("0.05");
+  v_sys.push_back(sysdef("Pile up", "pu", kPU));
   v_sys.push_back(sysdef("Luminosity", "lumi", kConst));
-  v_sys.back().v_wgts.push_back("0.046");
+  v_sys.back().v_wgts.push_back("0.026");
 
   //// tables has a vector of the tables you want to print
   TString baseline("st>500 && met>200 && mj14>250 && njets>=6 && nbm>=1 && nleps==1 && nveto==0");
@@ -206,6 +212,13 @@ int main(int argc, char *argv[]){
       for (auto &bin: v_bins) {
 	bcuts.emplace_back(nom2genmet("("+baseline+"&&"+bin.cut)+")*"+nom_wgt);
       }
+    } else if (sys.sys_type == kPU) {
+      for(const auto &bin: v_bins){
+        bcuts.emplace_back("("+baseline+"&&"+bin.cut+"&&"+"ntrupv<=20)*"+nom_wgt);
+        bcuts.emplace_back("(ntrupv<=20)*"+nom_wgt);
+        bcuts.emplace_back("("+baseline+"&&"+bin.cut+"&&"+"ntrupv>=21)*"+nom_wgt);
+        bcuts.emplace_back("(ntrupv>=21)*"+nom_wgt);
+      }
     }
   }
   
@@ -270,6 +283,31 @@ int main(int argc, char *argv[]){
       } else if (sys.sys_type == kCorr) {
         up = yields[sys.ind + 2*ibin]/nom_yield - 1;
         dn = yields[sys.ind + 2*ibin + 1]/nom_yield - 1;
+      } else if (sys.sys_type == kPU ) {
+        double eff_low  = yields[sys.ind+4*ibin+0]/yields[sys.ind+4*ibin+1];
+        double eff_high = yields[sys.ind+4*ibin+2]/yields[sys.ind+4*ibin+3];
+        double m = (eff_high-eff_low)/(pu_high-pu_low);
+        double b = (eff_low*pu_high-eff_high*pu_low)/(pu_high-pu_low);
+        double eff_data = 0., eff_mc = 0.;
+        for(size_t i = 0; i < v_data_npv.size(); ++i){
+          double fx = m*static_cast<double>(i)+b;
+          eff_data += fx*h_data_npv.GetBinContent(i+1);
+          eff_mc += fx*h_mc_npv.GetBinContent(i+1);
+        }
+        up = (eff_data-eff_mc)/eff_mc;
+        dn = -up;
+
+        //Temporary stand-in until better method available
+        if(fake_PU){
+          if((v_bins.at(ibin).tag.Contains("lowmet") || v_bins.at(ibin).tag.Contains("medmet"))
+             && (v_bins.at(ibin).tag.Contains("lownj") || v_bins.at(ibin).tag.Contains("r1_") || v_bins.at(ibin).tag.Contains("r3_"))){
+            up = 0.1;
+            dn = 0.1;
+          }else{
+            up = 0.15;
+            dn = 0.15;
+          }
+        }
       }
       // convert to ra4_stats input and write to file
       double ln = (up>0 ? 1:-1)*max(up>0 ? up : (1/(1+up)-1), dn>0 ? dn : (1/(1+dn)-1));
@@ -325,6 +363,7 @@ void GetOptions(int argc, char *argv[], TString &infolder, TString &outfolder, T
       {"outfolder", required_argument, 0, 'o'},
       {"lumi", required_argument, 0, 'l'},
       {"alt_bin", no_argument, 0, 'b'},
+      {"fake_PU", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -340,6 +379,14 @@ void GetOptions(int argc, char *argv[], TString &infolder, TString &outfolder, T
     case 'f': infile = optarg; break;
     case 'o': outfolder = optarg; break;
     case 'l': luminosity = optarg; break;
+    case 0:
+      optname = long_options[option_index].name;
+      if(optname == "fake_PU"){
+        fake_PU = true;
+      }else{
+        printf("Bad option! Found option name %s\n", optname.c_str());
+      }
+      break;
     default: printf("Bad option! getopt_long returned character code 0%o\n", opt); break;
     }
   }
@@ -396,9 +443,16 @@ void fillTtbarSys(ofstream &fsys){
     fsys << endl;
 }
 
-vector<double> getYields(Baby_full &baby, const NamedFunc &baseline, const vector<NamedFunc> &bincuts,
+vector<double> getYields(Baby_full &baby, const NamedFunc &/*baseline*/, const vector<NamedFunc> &bincuts,
                          vector<double> &yield, vector<double> &w2, double lumi,
                          bool do_trig, const TString &flag){
+  for(size_t i = 0; i <v_data_npv.size(); ++i){
+    h_data_npv.SetBinContent(i+1, v_data_npv.at(i));
+    h_data_npv.SetBinError(i+1, 0.);
+    h_mc_npv.SetBinContent(i+1, 0.);
+    h_mc_npv.SetBinError(i+1, 0.);
+  }
+  
   vector<double> entries = vector<double>(bincuts.size(), 0);
   yield = vector<double>(bincuts.size(), 0);
   w2 = yield;
@@ -407,11 +461,12 @@ vector<double> getYields(Baby_full &baby, const NamedFunc &baseline, const vecto
 
   for(long entry = 0; entry < nentries; ++entry){
     baby.GetEntry(entry);
+    h_mc_npv.Fill(baby.ntrupv(), baby.weight()*baby.eff_trig());
     if(do_trig){
       if(!baby.pass()) continue;
       if(!baby.trig()->at(4) && !baby.trig()->at(8) && !baby.trig()->at(13) && !baby.trig()->at(33)) continue;
     }
-    if(!baseline.GetScalar(baby)) continue;
+    //if(!baseline.GetScalar(baby)) continue;
     for(size_t ind = 0; ind<bincuts.size(); ++ind){
       float wgt = bincuts.at(ind).GetScalar(baby);
       if(wgt != 0.){
@@ -433,5 +488,21 @@ vector<double> getYields(Baby_full &baby, const NamedFunc &baseline, const vecto
      yield.at(ind) *= lumi;
      w2.at(ind) *= pow(lumi, 2);
   }
+  h_data_npv.Scale(1./h_data_npv.Integral());
+  h_mc_npv.Scale(1./h_mc_npv.Integral());
+  pu_low = 0.;
+  pu_high = 0.;
+  double norm = 0.;
+  for(size_t npv = 0; npv <= 20 && npv < v_data_npv.size(); ++npv){
+    pu_low += npv*h_mc_npv.GetBinContent(npv+1);
+    norm += h_mc_npv.GetBinContent(npv+1);
+  }
+  pu_low /= norm;
+  norm = 0.;
+  for(size_t npv = 21; npv < v_data_npv.size(); ++npv){
+    pu_high += npv*h_mc_npv.GetBinContent(npv+1);
+    norm += h_mc_npv.GetBinContent(npv+1);
+  }
+  pu_high /= norm;
   return entries;
 }
