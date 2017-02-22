@@ -1050,8 +1050,6 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   if(ichep_nbm) fname += "_ichepnbm";
   fname += ".pdf";
   can.SaveAs(fname);
-  fname.ReplaceAll(".pdf",".png");
-  can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl;
 
 }
@@ -1341,8 +1339,6 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   lumi_s.ReplaceAll(".","p");
   fname += "_lumi"+lumi_s;
   fname += ".pdf";
-  can.SaveAs(fname);
-  fname.ReplaceAll(".pdf",".png");
   can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl;
 
