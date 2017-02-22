@@ -21,7 +21,7 @@ using namespace std;
 using namespace PlotOptTypes;
 
 namespace {
-  double lumi = 36.8;
+  double lumi = 35.9;
 }
 
 int main(){
@@ -29,38 +29,37 @@ int main(){
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
-    bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
+    bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
   Palette colors("txt/colors.txt", "default");
 
   string ntupletag = "*.root";
   
-  string fdata = bfolder+"/cms2r0/babymaker/babies/2016_11_08/data/merged_database_standard/";
-
-
+  string fdata = bfolder+"/cms29r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/";
+  
 
   auto data_highmt = Process::MakeShared<Baby_full>("Data 1l, m_{T} > 140", Process::Type::data, kBlack,
-    {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm_moriond>=1 && met/met_calo<5.0 && pass_ra2_badmu");
+    {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   auto data_lowmt = Process::MakeShared<Baby_full>("Data 1l, m_{T} #leq 140", Process::Type::background, kBlack,
-    {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt<=140 && nleps==1 && nveto==0 && njets>=6 && nbm_moriond>=1 && met/met_calo<5.0 && pass_ra2_badmu");
+    {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt<=140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   data_lowmt->SetFillColor(kWhite);
   data_lowmt->SetLineColor(kBlue-7);
   data_lowmt->SetLineWidth(2);
 
   auto data2lveto = Process::MakeShared<Baby_full>("Data 2l or l+trk", Process::Type::data, kBlue+2,
     {fdata+ntupletag},
-    "pass && trig_ra4 && st>500 && ((nleps==2 && njets>=5 && nbm_moriond<=2) || (nleps==1 && nveto==1 && njets>=6 && nbm_moriond>=1 && mt>140)) && met/met_calo<5.0 && pass_ra2_badmu");
+    "pass && trig_ra4 && st>500 && ((nleps==2 && njets>=5 && nbm<=2) || (nleps==1 && nveto==1 && njets>=6 && nbm>=1 && mt>140)) && met/met_calo<5.0 && pass_ra2_badmu");
 
   auto data2l = Process::MakeShared<Baby_full>("Data 2l", Process::Type::data, kMagenta+3,
     {fdata+ntupletag},
-    "pass && trig_ra4 && st>500 && (nleps==2 && njets>=5 && nbm_moriond<=2) && met/met_calo<5.0 && pass_ra2_badmu");
+    "pass && trig_ra4 && st>500 && (nleps==2 && njets>=5 && nbm<=2) && met/met_calo<5.0 && pass_ra2_badmu");
 
 
   auto t1tttt = Process::MakeShared<Baby_full>("T1tttt(1800,100)", Process::Type::signal, colors("t1tttt"),
-    {bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm_moriond>=1 && met/met_calo<5.0 && pass_ra2_badmu");
+    {"/net/cms29/cms29r0/babymaker/babies/2017_02_13_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   t1tttt->SetLineWidth(2);
   auto t1ttttc = Process::MakeShared<Baby_full>("T1tttt(1400,1000)", Process::Type::signal, colors("t1tttt"),
-    {bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/*SMS-T1tttt_mGluino-1400_mLSP-1000_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm_moriond>=1 && met/met_calo<5.0 && pass_ra2_badmu");
+    {"/net/cms29/cms29r0/babymaker/babies/2017_02_13_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1400_mLSP-1000_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   t1ttttc->SetLineWidth(2);
   t1ttttc->SetLineStyle(2);
 
@@ -94,13 +93,14 @@ int main(){
   PlotMaker pm;
 
   //data-to-data
-  vector<string> metbins = {"met>150 && met<=500", "met>150 && met<=200", "met>200 && met<=350", "met>350 && met<=500", "met>200 && met<=500","met>500","met>200","met>350"};
+  //  vector<string> metbins = {"met>150 && met<=500", "met>150 && met<=200", "met>200 && met<=350", "met>350 && met<=500", "met>200 && met<=500","met>500","met>200","met>350"};
+  vector<string> metbins = { "met>200 && met<=350", "met>350 && met<=500","met>500"};
   for (auto &imet: metbins){
     pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]",{250.,400.}),
-		    imet + "&&nbm_moriond==1", data1l_procs, lin).Tag("data1l1b").RatioTitle("Data m_{T} > 140","Data m_{T} #leq 140");
+		    imet + "&&nbm==1", data1l_procs, lin).Tag("data1l1b").RatioTitle("Data m_{T} > 140","Data m_{T} #leq 140");
 
     pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]", {250.,400.}),
-		    imet + "&&nbm_moriond>=2", data1l_procs, lin).Tag("data1l2b").RatioTitle("Data m_{T} > 140","Data m_{T} #leq 140");;
+		    imet + "&&nbm>=2", data1l_procs, lin).Tag("data1l2b").RatioTitle("Data m_{T} > 140","Data m_{T} #leq 140");;
 
     pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]", {250.,400.}),
 		    imet,  data2l_procs, lin).Tag("data2l").RatioTitle("Data 2l","Data 1l, m_{T} #leq 140");
