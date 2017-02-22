@@ -21,7 +21,7 @@ using namespace std;
 namespace {
   bool fake_PU = false;
   TString luminosity = "35.9";
-  TString nom_wgt = "weight*eff_trig"; // nominal weight to use, (no division in bcut yet...)
+  TString nom_wgt = "weight*eff_trig"; // nominal weight to use
   enum SysType {kConst, kWeight, kSmear, kCorr, kMetSwap, kPU};
   TString syst = "all";
 
