@@ -52,7 +52,7 @@ namespace{
   bool do_correction = false;
   bool table_preview = false;
   TString skim = "standard";
-  TString json = "2p6";
+  TString json = "full";
   TString only_method = "";
   TString mc_lumi = "";
   string sys_wgts_file = "txt/sys_weights.cfg";
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]){
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
-    bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
+    bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
   string ntupletag="";
   // if(only_method!="" && !only_method.Contains("allmet") && !only_method.Contains("onemet")){
@@ -148,10 +148,15 @@ int main(int argc, char *argv[]){
   }
 
   //// Capybara
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/");
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
-  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_database_stdnj5/");
+//  string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/");
+//  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
+//  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_database_stdnj5/");
   //string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_21/data/merged_database_stdnj5/");
+  
+  //// Bear 
+  string foldersig(bfolder+"/cms29r0/babymaker/babies/2017_02_07/T1tttt/unskimmed/");
+  string foldermc(bfolder+"/cms29r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/");
+  string folderdata(bfolder+"/cms29r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/");
 
   // Old 2015 data
   if(skim.Contains("2015")){
@@ -177,23 +182,21 @@ int main(int argc, char *argv[]){
   if(do_ht) baseline = baseline && "ht>500";
   else baseline = baseline && st>500;
 
-
   auto proc_t1c = Process::MakeShared<Baby_full>("T1tttt(C)", Process::Type::signal, colors("t1tttt"),
     {foldersig+"*mGluino-1400_mLSP-1000_*.root"},
-    baseline && "stitch");
+    baseline && "stitch_met");
   auto proc_t1nc = Process::MakeShared<Baby_full>("T1tttt(NC)", Process::Type::signal, colors("t1tttt"),
-    {foldersig+"*mGluino-1700_mLSP-100_*.root"},
-    baseline && "stitch");
+    {foldersig+"*mGluino-1800_mLSP-100_*.root"},
+    baseline && "stitch_met");
   auto proc_tt1l = Process::MakeShared<Baby_full>("tt 1lep", Process::Type::background, colors("tt_1l"),
-    {foldermc+"*_TTJets*SingleLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
-    baseline && "stitch && ntruleps==1 && pass");
+    {foldermc+"*_TTJets*SingleLept*"+ntupletag+"*.root"}, baseline && "stitch_met && ntruleps==1 && pass");  
   auto proc_tt2l = Process::MakeShared<Baby_full>("tt 2lep", Process::Type::background, colors("tt_2l"),
-    {foldermc+"*_TTJets*DiLept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"},
-    baseline && "stitch && ntruleps==2 && pass");
+    {foldermc+"*_TTJets*DiLept*"+ntupletag+"*.root"}, baseline && "stitch_met && ntruleps==2 && pass");
   
   // Filling all other processes
   vector<string> vnames_other({"_WJetsToLNu", "_ST_", "_TTW", "_TTZ", "DYJetsToLL", 
-	"_ZJet", "_ttHJetTobb", "_TTGJets", "_TTTT", 
+	"_ZJet", "_ttHTobb_M125_", "_TTGJets", "_TTTT",  // Bear
+    //"_ZJet", "_ttHJetTobb", "_TTGJets", "_TTTT", // Cabybara 
 	"_WH_HToBB", "_ZH_HToBB", "_WWTo", "_WZ", "_ZZ_"});
   // QCD changed name in Capybara (2016_08_10)
   if(skim.Contains("2015")) vnames_other.push_back("QCD_HT");
@@ -205,12 +208,11 @@ int main(int argc, char *argv[]){
   for(auto name : vnames_other)
     names_other.insert(name = foldermc + "*" + name + "*" + ntupletag + "*.root");
   auto proc_other = Process::MakeShared<Baby_full>("Other", Process::Type::background, colors("other"),
-    names_other, baseline && "stitch && pass");
+    names_other, baseline && "stitch_met && pass");
 
   //// All MC files to make pseudodata
   set<string> names_allmc = names_other;
   names_allmc.insert(foldermc + "*_TTJets*Lept*" + ntupletag + "*.root");
-  names_allmc.insert(foldermc + "*_TTJets_HT*" + ntupletag + "*.root");
 
   string trigs = "trig_ra4";
   if(skim.Contains("2015")) trigs = "(trig[4]||trig[8]||trig[28]||trig[14])";
@@ -240,7 +242,7 @@ int main(int argc, char *argv[]){
     lumi = 12.9;
     jsonCuts = "json12p9";
   } else if(json=="full"){
-    lumi = 36.8;
+    lumi = 35.9;
     jsonCuts = "1";
   }
   if(mc_lumi!="") lumi = mc_lumi.Atof();
@@ -253,7 +255,7 @@ int main(int argc, char *argv[]){
   if(only_mc){
     names_data = names_allmc;
     if(quick_test) names_data = set<string>({foldermc+"*_TTJets_Tune*"+ntupletag+"*.root"});
-    trigs = quick_test ? "1" : "stitch";
+    trigs = quick_test ? "1" : "stitch_met"; 
   }
   auto proc_data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     names_data,baseline && trigs && "pass");
@@ -618,7 +620,7 @@ int main(int argc, char *argv[]){
 
   bool single_thread = false;
   if(single_thread) pm.multithreaded_ = false;
-  pm.min_print_ = true;
+  pm.min_print_ = true; 
   pm.MakePlots(lumi);
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -959,7 +961,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   if(k_ordered.size()>3) label.SetTextSize(0.04);
 
 
-  float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = 2.4;
+  float minx = 0.5, maxx = nbins+0.5, miny = 0, maxy = 4.;//2.4;
   if(label_up) maxy = 2.6;
   TH1D histo("histo", "", nbins, minx, maxx);
   histo.SetMinimum(miny);
@@ -1047,6 +1049,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   if(do_ht) fname  += "_ht500";
   if(ichep_nbm) fname += "_ichepnbm";
   fname += ".pdf";
+  can.SaveAs(fname);
+  fname.ReplaceAll(".pdf",".png");
   can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl;
 
@@ -1338,6 +1342,8 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   fname += "_lumi"+lumi_s;
   fname += ".pdf";
   can.SaveAs(fname);
+  fname.ReplaceAll(".pdf",".png");
+  can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl;
 
 }
@@ -1556,14 +1562,14 @@ void GetOptions(int argc, char *argv[]){
       } else if(optname == "mm"){
         mm_scen = optarg;
       }else if(optname == "ichep_nbm"){
-	ichep_nbm = true;
+	    ichep_nbm = true;
       }else if(optname == "preview"){
-	table_preview = true;
+	    table_preview = true;
       }else if(optname == "quick"){
-	quick_test = true;
+	    quick_test = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
-	exit(1);
+	    exit(1);
       }
       break;
     default:
