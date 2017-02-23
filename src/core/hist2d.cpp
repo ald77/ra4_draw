@@ -11,9 +11,10 @@
 #include "TROOT.h"
 #include "TCanvas.h"
 #include "TLatex.h"
+#include "TPaveText.h"
 #include "TLegend.h"
 #include "TColor.h"
-
+#include "TArrow.h"
 #include "core/named_func.hpp"
 
 using namespace std;
@@ -245,6 +246,40 @@ void Hist2D::MakeOnePlot(const string &subdir){
   }
   legend.Draw("same");
   bkg_hist.Draw("axis same");
+
+    double height = 0.125;
+    double width = 0.125;
+    TPaveText l1(this_opt_.LeftMargin()+0.16,  -0.014,
+		 this_opt_.LeftMargin()+width+0.16, -0.014+height, "NDCNB");
+    TPaveText l2(1.- this_opt_.RightMargin()+0.1-width,  this_opt_.BottomMargin(),
+		 1.- this_opt_.RightMargin()+0.1,  this_opt_.BottomMargin()+height, "NDCNB");
+    TPaveText l3(this_opt_.LeftMargin()+0.16, 1.- this_opt_.TopMargin()-2.0*height,
+		 this_opt_.LeftMargin()+0.16+width, 1.- this_opt_.TopMargin()-height, "NDCNB");
+    TPaveText l4(1.- this_opt_.RightMargin()+0.1-width, 1.- this_opt_.TopMargin()-2.0*height,
+		 1.- this_opt_.RightMargin()+0.1, 1.- this_opt_.TopMargin()-height, "NDCNB");
+
+    TArrow arrow;
+    arrow.SetLineColor(kGray+2); arrow.SetFillColor(kGray+2);
+    arrow.SetArrowSize(0.015); arrow.SetLineWidth(4);
+
+    l1.AddText("R1");
+    l2.AddText("R2");
+    l3.AddText("R3");
+    l4.AddText("R4");
+    
+    SetStyle(l1);
+    SetStyle(l2);
+    SetStyle(l3);
+    SetStyle(l4);
+    if(!bkg_is_hist){
+      l1.Draw("same");
+      l2.Draw("same");
+      l3.Draw("same");
+      l4.Draw("same");
+      arrow.DrawArrow(325, -29, 325, -10);
+   }
+
+
   if(subdir != "") mkdir(("plots/"+subdir).c_str(), 0777);
   string base_name = subdir != ""
     ? "plots/"+subdir+"/"+Name()
@@ -341,6 +376,7 @@ vector<shared_ptr<TLatex> > Hist2D::GetLabels(bool bkg_is_hist) const{
   labels.back()->SetNDC();
   labels.back()->SetTextAlign(33);
   labels.back()->SetTextFont(this_opt_.Font());
+  
   return labels;
 }
 
@@ -379,15 +415,21 @@ void Hist2D::AddEntry(TLegend &l, const SingleHist2D &h, const TGraph &g) const{
     break;
   case TitleType::preliminary:
   case TitleType::simulation:
+    print_rho = true;
+    break;
   case TitleType::supplementary:
   case TitleType::data:
   default:
     print_rho = false;
     break;
   }
+  if(h.process_->type_ == Process::Type::signal){
+    print_rho = false;
+  }
+  
   if(print_rho){
     double rho = h.clusterizer_.GetHistogram(1.).GetCorrelationFactor();
-    oss.precision(2);
+    oss.precision(1);
     oss << " [#rho=" << rho << "]" << flush;
   }
   oss << flush;
@@ -431,4 +473,11 @@ const vector<unique_ptr<Hist2D::SingleHist2D> >& Hist2D::GetComponentList(const 
     ERROR("Did not understand process type "+to_string(static_cast<long>(process->type_))+".");
     return backgrounds_;
   }
+}
+
+void SetStyle(TPaveText &pt){
+  pt.SetFillColor(0);
+  pt.SetFillStyle(4000);
+  pt.SetBorderSize(0);
+  pt.SetTextColorAlpha(1,0.5);
 }

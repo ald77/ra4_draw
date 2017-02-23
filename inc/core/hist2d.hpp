@@ -6,7 +6,7 @@
 #include "TLine.h"
 #include "TLatex.h"
 #include "TLegend.h"
-
+#include "TPaveText.h"
 #include "core/figure.hpp"
 #include "core/axis.hpp"
 #include "core/plot_opt.hpp"
@@ -83,5 +83,7 @@ private:
 
   const std::vector<std::unique_ptr<SingleHist2D> >& GetComponentList(const Process *process);
 };
+
+void SetStyle(TPaveText &pt);
 
 #endif

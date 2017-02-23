@@ -32,25 +32,25 @@ int main(int argc, char *argv[]){
   gErrorIgnoreLevel = 6000;
   GetOptions(argc, argv);
 
-  double lumi = 36.8;
+  double lumi = 35.9;
 
   string base_path = "";
   string hostname = execute("echo $HOSTNAME");
   if(Contains(hostname, "cms") || Contains(hostname,"compute-")){
-    base_path = "/net/cms2";
+    base_path = "/net/cms29";
   }
-  string mc_dir = base_path+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_standard/";
+  string mc_dir = base_path+"/cms29r0/babymaker/babies/2017_01_27/mc/merged_mcbase_standard/";
 
   Palette colors("txt/colors.txt", "default");
 
   auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors.RGB(1,57,166),
-    {mc_dir+"*_TTJets*Lept*.root", mc_dir+"*_TTJets_HT*.root"},
-    "ntruleps<=1&&stitch");
+    {mc_dir+"*_TTJets*Lept*.root"},
+    "ntruleps<=1&&stitch_met");
   tt1l->SetMarkerStyle(23);
   tt1l->SetMarkerSize(0.8);
   auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors.RGB(86,160,211),
-    {mc_dir+"*_TTJets*Lept*.root", mc_dir+"*_TTJets_HT*.root"},
-    "ntruleps>=2&&stitch");
+    {mc_dir+"*_TTJets*Lept*.root"},
+    "ntruleps>=2&&stitch_met");
   tt2l->SetMarkerStyle(22);
   tt2l->SetMarkerSize(0.8);
   auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
@@ -68,12 +68,12 @@ int main(int argc, char *argv[]){
         mc_dir+"*_ZH_HToBB*.root", mc_dir+"*_ZZ_*.root"});
 
   auto t1tttt = Process::MakeShared<Baby_full>("T1tttt(1800,100)", Process::Type::signal, colors("t1tttt"),
-    {base_path+"/cms2r0/babymaker/babies/2016_08_10/T1tttt/merged_mcbase_standard/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"});
+    {base_path+"/cms29r0/babymaker/babies/2017_02_13_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"});
   t1tttt->SetMarkerStyle(21);
   t1tttt->SetMarkerSize(0.9);
 
   auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    {base_path+"/cms2r0/babymaker/babies/2016_11_08/data/merged_database_standard/*.root"},"pass&&trig_ra4");
+    {base_path+"/cms29r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/*.root"},"pass&&trig_ra4");
   data->SetMarkerStyle(20);
   data->SetMarkerSize(1.);
 
@@ -82,12 +82,12 @@ int main(int argc, char *argv[]){
 
   PlotOpt style("txt/plot_styles.txt", "Scatter");
   vector<PlotOpt> bkg_hist = {style().Stack(StackType::data_norm).Title(TitleType::preliminary)};
-  vector<PlotOpt> bkg_pts = {style().Stack(StackType::lumi_shapes).Title(TitleType::info)};
+  vector<PlotOpt> bkg_pts = {style().Stack(StackType::lumi_shapes).Title(TitleType::simulation)};
 
-  NamedFunc baseline = "nleps==1&&st>500&&met>150&&njets>=6&&nbm_moriond>=1&&nveto==0 && met/met_calo<5.0 && pass_ra2_badmu";
+  NamedFunc baseline = "nleps==1&&st>500&&met>150&&njets>=6&&nbm>=1&&nveto==0 && met/met_calo<5.0 && pass_ra2_badmu";
   NamedFunc weight = "weight";
   vector<NamedFunc> met_bins = {"met>200", "met>150&&met<=200", "met>200&&met<=350", "met>350&&met<=500", "met>500"};
-  vector<NamedFunc> nbm_bins = {"nbm_moriond>=1", "nbm_moriond==1", "nbm_moriond>=2"};
+  vector<NamedFunc> nbm_bins = {"nbm>=1", "nbm==1", "nbm>=2"};
 
   PlotMaker pm;
   for(const auto &met_bin: met_bins){
