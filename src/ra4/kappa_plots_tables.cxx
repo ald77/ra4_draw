@@ -884,10 +884,20 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   //// Setting plot style
   PlotOpt opts("txt/plot_styles.txt", "Kappa");
   if(label_up) opts.BottomMargin(0.11);
-  if(kappas.size() >= 4) {
+  if(kappas.size() >= 3) {
     opts.CanvasWidth(1300);
     markerSize = 1.5;
+    opts.YTitleOffset(0.6);
+    opts.LeftMargin(0.1);
+    if(kappas.size()>=5){
+	opts.RightMargin(0.03);
+      }
+
+    cout<<"kappas.size() is "<<kappas.size()<<endl;
+    cout<<"kappas[0].size() is "<<kappas[0].size()<<endl;
+    cout<<"kappas[0][0].size() is "<<kappas[0][0].size()<<endl;
   }
+  
   setPlotStyle(opts);
 
   struct kmarker{
@@ -1008,7 +1018,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
     if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
     // Drawing MET labels
     if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
-    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.26, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
+    else if(kappas.size()<5) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.26, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
+    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.45, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
   } // Loop over plane cuts
 
   //// Drawing legend and TGraphs
