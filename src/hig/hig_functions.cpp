@@ -328,96 +328,96 @@ const NamedFunc eff_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::Scala
         // //////// First 4.3 ifb (FULL STATUS)
 
       } else { // TRUE MET
-	if(ht>   0 && ht<= 200 && met> 150 && met<= 155) {eff = 0.456; errup = 0.012; errdown = 0.012;}
-	else if(ht> 200 && ht<= 600 && met> 150 && met<= 155) {eff = 0.526; errup = 0.004; errdown = 0.004;}
-	else if(ht> 600 && ht<= 800 && met> 150 && met<= 155) {eff = 0.460; errup = 0.015; errdown = 0.015;}
-	else if(ht> 800 && ht<=1000 && met> 150 && met<= 155) {eff = 0.457; errup = 0.025; errdown = 0.025;}
-	else if(ht>1000 && ht<=9999 && met> 150 && met<= 155) {eff = 0.395; errup = 0.029; errdown = 0.028;}
-	else if(ht>   0 && ht<= 200 && met> 155 && met<= 160) {eff = 0.530; errup = 0.013; errdown = 0.013;}
-	else if(ht> 200 && ht<= 600 && met> 155 && met<= 160) {eff = 0.585; errup = 0.005; errdown = 0.005;}
-	else if(ht> 600 && ht<= 800 && met> 155 && met<= 160) {eff = 0.544; errup = 0.016; errdown = 0.016;}
-	else if(ht> 800 && ht<=1000 && met> 155 && met<= 160) {eff = 0.442; errup = 0.026; errdown = 0.026;}
-	else if(ht>1000 && ht<=9999 && met> 155 && met<= 160) {eff = 0.489; errup = 0.031; errdown = 0.031;}
-	else if(ht>   0 && ht<= 200 && met> 160 && met<= 165) {eff = 0.552; errup = 0.014; errdown = 0.014;}
-	else if(ht> 200 && ht<= 600 && met> 160 && met<= 165) {eff = 0.640; errup = 0.005; errdown = 0.005;}
-	else if(ht> 600 && ht<= 800 && met> 160 && met<= 165) {eff = 0.596; errup = 0.016; errdown = 0.016;}
-	else if(ht> 800 && ht<=1000 && met> 160 && met<= 165) {eff = 0.490; errup = 0.028; errdown = 0.028;}
-	else if(ht>1000 && ht<=9999 && met> 160 && met<= 165) {eff = 0.442; errup = 0.034; errdown = 0.033;}
-	else if(ht>   0 && ht<= 200 && met> 165 && met<= 170) {eff = 0.593; errup = 0.016; errdown = 0.016;}
-	else if(ht> 200 && ht<= 600 && met> 165 && met<= 170) {eff = 0.686; errup = 0.005; errdown = 0.005;}
-	else if(ht> 600 && ht<= 800 && met> 165 && met<= 170) {eff = 0.610; errup = 0.016; errdown = 0.016;}
-	else if(ht> 800 && ht<=1000 && met> 165 && met<= 170) {eff = 0.616; errup = 0.027; errdown = 0.028;}
-	else if(ht>1000 && ht<=9999 && met> 165 && met<= 170) {eff = 0.551; errup = 0.032; errdown = 0.032;}
-	else if(ht>   0 && ht<= 200 && met> 170 && met<= 175) {eff = 0.636; errup = 0.018; errdown = 0.018;}
-	else if(ht> 200 && ht<= 600 && met> 170 && met<= 175) {eff = 0.730; errup = 0.005; errdown = 0.005;}
-	else if(ht> 600 && ht<= 800 && met> 170 && met<= 175) {eff = 0.667; errup = 0.017; errdown = 0.017;}
-	else if(ht> 800 && ht<=1000 && met> 170 && met<= 175) {eff = 0.623; errup = 0.027; errdown = 0.028;}
-	else if(ht>1000 && ht<=9999 && met> 170 && met<= 175) {eff = 0.507; errup = 0.036; errdown = 0.036;}
-	else if(ht>   0 && ht<= 200 && met> 175 && met<= 180) {eff = 0.634; errup = 0.019; errdown = 0.019;}
-	else if(ht> 200 && ht<= 600 && met> 175 && met<= 180) {eff = 0.771; errup = 0.005; errdown = 0.005;}
-	else if(ht> 600 && ht<= 800 && met> 175 && met<= 180) {eff = 0.671; errup = 0.016; errdown = 0.017;}
-	else if(ht> 800 && ht<=1000 && met> 175 && met<= 180) {eff = 0.677; errup = 0.029; errdown = 0.030;}
-	else if(ht>1000 && ht<=9999 && met> 175 && met<= 180) {eff = 0.574; errup = 0.034; errdown = 0.035;}
-	else if(ht>   0 && ht<= 200 && met> 180 && met<= 185) {eff = 0.721; errup = 0.020; errdown = 0.021;}
-	else if(ht> 200 && ht<= 600 && met> 180 && met<= 185) {eff = 0.801; errup = 0.005; errdown = 0.005;}
-	else if(ht> 600 && ht<= 800 && met> 180 && met<= 185) {eff = 0.731; errup = 0.016; errdown = 0.017;}
-	else if(ht> 800 && ht<=1000 && met> 180 && met<= 185) {eff = 0.712; errup = 0.027; errdown = 0.029;}
-	else if(ht>1000 && ht<=9999 && met> 180 && met<= 185) {eff = 0.640; errup = 0.037; errdown = 0.039;}
-	else if(ht>   0 && ht<= 200 && met> 185 && met<= 190) {eff = 0.704; errup = 0.024; errdown = 0.025;}
-	else if(ht> 200 && ht<= 600 && met> 185 && met<= 190) {eff = 0.832; errup = 0.005; errdown = 0.005;}
-	else if(ht> 600 && ht<= 800 && met> 185 && met<= 190) {eff = 0.764; errup = 0.015; errdown = 0.016;}
-	else if(ht> 800 && ht<=1000 && met> 185 && met<= 190) {eff = 0.751; errup = 0.027; errdown = 0.029;}
-	else if(ht>1000 && ht<=9999 && met> 185 && met<= 190) {eff = 0.685; errup = 0.033; errdown = 0.035;}
-	else if(ht>   0 && ht<= 200 && met> 190 && met<= 195) {eff = 0.768; errup = 0.025; errdown = 0.026;}
-	else if(ht> 200 && ht<= 600 && met> 190 && met<= 195) {eff = 0.858; errup = 0.005; errdown = 0.005;}
-	else if(ht> 600 && ht<= 800 && met> 190 && met<= 195) {eff = 0.834; errup = 0.014; errdown = 0.015;}
-	else if(ht> 800 && ht<=1000 && met> 190 && met<= 195) {eff = 0.762; errup = 0.028; errdown = 0.030;}
-	else if(ht>1000 && ht<=9999 && met> 190 && met<= 195) {eff = 0.745; errup = 0.031; errdown = 0.033;}
-	else if(ht>   0 && ht<= 200 && met> 195 && met<= 200) {eff = 0.700; errup = 0.030; errdown = 0.032;}
-	else if(ht> 200 && ht<= 600 && met> 195 && met<= 200) {eff = 0.869; errup = 0.005; errdown = 0.005;}
-	else if(ht> 600 && ht<= 800 && met> 195 && met<= 200) {eff = 0.776; errup = 0.017; errdown = 0.018;}
-	else if(ht> 800 && ht<=1000 && met> 195 && met<= 200) {eff = 0.783; errup = 0.027; errdown = 0.030;}
-	else if(ht>1000 && ht<=9999 && met> 195 && met<= 200) {eff = 0.721; errup = 0.033; errdown = 0.036;}
-	else if(ht>   0 && ht<= 200 && met> 200 && met<= 210) {eff = 0.777; errup = 0.021; errdown = 0.023;}
-	else if(ht> 200 && ht<= 600 && met> 200 && met<= 210) {eff = 0.896; errup = 0.003; errdown = 0.003;}
-	else if(ht> 600 && ht<= 800 && met> 200 && met<= 210) {eff = 0.866; errup = 0.010; errdown = 0.011;}
-	else if(ht> 800 && ht<=1000 && met> 200 && met<= 210) {eff = 0.823; errup = 0.018; errdown = 0.019;}
-	else if(ht>1000 && ht<=9999 && met> 200 && met<= 210) {eff = 0.723; errup = 0.025; errdown = 0.026;}
-	else if(ht>   0 && ht<= 200 && met> 210 && met<= 220) {eff = 0.799; errup = 0.028; errdown = 0.031;}
-	else if(ht> 200 && ht<= 600 && met> 210 && met<= 220) {eff = 0.926; errup = 0.003; errdown = 0.003;}
-	else if(ht> 600 && ht<= 800 && met> 210 && met<= 220) {eff = 0.890; errup = 0.010; errdown = 0.010;}
-	else if(ht> 800 && ht<=1000 && met> 210 && met<= 220) {eff = 0.863; errup = 0.018; errdown = 0.020;}
-	else if(ht>1000 && ht<=9999 && met> 210 && met<= 220) {eff = 0.798; errup = 0.022; errdown = 0.024;}
-	else if(ht>   0 && ht<= 200 && met> 220 && met<= 230) {eff = 0.824; errup = 0.028; errdown = 0.031;}
-	else if(ht> 200 && ht<= 600 && met> 220 && met<= 230) {eff = 0.940; errup = 0.003; errdown = 0.003;}
-	else if(ht> 600 && ht<= 800 && met> 220 && met<= 230) {eff = 0.899; errup = 0.010; errdown = 0.011;}
-	else if(ht> 800 && ht<=1000 && met> 220 && met<= 230) {eff = 0.903; errup = 0.015; errdown = 0.018;}
-	else if(ht>1000 && ht<=9999 && met> 220 && met<= 230) {eff = 0.843; errup = 0.021; errdown = 0.023;}
-	else if(ht>   0 && ht<= 200 && met> 230 && met<= 240) {eff = 0.821; errup = 0.038; errdown = 0.045;}
-	else if(ht> 200 && ht<= 600 && met> 230 && met<= 240) {eff = 0.957; errup = 0.003; errdown = 0.003;}
-	else if(ht> 600 && ht<= 800 && met> 230 && met<= 240) {eff = 0.925; errup = 0.009; errdown = 0.010;}
-	else if(ht> 800 && ht<=1000 && met> 230 && met<= 240) {eff = 0.920; errup = 0.015; errdown = 0.017;}
-	else if(ht>1000 && ht<=9999 && met> 230 && met<= 240) {eff = 0.908; errup = 0.018; errdown = 0.022;}
-	else if(ht>   0 && ht<= 200 && met> 240 && met<= 250) {eff = 0.762; errup = 0.050; errdown = 0.057;}
-	else if(ht> 200 && ht<= 600 && met> 240 && met<= 250) {eff = 0.966; errup = 0.003; errdown = 0.003;}
-	else if(ht> 600 && ht<= 800 && met> 240 && met<= 250) {eff = 0.963; errup = 0.007; errdown = 0.008;}
-	else if(ht> 800 && ht<=1000 && met> 240 && met<= 250) {eff = 0.939; errup = 0.014; errdown = 0.018;}
-	else if(ht>1000 && ht<=9999 && met> 240 && met<= 250) {eff = 0.881; errup = 0.023; errdown = 0.027;}
-	else if(ht>   0 && ht<= 200 && met> 250 && met<= 275) {eff = 0.853; errup = 0.035; errdown = 0.042;}
-	else if(ht> 200 && ht<= 600 && met> 250 && met<= 275) {eff = 0.975; errup = 0.002; errdown = 0.002;}
-	else if(ht> 600 && ht<= 800 && met> 250 && met<= 275) {eff = 0.970; errup = 0.004; errdown = 0.005;}
-	else if(ht> 800 && ht<=1000 && met> 250 && met<= 275) {eff = 0.969; errup = 0.007; errdown = 0.009;}
-	else if(ht>1000 && ht<=9999 && met> 250 && met<= 275) {eff = 0.901; errup = 0.014; errdown = 0.015;}
-	else if(ht>   0 && ht<= 200 && met> 275 && met<= 300) {eff = 0.877; errup = 0.044; errdown = 0.060;}
-	else if(ht> 200 && ht<= 600 && met> 275 && met<= 300) {eff = 0.986; errup = 0.002; errdown = 0.002;}
-	else if(ht> 600 && ht<= 800 && met> 275 && met<= 300) {eff = 0.970; errup = 0.005; errdown = 0.006;}
-	else if(ht> 800 && ht<=1000 && met> 275 && met<= 300) {eff = 0.959; errup = 0.009; errdown = 0.011;}
-	else if(ht>1000 && ht<=9999 && met> 275 && met<= 300) {eff = 0.942; errup = 0.012; errdown = 0.014;}
-	else if(ht>   0 && ht<= 200 && met> 300 && met<=9999) {eff = 0.822; errup = 0.059; errdown = 0.076;}
-	else if(ht> 200 && ht<= 600 && met> 300 && met<=9999) {eff = 0.991; errup = 0.001; errdown = 0.001;}
-	else if(ht> 600 && ht<= 800 && met> 300 && met<=9999) {eff = 0.995; errup = 0.001; errdown = 0.001;}
-	else if(ht> 800 && ht<=1000 && met> 300 && met<=9999) {eff = 0.991; errup = 0.002; errdown = 0.003;}
-	else if(ht>1000 && ht<=9999 && met> 300 && met<=9999) {eff = 0.972; errup = 0.004; errdown = 0.004;}
+	if(ht>   0 && ht<= 200 && met> 150 && met<= 155) {eff = 0.491; errup = 0.013; errdown = 0.013;}
+	else if(ht> 200 && ht<= 600 && met> 150 && met<= 155) {eff = 0.574; errup = 0.005; errdown = 0.005;}
+	else if(ht> 600 && ht<= 800 && met> 150 && met<= 155) {eff = 0.515; errup = 0.022; errdown = 0.022;}
+	else if(ht> 800 && ht<=1000 && met> 150 && met<= 155) {eff = 0.538; errup = 0.041; errdown = 0.041;}
+	else if(ht>1000 && ht<=9999 && met> 150 && met<= 155) {eff = 0.483; errup = 0.051; errdown = 0.050;}
+	else if(ht>   0 && ht<= 200 && met> 155 && met<= 160) {eff = 0.569; errup = 0.014; errdown = 0.015;}
+	else if(ht> 200 && ht<= 600 && met> 155 && met<= 160) {eff = 0.638; errup = 0.006; errdown = 0.006;}
+	else if(ht> 600 && ht<= 800 && met> 155 && met<= 160) {eff = 0.641; errup = 0.023; errdown = 0.024;}
+	else if(ht> 800 && ht<=1000 && met> 155 && met<= 160) {eff = 0.477; errup = 0.044; errdown = 0.044;}
+	else if(ht>1000 && ht<=9999 && met> 155 && met<= 160) {eff = 0.570; errup = 0.052; errdown = 0.053;}
+	else if(ht>   0 && ht<= 200 && met> 160 && met<= 165) {eff = 0.591; errup = 0.016; errdown = 0.016;}
+	else if(ht> 200 && ht<= 600 && met> 160 && met<= 165) {eff = 0.694; errup = 0.006; errdown = 0.006;}
+	else if(ht> 600 && ht<= 800 && met> 160 && met<= 165) {eff = 0.691; errup = 0.022; errdown = 0.023;}
+	else if(ht> 800 && ht<=1000 && met> 160 && met<= 165) {eff = 0.588; errup = 0.043; errdown = 0.044;}
+	else if(ht>1000 && ht<=9999 && met> 160 && met<= 165) {eff = 0.576; errup = 0.056; errdown = 0.058;}
+	else if(ht>   0 && ht<= 200 && met> 165 && met<= 170) {eff = 0.652; errup = 0.018; errdown = 0.018;}
+	else if(ht> 200 && ht<= 600 && met> 165 && met<= 170) {eff = 0.741; errup = 0.006; errdown = 0.006;}
+	else if(ht> 600 && ht<= 800 && met> 165 && met<= 170) {eff = 0.712; errup = 0.022; errdown = 0.023;}
+	else if(ht> 800 && ht<=1000 && met> 165 && met<= 170) {eff = 0.682; errup = 0.040; errdown = 0.043;}
+	else if(ht>1000 && ht<=9999 && met> 165 && met<= 170) {eff = 0.580; errup = 0.053; errdown = 0.055;}
+	else if(ht>   0 && ht<= 200 && met> 170 && met<= 175) {eff = 0.676; errup = 0.020; errdown = 0.020;}
+	else if(ht> 200 && ht<= 600 && met> 170 && met<= 175) {eff = 0.787; errup = 0.006; errdown = 0.006;}
+	else if(ht> 600 && ht<= 800 && met> 170 && met<= 175) {eff = 0.765; errup = 0.022; errdown = 0.024;}
+	else if(ht> 800 && ht<=1000 && met> 170 && met<= 175) {eff = 0.608; errup = 0.042; errdown = 0.043;}
+	else if(ht>1000 && ht<=9999 && met> 170 && met<= 175) {eff = 0.631; errup = 0.057; errdown = 0.060;}
+	else if(ht>   0 && ht<= 200 && met> 175 && met<= 180) {eff = 0.685; errup = 0.021; errdown = 0.021;}
+	else if(ht> 200 && ht<= 600 && met> 175 && met<= 180) {eff = 0.820; errup = 0.006; errdown = 0.006;}
+	else if(ht> 600 && ht<= 800 && met> 175 && met<= 180) {eff = 0.752; errup = 0.025; errdown = 0.027;}
+	else if(ht> 800 && ht<=1000 && met> 175 && met<= 180) {eff = 0.832; errup = 0.036; errdown = 0.043;}
+	else if(ht>1000 && ht<=9999 && met> 175 && met<= 180) {eff = 0.731; errup = 0.053; errdown = 0.060;}
+	else if(ht>   0 && ht<= 200 && met> 180 && met<= 185) {eff = 0.768; errup = 0.021; errdown = 0.023;}
+	else if(ht> 200 && ht<= 600 && met> 180 && met<= 185) {eff = 0.852; errup = 0.006; errdown = 0.006;}
+	else if(ht> 600 && ht<= 800 && met> 180 && met<= 185) {eff = 0.805; errup = 0.023; errdown = 0.025;}
+	else if(ht> 800 && ht<=1000 && met> 180 && met<= 185) {eff = 0.778; errup = 0.042; errdown = 0.047;}
+	else if(ht>1000 && ht<=9999 && met> 180 && met<= 185) {eff = 0.742; errup = 0.057; errdown = 0.065;}
+	else if(ht>   0 && ht<= 200 && met> 185 && met<= 190) {eff = 0.752; errup = 0.025; errdown = 0.027;}
+	else if(ht> 200 && ht<= 600 && met> 185 && met<= 190) {eff = 0.881; errup = 0.005; errdown = 0.006;}
+	else if(ht> 600 && ht<= 800 && met> 185 && met<= 190) {eff = 0.873; errup = 0.019; errdown = 0.021;}
+	else if(ht> 800 && ht<=1000 && met> 185 && met<= 190) {eff = 0.865; errup = 0.037; errdown = 0.046;}
+	else if(ht>1000 && ht<=9999 && met> 185 && met<= 190) {eff = 0.797; errup = 0.047; errdown = 0.056;}
+	else if(ht>   0 && ht<= 200 && met> 190 && met<= 195) {eff = 0.789; errup = 0.026; errdown = 0.029;}
+	else if(ht> 200 && ht<= 600 && met> 190 && met<= 195) {eff = 0.904; errup = 0.005; errdown = 0.005;}
+	else if(ht> 600 && ht<= 800 && met> 190 && met<= 195) {eff = 0.875; errup = 0.019; errdown = 0.022;}
+	else if(ht> 800 && ht<=1000 && met> 190 && met<= 195) {eff = 0.844; errup = 0.038; errdown = 0.046;}
+	else if(ht>1000 && ht<=9999 && met> 190 && met<= 195) {eff = 0.779; errup = 0.047; errdown = 0.054;}
+	else if(ht>   0 && ht<= 200 && met> 195 && met<= 200) {eff = 0.733; errup = 0.033; errdown = 0.035;}
+	else if(ht> 200 && ht<= 600 && met> 195 && met<= 200) {eff = 0.912; errup = 0.005; errdown = 0.005;}
+	else if(ht> 600 && ht<= 800 && met> 195 && met<= 200) {eff = 0.864; errup = 0.021; errdown = 0.024;}
+	else if(ht> 800 && ht<=1000 && met> 195 && met<= 200) {eff = 0.863; errup = 0.036; errdown = 0.045;}
+	else if(ht>1000 && ht<=9999 && met> 195 && met<= 200) {eff = 0.769; errup = 0.055; errdown = 0.064;}
+	else if(ht>   0 && ht<= 200 && met> 200 && met<= 210) {eff = 0.810; errup = 0.024; errdown = 0.026;}
+	else if(ht> 200 && ht<= 600 && met> 200 && met<= 210) {eff = 0.936; errup = 0.003; errdown = 0.004;}
+	else if(ht> 600 && ht<= 800 && met> 200 && met<= 210) {eff = 0.922; errup = 0.012; errdown = 0.014;}
+	else if(ht> 800 && ht<=1000 && met> 200 && met<= 210) {eff = 0.881; errup = 0.025; errdown = 0.030;}
+	else if(ht>1000 && ht<=9999 && met> 200 && met<= 210) {eff = 0.808; errup = 0.036; errdown = 0.041;}
+	else if(ht>   0 && ht<= 200 && met> 210 && met<= 220) {eff = 0.839; errup = 0.030; errdown = 0.034;}
+	else if(ht> 200 && ht<= 600 && met> 210 && met<= 220) {eff = 0.963; errup = 0.003; errdown = 0.003;}
+	else if(ht> 600 && ht<= 800 && met> 210 && met<= 220) {eff = 0.948; errup = 0.011; errdown = 0.013;}
+	else if(ht> 800 && ht<=1000 && met> 210 && met<= 220) {eff = 0.899; errup = 0.024; errdown = 0.030;}
+	else if(ht>1000 && ht<=9999 && met> 210 && met<= 220) {eff = 0.914; errup = 0.026; errdown = 0.035;}
+	else if(ht>   0 && ht<= 200 && met> 220 && met<= 230) {eff = 0.891; errup = 0.028; errdown = 0.035;}
+	else if(ht> 200 && ht<= 600 && met> 220 && met<= 230) {eff = 0.963; errup = 0.003; errdown = 0.004;}
+	else if(ht> 600 && ht<= 800 && met> 220 && met<= 230) {eff = 0.955; errup = 0.011; errdown = 0.014;}
+	else if(ht> 800 && ht<=1000 && met> 220 && met<= 230) {eff = 0.945; errup = 0.019; errdown = 0.026;}
+	else if(ht>1000 && ht<=9999 && met> 220 && met<= 230) {eff = 0.928; errup = 0.026; errdown = 0.037;}
+	else if(ht>   0 && ht<= 200 && met> 230 && met<= 240) {eff = 0.854; errup = 0.040; errdown = 0.050;}
+	else if(ht> 200 && ht<= 600 && met> 230 && met<= 240) {eff = 0.981; errup = 0.003; errdown = 0.003;}
+	else if(ht> 600 && ht<= 800 && met> 230 && met<= 240) {eff = 0.966; errup = 0.010; errdown = 0.013;}
+	else if(ht> 800 && ht<=1000 && met> 230 && met<= 240) {eff = 0.968; errup = 0.015; errdown = 0.025;}
+	else if(ht>1000 && ht<=9999 && met> 230 && met<= 240) {eff = 1.000; errup = 0.000; errdown = 0.019;}
+	else if(ht>   0 && ht<= 200 && met> 240 && met<= 250) {eff = 0.800; errup = 0.059; errdown = 0.073;}
+	else if(ht> 200 && ht<= 600 && met> 240 && met<= 250) {eff = 0.981; errup = 0.003; errdown = 0.004;}
+	else if(ht> 600 && ht<= 800 && met> 240 && met<= 250) {eff = 0.990; errup = 0.006; errdown = 0.010;}
+	else if(ht> 800 && ht<=1000 && met> 240 && met<= 250) {eff = 0.980; errup = 0.013; errdown = 0.026;}
+	else if(ht>1000 && ht<=9999 && met> 240 && met<= 250) {eff = 0.921; errup = 0.034; errdown = 0.050;}
+	else if(ht>   0 && ht<= 200 && met> 250 && met<= 275) {eff = 0.894; errup = 0.038; errdown = 0.052;}
+	else if(ht> 200 && ht<= 600 && met> 250 && met<= 275) {eff = 0.989; errup = 0.002; errdown = 0.002;}
+	else if(ht> 600 && ht<= 800 && met> 250 && met<= 275) {eff = 0.989; errup = 0.004; errdown = 0.007;}
+	else if(ht> 800 && ht<=1000 && met> 250 && met<= 275) {eff = 0.980; errup = 0.009; errdown = 0.015;}
+	else if(ht>1000 && ht<=9999 && met> 250 && met<= 275) {eff = 0.952; errup = 0.018; errdown = 0.025;}
+	else if(ht>   0 && ht<= 200 && met> 275 && met<= 300) {eff = 0.879; errup = 0.057; errdown = 0.086;}
+	else if(ht> 200 && ht<= 600 && met> 275 && met<= 300) {eff = 0.993; errup = 0.002; errdown = 0.002;}
+	else if(ht> 600 && ht<= 800 && met> 275 && met<= 300) {eff = 0.989; errup = 0.005; errdown = 0.008;}
+	else if(ht> 800 && ht<=1000 && met> 275 && met<= 300) {eff = 0.978; errup = 0.012; errdown = 0.021;}
+	else if(ht>1000 && ht<=9999 && met> 275 && met<= 300) {eff = 0.992; errup = 0.007; errdown = 0.018;}
+	else if(ht>   0 && ht<= 200 && met> 300 && met<=9999) {eff = 0.828; errup = 0.072; errdown = 0.100;}
+	else if(ht> 200 && ht<= 600 && met> 300 && met<=9999) {eff = 0.995; errup = 0.001; errdown = 0.002;}
+	else if(ht> 600 && ht<= 800 && met> 300 && met<=9999) {eff = 0.995; errup = 0.002; errdown = 0.003;}
+	else if(ht> 800 && ht<=1000 && met> 300 && met<=9999) {eff = 0.997; errup = 0.002; errdown = 0.005;}
+	else if(ht>1000 && ht<=9999 && met> 300 && met<=9999) {eff = 0.985; errup = 0.005; errdown = 0.008;}
       }
 
       //// MET || Ele27 || Ele105 || Ele115
