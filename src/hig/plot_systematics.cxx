@@ -141,26 +141,26 @@ int main(int argc, char *argv[]){
   }else if(mm_scen == "totunc"){
     scenarios = vector<string>();
     do_correction = true;
-    // scenarios.push_back("syst_ttx_up");
-    // weights.emplace("syst_ttx_up", w*(1+Higfuncs::wgt_syst_ttx));
-    // corrections.emplace("syst_ttx_up", 1.);
-    // scenarios.push_back("syst_ttx_dn");
-    // weights.emplace("syst_ttx_dn", w*(1-Higfuncs::wgt_syst_ttx));
-    // corrections.emplace("syst_ttx_dn", 1.);
+    scenarios.push_back("syst_ttx_up");
+    weights.emplace("syst_ttx_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_ttx));
+    corrections.emplace("syst_ttx_up", Higfuncs::wgt_comp);
+    scenarios.push_back("syst_ttx_dn");
+    weights.emplace("syst_ttx_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_ttx));
+    corrections.emplace("syst_ttx_dn", Higfuncs::wgt_comp);
 
-    // scenarios.push_back("syst_vjets_up");
-    // weights.emplace("syst_vjets_up", w*(1+Higfuncs::wgt_syst_vjets));
-    // corrections.emplace("syst_vjets_up", 1.);
-    // scenarios.push_back("syst_vjets_dn");
-    // weights.emplace("syst_vjets_dn", w*(1-Higfuncs::wgt_syst_vjets));
-    // corrections.emplace("syst_vjets_dn", 1.);
+    scenarios.push_back("syst_vjets_up");
+    weights.emplace("syst_vjets_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_vjets));
+    corrections.emplace("syst_vjets_up", Higfuncs::wgt_comp);
+    scenarios.push_back("syst_vjets_dn");
+    weights.emplace("syst_vjets_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_vjets));
+    corrections.emplace("syst_vjets_dn", Higfuncs::wgt_comp);
 
-    // scenarios.push_back("syst_qcd_up");
-    // weights.emplace("syst_qcd_up", w*(1+Higfuncs::wgt_syst_qcd));
-    // corrections.emplace("syst_qcd_up", 1.);
-    // scenarios.push_back("syst_qcd_dn");
-    // weights.emplace("syst_qcd_dn", w*(1-Higfuncs::wgt_syst_qcd));
-    // corrections.emplace("syst_qcd_dn", 1.);
+    scenarios.push_back("syst_qcd_up");
+    weights.emplace("syst_qcd_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_qcd));
+    corrections.emplace("syst_qcd_up", Higfuncs::wgt_comp);
+    scenarios.push_back("syst_qcd_dn");
+    weights.emplace("syst_qcd_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_qcd));
+    corrections.emplace("syst_qcd_dn", Higfuncs::wgt_comp);
 
     scenarios.push_back("syst_comp");
     weights.emplace("syst_comp", w*(Higfuncs::wgt_comp)); 

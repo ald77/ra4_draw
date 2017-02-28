@@ -115,6 +115,7 @@ string CodeToPlainText(string code){
   ReplaceAll(code, "higd_am>100&&higd_am<=140&&higd_dm<=40","HIG");
   ReplaceAll(code, "(higd_am<=100||(higd_am>140&&higd_am<=200))&&higd_dm<=40","SBD");
   ReplaceAll(code, "mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0)","zpt");
+  ReplaceAll(code, "((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100))","mll80to100");
   ReplaceAll(code, ".", "p");
   ReplaceAll(code, "(", "");
   ReplaceAll(code, ")", "");
@@ -235,6 +236,9 @@ string CodeToRootTex(string code){
              "80<m_{ll}<100");
   ReplaceAll(code, "elelv_m>80&&elelv_m<100",
              "80<m_{ll}<100");
+  ReplaceAll(code, "((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100))",
+             "80<m_{ll}<100");
+  ReplaceAll(code, "leps_pt[0]","p_{T}^{max}(l)");
   ReplaceAll(code, "onht>350&&onmet>100&&","");
   ReplaceAll(code, "jets_islep[0]==0","");
   ReplaceAll(code, "(nels==0&&nmus==1)","N_{#mu}=1");
@@ -508,6 +512,12 @@ double intGaus(double mean, double sigma, double minX, double maxX){
 
 float deltaR(float eta1, float phi1, float eta2, float phi2){
   return hypot(TVector2::Phi_mpi_pi(phi2-phi1), eta2-eta1);
+}
+
+double deltaPhi(double phi1, double phi2){
+  const double PI = acos(-1.);
+  double dphi = fmod(fabs(phi2-phi1), 2.*PI);
+  return dphi>PI ? 2.*PI-dphi : dphi;
 }
 
 // Finds significance of observation Nbkg, for an expected background Nbkg+Eup_bkg-Edown_bkg
