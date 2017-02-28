@@ -43,21 +43,21 @@ int main(){
   chrono::high_resolution_clock::time_point begTime;
   begTime = chrono::high_resolution_clock::now();
 
-  double lumi = 2.6;
+  double lumi =35.9;
   string bfolder("");
   string hostname(execute("echo $HOSTNAME"));
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))  
-    bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
+    bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
   string ntupletag=""; 
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_met100_stdnj5/");
+  string foldermc(bfolder+"/cms29r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/");
 
   Palette colors("txt/colors.txt", "default");
 
 
-  NamedFunc baseline = "stitch && nleps==1 && nveto==0 && st>500 && met>100 && njets>=5 && nbm>=1 && weight<1";
+  NamedFunc baseline = "stitch_met && nleps==1 && nveto==0 && st>500 && met>100 && njets>=5 && nbm>=1 && weight<1";
 
-  set<string> ttfiles = {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root", foldermc+"*_TTJets_HT*"+ntupletag+"*.root"};
+  set<string> ttfiles = {foldermc+"*_TTJets*Lept*"+ntupletag+"*.root"};
 
   /// Study of ttbar 1l
   auto proc_tt1l_lomt = Process::MakeShared<Baby_full>("t#bar{t} 1l, m_{T}#leq140", Process::Type::background, 
@@ -94,7 +94,10 @@ int main(){
   PlotMaker pm;
 
 
-  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>100", tt_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>100&&njets>=5", tt_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>100&&njets>=6", tt_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>200&&njets>=5", tt_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>200&&njets>=6", tt_procs, plot_types).Tag("tt1l");
 
   pm.Push<Hist1D>(Axis(35,0.,700.,max_b_pt,"Max b-quark p_{T} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(30,-0.5,1.,"(met-met_tru)/met","(MET-MET^{tru})/MET"),"met>100", 
@@ -111,7 +114,7 @@ int main(){
 
   pm.Push<Hist1D>(Axis(30,-1.,5.,"(met-met_tru)/met_tru","(MET-MET^{tru})/MET^{tru}"),"met>100", 
 		  tt1l_procs, plot_types).Tag("tt1l");
-  pm.Push<Hist1D>(Axis(30,200.,800.,"met","MET [GeV]"),"met>200", tt1l_procs, plot_types).Tag("tt1l");
+  pm.Push<Hist1D>(Axis(30,200.,800.,"met","MET [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(30,300.,1500.,"m_tt","m_{t#bar{t}} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(6,-0.5,5.5,"nisr","N_{jets}^{ISR}"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
   pm.Push<Hist1D>(Axis(40,0.,200.,"leps_pt[0]","Lepton p_{T} [GeV]"),"met>100", tt1l_procs, plot_types).Tag("tt1l");
