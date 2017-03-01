@@ -555,6 +555,12 @@ int main(int argc, char *argv[]){
           }
           isys++;
         }
+        // print correlation column
+        if (syst_names[isys].Contains("syst_qcd") || syst_names[isys].Contains("syst_vjets")
+            || syst_names[isys].Contains("syst_ttx"))
+            cout<<" & "<<setw(7)<<"1";
+        else 
+            cout<<" & "<<setw(7)<<"0";
         cout<<" \\\\"<<endl;
       } else { 
         for (unsigned ibin(0); ibin<syst_values[isys].size(); ibin++) {
@@ -566,6 +572,9 @@ int main(int argc, char *argv[]){
             cout<<" & "<<setw(7)<<"$<$ 1";
           }
         }
+        // print correlation column
+        if (syst_names[isys].Contains("syst_comp")) cout<<" & "<<setw(7)<<"1";
+        else cout<<" & "<<setw(7)<<"0";
         cout<<" \\\\"<<endl;
       }
     }
