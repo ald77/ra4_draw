@@ -418,7 +418,7 @@ void Hist1D::Print(double luminosity,
       TH1D *hdata = (datas_.size() ? &(datas_[0]->scaled_hist_) : 0);
       TH1D *hmc = (backgrounds_.size() ? &(backgrounds_[0]->scaled_hist_) : 0);
       TH1D *hbot = (bot_plots.size() ? &(bot_plots[0]) : 0);
-      if(hdata==0 || hmc==0 || hbot==0 || hdata->Integral()==0 || hmc->Integral()==0 || hbot->Integral()==0) cout<<"Printing values failed: no histogram or no entries in histogram"<<endl;
+      if(hdata==0 || hmc==0 || hbot==0 || hdata->Integral()==0|| hbot->Integral()==0) cout<<"Printing values failed: no histogram or no entries in histogram"<<endl;
       else {
 	int digits = floor(log10(max(hdata->GetBinContent(hdata->GetMaximumBin()), 
 				     hmc->GetBinContent(hmc->GetMaximumBin())))+1.);
@@ -922,10 +922,10 @@ TGraphAsymmErrors Hist1D::GetBackgroundError() const{
     g = TGraphAsymmErrors(&h);
   }else{
     g = TGraphAsymmErrors(&(backgrounds_.front()->scaled_hist_));
+  // set the color of the error band to the line color, accomodating data-to-data plots
+    g.SetFillColor(backgrounds_.front()->scaled_hist_.GetLineColor());
   }
   g.SetFillStyle(3002);
-  // set the color of the error band to the line color, accomodating data-to-data plots
-  g.SetFillColor(backgrounds_.front()->scaled_hist_.GetLineColor());
   g.SetLineWidth(0);
   g.SetMarkerSize(0);
   return g;

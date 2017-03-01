@@ -99,6 +99,7 @@ double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg=-
 double gsl_ran_gamma (const double a, const double b, TRandom3 &rand);
 double intGaus(double mean, double sigma, double minX, double maxX);
 float deltaR(float eta1, float phi1, float eta2, float phi2);
+double deltaPhi(double phi1, double phi2);
 // yields[Nobs][Nsam] has the entries for each sample for each observable going into kappa
 // weights[Nobs][Nsam] has the average weight of each observable for each sample
 // powers[Nobs] defines kappa = Product_obs{ Sum_sam{yields[sam][obs]*weights[sam][obs]}^powers[obs] }

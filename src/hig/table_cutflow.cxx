@@ -65,6 +65,17 @@ int main(){
 					    attach_folder(foldermc,mctags["vjets"]),c_ps));
   procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", Process::Type::background,1,
 					    attach_folder(foldermc, mctags["ttx"]),c_ps));
+  // for Filip's question
+  // procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}/t#bar{t}#gamma/t#bar{t}+W", Process::Type::background, 1,
+  //             {foldermc+"*TTJets_*Lep*", foldermc+"*_TTW*.root", foldermc+"*_TTGJets*.root"},c_ps));
+  // procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+Z(#rightarrow ll/#nu#nu)", Process::Type::background,1,
+  //             {foldermc+"/*TTZToLLNuNu*.root"},c_ps));
+  // procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+Z(#rightarrow qq)", Process::Type::background,1,
+  //             {foldermc+"/*TTZToQQ*.root"},c_ps));
+  // procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+H(#rightarrow bb)", Process::Type::background,1,
+  //             {foldermc+"/*ttHTobb*.root"},c_ps));
+  // procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}t#bar{t}", Process::Type::background,1,
+  //             {foldermc+"/*_TTTT*.root"},c_ps));
   for (unsigned isig(0); isig<sigm.size(); isig++)
     procs.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", 
       Process::Type::signal, 1, {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, "1"));
