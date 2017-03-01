@@ -24,11 +24,14 @@
 
 using namespace std;
 using namespace PlotOptTypes;
+using namespace Higfuncs;
 
 void GetOptions(int argc, char *argv[]);
 
 namespace{
-  string sample = "tt";
+  float lumi = 35.9;
+  vector<string> sigm = {"225","400","700"}; 
+  vector<int> sig_colors = {kGreen+1, kRed, kBlue}; 
 }
 
 int main(int argc, char *argv[]){
@@ -69,9 +72,11 @@ int main(int argc, char *argv[]){
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////// Higgsino //////////////////////////////////////////////
   //string folderhigmc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
-  string folderhigmc = bfolder+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_higmc_higloose/";
-  string folderhigdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep1/";
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2016_08_10/TChiHH/merged_higmc_higloose/");
+  string folderhigmc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/";
+  // to plot njets
+  folderhigmc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlooser/";
+  string folderhigdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep1/";
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_unskimmed/");
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({"*_TTJets*Lept*.root", "*_TTJets_HT*.root", "*_TTZ*.root", "*_TTW*.root",
@@ -86,53 +91,65 @@ int main(int argc, char *argv[]){
       allmctags.insert(iset.second.begin(), iset.second.end());
   }
 
-  NamedFunc wgt = "weight"* Higfuncs::eff_higtrig;
-  NamedFunc base_func = "pass && met/met_calo<5 && nbt>=2 && nvleps==0&&ntks==0&&!low_dphi&&met>150&&weight<.1";
+  string c_ps = "stitch && pass && pass_ra2_badmu && met/met_calo<5 && weight<1";
 
   vector<shared_ptr<Process> > procs_hig;
   procs_hig.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", 
-    Process::Type::background, colors("tt_1l"),    attach_folder(folderhigmc,mctags["ttx"]),     base_func&&"stitch"));
+    Process::Type::background, colors("tt_1l"),    attach_folder(folderhigmc,mctags["ttx"]),    c_ps));
   procs_hig.push_back(Process::MakeShared<Baby_full>("V+jets",     
-    Process::Type::background, kOrange+1,          attach_folder(folderhigmc,mctags["vjets"]),   base_func&&"stitch"));
+    Process::Type::background, kOrange+1,          attach_folder(folderhigmc,mctags["vjets"]),  c_ps));
   procs_hig.push_back(Process::MakeShared<Baby_full>("Single t",   
-    Process::Type::background, colors("single_t"), attach_folder(folderhigmc,mctags["singlet"]), base_func&&"stitch"));
+    Process::Type::background, colors("single_t"), attach_folder(folderhigmc,mctags["singlet"]),c_ps));
   procs_hig.push_back(Process::MakeShared<Baby_full>("QCD",        
-    Process::Type::background, colors("other"),    attach_folder(folderhigmc,mctags["qcd"]),     base_func&&"stitch")); 
+    Process::Type::background, colors("other"),    attach_folder(folderhigmc,mctags["qcd"]),    c_ps)); 
   procs_hig.push_back(Process::MakeShared<Baby_full>("Other",      
-    Process::Type::background, kGreen+1,           attach_folder(folderhigmc,mctags["other"]),   base_func&&"stitch"));      
+    Process::Type::background, kGreen+1,           attach_folder(folderhigmc,mctags["other"]),  c_ps));      
 
-  vector<string> sigm = {"225","400","700"}; 
-  vector<int> sig_colors = {kGreen, kRed, kBlue}; // need sigm.size() >= sig_colors.size()
   for (unsigned isig(0); isig<sigm.size(); isig++)
     procs_hig.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
-			sig_colors[isig], {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, base_func));
+			sig_colors[isig], {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, 
+      "pass_goodv&&pass_ecaldeadcell&&pass_hbhe&&pass_hbheiso&&pass_fsmet"));
 
   // procs_hig.push_back(Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-  //   {folderhigdata+"*root"},  Higfuncs::trig_hig>0. && base_func)); 
+  //   {folderhigdata+"*root"},  trig_hig>0. && base_func)); 
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+  string uu = "&&";
+  string baseline = "njets>=4 && nbdt>=2 && nvleps==0 && ntks==0 && !low_dphi && met>150";
 
-  string cuts = "nbm>=2";
+  string cnj = "njets<=5";
+
+  string c2b = "nbdt==2 && nbdm==2";
+  string c3b = "nbdt>=2 && nbdm==3 && nbdl==3";
+  string c4b = "nbdt>=2 && nbdm>=3 && nbdl>=4";
+  string c3bp = "nbdt>=2 && nbdm>=3";
+
+  string hdrmax = "hig_drmax<2.2";
+  string hdm = "hig_dm<40";
+  string htrim = "hig_dm<40 && hig_am<=200";
+  string hig = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && (higd_am>100 && higd_am<=140)";
+  string sbd = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && !(higd_am>100 && higd_am<=140)";
+
+  //to avoid warnings for unused variables...
+  string dummy=c2b;dummy=c3b;dummy=c4b;dummy=hdrmax;dummy=hdm;dummy=htrim;dummy=hig;dummy=sbd;
+
+  NamedFunc wgt = weight_higd * eff_higtrig;
+
   PlotMaker pm;
-  cuts = "nbm>=3&&nbl>=4&&met>150&&hig_drmax<2.2&&hig_dm<40&& njets>=4 && njets<=5 ";
-  pm.Push<Hist1D>(Axis(50, 0., 250., "hig_am", "#LTm#GT [GeV]", {100., 140.}),cuts, procs_hig, plt_norm).Tag("hig");
-  cuts = "nbm>=3&&nbl>=4&&met>150&&hig_drmax<2.2&&hig_dm<40";
-  pm.Push<Hist1D>(Axis(6, 3.5, 9.5, "njets", "N_{jets}", {5.5}),cuts, procs_hig, plt_norm).Tag("hig");
 
-  cuts = "nbm>=3&&nbl>=4&&met>150&&hig_drmax<2.2&& njets>=4 && njets<=5 ";
-  pm.Push<Hist1D>(Axis(30, 0., 150., "hig_dm", "#Deltam [GeV]", {40.}),cuts, procs_hig, plt_norm).Tag("hig");
+  pm.Push<Hist1D>(Axis(40, 0., 200., "hig_am", "#LTm#GT [GeV]", {100., 140.}),
+    baseline+uu+c4b+uu+cnj+uu+hdrmax+uu+hdm, procs_hig, plt_norm).Weight(wgt).Tag("hig");
+  
+  pm.Push<Hist1D>(Axis(6, 3.5, 9.5, "njets", "N_{jets}", {5.5}),
+    baseline+uu+c3bp+uu+hdrmax+uu+hdm+uu+"met>300", procs_hig, plt_norm).Weight(wgt).Tag("hig");
 
-  cuts = "nbm>=3&&nbl>=4&&met>150&&hig_drmax<2.2";
-  pm.Push<Hist1D>(Axis(9, 150., 600., "met", "E^{miss}_{T} [GeV]", {150., 200., 300., 450.}),cuts, procs_hig, plt_norm).Tag("hig");
-  // cuts = "mt<100 && met>150 && nleps==11";
-  // pm.Push<Hist1D>(Axis(6, -0.5, 5.5, "nbm", "CSV N_{b,M}"),cuts, procs_hig, plt_norm_info).Tag("hig");
-  // pm.Push<Hist1D>(Axis(6, -0.5, 5.5, "nbt", "CSV N_{b,T}"),cuts, procs_hig, plt_norm_info).Tag("hig");
-  // pm.Push<Hist1D>(Axis(6, -0.5, 5.5, "nbdm", "DeepCSV N_{b,M}"),cuts, procs_hig, plt_norm_info).Tag("hig");
-  // pm.Push<Hist1D>(Axis(6, -0.5, 5.5, "nbdt", "DeepCSV N_{b,T}"),cuts, procs_hig, plt_norm_info).Tag("hig");
+  pm.Push<Hist1D>(Axis(30, 0., 150., "hig_dm", "#Deltam [GeV]", {40.}),
+    baseline+uu+c4b+uu+cnj+uu+hdrmax, procs_hig, plt_norm).Weight(wgt).Tag("hig");
+
 
   pm.min_print_ = true;
-  pm.MakePlots(36.8);
+  pm.MakePlots(lumi);
 
   time(&endtime);
   cout<<endl<<"Making plots took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
@@ -141,19 +158,19 @@ int main(int argc, char *argv[]){
 void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
-      {"sample", required_argument, 0, 's'},    
+      {"lumi", required_argument, 0, 'l'},    
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "s:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
     switch(opt){
-    case 's':
-      sample = optarg;
+    case 'l':
+      lumi = atof(optarg);
       break;
     case 0:
       break;
