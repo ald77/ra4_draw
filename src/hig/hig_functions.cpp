@@ -183,12 +183,31 @@ const NamedFunc wgt_syst_qcd("wgt_syst_qcd",[](const Baby &b) -> NamedFunc::Scal
   return 0;
 });
 
-// defintion of analysis trigger
+// Definition of analysis trigger
 const NamedFunc trig_hig("trig_hig", [](const Baby &b) -> NamedFunc::ScalarType{
-  if ( b.trig()->at(13)||b.trig()->at(33)||b.trig()->at(14)||b.trig()->at(15)||b.trig()->at(30)||b.trig()->at(31)
-    ||b.trig()->at(22)||b.trig()->at(40)||b.trig()->at(24)||b.trig()->at(41)
-    ||b.trig()->at(19)||b.trig()->at(55)||b.trig()->at(21)) return 1;
-  return -1;
+    bool mettrig = b.trig()->at(13)||b.trig()->at(33)||b.trig()->at(14)||b.trig()->at(15)
+      ||b.trig()->at(30)||b.trig()->at(31);
+    bool eltrig = b.trig()->at(22)||b.trig()->at(40)||b.trig()->at(24)||b.trig()->at(41);
+    bool mutrig = b.trig()->at(19)||b.trig()->at(55)||b.trig()->at(21);
+
+    if(b.nvleps()==0){
+      if(mettrig) return 1;
+      else return -1;
+    } else if(b.nels()==1 && b.nmus()==0){
+      if(mettrig || eltrig) return 1;
+      else return -1;
+    } else if(b.nels()==0 && b.nmus()==1){
+      if(mettrig || mutrig) return 1;
+      else return -1;
+    } else if(b.nels()==2 && b.nmus()==0){
+      if(eltrig) return 1;
+      else return -1;
+    } else if(b.nels()==0 && b.nmus()==2){
+      if(mutrig) return 1;
+      else return -1;
+    }
+
+    return -1;
   });
   
 //// Efficiency of the MET[100||110||120] triggers in all 36.2 ifb
