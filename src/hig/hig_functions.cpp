@@ -214,6 +214,8 @@ const NamedFunc trig_hig("trig_hig", [](const Baby &b) -> NamedFunc::ScalarType{
 const NamedFunc err_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::ScalarType{
     float errup, errdown; // Stat uncertainty. Not used, but for reference
     float uncert = 0., met = b.met(), ht = b.ht();
+    errup=0;errdown=0;
+    errup+=errdown;
 
     if(ht>   0 && ht<= 200 && met> 150 && met<= 155) {uncert = 0.072; errup = 0.013; errdown = 0.013;}
     else if(ht> 200 && ht<= 600 && met> 150 && met<= 155) {uncert = 0.071; errup = 0.005; errdown = 0.005;}

@@ -163,11 +163,11 @@ void Hist1D::SingleHist1D::RecordEvent(const Baby &baby){
     have_vec = true;
     min_vec_size = cut_vector_.size();
   }
-
   const NamedFunc &wgt = stack.weight_;
   NamedFunc::ScalarType wgt_scalar = 0.;
   if(wgt.IsScalar()){
-    wgt_scalar = wgt.GetScalar(baby);
+    if(! (proc_and_hist_cut_.Name().find("st<100000") != std::string::npos)) {const NamedFunc &wgt_alt = "weight/w_btag"; wgt_scalar = wgt_alt.GetScalar(baby);}
+    else wgt_scalar = wgt.GetScalar(baby);
   }else{
     wgt_vector_ = wgt.GetVector(baby);
     if(!have_vec || wgt_vector_.size() < min_vec_size){
