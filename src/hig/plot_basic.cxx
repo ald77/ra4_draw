@@ -28,7 +28,7 @@ void GetOptions(int argc, char *argv[]);
 
 namespace{
   //fixme:simplify options
-  bool note = false;
+  bool note = true;
   bool rewgt = false;
   float lumi = 4.3;
   string sample = "search";
@@ -114,8 +114,8 @@ int main(int argc, char *argv[]){
                                    "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"});
   mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
   mctags["singlet"] = set<string>({"*_ST_*.root"});
-  mctags["qcd"]     = set<string>({//"*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*",
-                                   // "*QCD_HT300to500_Tune*", 
+  mctags["qcd"]     = set<string>({"*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*",
+                                   "*QCD_HT300to500_Tune*", 
                                    "*QCD_HT500to700_Tune*",
                                    "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
                                    "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*"});
@@ -285,7 +285,7 @@ int main(int argc, char *argv[]){
         tmp_seln = metcuts[imet];
         for(unsigned inb(0); inb<nbcuts.size(); inb++) {
           int div = 1;
-          if (inb>0) div = 2;
+          // if (inb>0) div = 2;
           if (ixcut.first=="nm1") { 
             pm.Push<Hist1D>(Axis(24/div,0,240,"higd_am", "<m> [GeV]", {100., 140.}),
               ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&higd_dm<40", 

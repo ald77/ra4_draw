@@ -166,9 +166,9 @@ int main(int argc, char *argv[]){
     weights.emplace("syst_comp", w*(Higfuncs::wgt_comp)); 
     corrections.emplace("syst_comp", 1.);
 
-    // scenarios.push_back("syst_mcstat");
-    // weights.emplace("syst_mcstat", w);
-    // corrections.emplace("syst_mcstat", 1.);
+    scenarios.push_back("syst_mcstat");
+    weights.emplace("syst_mcstat", w);
+    corrections.emplace("syst_mcstat", 1.);
 
     // scenarios.push_back("syst_bctag");
     // weights.emplace("syst_bctag", w*"sys_bctag[0]");
@@ -195,7 +195,7 @@ int main(int argc, char *argv[]){
   if (skim=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep1/";
   if (skim=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep2/";
   if (skim=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higqcd/";
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_higloose/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_26/TChiHH/merged_higmc_higloose/");
 
   Palette colors("txt/colors.txt", "default");
 

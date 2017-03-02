@@ -68,41 +68,41 @@ const NamedFunc wgt_comp("wgt_comp",[](const Baby &b) -> NamedFunc::ScalarType{
     b.type()==10000  ||                      // ttgamma
     b.type()==11000) {                       // tttt
     //apply normalization factor from MET distribution
-    wgt = 1.053;
+    wgt = 1.052;
     if (b.met()<=50)                      wgt*=1.005;
     else if (b.met()>50 && b.met()<=100)  wgt*=1.018;
-    else if (b.met()>100 && b.met()<=150) wgt*=0.975;
-    else if (b.met()>150 && b.met()<=200) wgt*=0.913;
-    else if (b.met()>200 && b.met()<=300) wgt*=0.853;
-    else if (b.met()>300)                 wgt*=0.864;
+    else if (b.met()>100 && b.met()<=150) wgt*=0.976;
+    else if (b.met()>150 && b.met()<=200) wgt*=0.914;
+    else if (b.met()>200 && b.met()<=300) wgt*=0.854;
+    else if (b.met()>300)                 wgt*=0.865;
     // nb correction from nb distribution data/mc, inclusive in MET
     if (b.nbdt()==2 && b.nbdm()==2)                     wgt*=0.992;
     else if (b.nbdt()>=2 && b.nbdm()==3 && b.nbdl()==3) wgt*=1.040;
-    else if (b.nbdt()>=2 && b.nbdm()>=3 && b.nbdl()>=4) wgt*=1.166;
+    else if (b.nbdt()>=2 && b.nbdm()>=3 && b.nbdl()>=4) wgt*=1.165;
   } 
   else if((b.type()>=8000 && b.type()<9000) || // zjets
   (b.type()>=2000 && b.type()<3000) ||      // wjets
   (b.type()>=6000 && b.type()<7000)) {      // dyjets
     //apply normalization factor from MET distribution
-    wgt = 1.566;
-    if (b.met()>150 && b.met()<=200)      wgt*=1.125;
-    else if (b.met()>200 && b.met()<=300) wgt*=0.946;
-    else if (b.met()>300)                 wgt*=0.719;
+    wgt = 1.416;
+    if (b.met()>150 && b.met()<=200)      wgt*=1.121;
+    else if (b.met()>200 && b.met()<=300) wgt*=0.951;
+    else if (b.met()>300)                 wgt*=0.722;
     // nb correction from nb distribution data/mc, inclusive in MET
-    if (b.nbdt()==2 && b.nbdm()==2)                     wgt*=0.987;
-    else if (b.nbdt()>=2 && b.nbdm()==3 && b.nbdl()==3) wgt*=1.155;
-    else if (b.nbdt()>=2 && b.nbdm()>=3 && b.nbdl()>=4) wgt*=1.076;
+    if (b.nbdt()==2 && b.nbdm()==2)                     wgt*=0.985;
+    else if (b.nbdt()>=2 && b.nbdm()==3 && b.nbdl()==3) wgt*=1.176;
+    else if (b.nbdt()>=2 && b.nbdm()>=3 && b.nbdl()>=4) wgt*=1.097;
   } 
   else if ( (b.type()>=7000 && b.type()<8000)) { // qcd
   //apply normalization factor from MET distribution
-    wgt = 2.046;
-    if (b.met()>150 && b.met()<=200)      wgt*=0.972;
-    else if (b.met()>200 && b.met()<=300) wgt*=1.075;
-    else if (b.met()>300)                 wgt*=1.122;
+    wgt = 1.700;
+    if (b.met()>150 && b.met()<=200)      wgt*=0.927;
+    else if (b.met()>200 && b.met()<=300) wgt*=1.199;
+    else if (b.met()>300)                 wgt*=1.301;
     // nb correction from nb distribution data/mc, inclusive in MET
-    if (b.nbdt()==2 && b.nbdm()==2)                    wgt*=0.979;
-    else if (b.nbdt()>=2 && b.nbdm()==3 && b.nbdl()==3) wgt*=1.153;
-    else if (b.nbdt()>=2 && b.nbdm()>=3 && b.nbdl()>=4) wgt*=1.115;
+    if (b.nbdt()==2 && b.nbdm()==2)                    wgt*=0.982;
+    else if (b.nbdt()>=2 && b.nbdm()==3 && b.nbdl()==3) wgt*=1.142;
+    else if (b.nbdt()>=2 && b.nbdm()>=3 && b.nbdl()>=4) wgt*=1.069;
   }
   return wgt;
 });
@@ -121,28 +121,22 @@ const NamedFunc wgt_subtr_ttx("wgt_subtr_ttx",[](const Baby &b) -> NamedFunc::Sc
     // apply lumi 
     wgt*= 35.9;
     // apply ttx weights derived from 1l CR
-    wgt = 1.053;
+    wgt = 1.052;
     if (b.met()<=50)                      wgt*=1.005;
     else if (b.met()>50 && b.met()<=100)  wgt*=1.018;
-    else if (b.met()>100 && b.met()<=150) wgt*=0.975;
-    else if (b.met()>150 && b.met()<=200) wgt*=0.913;
-    else if (b.met()>200 && b.met()<=300) wgt*=0.853;
-    else if (b.met()>300)                 wgt*=0.864;
+    else if (b.met()>100 && b.met()<=150) wgt*=0.976;
+    else if (b.met()>150 && b.met()<=200) wgt*=0.914;
+    else if (b.met()>200 && b.met()<=300) wgt*=0.854;
+    else if (b.met()>300)                 wgt*=0.865;
     // nb correction from nb distribution data/mc, inclusive in MET
     if (b.nbdt()==2 && b.nbdm()==2)                     wgt*=0.992;
     else if (b.nbdt()>=2 && b.nbdm()==3 && b.nbdl()==3) wgt*=1.040;
-    else if (b.nbdt()>=2 && b.nbdm()>=3 && b.nbdl()>=4) wgt*=1.166;
+    else if (b.nbdt()>=2 && b.nbdm()>=3 && b.nbdl()>=4) wgt*=1.165;
     // apply stitch
-    if (b.stitch()) return wgt;
+    if (b.stitch_met()) return wgt;
     else return 0;
   } else if (b.type()>0 && b.type()<1000){ // apply trigger and json for data
-    if (b.trig()->at(13)||b.trig()->at(33)||b.trig()->at(14)||b.trig()->at(15)||b.trig()->at(30)||b.trig()->at(31)
-      ||b.trig()->at(22)||b.trig()->at(40)||b.trig()->at(24)||b.trig()->at(41)
-      ||b.trig()->at(19)||b.trig()->at(55)||b.trig()->at(21)) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return trig_hig_decision(b);
   }
   // for all other backgrounds, chill (they are not in the "data" process so no need to apply lumi)
   return 1;
@@ -178,13 +172,13 @@ const NamedFunc wgt_syst_vjets("wgt_syst_vjets",[](const Baby &b) -> NamedFunc::
 const NamedFunc wgt_syst_qcd("wgt_syst_qcd",[](const Baby &b) -> NamedFunc::ScalarType{
   if ( (b.type()>=7000 && b.type()<8000)) { // qcd
     if (b.higd_am()<=100 || (b.higd_am()>140 && b.higd_am()<=200))
-      if (b.nbdt()>=2 && b.nbdm()>=3) return 0.12;
+      if (b.nbdt()>=2 && b.nbdm()>=3) return 0.13;
   }
   return 0;
 });
 
 // Definition of analysis trigger
-const NamedFunc trig_hig("trig_hig", [](const Baby &b) -> NamedFunc::ScalarType{
+NamedFunc::ScalarType trig_hig_decision(const Baby &b){
     bool mettrig = b.trig()->at(13)||b.trig()->at(33)||b.trig()->at(14)||b.trig()->at(15)
       ||b.trig()->at(30)||b.trig()->at(31);
     bool eltrig = b.trig()->at(22)||b.trig()->at(40)||b.trig()->at(24)||b.trig()->at(41);
@@ -208,6 +202,10 @@ const NamedFunc trig_hig("trig_hig", [](const Baby &b) -> NamedFunc::ScalarType{
     }
 
     return -1;
+}
+
+const NamedFunc trig_hig("trig_hig", [](const Baby &b) -> NamedFunc::ScalarType{
+  return trig_hig_decision(b);
   });
   
 //// Efficiency of the MET[100||110||120] triggers in all 36.2 ifb

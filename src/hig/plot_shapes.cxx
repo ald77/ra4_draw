@@ -26,7 +26,7 @@ using namespace PlotOptTypes;
 void GetOptions(int argc, char *argv[]);
 
 namespace{
-  bool do_allbkg = true;
+  bool do_allbkg = false;
   string sample = "search";
   string json = "full";
   bool unblind = true;

@@ -198,7 +198,7 @@ int main(int argc, char *argv[]){
 
   histo.GetXaxis()->SetLabelOffset(0.01);
   histo.SetMinimum(miny/2.);
-  histo.SetMaximum(maxy*1.2);
+  histo.SetMaximum(1e5);
   histo.SetYTitle("#sigma_{excl}^{95% CL} #times BF(hh #rightarrow bbbb) [fb]");
   histo.Draw();
   TGraphAsymmErrors gexp2(vmx.size(), &(vmx[0]), &(vexp[0]), &(zeroes[0]), &(zeroes[0]), &(v2down[0]), &(v2up[0]));

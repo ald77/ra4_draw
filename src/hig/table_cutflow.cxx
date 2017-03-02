@@ -42,7 +42,7 @@ int main(){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/");
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_unskimmed/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_26/TChiHH/merged_higmc_unskimmed/");
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({"*TTJets_*Lep*", "*_TTZ*.root", "*_TTW*.root",

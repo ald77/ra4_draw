@@ -151,6 +151,9 @@ int main(int argc, char *argv[]){
   pm.Push<Hist1D>(Axis(16,0,3.2,"dphi2", "#Delta#Phi_{2}"),
     "njets>=4 && njets<=5", procs, linplt).Weight(wgt);
 
+  pm.Push<Hist1D>(Axis(16,0,3.2,"isr_tru_pt", "Higgsino system p_{T} [GeV]"),
+    "njets>=4 && njets<=5 && met>150", procs, linplt).Weight(wgt);
+
 
   if(single_thread) pm.multithreaded_ = false;
   pm.min_print_ = true;

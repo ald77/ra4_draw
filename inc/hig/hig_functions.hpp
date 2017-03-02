@@ -36,6 +36,7 @@ namespace Higfuncs{
 
 
 	// analysis trigger and its efficiency
+	NamedFunc::ScalarType trig_hig_decision(const Baby &b);
 	extern const NamedFunc trig_hig;
 	extern const NamedFunc eff_higtrig;
 	extern const NamedFunc err_higtrig;
