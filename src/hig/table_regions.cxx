@@ -29,7 +29,7 @@ void GetOptions(int argc, char *argv[]);
 namespace{
   float lumi = 35.9;
   bool doSignal = true;
-  bool csv = true;
+  bool csv = false;
 }
 
 int main(int argc, char *argv[]){
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]){
 
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higtight/");
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/");
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_higtight/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_26/TChiHH/merged_higmc_higtight/");
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({"*TTJets_*Lept*", "*_TTZ*.root", "*_TTW*.root",
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]){
   string c_4b = "nbdt>=2&&nbdm>=3&&nbdl>=4";
   string hig = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && (higd_am>100 && higd_am<=140)";
   string sbd = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && !(higd_am>100 && higd_am<=140)";
-  NamedFunc wgt = Higfuncs::weight_higd ;//* Higfuncs::eff_higtrig;//*(1+Higfuncs::wgt_syst_ttx);// * Higfuncs::wgt_comp;
+  NamedFunc wgt = Higfuncs::weight_higd * Higfuncs::eff_higtrig;//*(1+Higfuncs::wgt_syst_ttx);// * Higfuncs::wgt_comp;
   if (csv) {
     c_2b = "nbt==2&&nbm==2";
     c_3b = "nbt>=2&&nbm==3&&nbl==3";
