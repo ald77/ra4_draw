@@ -368,7 +368,7 @@ int main(int argc, char *argv[]){
       }
       // convert to ra4_stats input and write to file
       double ln = (up>0 ? 1:-1)*max(up>0 ? up : (1/(1+up)-1), dn>0 ? dn : (1/(1+dn)-1));
-      if (isnan(ln) || isinf(ln)) {
+      if (std::isnan(ln) || std::isinf(ln)) {
         cout <<" Found bad unc. set to 0 -> "<<std::left<<setw(10)<<sys.tag <<std::left<<setw(10)<<v_bins[ibin].tag <<" "<<std::right<<setprecision(0)<<setw(25)<<entries[ibin] <<" "<<setprecision(5)<<setw(15)<<yields[ibin] <<" "<<setprecision(10)<<setw(15)<<w2[ibin] <<endl;  
         ln = 0;
       } 
