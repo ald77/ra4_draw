@@ -1016,6 +1016,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   if(lumi-floor(lumi)==0) digits_lumi = 0;
   TString lumi_s = RoundNumber(lumi, digits_lumi);
   double legX(opts.LeftMargin()+0.005), legY(1-0.03), legSingle = 0.05;
+  legX = 0.32;
+  if(only_mc) legX = 0.4;
   if(label_up) legY = 0.8;
   double legW = 0.35, legH = legSingle*(ind_bcuts.size()+1)/2;
   if(ind_bcuts.size()>3) legH = legSingle*((ind_bcuts.size()+1)/2);
@@ -1053,19 +1055,24 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
     leg.AddEntry(&graph[indb], "MC", "p");
     TString data_s = (mm_scen=="data"||mm_scen=="off"||mm_scen=="no_mismeasurement"?"Data":"Pseudodata");
-    if(mm_scen!="mc_as_data" && mm_scen!="syst_mcstat") leg.AddEntry(&graph_mm[indb], data_s+" "+lumi_s+" fb^{-1}", "p");
+    if(mm_scen!="mc_as_data" && mm_scen!="syst_mcstat") 
+      leg.AddEntry(&graph_mm[indb], data_s+" "+lumi_s+" fb^{-1} (13 TeV)", "p");
     //leg.AddEntry(&graph[indb], CodeToRootTex(ind_bcuts[indb].cut.Data()).c_str(), "p");
 
   } // Loop over TGraphs
   leg.Draw();
+
   //if(ind_bcuts.size()>1) leg.Draw();
 
   //// Drawing CMS labels and line at 1
+  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
+  TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";
   TLatex cmslabel;
   cmslabel.SetTextSize(0.06);
   cmslabel.SetNDC(kTRUE);
   cmslabel.SetTextAlign(11);
-  //cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}");
+  if(only_mc) cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSim);
+  else cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsPrel);
   cmslabel.SetTextAlign(31);
   //cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
   cmslabel.SetTextSize(0.053);

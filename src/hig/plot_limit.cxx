@@ -23,7 +23,7 @@ using namespace std;
 
 namespace{
   TString lumi = "35p9";
-  TString filename = "txt/limits/limits_TChiHH_lumi"+lumi+".txt";
+  TString filename = "txt/limits/limits_TChiHH_lumi"+lumi+"_wilk.txt";
   TString model = "TChiHH";
 }
 
@@ -144,6 +144,7 @@ int main(int argc, char *argv[]){
 
   //// Drawing CMS labels and line at 1
   TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
+  TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";
   TString lumiEner = "#font[42]{"+lumi+" fb^{-1} (13 TeV)}"; lumiEner.ReplaceAll("p",".");
   TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.6]{"+chij+"}  #rightarrow hh#tilde{G}#tilde{G}";
   TString mChis = mass_+chi2n+"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}, "+mass_+"#tilde{G}}}} = 1 GeV";
@@ -255,7 +256,7 @@ int main(int argc, char *argv[]){
   gsig.Draw("same"); 
   //// Drawing CMS labels
   cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
-  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsPrel);
+  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsSim);
   cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
   //// Drawing process and masses
