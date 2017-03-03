@@ -44,6 +44,8 @@ namespace Higfuncs{
 	extern const NamedFunc weight_higd;
 
 	extern const NamedFunc mhig;
+	extern const NamedFunc nb_exci;
+	extern const NamedFunc nb_gs;
 }
 
 #endif

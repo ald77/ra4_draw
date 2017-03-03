@@ -62,6 +62,7 @@ namespace{
   bool do_highnb = false;
   bool do_midnb = false;
   bool do_onemet = false;
+  bool print_mc = false;
   TString skim = "search";
   TString json = "2p6";
   TString only_method = "";
@@ -622,7 +623,8 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
 
   size_t Nsig = proc_sigs.size(); // Number of signal points (for now it cannot be changed)
   bool do_zbi = true;
-  size_t Ncol = 5;
+  size_t Ncol = 3;
+  if(print_mc) Ncol += 2;
   if(do_signal) Ncol += Nsig;
   if(do_signal &&do_zbi) Ncol += Nsig;
   if(split_bkg) Ncol += 3;
@@ -654,7 +656,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   if(abcd.method.Contains("signal") && Ncol>7) out << "\\resizebox{\\textwidth}{!}{\n";
   out << "\\begin{tabular}[tbp!]{ l ";
   if(split_bkg) out << "|ccc";
-  out << "|cc";
+  if(print_mc) out << "|cc";
   if(!only_mc) out << "|cc "<<(do_zbi?"c":"");
   if(do_signal)
     for(size_t ind=0; ind<Nsig; ind++)
@@ -663,7 +665,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   out<<"}\\hline\\hline\n";
   out<<"${\\cal L}="<<lumi_s<<"$ fb$^{-1}$ ";
   if(split_bkg) out << " & Other & Single $t$ & $t\\bar{t}$ ";
-  out << "& $\\kappa$ & MC bkg.";
+  if(print_mc) out << "& $\\kappa$ & MC bkg.";
   if(!only_mc) out << " & Pred.& Obs. "<<(do_zbi?"& Signi.":"");
   if(do_signal) {
     for(size_t ind=0; ind<Nsig; ind++) {
@@ -703,13 +705,15 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
               << ump <<RoundNumber(allyields[offset+3][index].Yield(), digits)
               << ump <<RoundNumber(allyields[offset+4][index].Yield(), digits);
         }
-        //// Printing kappa
-        out<<ump;
-        if(iabcd==3) out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits)
-                          << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits)
-                          << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits) <<"}$ ";
-        //// Printing MC Bkg yields
-        out << ump << RoundNumber(allyields[1][index].Yield(), digits);
+ 	if(print_mc) {
+	  //// Printing kappa
+	  out<<ump;
+	  if(iabcd==3) out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits)
+			    << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits)
+			    << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits) <<"}$ ";
+	  //// Printing MC Bkg yields
+	  out << ump << RoundNumber(allyields[1][index].Yield(), digits);
+	} // print_mc
         //// Printing background predictions
         out << ump;
         if(iabcd==3) out << "$"    << RoundNumber(preds[iplane][ibin][0], digits)
@@ -1255,6 +1259,7 @@ void GetOptions(int argc, char *argv[]){
       {"zbi", no_argument, 0, 0},             // Use Zbi instead of toys
       {"highnb", no_argument, 0, 0},          // Do 3b and 4b for QCD CR
       {"midnb", no_argument, 0, 0},           // Do 3b and 4b for QCD CR
+      {"print_mc", no_argument, 0, 0},        // Put kappa and MC in tables
       {"onemet", no_argument, 0, 0},             
       {0, 0, 0, 0}
     };
@@ -1330,6 +1335,8 @@ void GetOptions(int argc, char *argv[]){
         do_midnb = true;
       }else if(optname == "onemet"){
         do_onemet = true;
+      }else if(optname == "print_mc"){
+        print_mc = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
         exit(1);

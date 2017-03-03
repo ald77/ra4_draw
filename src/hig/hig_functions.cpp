@@ -717,4 +717,23 @@ const NamedFunc mhig("mhig",[](const Baby &b) -> NamedFunc::ScalarType{
   return mass;
 });
 
+const NamedFunc nb_exci("nb_exci",[](const Baby &b) -> NamedFunc::ScalarType{
+  int nb=0;
+  for (unsigned i(0); i<b.mc_id()->size(); i++){
+    if (abs(b.mc_id()->at(i))==5 && b.mc_status()->at(i)==23 
+	&& abs(b.mc_mom()->at(i))!=6 && abs(b.mc_mom()->at(i))!=24 && abs(b.mc_mom()->at(i))!=23) 
+      nb++;
+  }
+  return nb;
+});
+
+const NamedFunc nb_gs("nb_gs",[](const Baby &b) -> NamedFunc::ScalarType{
+  int nb=0;
+  for (unsigned i(0); i<b.mc_id()->size(); i++){
+    if (abs(b.mc_id()->at(i))==5 && b.mc_status()->at(i)!=23 ) 
+      nb++;
+  }
+  return nb;
+});
+
 }
