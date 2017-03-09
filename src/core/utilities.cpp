@@ -19,6 +19,8 @@
 #include "TCanvas.h"
 #include "TVector2.h"
 #include "TH1D.h"
+#include "TStyle.h"
+#include "TArrow.h"
 #include "RooStats/RooStatsUtils.h"
 
 using namespace std;
@@ -644,31 +646,74 @@ double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weight
       imSigma -= (ipSigma-ntot+1);
       ipSigma = ntot-1;
     }
-    mSigma = stdval-fKappas[imSigma]; pSigma = fKappas[ipSigma]-stdval;
+    mSigma = fabs(stdval-fKappas[imSigma]); pSigma = fKappas[ipSigma]-stdval;
   }
-
+  
+  gStyle->SetOptStat(0);              // No Stats box
   TCanvas can;
+  can.SetMargin(0.15, 0.05, 0.12, 0.11);
   int nbins(100);
-  double minH(stdval-3*mSigma), maxH(stdval+3*pSigma);
+  double minH(stdval-3*fabs(mSigma)), maxH(stdval+3*pSigma);
   if(minH < fKappas[0]) minH = fKappas[0];
   if(maxH > fKappas[ntot-1]) maxH = fKappas[ntot-1];
   TH1D histo("h","",nbins, minH, maxH);
-  for(int rep(0); rep < ntot; rep++) 
+  TH1D herr("herr","",nbins, minH, maxH);
+  for(int rep(0); rep < ntot; rep++) {
     histo.Fill(fKappas[rep]);   
-  //histo.SetBinContent(1, histo.GetBinContent(1)+nbadk);
-  //histo.SetBinContent(nbins, histo.GetBinContent(nbins)+histo.GetBinContent(nbins+1));
-  histo.Scale(1/histo.Integral());
-  histo.SetMaximum(histo.GetMaximum()*1.2);
-  histo.SetLineWidth(3);
-  histo.Draw();
-  histo.SetXTitle("Expected value");
-  histo.SetYTitle("Probability");
-  histo.Draw();
-  if(do_plot) can.SaveAs("test.eps");
-
+    if(fKappas[rep] >= stdval - mSigma && fKappas[rep] <= stdval + pSigma)
+      herr.Fill(fKappas[rep]); 
+  }
   double mode(histo.GetBinLowEdge(histo.GetMaximumBin()));
   if(verbose) cout<<"Std kappa = "<<stdval<<"+"<<pSigma<<"-"<<mSigma<<".   Mean = "<<mean
                   <<". Mode = "<<mode<<". Median = "<<median<<endl;
+  //histo.SetBinContent(1, histo.GetBinContent(1)+nbadk);
+  //histo.SetBinContent(nbins, histo.GetBinContent(nbins)+histo.GetBinContent(nbins+1));
+  if(do_plot) {
+    herr.SetLineColor(0);
+    herr.SetFillColor(kGray);
+    histo.SetTitleOffset(1.1, "X");
+    histo.SetTitleOffset(1.5, "Y");
+    // histo.Scale(1/histo.Integral());
+    // herr.Scale(1/histo.Integral());
+    histo.SetMinimum(0);
+    histo.SetMaximum(histo.GetMaximum()*1.2);
+    histo.SetTitleSize(0.05, "XY");
+    histo.SetLineWidth(3);
+    histo.Draw();
+    histo.SetXTitle("Toy value");
+    histo.SetYTitle("Number of toys");
+    histo.Draw();
+    herr.Draw("same");
+    histo.Draw("same");
+    histo.Draw("same axis");
+    TString title;
+    for(unsigned obs(0); obs < powers.size(); obs++) {
+      float observed(0.);
+      for(unsigned sam(0); sam < entries[obs].size(); sam++) {
+        observed += entries[obs][sam]*weights[obs][sam];
+      }
+      if(obs>0){
+	if(powers[obs]>0) title += " #times ";
+	else title += " / ";
+      }
+      title += RoundNumber(observed,0);
+    }
+    TString pName = "gamma_"+title+".pdf"; 
+    pName.ReplaceAll("/", "_d_"); pName.ReplaceAll("#times","_");
+    pName.ReplaceAll(" ","");
+    title += (" #rightarrow "+RoundNumber(stdval,2)+"^{+"+RoundNumber(pSigma,2)+"}_{-"+RoundNumber(mSigma,2)+"}");
+    title = "Interval for "+title;
+    histo.SetTitle(title);
+    
+    int abin = (nbins * fabs(stdval-minH)/(maxH-minH))+1;
+    TArrow arrow;
+    arrow.SetLineColor(kRed+2); arrow.SetFillColor(kRed+2);
+    arrow.SetArrowSize(0.015); arrow.SetLineWidth(4);
+    arrow.DrawArrow(stdval, 0, stdval, histo.GetBinContent(abin));
+
+    can.SaveAs(pName);
+  } // do_plot
+
 
   return stdval;
 }

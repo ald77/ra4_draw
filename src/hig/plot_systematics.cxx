@@ -63,6 +63,7 @@ namespace{
   bool do_midnb = false;
   bool do_onemet = false;
   bool print_mc = false;
+  int digits_table = 1;
   TString skim = "search";
   TString json = "2p6";
   TString only_method = "";
@@ -618,7 +619,6 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   //cout<<endl<<"Printing table (significance estimation can take a bit)"<<endl;
   //// Table general parameters
   yieldsPlane.clear();
-  int digits = 2;
   TString ump = " & ";
 
   size_t Nsig = proc_sigs.size(); // Number of signal points (for now it cannot be changed)
@@ -701,24 +701,24 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
         //// Printing Other, tt1l, tt2l
         if(split_bkg){
           size_t offset = (do_signal?Nsig:0);
-          out << ump <<RoundNumber(allyields[offset+2][index].Yield(), digits)
-              << ump <<RoundNumber(allyields[offset+3][index].Yield(), digits)
-              << ump <<RoundNumber(allyields[offset+4][index].Yield(), digits);
+          out << ump <<RoundNumber(allyields[offset+2][index].Yield(), digits_table)
+              << ump <<RoundNumber(allyields[offset+3][index].Yield(), digits_table)
+              << ump <<RoundNumber(allyields[offset+4][index].Yield(), digits_table);
         }
  	if(print_mc) {
 	  //// Printing kappa
 	  out<<ump;
-	  if(iabcd==3) out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits)
-			    << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits)
-			    << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits) <<"}$ ";
+	  if(iabcd==3) out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits_table)
+			    << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits_table)
+			    << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits_table) <<"}$ ";
 	  //// Printing MC Bkg yields
-	  out << ump << RoundNumber(allyields[1][index].Yield(), digits);
+	  out << ump << RoundNumber(allyields[1][index].Yield(), digits_table);
 	} // print_mc
         //// Printing background predictions
         out << ump;
-        if(iabcd==3) out << "$"    << RoundNumber(preds[iplane][ibin][0], digits)
-                         << "^{+"  << RoundNumber(preds[iplane][ibin][1], digits)
-                         << "}_{-" << RoundNumber(preds[iplane][ibin][2], digits) <<"}$ ";
+        if(iabcd==3) out << "$"    << RoundNumber(preds[iplane][ibin][0], digits_table)
+                         << "^{+"  << RoundNumber(preds[iplane][ibin][1], digits_table)
+                         << "}_{-" << RoundNumber(preds[iplane][ibin][2], digits_table) <<"}$ ";
         //// Printing observed events in data and Obs/MC ratio
         out << ump;
         if(iabcd==3) out << (unblind ? RoundNumber(allyields[0][index].Yield(), 0) : blind_s);
@@ -732,7 +732,7 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
         //// Printing signal yields
         if(do_signal){
           for(size_t ind=0; ind<Nsig; ind++) {
-            out<<ump<<RoundNumber(allyields[2+ind][index].Yield(), digits);
+            out<<ump<<RoundNumber(allyields[2+ind][index].Yield(), digits_table);
             if(do_zbi){
               out << ump;
               if(iabcd==3) 
@@ -1249,6 +1249,7 @@ void GetOptions(int argc, char *argv[]){
       {"lumi", required_argument, 0, 'l'},    // Luminosity to normalize MC with (no data)
       {"skim", required_argument, 0, 's'},    // Which skim to use: standard, 2015 data
       {"json", required_argument, 0, 'j'},    // Which JSON to use: 0p815, 2p6, 4p0, 7p65, 12p9
+      {"digits", required_argument, 0, 0},    // Number of digits to print the table with
       {"split_bkg", no_argument, 0, 'b'},     // Prints Other, tt1l, tt2l contributions
       {"no_signal", no_argument, 0, 'n'},     // Does not print signal columns
       {"do_leptons", no_argument, 0, 'p'},    // Does tables for e/mu/emu as well
@@ -1328,6 +1329,8 @@ void GetOptions(int argc, char *argv[]){
         do_ht = true;
       } else if(optname == "mm"){
         mm_scen = optarg;
+      }else if(optname == "digits"){
+	digits_table = atoi(optarg);
       }else if(optname == "quick"){
         quick_test = true;
       }else if(optname == "rewgt"){
