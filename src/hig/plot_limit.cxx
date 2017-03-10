@@ -164,7 +164,8 @@ int main(int argc, char *argv[]){
   TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
   TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";
   TString lumiEner = "#font[42]{"+lumi+" fb^{-1} (13 TeV)}"; lumiEner.ReplaceAll("p",".");
-  TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.6]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "+xsoft+"; "+chi10+" #rightarrow h#tilde{G}";
+  TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.6]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "+xsoft+"#rightarrow hh#tilde{G}#tilde{G} + "+xsoft;
+
   TString mChis = mass_+chi2n+"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}, "+mass_+"#tilde{G}}}} = 1 GeV";
   cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
   cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsPrel);
