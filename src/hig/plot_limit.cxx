@@ -25,9 +25,10 @@ namespace{
   TString lumi = "35p9";
   TString filename = "txt/limits/limits_TChiHH_lumi"+lumi+"_wilk.txt";
   TString model = "TChiHH";
-  TString datestamp = "17XXYY";
+  TString datestamp = "170310";
 }
 
+void higgsinoCrossSection(int hig_mass, float &xsec, float &xsec_unc);
 void GetOptions(int argc, char *argv[]);
 
 int main(int argc, char *argv[]){
@@ -44,6 +45,7 @@ int main(int argc, char *argv[]){
   vector<double> vmx, vmy, vxsec, vexsec, vobs, vobsup, vobsdown;
   vector<double> vexp, vup, vdown, v2up, v2down, vsigobs, vsigexp, zeroes, ones;
   double maxy=-99., miny=1e99;
+  vector<double> vxsecup, vxsecdown;
   
   string line_s;
   while(getline(infile, line_s)){
@@ -70,6 +72,10 @@ int main(int argc, char *argv[]){
     ones.push_back(1);
     if(miny > min(vobs.back(), 1.)) miny = min(vobs.back(), 1.);
     if(maxy < max(vobs.back(), 1.)) maxy = max(vobs.back(), 1.);
+
+    vxsecup.push_back(1+pexsec);
+    vxsecdown.push_back(1-pexsec);
+    
   }
   infile.close();
 
@@ -104,6 +110,8 @@ int main(int argc, char *argv[]){
   v2down   = ApplyPermutation(v2down   , perm);	
   vsigobs  = ApplyPermutation(vsigobs  , perm);	 	
   vsigexp  = ApplyPermutation(vsigexp  , perm);	
+  vxsecup  = ApplyPermutation(vxsecup  , perm);	
+  vxsecdown= ApplyPermutation(vxsecdown, perm);	
 
   TCanvas can;
   //can.SetGrid(); 
@@ -126,8 +134,9 @@ int main(int argc, char *argv[]){
   histo.SetYTitle("#sigma_{excl}^{95% CL}/#sigma_{theory}");
   histo.Draw();
 
+  int thcolor = kRed+1, thwidth = 3;
   TLine line;
-  line.SetLineColor(kBlue); line.SetLineStyle(2); line.SetLineWidth(3);
+  line.SetLineColor(thcolor); line.SetLineStyle(1); line.SetLineWidth(thwidth);
   TLatex cmslabel;
   
   cmslabel.SetNDC(kTRUE);
@@ -144,12 +153,18 @@ int main(int argc, char *argv[]){
   TGraph grobs(vmx.size(), &(vmx[0]), &(vobs[0]));
   grobs.SetLineWidth(3); 
   grobs.Draw("same"); 
+  TGraph grxsecup(vmx.size(), &(vmx[0]), &(vxsecup[0]));
+  grxsecup.SetLineWidth(1); grxsecup.SetLineStyle(2); grxsecup.SetLineColor(thcolor); 
+  grxsecup.Draw("same"); 
+  TGraph grxsecdown(vmx.size(), &(vmx[0]), &(vxsecdown[0]));
+  grxsecdown.SetLineWidth(1); grxsecdown.SetLineStyle(2); grxsecdown.SetLineColor(thcolor); 
+  grxsecdown.Draw("same"); 
 
   //// Drawing CMS labels and line at 1
   TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
   TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";
   TString lumiEner = "#font[42]{"+lumi+" fb^{-1} (13 TeV)}"; lumiEner.ReplaceAll("p",".");
-  TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.6]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "+xsoft+"#rightarrow hh#tilde{G}#tilde{G}";
+  TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.6]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "+xsoft+"; "+chi10+" #rightarrow h#tilde{G}";
   TString mChis = mass_+chi2n+"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}, "+mass_+"#tilde{G}}}} = 1 GeV";
   cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
   cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsPrel);
@@ -168,7 +183,7 @@ int main(int argc, char *argv[]){
   TLegend leg(legX-legW, legY-legH, legX, legY);
   leg.SetTextSize(0.04); leg.SetFillColor(0); 
   leg.SetFillStyle(0); leg.SetBorderSize(0);
-  leg.AddEntry(&line, "NLO+NLL", "l");
+  leg.AddEntry(&line, "NLO+NLL #pm #sigma_{theory}", "l");
   leg.AddEntry(&grobs, "Observed", "l");
   leg.AddEntry(&grexp1, "Expected #pm #sigma");
   leg.AddEntry(&grexp2, "Expected #pm 2#sigma");
@@ -198,6 +213,8 @@ int main(int argc, char *argv[]){
     if(miny > min(vexp[i]-v2down[i], vxsec[i])) miny = min(vexp[i]-v2down[i], vxsec[i]);
     if(maxy < max(vexp[i]+v2up[i], vxsec[i])) maxy = max(vexp[i]+v2up[i], vxsec[i]);
     //cout<<vmx[i]<<" -> "<<vobs[i]<<endl;
+    vxsecup[i]  *= vxsec[i];
+    vxsecdown[i]  *= vxsec[i];
   }
 
   histo.GetXaxis()->SetLabelOffset(0.01);
@@ -218,8 +235,14 @@ int main(int argc, char *argv[]){
   gobs.SetLineWidth(3); 
   gobs.Draw("same"); 
   TGraph gxsec(vmx.size(), &(vmx[0]), &(vxsec[0]));
-  gxsec.SetLineWidth(4); gxsec.SetLineColor(4); gxsec.SetLineStyle(2);
+  gxsec.SetLineWidth(thwidth); gxsec.SetLineColor(thcolor); gxsec.SetLineStyle(1);
   gxsec.Draw("same");
+  TGraph gxsecup(vmx.size(), &(vmx[0]), &(vxsecup[0]));
+  gxsecup.SetLineWidth(1); gxsecup.SetLineStyle(2); gxsecup.SetLineColor(thcolor); 
+  gxsecup.Draw("same"); 
+  TGraph gxsecdown(vmx.size(), &(vmx[0]), &(vxsecdown[0]));
+  gxsecdown.SetLineWidth(1); gxsecdown.SetLineStyle(2); gxsecdown.SetLineColor(thcolor); 
+  gxsecdown.Draw("same"); 
 
   can.SetLogy(true);
 
@@ -275,6 +298,48 @@ int main(int argc, char *argv[]){
 
 
 }
+
+void higgsinoCrossSection(int hig_mass, float &xsec, float &xsec_unc) {
+  if(hig_mass == 127) { xsec = .5824*.5824*7602.2/1000; xsec_unc = 0.0393921; return;}
+  else if(hig_mass == 150) { xsec = .5824*.5824*3832.31/1000; xsec_unc = 0.0413612; return;}
+  else if(hig_mass == 175) { xsec = .5824*.5824*2267.94/1000; xsec_unc = 0.044299;  return;}
+  else if(hig_mass == 200) { xsec = .5824*.5824*1335.62/1000; xsec_unc = 0.0474362; return;}
+  else if(hig_mass == 225) { xsec = .5824*.5824*860.597/1000; xsec_unc = 0.0504217; return;}
+  else if(hig_mass == 250) { xsec = .5824*.5824*577.314/1000; xsec_unc = 0.0532731; return;}
+  else if(hig_mass == 275) { xsec = .5824*.5824*400.107/1000; xsec_unc = 0.0560232; return;}
+  else if(hig_mass == 300) { xsec = .5824*.5824*284.855/1000; xsec_unc = 0.0586867; return;}
+  else if(hig_mass == 325) { xsec = .5824*.5824* 207.36/1000; xsec_unc = 0.0613554; return;}
+  else if(hig_mass == 350) { xsec = .5824*.5824*153.841/1000; xsec_unc = 0.0640598; return;}
+  else if(hig_mass == 375) { xsec = .5824*.5824*116.006/1000; xsec_unc = 0.066892;  return;}
+  else if(hig_mass == 400) { xsec = .5824*.5824*88.7325/1000; xsec_unc = 0.0697517; return;}
+  else if(hig_mass == 425) { xsec = .5824*.5824*68.6963/1000; xsec_unc = 0.0723531; return;}
+  else if(hig_mass == 450) { xsec = .5824*.5824*53.7702/1000; xsec_unc = 0.0748325; return;}
+  else if(hig_mass == 475) { xsec = .5824*.5824*42.4699/1000; xsec_unc = 0.0775146; return;}
+  else if(hig_mass == 500) { xsec = .5824*.5824*33.8387/1000; xsec_unc = 0.0802572; return;}
+  else if(hig_mass == 525) { xsec = .5824*.5824*27.1867/1000; xsec_unc = 0.0825803; return;}
+  else if(hig_mass == 550) { xsec = .5824*.5824*21.9868/1000; xsec_unc = 0.0849278; return;}
+  else if(hig_mass == 575) { xsec = .5824*.5824*17.9062/1000; xsec_unc = 0.087561;  return;}
+  else if(hig_mass == 600) { xsec = .5824*.5824*14.6677/1000; xsec_unc = 0.0900693; return;}
+  else if(hig_mass == 625) { xsec = .5824*.5824* 12.062/1000; xsec_unc = 0.091959;  return;}
+  else if(hig_mass == 650) { xsec = .5824*.5824*9.96406/1000; xsec_unc = 0.094065;  return;}
+  else if(hig_mass == 675) { xsec = .5824*.5824*8.28246/1000; xsec_unc = 0.0957436; return;}
+  else if(hig_mass == 700) { xsec = .5824*.5824*6.89981/1000; xsec_unc = 0.0982894; return;}
+  else if(hig_mass == 725) { xsec = .5824*.5824*5.78355/1000; xsec_unc = 0.0999915; return;}
+  else if(hig_mass == 750) { xsec = .5824*.5824* 4.8731/1000; xsec_unc = 0.101211;  return;}
+  else if(hig_mass == 775) { xsec = .5824*.5824*4.09781/1000; xsec_unc = 0.104646;  return;}
+  else if(hig_mass == 800) { xsec = .5824*.5824*3.46143/1000; xsec_unc = 0.107618;  return;}
+  else if(hig_mass == 825) { xsec = .5824*.5824* 2.9337/1000; xsec_unc = 0.108353;  return;}
+  else if(hig_mass == 850) { xsec = .5824*.5824* 2.4923/1000; xsec_unc = 0.110016;  return;}
+  else if(hig_mass == 875) { xsec = .5824*.5824*2.13679/1000; xsec_unc = 0.112636;  return;}
+  else if(hig_mass == 900) { xsec = .5824*.5824*1.80616/1000; xsec_unc = 0.1134;    return;}
+  else if(hig_mass == 925) { xsec = .5824*.5824*1.55453/1000; xsec_unc = 0.116949;  return;}
+  else if(hig_mass == 950) { xsec = .5824*.5824*1.32692/1000; xsec_unc = 0.117027;  return;}
+  else if(hig_mass == 975) { xsec = .5824*.5824*1.12975/1000; xsec_unc = 0.121244;  return;}
+  else if(hig_mass ==1000) { xsec = .5824*.5824*0.968853/1000; xsec_unc = 0.126209; return;}
+  else{ xsec = 0; xsec_unc = 0;}
+}
+
+
 
 void GetOptions(int argc, char *argv[]){
   while(true){
