@@ -278,6 +278,7 @@ int main(int argc, char *argv[]){
   }
   
   // get yields from the baby for all the cut strings
+  cout<<"Running on: "<<infolder+"/"+infile<<endl;
   Baby_full baby(std::set<std::string>{(infolder+"/"+infile).Data()});
   auto activator = baby.Activate();
   vector<double> yields, w2, entries;
@@ -502,6 +503,9 @@ void fillHiggsinoSys(ofstream &fsys){
     fsys << "SYSTEMATIC stat_4bmet3" << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_4b_met3    0.75"  << endl << endl;
+    fsys << "SYSTEMATIC wilks"       << endl;
+    fsys << " PROCESSES ttbar,other" << endl;
+    fsys << "  sbd_4b_met3    10.0"  << endl << endl;
     // ttbar closure
     fsys << "SYSTEMATIC ttx_closure" << endl;
     fsys << " PROCESSES ttbar,other" << endl;

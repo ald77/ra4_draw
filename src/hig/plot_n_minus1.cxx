@@ -29,6 +29,7 @@ void GetOptions(int argc, char *argv[]);
 
 namespace{
   string sample = "tt";
+  bool paper = true;
 }
 
 const NamedFunc fakeb_fromw("fakeb_fromw",[](const Baby &b) -> NamedFunc::ScalarType{
@@ -98,8 +99,12 @@ int main(int argc, char *argv[]){
   PlotOpt log_norm_info = lin_norm_info().YAxis(YAxisType::log);
   vector<PlotOpt> plt_norm_info = {lin_norm_info, log_norm_info};
 
-  PlotOpt log_norm = lin_norm_info().YAxis(YAxisType::log).Title(TitleType::info).LogMinimum(.7).Bottom(BottomType::off);
-  PlotOpt lin_norm = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info).Bottom(BottomType::off);
+  PlotOpt log_norm = lin_norm_info().YAxis(YAxisType::log).Title(TitleType::info).LogMinimum(.7).Bottom(BottomType::ratio);
+  PlotOpt lin_norm = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info).Bottom(BottomType::ratio);
+  if (paper) {
+    lin_norm.Title(TitleType::preliminary);
+    log_norm.Title(TitleType::preliminary);
+  }
   vector<PlotOpt> plt_norm = {lin_norm, log_norm};
 
   PlotOpt lin_shapes = lin_norm().Stack(StackType::shapes).Bottom(BottomType::ratio);
@@ -121,8 +126,8 @@ int main(int argc, char *argv[]){
   ///////////////////////////////// Higgsino //////////////////////////////////////////////
   //string folderhigmc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
   string folderhigmc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/";
-  string folderhigdata = bfolder+"/cms2r0/babymaker/babies/2017_01_27/data/merged_higdata_higlep1/";
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_higloose/");
+  string folderhigdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_26/TChiHH/merged_higmc_higloose/");
 
   map<string, set<string>> mctags; 
   mctags["tt"]     = set<string>({"*_TTJets*Lept*.root"});
@@ -139,17 +144,17 @@ int main(int argc, char *argv[]){
   }
 
   NamedFunc wgt = Higfuncs::weight_higd * Higfuncs::eff_higtrig;
-  NamedFunc base_func = "pass && met/met_calo<5 && nbt>=2 && nvleps==0&&ntks==0&&!low_dphi&&met>150&&weight<.1";
+  NamedFunc base_func = "pass && pass_ra2_badmu && met/met_calo<5 && nbt>=2 && nvleps==0&&ntks==0&&!low_dphi&&met>150";
 
   vector<shared_ptr<Process> > procs_hig;
+  procs_hig.push_back(Process::MakeShared<Baby_full>("QCD",        
+    Process::Type::background, colors("other"),    attach_folder(folderhigmc,mctags["qcd"]),     base_func&&"stitch")); 
   procs_hig.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", 
     Process::Type::background, colors("tt_1l"),    attach_folder(folderhigmc,mctags["ttx"]),     base_func&&"stitch"));
   procs_hig.push_back(Process::MakeShared<Baby_full>("V+jets",     
     Process::Type::background, kOrange+1,          attach_folder(folderhigmc,mctags["vjets"]),   base_func&&"stitch"));
   procs_hig.push_back(Process::MakeShared<Baby_full>("Single t",   
     Process::Type::background, colors("single_t"), attach_folder(folderhigmc,mctags["singlet"]), base_func&&"stitch"));
-  procs_hig.push_back(Process::MakeShared<Baby_full>("QCD",        
-    Process::Type::background, colors("other"),    attach_folder(folderhigmc,mctags["qcd"]),     base_func&&"stitch")); 
   procs_hig.push_back(Process::MakeShared<Baby_full>("Other",      
     Process::Type::background, kGreen+1,           attach_folder(folderhigmc,mctags["other"]),   base_func&&"stitch"));      
 
@@ -177,7 +182,8 @@ int main(int argc, char *argv[]){
   /////////////// TTBAR ONLY PROCESSES
   vector<shared_ptr<Process> > procs_tt;
   procs_tt.push_back(Process::MakeShared<Baby_full>("t#bar{t}(1l)", 
-    Process::Type::background, colors("tt_1l"), attach_folder(folderhigmc,mctags["tt"]), base_func&&"stitch&&ntruleps==1"));
+    Process::Type::background, colors("tt_1l"), 
+    attach_folder(folderhigmc,mctags["tt"]), base_func&&"stitch&&ntruleps==1"));
   ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -187,19 +193,24 @@ int main(int argc, char *argv[]){
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////// N-1 //////////////////////////////////////////////
   cuts = "nbdt>=2&&met>150&&higd_drmax<2.2&&higd_dm<40&&njets>=4&&njets<=5";
-  pm.Push<Hist1D>(Axis(9, 150., 600., "met", "E^{miss}_{T} [GeV]", {150., 200., 300., 450.}),cuts, procs_hig, plt_norm).Weight(wgt).Tag("n1");
+  pm.Push<Hist1D>(Axis(9, 150., 600., "met", "E^{miss}_{T} [GeV]", {150., 200., 300., 450.}),
+    cuts, procs_data, plt_norm).Weight(wgt).Tag("n1");
+
+  // cuts = "nbdt>=2&&nbdm>=3&&met>150&&higd_drmax<2.2&&higd_dm<40&&njets>=4&&njets<=5";
+  // pm.Push<Hist1D>(Axis(9, 150., 600., "met", "E^{miss}_{T} [GeV]", {150., 200., 300., 450.}),
+  //   cuts, procs_data, plt_norm).Weight(wgt).Tag("n1");
 
   cuts = "nbdt>=2&&nbdm>=3&&nbdl>=4&&met>150&&higd_drmax<2.2&&higd_dm<40&&njets>=4&&njets<=5";
-  pm.Push<Hist1D>(Axis(9, 150., 600., "met", "E^{miss}_{T} [GeV]", {150., 200., 300., 450.}),cuts, procs_hig, plt_norm).Weight(wgt).Tag("n1");
-
-  cuts = "nbdt>=2&&nbdm>=3&&nbdl>=4&&met>150&&higd_drmax<2.2&&higd_dm<40&&njets>=4&&njets<=5";
-  pm.Push<Hist1D>(Axis(50, 0., 250., "higd_am", "#LTm#GT [GeV]", {100., 140.}),cuts, procs_hig, plt_norm).Weight(wgt).Tag("n1");
+  pm.Push<Hist1D>(Axis(20, 0., 200., "higd_am", "#LTm#GT [GeV]", {100., 140.}),
+    cuts, procs_data, plt_norm).Weight(wgt).Tag("n1");
 
   cuts = "nbdt>=2&&nbdm>=3&&nbdl>=4&&met>150&&higd_drmax<2.2&&njets>=4&&njets<=5";
-  pm.Push<Hist1D>(Axis(30, 0., 150., "higd_dm", "#Deltam [GeV]", {40.}),cuts, procs_hig, plt_norm).Weight(wgt).Tag("n1");
+  pm.Push<Hist1D>(Axis(15, 0., 120., "higd_dm", "#Deltam [GeV]", {40.}),
+    cuts, procs_data, plt_norm).Weight(wgt).Tag("n1");
 
   cuts = "nbdt>=2&&nbdm>=3&&nbdl>=4&&met>150&&higd_dm<40&&njets>=4&&njets<=5";
-  pm.Push<Hist1D>(Axis(20,0,4,"higd_drmax", "#DeltaR_{max} [GeV]", {2.2}),cuts, procs_hig, plt_norm).Weight(wgt).Tag("n1");
+  pm.Push<Hist1D>(Axis(20,0,4,"higd_drmax", "#DeltaR_{max} [GeV]", {2.2}),
+    cuts, procs_data, plt_norm).Weight(wgt).Tag("n1");
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
 

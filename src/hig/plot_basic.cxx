@@ -29,6 +29,7 @@ void GetOptions(int argc, char *argv[]);
 namespace{
   //fixme:simplify options
   bool note = true;
+  bool paper = true;
   bool rewgt = false;
   float lumi = 4.3;
   string sample = "search";
@@ -82,13 +83,15 @@ int main(int argc, char *argv[]){
   if (do_data) {
     log_lumi_info = log_lumi().Title(TitleType::info).Bottom(BottomType::ratio);
     lin_lumi_info = lin_lumi().Title(TitleType::info).Bottom(BottomType::ratio);
+    log_lumi = log_lumi().Bottom(BottomType::ratio);
+    lin_lumi = lin_lumi().Bottom(BottomType::ratio);
   }
-  vector<PlotOpt> linplot = {lin_lumi_info};
+  vector<PlotOpt> linplot = {paper ? lin_lumi : lin_lumi_info};
   PlotOpt lin_lumi_info_print = lin_lumi().Title(TitleType::info).Bottom(BottomType::ratio).PrintVals(true);
   vector<PlotOpt> linplotprint = {lin_lumi_info_print};
   PlotOpt log_lumi_info_print = log_lumi().Title(TitleType::info).Bottom(BottomType::ratio).PrintVals(true);
   vector<PlotOpt> logplotprint = {log_lumi_info_print};
-  vector<PlotOpt> logplot = {log_lumi_info};
+  vector<PlotOpt> logplot = {paper ? log_lumi : log_lumi_info};
   vector<PlotOpt> all_shapes = {lin_shapes_info};
   Palette colors("txt/colors.txt", "default");
 
@@ -147,7 +150,10 @@ int main(int argc, char *argv[]){
 
   vector<shared_ptr<Process> > procs;
   if (!subtr_ttx) 
-    procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", 
+  procs.push_back(Process::MakeShared<Baby_full>("QCD",        
+    Process::Type::background, colors("other"),    attach_folder(foldermc,mctags["qcd"]),     
+    base_func+"&& pass && pass_ra2_badmu && stitch_met" + ((sample=="qcd"&&!subtr_ttx) ? "&&weight<10":""))); 
+  procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", 
       Process::Type::background, colors("tt_1l"),    attach_folder(foldermc,mctags["ttx"]),     
       base_func+"&& pass && pass_ra2_badmu && stitch_met"));
   procs.push_back(Process::MakeShared<Baby_full>("V+jets",     
@@ -156,9 +162,6 @@ int main(int argc, char *argv[]){
   procs.push_back(Process::MakeShared<Baby_full>("Single t",   
     Process::Type::background, colors("single_t"), attach_folder(foldermc,mctags["singlet"]), 
     base_func+"&& pass && pass_ra2_badmu && stitch_met"));
-  procs.push_back(Process::MakeShared<Baby_full>("QCD",        
-    Process::Type::background, colors("other"),    attach_folder(foldermc,mctags["qcd"]),     
-    base_func+"&& pass && pass_ra2_badmu && stitch_met" + ((sample=="qcd"&&!subtr_ttx) ? "&&weight<10":""))); 
   procs.push_back(Process::MakeShared<Baby_full>("Other",      
     Process::Type::background, kGreen+1,           attach_folder(foldermc,mctags["other"]),   
     base_func+"&& pass && pass_ra2_badmu && stitch_met"));      
@@ -199,16 +202,24 @@ int main(int argc, char *argv[]){
   
   vector<string> nbcuts;
   if (sample=="zll" || sample=="qcd") {
-    nbcuts.push_back("nbdm==0");
-    nbcuts.push_back("nbdm==1");
+    if (paper) {
+      nbcuts.push_back("nbdm>=0");
+    } else {
+      nbcuts.push_back("nbdm==0");
+      nbcuts.push_back("nbdm==1");
+    }
   } 
   if (!note || sample=="ttbar" || sample=="search") {
-    nbcuts.push_back("nbdt==2&&nbdm==2");
-    if (do_ge3b) {
-      nbcuts.push_back("nbdt>=2&&nbdm>=3");
+    if (paper) {
+      nbcuts.push_back("nbdt>=2");
     } else {
-      nbcuts.push_back("nbdt>=2&&nbdm==3&&nbdl==3");
-      nbcuts.push_back("nbdt>=2&&nbdm>=3&&nbdl>=4");
+      nbcuts.push_back("nbdt==2&&nbdm==2");
+      if (do_ge3b) {
+        nbcuts.push_back("nbdt>=2&&nbdm>=3");
+      } else {
+        nbcuts.push_back("nbdt>=2&&nbdm==3&&nbdl==3");
+        nbcuts.push_back("nbdt>=2&&nbdm>=3&&nbdl>=4");
+      }
     }
   }
 

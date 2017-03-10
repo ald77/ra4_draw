@@ -27,6 +27,7 @@ void GetOptions(int argc, char *argv[]);
 
 namespace{
   bool do_allbkg = false;
+  bool paper = true;
   string sample = "search";
   string json = "full";
   bool unblind = true;
@@ -45,6 +46,7 @@ int main(int argc, char *argv[]){
     .Bottom(BottomType::ratio)
     .YAxis(YAxisType::linear)
     .Stack(StackType::shapes);
+  if (paper) lin_shapes_info = lin_shapes_info.Title(TitleType::simulation);
   // PlotOpt log_shapes_info = lin_shapes_info.YAxis(YAxisType::log);
   vector<PlotOpt> plt_types = {lin_shapes_info};
 
@@ -76,8 +78,8 @@ int main(int argc, char *argv[]){
     if(sample=="qcd") alltags = {"*TTJets_*Lept*", 
                                  "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root",
                                  "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root", "*_ST_*.root",
-                                 //"*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*",
-                                 //"*QCD_HT300to500_Tune*", 
+                                 "*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*",
+                                 "*QCD_HT300to500_Tune*", 
                                  "*QCD_HT500to700_Tune*",
                                  "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
                                  "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*"
@@ -117,7 +119,7 @@ int main(int argc, char *argv[]){
   string samplename = "t#bar{t}+X";
   if (sample=="qcd") samplename = "QCD";
   if (sample=="zll") samplename = "Z#rightarrow ll";
-  if (do_allbkg) samplename = "All bkg.";
+  if (do_allbkg) samplename = "Bkg.";
 
   vector<int> colors = {kGreen+3, kGreen+1, kOrange, kAzure+1, kBlue+1};
 
@@ -233,7 +235,8 @@ int main(int argc, char *argv[]){
       }
 
       pm.Push<Hist1D>(Axis(10,0,200,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
-        baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Weight(wgt).Tag(sample+"_shape_bcats");
+        baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Weight(wgt).Tag(sample+"_shape_bcats")
+        .RatioTitle("Bkg.(nb)","Bkg.(2b)");
 
       pm.Push<Hist1D>(Axis(10,0,200,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
         baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Weight(wgt).Tag(sample+"_shape_trub");
@@ -252,7 +255,7 @@ int main(int argc, char *argv[]){
   }
 
   pm.min_print_ = true;
-  pm.MakePlots(40.);
+  pm.MakePlots(35.9);
 
   time(&endtime);
   cout<<endl<<"Making plots took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
