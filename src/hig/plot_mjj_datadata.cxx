@@ -75,7 +75,7 @@ int main(){
     .Stack(StackType::data_norm); 
   PlotOpt lin_lumi = log_lumi().YAxis(YAxisType::linear);
   PlotOpt lin_lumi_info = lin_lumi().Title(TitleType::info);
-  vector<PlotOpt> lin = {lin_lumi_info,lin_lumi};
+  vector<PlotOpt> lin = {lin_lumi};
 
   NamedFunc wgt = Higfuncs::weight_higd * Higfuncs::eff_higtrig;
 
@@ -86,10 +86,12 @@ int main(){
   vector<string> metbins = {"met>150 && met<=200", "met>200"};
   for (auto &imet: metbins){
     pm.Push<Hist1D>(Axis(20, 0, 200, "higd_am", "#LTm#GT [GeV]",{100.,140.}),
-		    imet, data3b_procs, lin).Weight(wgt).Tag("data3b").RatioTitle("Data 3b","Data 2b");
+		    imet, data3b_procs, lin).Weight(wgt).Tag("data3b").RatioTitle("Data 3b","Data 2b")
+      .RightLabel(CodeToRootTex(imet)+" GeV").YAxisZoom(0.93);
 
     pm.Push<Hist1D>(Axis(20, 0, 200, "higd_am", "#LTm#GT [GeV]", {100.,140.}),
-		    imet, data4b_procs, lin).Weight(wgt).Tag("data4b").RatioTitle("Data 4b","Data 2b");;
+		    imet, data4b_procs, lin).Weight(wgt).Tag("data4b").RatioTitle("Data 4b","Data 2b")
+      .RightLabel(CodeToRootTex(imet)+" GeV").YAxisZoom(0.93);
   } 
 
 

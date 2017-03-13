@@ -277,6 +277,9 @@ Hist1D::Hist1D(const Axis &xaxis, const NamedFunc &cut,
   cut_(cut),
   weight_("weight"),
   tag_(""),
+  left_label_(""),
+  right_label_(""),
+  yaxis_zoom_(1.),
   ratio_numerator_(""),
   ratio_denominator_(""),
   plot_options_(plot_options),
@@ -407,6 +410,28 @@ void Hist1D::Print(double luminosity,
     top->RedrawAxis();
     top->RedrawAxis("g");
 
+    if(left_label_ != ""){
+      double mindraw = GetMinDraw();
+      double maxdraw = GetMaxDraw()/yaxis_zoom_;
+      double left = xaxis_.Bins().front();
+      double right = xaxis_.Bins().back();
+      TLatex label; 
+      label.SetTextFont(this_opt_.Font()+10);label.SetTextSize(this_opt_.TitleSize()*0.78);
+      label.SetTextAlign(13);
+      label.DrawLatex(left+(right-left)*0.04, mindraw+(maxdraw-mindraw)*1.05, left_label_.c_str());
+    }
+
+    if(right_label_ != ""){
+      double mindraw = GetMinDraw();
+      double maxdraw = GetMaxDraw()/yaxis_zoom_;
+      double left = xaxis_.Bins().front();
+      double right = xaxis_.Bins().back();
+      TLatex label; 
+      label.SetTextFont(this_opt_.Font()+10);label.SetTextSize(this_opt_.TitleSize()*0.78);
+      label.SetTextAlign(33);
+      label.DrawLatex(right-(right-left)*0.04, mindraw+(maxdraw-mindraw)*1.05, right_label_.c_str());
+    }
+
     vector<shared_ptr<TLatex> > title_text = GetTitleTexts();
     for(auto &x: title_text){
       x->Draw();
@@ -510,6 +535,21 @@ Hist1D & Hist1D::Weight(const NamedFunc &weight){
 
 Hist1D & Hist1D::Tag(const string &tag){
   tag_ = tag;
+  return *this;
+}
+
+Hist1D & Hist1D::LeftLabel(const string &label){
+  left_label_ = label;
+  return *this;
+}
+
+Hist1D & Hist1D::RightLabel(const string &label){
+  right_label_ = label;
+  return *this;
+}
+
+Hist1D & Hist1D::YAxisZoom(const double &yaxis_zoom){
+  yaxis_zoom_ = yaxis_zoom;
   return *this;
 }
 
@@ -661,7 +701,7 @@ void Hist1D::NormalizeHistos() const{
  */
 void Hist1D::SetRanges() const{
   double the_min = GetMinDraw();
-  double the_max = GetMaxDraw();
+  double the_max = GetMaxDraw()/yaxis_zoom_;
 
   double ratio = GetLegendRatio();
 
@@ -720,6 +760,10 @@ void Hist1D::StyleHisto(TH1D &h) const{
   h.SetTitleFont(this_opt_.Font(), "xyz");
   
   double bin_width = xaxis_.AvgBinWidth();
+
+  bool have_vec_ = false; // To be properly filled from the SingleHist1D...
+  string Yunit = (have_vec_?"Entries":"Events");
+  string yunit = (have_vec_?"entries":"events");
   
   ostringstream title;
   switch(this_opt_.Stack()){
@@ -730,22 +774,22 @@ void Hist1D::StyleHisto(TH1D &h) const{
   case StackType::data_norm:
   case StackType::lumi_shapes:
     if(xaxis_.units_ == "" && bin_width == 1){
-      title << "Entries";    
+      title << Yunit;    
       break;
     }
     else{
-      title << "Entries/(" << bin_width;
+      title << Yunit<<"/(" << bin_width;
       if(xaxis_.units_ != "") title << " " << xaxis_.units_;
       title << ")";
       break;
     }
   case StackType::shapes:
     if(xaxis_.units_ == "" && bin_width == 1){
-      title << "% entries";
+      title << "% "<<yunit;
       break;
     }
     else{
-      title << "% entries/(" << bin_width;
+      title << "% "<<yunit<<"/(" << bin_width;
       if(xaxis_.units_ != "") title << " " << xaxis_.units_;
       title << ")";
       break;
@@ -892,20 +936,22 @@ vector<shared_ptr<TLatex> > Hist1D::GetTitleTexts() const{
     default:
       ERROR("Did not understand title type "+to_string(static_cast<int>(this_opt_.Title())));
     }
-    out.push_back(make_shared<TLatex>(left, 0.5*(bottom+top),
+    out.push_back(make_shared<TLatex>(left, bottom+0.2*(top-bottom),
                                       ("#font[62]{CMS}#scale[0.76]{#font[52]{ "+extra+"}}").c_str()));
     out.back()->SetNDC();
-    out.back()->SetTextAlign(12);
+    out.back()->SetTextAlign(11);
     out.back()->SetTextFont(this_opt_.Font());
+    out.back()->SetTextSize(this_opt_.TitleSize());
 
     ostringstream oss;
     if(luminosity_ != 1.0) oss << luminosity_ << " fb^{-1} (13 TeV)" << flush;
     else oss << 36.8 << " fb^{-1} (13 TeV)" << flush; // In the future I may be murdered in my sleep for this offense- Ryan
-    out.push_back(make_shared<TLatex>(right, 0.5*(bottom+top),
+    out.push_back(make_shared<TLatex>(right, bottom+0.2*(top-bottom),
                                       oss.str().c_str()));
     out.back()->SetNDC();
-    out.back()->SetTextAlign(32);
+    out.back()->SetTextAlign(31);
     out.back()->SetTextFont(this_opt_.Font());
+    out.back()->SetTextSize(this_opt_.TitleSize());
   }
   return out;
 }
