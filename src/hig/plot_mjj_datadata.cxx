@@ -46,7 +46,7 @@ int main(){
   auto data_2b = Process::MakeShared<Baby_full>("Data 2b", Process::Type::background, kBlack,
     {fdata+"*.root"},baseline && Higfuncs::trig_hig>0. && "pass && nbdt==2&&nbdm==2");
   data_2b->SetFillColor(kWhite);
-  data_2b->SetLineColor(kBlue-7);
+  data_2b->SetLineColor(kAzure-2);//kBlue-7);
   data_2b->SetLineWidth(2);
 
   string filters = "pass_ra2_badmu&&pass_goodv&&pass_ecaldeadcell&&pass_hbhe&&pass_hbheiso&&pass_fsmet";
@@ -85,13 +85,14 @@ int main(){
   //  vector<string> metbins = {"met>150 && met<=500", "met>150 && met<=200", "met>200 && met<=350", "met>350 && met<=500", "met>200 && met<=500","met>500","met>200","met>350"};
   vector<string> metbins = {"met>150 && met<=200", "met>200"};
   for (auto &imet: metbins){
+    string metlabel = CodeToRootTex(imet)+" GeV"; ReplaceAll(metlabel,"E","p");
     pm.Push<Hist1D>(Axis(20, 0, 200, "higd_am", "#LTm#GT [GeV]",{100.,140.}),
 		    imet, data3b_procs, lin).Weight(wgt).Tag("data3b").RatioTitle("Data 3b","Data 2b")
-      .RightLabel(CodeToRootTex(imet)+" GeV").YAxisZoom(0.93);
+      .RightLabel(metlabel).YAxisZoom(0.93);
 
     pm.Push<Hist1D>(Axis(20, 0, 200, "higd_am", "#LTm#GT [GeV]", {100.,140.}),
 		    imet, data4b_procs, lin).Weight(wgt).Tag("data4b").RatioTitle("Data 4b","Data 2b")
-      .RightLabel(CodeToRootTex(imet)+" GeV").YAxisZoom(0.93);
+      .RightLabel(metlabel).YAxisZoom(0.93);
   } 
 
 

@@ -1070,10 +1070,8 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
     out.at(i) = out.at(i+1);
   }
   out.back() = band;
-  //out.back().SetFillStyle(3002);
-  // makes ratio error band colored for data-to-data plots as well
-  if (backgrounds_.front()->scaled_hist_.GetLineColor()!=kBlack)
-    out.back().SetFillColorAlpha(backgrounds_.front()->scaled_hist_.GetLineColor(),0.3);
+  out.back().SetFillStyle(1001);
+  out.back().SetFillColorAlpha(backgrounds_.front()->scaled_hist_.GetLineColor(),0.2);
   out.back().SetLineWidth(0);
   out.back().SetMarkerStyle(0);
   out.back().SetMarkerSize(0);

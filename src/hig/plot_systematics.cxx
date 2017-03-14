@@ -43,6 +43,7 @@
 using namespace std;
 
 namespace{
+  bool paper = true;
   bool test = false;
   bool deep = true;
   bool rewgt = false;
@@ -143,30 +144,30 @@ int main(int argc, char *argv[]){
   }else if(mm_scen == "totunc"){
     scenarios = vector<string>();
     do_correction = true;
-    scenarios.push_back("syst_ttx_up");
-    weights.emplace("syst_ttx_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_ttx));
-    corrections.emplace("syst_ttx_up", Higfuncs::wgt_comp);
-    scenarios.push_back("syst_ttx_dn");
-    weights.emplace("syst_ttx_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_ttx));
-    corrections.emplace("syst_ttx_dn", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_ttx_up");
+    // weights.emplace("syst_ttx_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_ttx));
+    // corrections.emplace("syst_ttx_up", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_ttx_dn");
+    // weights.emplace("syst_ttx_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_ttx));
+    // corrections.emplace("syst_ttx_dn", Higfuncs::wgt_comp);
 
-    scenarios.push_back("syst_vjets_up");
-    weights.emplace("syst_vjets_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_vjets));
-    corrections.emplace("syst_vjets_up", Higfuncs::wgt_comp);
-    scenarios.push_back("syst_vjets_dn");
-    weights.emplace("syst_vjets_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_vjets));
-    corrections.emplace("syst_vjets_dn", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_vjets_up");
+    // weights.emplace("syst_vjets_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_vjets));
+    // corrections.emplace("syst_vjets_up", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_vjets_dn");
+    // weights.emplace("syst_vjets_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_vjets));
+    // corrections.emplace("syst_vjets_dn", Higfuncs::wgt_comp);
 
-    scenarios.push_back("syst_qcd_up");
-    weights.emplace("syst_qcd_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_qcd));
-    corrections.emplace("syst_qcd_up", Higfuncs::wgt_comp);
-    scenarios.push_back("syst_qcd_dn");
-    weights.emplace("syst_qcd_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_qcd));
-    corrections.emplace("syst_qcd_dn", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_qcd_up");
+    // weights.emplace("syst_qcd_up", w*(Higfuncs::wgt_comp)*(1+Higfuncs::wgt_syst_qcd));
+    // corrections.emplace("syst_qcd_up", Higfuncs::wgt_comp);
+    // scenarios.push_back("syst_qcd_dn");
+    // weights.emplace("syst_qcd_dn", w*(Higfuncs::wgt_comp)*(1-Higfuncs::wgt_syst_qcd));
+    // corrections.emplace("syst_qcd_dn", Higfuncs::wgt_comp);
 
-    scenarios.push_back("syst_comp");
-    weights.emplace("syst_comp", w*(Higfuncs::wgt_comp)); 
-    corrections.emplace("syst_comp", 1.);
+    // scenarios.push_back("syst_comp");
+    // weights.emplace("syst_comp", w*(Higfuncs::wgt_comp)); 
+    // corrections.emplace("syst_comp", 1.);
 
     scenarios.push_back("syst_mcstat");
     weights.emplace("syst_mcstat", w);
@@ -386,13 +387,13 @@ int main(int argc, char *argv[]){
 
     if(skim.Contains("zll")){
       caption = "$N_{\\rm leps}=2$ CR";
-      abcd_title = "Control region: "+nleps+" = 2";
+      abcd_title = "Dilepton CR";
    } else if(skim.Contains("qcd")){
       caption = "Low $\\Delta\\phi$ CR";
-      abcd_title = "Control region: Low #Delta#phi";
+      abcd_title = "Low #Delta#phi CR";
     } else if(skim.Contains("ttbar")){
       caption = "$N_{\\rm leps}=1$ CR";
-      abcd_title = "Control region: "+nleps+" = 1";
+      abcd_title = "Single-lepton CR";
     } else {
       caption = "Search bins";
       abcd_title = "Search bins";
@@ -920,7 +921,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   for(size_t iplane=0; iplane < k_ordered.size(); iplane++) {
     for(size_t ibin=0; ibin < k_ordered[iplane].size(); ibin++){
       bin++;
-      histo.GetXaxis()->SetBinLabel(bin, CodeToRootTex(k_ordered[iplane][ibin][0].cut.Data()).c_str());
+      if (paper) histo.GetXaxis()->SetBinLabel(bin, "");
+      else histo.GetXaxis()->SetBinLabel(bin, CodeToRootTex(k_ordered[iplane][ibin][0].cut.Data()).c_str());
       // xval is the x position of the first marker in the group
       double xval = bin, nbs = k_ordered[iplane][ibin].size(), minxb = 0.15, binw = 0;
       // If there is more than one point in the group, it starts minxb to the left of the center of the bin
@@ -977,7 +979,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
             else klab.SetTextColor(1);
             klab.SetTextSize(0.045);
             if (k_ordered.size()*k_ordered[iplane].size()>8) klab.SetTextSize(0.03);
-            if(mm_scen!="mc_as_data") klab.DrawLatex(xval, 0.952*maxy, text);
+            if(mm_scen!="mc_as_data" && !paper) klab.DrawLatex(xval, 0.952*maxy, text);
             //// Printing stat uncertainty of kappa_mm/kappa
             float kapUp = k_ordered[iplane][ibin][ib].kappa[1], kapDown = k_ordered[iplane][ibin][ib].kappa[2];
             float kap_mmUp = k_ordered_mm[iplane][ibin][ib].kappa[1];
@@ -993,8 +995,18 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
             }
             klab.SetTextSize(0.05);
             if (k_ordered.size()*k_ordered[iplane].size()>8) klab.SetTextSize(0.035);
-            klab.DrawLatex(xval, 0.888*maxy, text);
-           xval += binw;
+            if (paper) {
+              if (skim=="search" || skim=="ttbar") text = ibin%2==0 ? "3b/2b" : "4b/2b"; 
+              else if (skim=="zll") text = do_midnb ? "2b/1b" : "1b/0b"; 
+              else if (skim=="qcd") {
+                if (do_highnb) text =  ibin%2==0 ? "3b/2b" : "4b/2b"; 
+                else text = do_midnb ? "2b/1b" : "1b/0b"; 
+              }
+              klab.DrawLatex(xval, 0.92*maxy, text);
+            } else {
+              klab.DrawLatex(xval, 0.888*maxy, text);
+            }
+            xval += binw;
           }
         } // Loop over nb cuts in ordered TGraphs
       } // Loop over nb cuts in kappa plot
@@ -1005,8 +1017,24 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     else {line.SetLineStyle(2); line.SetLineWidth(2); line.SetLineColor(kBlack);}
     if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
     // Drawing MET labels
-    if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
-    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.10*maxy, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
+    if (paper) {
+      TString metlabel = abcd.planecuts[iplane]; 
+      TString metdef = "met";
+      if (skim=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
+      if (metlabel.Contains("&&")) { metlabel.ReplaceAll(metdef+">","").ReplaceAll(metdef+"<=","").ReplaceAll("&&"," - "); }
+      else { metlabel.ReplaceAll(metdef+">",""); metlabel += "+"; }
+      label.SetTextSize(0.05);
+      label.SetTextAlign(23);
+      label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.03*maxy, metlabel);
+      if (iplane==0) {
+        double lmargin(opts.LeftMargin()), rmargin(opts.RightMargin()), bmargin(opts.BottomMargin());
+        if (skim=="zll") label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/2., bmargin-0.08, "p_{T}(ll) [GeV]");
+        else label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/2., bmargin-0.08, "p_{T}^{miss} [GeV]");
+      }
+    } else {
+      if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
+      else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.10*maxy, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
+    }
   } // Loop over plane cuts
 
   //// Drawing legend and TGraphs
@@ -1060,7 +1088,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     //leg.AddEntry(&graph[indb], CodeToRootTex(ind_bcuts[indb].cut.Data()).c_str(), "p");
 
   } // Loop over TGraphs
-  leg.Draw();
+  if (skim!="search" || !paper) leg.Draw();
 
   //if(ind_bcuts.size()>1) leg.Draw();
 

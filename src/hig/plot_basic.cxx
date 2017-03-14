@@ -135,18 +135,18 @@ int main(int argc, char *argv[]){
   if (rewgt) wgt *= wgt_comp;
 
   string base_func("njets>=4 && njets<=5 && met/met_calo<5"); //met/met_calo
-  // zll skim: ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && 
-  // nleps==2 && Max$(leps_pt)>40 && (njets==4||njets==5)
   if (sample=="zll") base_func = base_func+"&& nleps==2 && met<50";
-  // qcd skim - met>150 && nvleps==0 && (njets==4||njets==5)
   if (sample=="qcd") base_func = base_func+"&& ntks==0 && nvleps==0 && low_dphi";
-  // ttbar skim - nleps==1 && (njets==4||njets==5) && nbt>=2
   if (sample=="ttbar") base_func = base_func+"&& nleps==1 && mt<100";
-  // search skim - met>100 && nvleps==0 && (njets==4||njets==5) && nbt>=2
   if (sample=="search") {
     if (do_loose) base_func = base_func+"&& nvleps==0";
     else base_func = base_func+"&& nvleps==0 && ntks==0 && !low_dphi";
   } 
+
+  string cr_label = "";
+  if (sample=="zll") cr_label = "Dilepton CR";
+  if (sample=="qcd") cr_label = "Low #Delta CR";
+  if (sample=="ttbar") cr_label = "Single-lepton CR";
 
   vector<shared_ptr<Process> > procs;
   if (!subtr_ttx) 
@@ -298,12 +298,12 @@ int main(int argc, char *argv[]){
           int div = 1;
           // if (inb>0) div = 2;
           if (ixcut.first=="nm1") { 
-            pm.Push<Hist1D>(Axis(24/div,0,240,"higd_am", "<m> [GeV]", {100., 140.}),
+            pm.Push<Hist1D>(Axis(24/div,0,240,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
               ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&higd_dm<40", 
-              procs, linplot).Weight(wgt).Tag(sample);
-            pm.Push<Hist1D>(Axis(24/div,0,240,"higd_am", "<m> [GeV]", {100., 140.}),
+              procs, linplot).Weight(wgt).Tag(sample).RightLabel(cr_label);
+            pm.Push<Hist1D>(Axis(24/div,0,240,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
               ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&higd_dm<40 && higd_drmax<=2.2", 
-              procs, linplot).Weight(wgt).Tag(sample);
+              procs, linplot).Weight(wgt).Tag(sample).RightLabel(cr_label);
             tmp_seln = ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb];
             if(!note) pm.Push<Hist1D>(Axis(15,0,150,"higd_dm", "#Deltam [GeV]", {40.}), 
               tmp_seln, procs, linplot).Weight(wgt).Tag(sample);

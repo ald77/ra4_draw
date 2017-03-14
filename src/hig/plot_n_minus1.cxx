@@ -105,7 +105,8 @@ int main(int argc, char *argv[]){
     lin_norm.Title(TitleType::preliminary);
     log_norm.Title(TitleType::preliminary);
   }
-  vector<PlotOpt> plt_norm = {lin_norm, log_norm};
+  vector<PlotOpt> plt_lin = {lin_norm};
+  vector<PlotOpt> plt_log = {log_norm};
 
   PlotOpt lin_shapes = lin_norm().Stack(StackType::shapes).Bottom(BottomType::ratio);
   vector<PlotOpt> plt_shapes = {lin_shapes};
@@ -193,8 +194,8 @@ int main(int argc, char *argv[]){
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////// N-1 //////////////////////////////////////////////
   cuts = "nbdt>=2&&met>150&&higd_drmax<2.2&&higd_dm<40&&njets>=4&&njets<=5";
-  pm.Push<Hist1D>(Axis(9, 150., 600., "met", "E^{miss}_{T} [GeV]", {150., 200., 300., 450.}),
-    cuts, procs_data, plt_norm).Weight(wgt).Tag("n1");
+  pm.Push<Hist1D>(Axis(9, 150., 600., "met", "p^{miss}_{T} [GeV]", {150., 200., 300., 450.}),
+    cuts, procs_data, plt_log).Weight(wgt).Tag("n1");
 
   // cuts = "nbdt>=2&&nbdm>=3&&met>150&&higd_drmax<2.2&&higd_dm<40&&njets>=4&&njets<=5";
   // pm.Push<Hist1D>(Axis(9, 150., 600., "met", "E^{miss}_{T} [GeV]", {150., 200., 300., 450.}),
@@ -202,15 +203,15 @@ int main(int argc, char *argv[]){
 
   cuts = "nbdt>=2&&nbdm>=3&&nbdl>=4&&met>150&&higd_drmax<2.2&&higd_dm<40&&njets>=4&&njets<=5";
   pm.Push<Hist1D>(Axis(20, 0., 200., "higd_am", "#LTm#GT [GeV]", {100., 140.}),
-    cuts, procs_data, plt_norm).Weight(wgt).Tag("n1");
+    cuts, procs_data, plt_lin).Weight(wgt).Tag("n1");
 
   cuts = "nbdt>=2&&nbdm>=3&&nbdl>=4&&met>150&&higd_drmax<2.2&&njets>=4&&njets<=5";
   pm.Push<Hist1D>(Axis(15, 0., 120., "higd_dm", "#Deltam [GeV]", {40.}),
-    cuts, procs_data, plt_norm).Weight(wgt).Tag("n1");
+    cuts, procs_data, plt_lin).Weight(wgt).Tag("n1");
 
   cuts = "nbdt>=2&&nbdm>=3&&nbdl>=4&&met>150&&higd_dm<40&&njets>=4&&njets<=5";
   pm.Push<Hist1D>(Axis(20,0,4,"higd_drmax", "#DeltaR_{max} [GeV]", {2.2}),
-    cuts, procs_data, plt_norm).Weight(wgt).Tag("n1");
+    cuts, procs_data, plt_lin).Weight(wgt).Tag("n1");
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
 
