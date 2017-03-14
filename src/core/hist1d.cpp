@@ -376,12 +376,14 @@ void Hist1D::Print(double luminosity,
     if(this_opt_.Bottom() != BottomType::off){
       bottom->cd();
 
-      string draw_opt = "e0";
+
+      if(bot_plots.size()>0) bot_plots.at(0).Draw("e0");
+      bottom_background.Draw("2 same");
+      string draw_opt = "e0 same";
       for(auto &h: bot_plots){
         h.Draw(draw_opt.c_str());
-        draw_opt = "e0 same";
       }
-      bottom_background.Draw("2 same");
+
 
       horizontal.Draw("same");
 
@@ -968,9 +970,9 @@ TGraphAsymmErrors Hist1D::GetBackgroundError() const{
   }else{
     g = TGraphAsymmErrors(&(backgrounds_.front()->scaled_hist_));
   // set the color of the error band to the line color, accomodating data-to-data plots
-    g.SetFillColor(backgrounds_.front()->scaled_hist_.GetLineColor());
+    g.SetFillColorAlpha(backgrounds_.front()->scaled_hist_.GetLineColor(),0.3);
   }
-  g.SetFillStyle(3002);
+  //g.SetFillStyle(3002);
   g.SetLineWidth(0);
   g.SetMarkerSize(0);
   return g;
@@ -1068,10 +1070,10 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
     out.at(i) = out.at(i+1);
   }
   out.back() = band;
-  out.back().SetFillStyle(3002);
+  //out.back().SetFillStyle(3002);
   // makes ratio error band colored for data-to-data plots as well
   if (backgrounds_.front()->scaled_hist_.GetLineColor()!=kBlack)
-    out.back().SetFillColor(backgrounds_.front()->scaled_hist_.GetLineColor());
+    out.back().SetFillColorAlpha(backgrounds_.front()->scaled_hist_.GetLineColor(),0.3);
   out.back().SetLineWidth(0);
   out.back().SetMarkerStyle(0);
   out.back().SetMarkerSize(0);
@@ -1278,8 +1280,9 @@ vector<shared_ptr<TLegend> > Hist1D::GetLegends(){
 
   size_t entries_added = 0;
   AddEntries(legends, datas_, "lep", n_entries, entries_added);
-  AddEntries(legends, signals_, "l", n_entries, entries_added);
   AddEntries(legends, backgrounds_, this_opt_.BackgroundsStacked() ? "f" : "l", n_entries, entries_added);
+  AddEntries(legends, signals_, "l", n_entries, entries_added);
+  //  AddEntries(legends, backgrounds_, this_opt_.BackgroundsStacked() ? "f" : "l", n_entries, entries_added);
 
   //Add a dummy legend entry to display MC normalization
   if(this_opt_.DisplayLumiEntry()){

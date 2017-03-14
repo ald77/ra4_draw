@@ -38,9 +38,9 @@ int main(){
   string fdata = bfolder+"/cms29r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/";
   
 
-  auto data_highmt = Process::MakeShared<Baby_full>("Data 1l, m_{T} > 140", Process::Type::data, kBlack,
+  auto data_highmt = Process::MakeShared<Baby_full>("Data, m_{T} > 140 GeV", Process::Type::data, kBlack,
     {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
-  auto data_lowmt = Process::MakeShared<Baby_full>("Data 1l, m_{T} #leq 140", Process::Type::background, kBlack,
+  auto data_lowmt = Process::MakeShared<Baby_full>("Data, m_{T} #leq 140 GeV", Process::Type::background, kBlack,
     {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt<=140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   data_lowmt->SetFillColor(kWhite);
   data_lowmt->SetLineColor(kBlue-7);
@@ -56,10 +56,10 @@ int main(){
 
 
   auto t1tttt = Process::MakeShared<Baby_full>("T1tttt(1800,100)", Process::Type::signal, colors("t1tttt"),
-    {"/net/cms29/cms29r0/babymaker/babies/2017_02_13_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
+    {"/net/cms29/cms29r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   t1tttt->SetLineWidth(2);
   auto t1ttttc = Process::MakeShared<Baby_full>("T1tttt(1400,1000)", Process::Type::signal, colors("t1tttt"),
-    {"/net/cms29/cms29r0/babymaker/babies/2017_02_13_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1400_mLSP-1000_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
+    {"/net/cms29/cms29r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1400_mLSP-1000_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   t1ttttc->SetLineWidth(2);
   t1ttttc->SetLineStyle(2);
 
@@ -76,7 +76,8 @@ int main(){
   log_lumi.Title(TitleType::preliminary)
     .Bottom(BottomType::ratio)
     .YAxis(YAxisType::log)
-    .Stack(StackType::data_norm); 
+    .Stack(StackType::data_norm)
+    .RatioMaximum(1.86);
   PlotOpt lin_lumi = log_lumi().YAxis(YAxisType::linear);
   PlotOpt log_shapes = log_lumi().Stack(StackType::shapes)
     .Bottom(BottomType::off)
@@ -94,19 +95,20 @@ int main(){
 
   //data-to-data
   //  vector<string> metbins = {"met>150 && met<=500", "met>150 && met<=200", "met>200 && met<=350", "met>350 && met<=500", "met>200 && met<=500","met>500","met>200","met>350"};
-  vector<string> metbins = { "met>200 && met<=350", "met>350 && met<=500","met>500"};
+  vector<string> metbins = { "met>200 && met<=350", "met>350 && met<=500","met>500","met>350"};
   for (auto &imet: metbins){
     pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]",{250.,400.}),
-		    imet + "&&nbm==1", data1l_procs, lin).Tag("data1l1b").RatioTitle("Data m_{T} > 140","Data m_{T} #leq 140");
+		    imet + "&&nbm==1", data1l_procs, lin).Tag("data1l1b").RatioTitle("Data, m_{T} > 140 GeV","Data, m_{T} #leq 140 GeV")
+      .RightLabel("#splitline{"+CodeToRootTex(imet)+" GeV}{"+CodeToRootTex("njets>=6&&nbm==1")+"}").YAxisZoom(0.93);
+    pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]", {250.,400.}),
+		    imet + "&&nbm>=2", data1l_procs, lin).Tag("data1l2b").RatioTitle("Data, m_{T} > 140 GeV","Data, m_{T} #leq 140 GeV")
+      .RightLabel("#splitline{"+CodeToRootTex(imet)+" GeV}{"+CodeToRootTex("njets>=6&&nbm>=2")+"}").YAxisZoom(0.93);
 
     pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]", {250.,400.}),
-		    imet + "&&nbm>=2", data1l_procs, lin).Tag("data1l2b").RatioTitle("Data m_{T} > 140","Data m_{T} #leq 140");;
+		    imet,  data2l_procs, lin).Tag("data2l").RatioTitle("Data 2l","Data 1l, m_{T} #leq 140 GeV");
 
     pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]", {250.,400.}),
-		    imet,  data2l_procs, lin).Tag("data2l").RatioTitle("Data 2l","Data 1l, m_{T} #leq 140");
-
-    pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]", {250.,400.}),
-		    imet, data2lveto_procs, lin).Tag("data2lveto").RatioTitle("Data 2l","Data 1l, m_{T} #leq 140");
+		    imet, data2lveto_procs, lin).Tag("data2lveto").RatioTitle("Data 2l","Data 1l, m_{T} #leq 140 GeV");
 
   } 
 
