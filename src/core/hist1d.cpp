@@ -947,8 +947,8 @@ vector<shared_ptr<TLatex> > Hist1D::GetTitleTexts() const{
     out.back()->SetTextSize(this_opt_.TitleSize());
 
     ostringstream oss;
-    if(luminosity_ != 1.0) oss << luminosity_ << " fb^{-1} (13 TeV)" << flush;
-    else oss << 36.8 << " fb^{-1} (13 TeV)" << flush; // In the future I may be murdered in my sleep for this offense- Ryan
+    if(this_opt_.Stack() != StackType::shapes) oss << luminosity_ << " fb^{-1} (13 TeV)" << flush;
+    else oss << "13 TeV" << flush;
     out.push_back(make_shared<TLatex>(right, bottom+0.2*(top-bottom),
                                       oss.str().c_str()));
     out.back()->SetNDC();

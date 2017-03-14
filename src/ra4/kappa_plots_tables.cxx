@@ -57,7 +57,7 @@ namespace{
   TString mc_lumi = "";
   string sys_wgts_file = "txt/sys_weights.cfg";
   string mm_scen = "";
-  float lumi=35.;
+  float lumi=35.9;
   bool quick_test = false;
 }
 
@@ -154,9 +154,9 @@ int main(int argc, char *argv[]){
   //string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_01_21/data/merged_database_stdnj5/");
   
   //// Bear 
-  string foldersig(bfolder+"/cms29r0/babymaker/babies/2017_02_07/T1tttt/unskimmed/");
-  string foldermc(bfolder+"/cms29r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/");
-  string folderdata(bfolder+"/cms29r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_07/T1tttt/unskimmed/");
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/");
+  string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/");
 
   // Old 2015 data
   if(skim.Contains("2015")){
