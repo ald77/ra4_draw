@@ -54,11 +54,13 @@ int main(){
     {fdata+ntupletag},
     "pass && trig_ra4 && st>500 && (nleps==2 && njets>=5 && nbm<=2) && met/met_calo<5.0 && pass_ra2_badmu");
 
+  string lsp = "{#lower[-0.1]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}}";
+  string t1t_label = "#scale[0.95]{#tilde{g}#kern[0.2]{#tilde{g}}, #tilde{g}#rightarrowt#kern[0.18]{#bar{t}}#kern[0.18]"+lsp;
 
-  auto t1tttt = Process::MakeShared<Baby_full>("T1tttt(1800,100)", Process::Type::signal, colors("t1tttt"),
+  auto t1tttt = Process::MakeShared<Baby_full>(t1t_label+" (1800,100)}", Process::Type::signal, colors("t1tttt"),
     {"/net/cms29/cms29r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   t1tttt->SetLineWidth(2);
-  auto t1ttttc = Process::MakeShared<Baby_full>("T1tttt(1400,1000)", Process::Type::signal, colors("t1tttt"),
+  auto t1ttttc = Process::MakeShared<Baby_full>(t1t_label+" (1400,1000)}", Process::Type::signal, colors("t1tttt"),
     {"/net/cms29/cms29r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1400_mLSP-1000_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   t1ttttc->SetLineWidth(2);
   t1ttttc->SetLineStyle(2);

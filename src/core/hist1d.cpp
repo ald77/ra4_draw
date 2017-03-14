@@ -420,7 +420,7 @@ void Hist1D::Print(double luminosity,
       TLatex label; 
       label.SetTextFont(this_opt_.Font()+10);label.SetTextSize(this_opt_.TitleSize()*0.78);
       label.SetTextAlign(13);
-      label.DrawLatex(left+(right-left)*0.04, mindraw+(maxdraw-mindraw)*1.05, left_label_.c_str());
+      label.DrawLatex(left+(right-left)*0.04, mindraw+(maxdraw-mindraw)*1.035, left_label_.c_str());
     }
 
     if(right_label_ != ""){
@@ -431,7 +431,7 @@ void Hist1D::Print(double luminosity,
       TLatex label; 
       label.SetTextFont(this_opt_.Font()+10);label.SetTextSize(this_opt_.TitleSize()*0.78);
       label.SetTextAlign(33);
-      label.DrawLatex(right-(right-left)*0.04, mindraw+(maxdraw-mindraw)*1.05, right_label_.c_str());
+      label.DrawLatex(right-(right-left)*0.04, mindraw+(maxdraw-mindraw)*1.035, right_label_.c_str());
     }
 
     vector<shared_ptr<TLatex> > title_text = GetTitleTexts();
