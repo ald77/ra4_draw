@@ -46,7 +46,7 @@ int main(int argc, char *argv[]){
     .Bottom(BottomType::ratio)
     .YAxis(YAxisType::linear)
     .Stack(StackType::shapes);
-  if (paper) lin_shapes_info = lin_shapes_info.Title(TitleType::simulation);
+  if (paper) lin_shapes_info = lin_shapes_info.Title(TitleType::simulation_preliminary);
   // PlotOpt log_shapes_info = lin_shapes_info.YAxis(YAxisType::log);
   vector<PlotOpt> plt_types = {lin_shapes_info};
 

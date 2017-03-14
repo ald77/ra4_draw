@@ -932,6 +932,7 @@ vector<shared_ptr<TLatex> > Hist1D::GetTitleTexts() const{
     switch(this_opt_.Title()){
     case TitleType::preliminary: extra = "Preliminary"; break;
     case TitleType::simulation: extra = "Simulation"; break;
+    case TitleType::simulation_preliminary: extra = "Simulation Preliminary"; break;
     case TitleType::supplementary: extra = "Supplementary"; break;
     case TitleType::data: extra = ""; break;
     case TitleType::info:
