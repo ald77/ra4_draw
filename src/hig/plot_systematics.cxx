@@ -1094,7 +1094,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
   //// Drawing CMS labels and line at 1
   TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
-  TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";
+  TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}";
   TLatex cmslabel;
   cmslabel.SetTextSize(0.06);
   cmslabel.SetNDC(kTRUE);

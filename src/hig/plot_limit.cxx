@@ -25,7 +25,7 @@ namespace{
   TString lumi = "35p9";
   TString filename = "txt/limits/limits_TChiHH_lumi"+lumi+"_wilk.txt";
   TString model = "TChiHH";
-  TString datestamp = "170310";
+  TString datestamp = "";
 }
 
 void higgsinoCrossSection(int hig_mass, float &xsec, float &xsec_unc);
@@ -141,11 +141,12 @@ int main(int argc, char *argv[]){
   
   cmslabel.SetNDC(kTRUE);
 
+  int cyellow = kOrange, cgreen = kGreen+1;
   TGraphAsymmErrors grexp2(vmx.size(), &(vmx[0]), &(vexp[0]), &(zeroes[0]), &(zeroes[0]), &(v2down[0]), &(v2up[0]));
-  grexp2.SetLineColor(1); grexp2.SetFillColor(kYellow); grexp2.SetLineWidth(3); grexp2.SetLineStyle(2);
+  grexp2.SetLineColor(1); grexp2.SetFillColor(cyellow); grexp2.SetLineWidth(3); grexp2.SetLineStyle(2);
   grexp2.Draw("e3 same");
   TGraphAsymmErrors grexp1(vmx.size(), &(vmx[0]), &(vexp[0]), &(zeroes[0]), &(zeroes[0]), &(vdown[0]), &(vup[0]));
-  grexp1.SetLineColor(1); grexp1.SetFillColor(kGreen); grexp1.SetLineWidth(3); grexp1.SetLineStyle(2);
+  grexp1.SetLineColor(1); grexp1.SetFillColor(cgreen); grexp1.SetLineWidth(3); grexp1.SetLineStyle(2);
   grexp1.Draw("e3 same");
   TGraph grexp(vmx.size(), &(vmx[0]), &(vexp[0]));
   grexp.SetLineWidth(3); grexp.SetLineStyle(2);
@@ -172,26 +173,35 @@ int main(int argc, char *argv[]){
   cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
   line.DrawLine(minh, 1, maxh, 1);
-  //// Drawing process and masses
-  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.045);
-  cmslabel.SetTextFont(132);
-  cmslabel.DrawLatex(0.24, opts.BottomMargin()+0.65, ppChiChi);
-  cmslabel.DrawLatex(0.24, opts.BottomMargin()+0.6, mChis);
-
 
   double legX(0.5), legY(1-opts.TopMargin()-0.24), legSingle = 0.05;
-  double legW = 0.26, legH = legSingle*4;
+  double legW = 0.26, legH = legSingle*5;
   TLegend leg(legX-legW, legY-legH, legX, legY);
   leg.SetTextSize(0.04); leg.SetFillColor(0); 
   leg.SetFillStyle(0); leg.SetBorderSize(0);
-  leg.AddEntry(&line, "NLO+NLL #pm #sigma_{theory}", "l");
+  leg.AddEntry(&line, "NLO+NLL theory #pm s.d.", "l");
+  leg.AddEntry(&grobs, " ", "n");
+  leg.AddEntry(&grobs, " ", "n");
   leg.AddEntry(&grobs, "Observed", "l");
-  leg.AddEntry(&grexp1, "Expected #pm #sigma");
-  leg.AddEntry(&grexp2, "Expected #pm 2#sigma");
+  leg.AddEntry(&grexp1, "68% expected");
+  leg.AddEntry(&grexp2, "95% expected");
   leg.Draw();
 
+  cmslabel.SetTextAlign(12); cmslabel.SetTextSize(0.04); cmslabel.SetTextFont(42); 
+  cmslabel.DrawLatex(legX-legW+0.01, legY-legSingle*2, "95% CL upper limits");
+  //// Drawing process and masses
+  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.045);
+  cmslabel.SetTextFont(132);
+  cmslabel.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.65, ppChiChi);
+  cmslabel.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.6, mChis);
+
+
+
   histo.Draw("axis same");
-  can.SaveAs("plots/higgsino_limits_lumi"+lumi+"_"+datestamp+".pdf");
+  TString pname = "plots/higgsino_limits_lumi"+lumi;
+  if(datestamp != "") pname += "_"+datestamp;
+  pname += ".pdf";
+  can.SaveAs(pname);
 
   // for(size_t i = 0; i < vxsec.size(); ++i) 
   //   cout<<vmx[i]<<" -> "<<vexp[i]<<"+"<<vup[i]<<"++"<<v2up[i]<<" -"<<vdown[i]<<"--"<<v2down[i]<<endl;
@@ -221,13 +231,13 @@ int main(int argc, char *argv[]){
   histo.GetXaxis()->SetLabelOffset(0.01);
   histo.SetMinimum(miny/2.);
   histo.SetMaximum(5*1e3);
-  histo.SetYTitle("#sigma_{excl}^{95% CL} #times BF(hh #rightarrow bbbb) [fb]");
+  histo.SetYTitle("#sigma #times BF(hh #rightarrow bbbb) [fb]");
   histo.Draw();
   TGraphAsymmErrors gexp2(vmx.size(), &(vmx[0]), &(vexp[0]), &(zeroes[0]), &(zeroes[0]), &(v2down[0]), &(v2up[0]));
-  gexp2.SetLineColor(1); gexp2.SetFillColor(5); gexp2.SetLineWidth(3); gexp2.SetLineStyle(2);
+  gexp2.SetLineColor(1); gexp2.SetFillColor(cyellow); gexp2.SetLineWidth(3); gexp2.SetLineStyle(2);
   gexp2.Draw("e3 same");
   TGraphAsymmErrors gexp1(vmx.size(), &(vmx[0]), &(vexp[0]), &(zeroes[0]), &(zeroes[0]), &(vdown[0]), &(vup[0]));
-  gexp1.SetLineColor(1); gexp1.SetFillColor(3); gexp1.SetLineWidth(3); gexp1.SetLineStyle(2);
+  gexp1.SetLineColor(1); gexp1.SetFillColor(cgreen); gexp1.SetLineWidth(3); gexp1.SetLineStyle(2);
   gexp1.Draw("e3 same");
   TGraph gexp(vmx.size(), &(vmx[0]), &(vexp[0]));
   gexp.SetLineWidth(3); gexp.SetLineStyle(2);
@@ -247,9 +257,15 @@ int main(int argc, char *argv[]){
 
   can.SetLogy(true);
 
-  legX = 1-opts.RightMargin()-0.02;
+  legX = 1-opts.RightMargin()-0.09;
+  legY += 0.05;
   leg.SetX1NDC(legX-legW); leg.SetX2NDC(legX);
+  leg.SetY1NDC(legY-legH); leg.SetY2NDC(legY);
   leg.Draw();
+  cmslabel.SetTextAlign(12); cmslabel.SetTextSize(0.04); cmslabel.SetTextFont(42); 
+  cmslabel.DrawLatex(legX-legW+0.01, legY-legSingle*2, "95% CL upper limits");
+
+
 
   //// Drawing CMS labels
   cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
@@ -264,11 +280,12 @@ int main(int argc, char *argv[]){
   // cmslabel.DrawLatex(opts.LeftMargin()+0.03, opts.BottomMargin()+0.04, mChis);
   cmslabel.SetTextAlign(33); cmslabel.SetTextSize(0.045);
   cmslabel.SetTextFont(132);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.025, ppChiChi);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.09, mChis);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.028, 1-opts.TopMargin()-0.03, ppChiChi);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.028, 1-opts.TopMargin()-0.095, mChis);
 
   histo.Draw("axis same");
-  can.SaveAs("plots/higgsino_limits_fb_lumi"+lumi+"_"+datestamp+".pdf");
+  pname.ReplaceAll("lumi", "fb_lumi");
+  can.SaveAs(pname);
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
@@ -295,7 +312,8 @@ int main(int argc, char *argv[]){
   cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.025, ppChiChi);
   cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.09, mChis);
 
-  can.SaveAs("plots/higgsino_significance_lumi"+lumi+"_"+datestamp+".pdf");
+  pname.ReplaceAll("fb_lumi", "significance");
+  can.SaveAs(pname);
 
 
 }
