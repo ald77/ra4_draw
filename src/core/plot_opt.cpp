@@ -18,6 +18,7 @@ PlotOpt::PlotOpt():
   overflow_type_(OverflowType::both),
   file_extensions_({"pdf"}),
   title_size_(0.045),
+  extra_label_size_(0.045),
   label_size_(0.04),
   x_title_offset_(1.),
   y_title_offset_(2.2),
@@ -151,6 +152,15 @@ PlotOpt & PlotOpt::TitleSize(double title_size){
 
 double PlotOpt::TitleSize() const{
   return title_size_;
+}
+
+PlotOpt & PlotOpt::ExtraLabelSize(double extra_label_size){
+  extra_label_size_ = extra_label_size;
+  return *this;
+}
+
+double PlotOpt::ExtraLabelSize() const{
+  return extra_label_size_;
 }
 
 PlotOpt & PlotOpt::LabelSize(double label_size){
@@ -513,6 +523,8 @@ void PlotOpt::SetProperty(const string &property,
     FileExtensions(exts);
   }else if(property == "TitleSize"){
     TitleSize(stod(value));
+  }else if(property == "ExtraLabelSize"){
+    ExtraLabelSize(stod(value));
   }else if(property == "LabelSize"){
     LabelSize(stod(value));
   }else if(property == "xTitleOffset" || property == "XTitleOffset"){

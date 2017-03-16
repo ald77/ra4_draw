@@ -300,10 +300,10 @@ int main(int argc, char *argv[]){
           if (ixcut.first=="nm1") { 
             pm.Push<Hist1D>(Axis(24/div,0,240,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
               ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&higd_dm<40", 
-              procs, linplot).Weight(wgt).Tag(sample).RightLabel(cr_label);
+              procs, linplot).Weight(wgt).Tag(sample).RightLabel({cr_label});
             pm.Push<Hist1D>(Axis(24/div,0,240,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
               ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&higd_dm<40 && higd_drmax<=2.2", 
-              procs, linplot).Weight(wgt).Tag(sample).RightLabel(cr_label);
+              procs, linplot).Weight(wgt).Tag(sample).RightLabel({cr_label});
             tmp_seln = ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb];
             if(!note) pm.Push<Hist1D>(Axis(15,0,150,"higd_dm", "#Deltam [GeV]", {40.}), 
               tmp_seln, procs, linplot).Weight(wgt).Tag(sample);

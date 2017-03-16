@@ -54,6 +54,9 @@ public:
   PlotOpt & TitleSize(double title_size);
   double TitleSize() const;
 
+  PlotOpt & ExtraLabelSize(double extra_label_size);
+  double ExtraLabelSize() const;
+
   PlotOpt & XTitleOffset(double x_title_offset);
   double XTitleOffset() const;
 
@@ -146,7 +149,7 @@ private:
   PlotOptTypes::StackType stack_type_;
   PlotOptTypes::OverflowType overflow_type_;
   std::set<std::string> file_extensions_;
-  double title_size_, label_size_;
+  double title_size_, extra_label_size_, label_size_;
   double x_title_offset_, y_title_offset_, z_title_offset_;
   bool auto_y_axis_;
   int canvas_width_, canvas_height_;

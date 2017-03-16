@@ -277,8 +277,8 @@ Hist1D::Hist1D(const Axis &xaxis, const NamedFunc &cut,
   cut_(cut),
   weight_("weight"),
   tag_(""),
-  left_label_(""),
-  right_label_(""),
+  left_label_({}),
+  right_label_({}),
   yaxis_zoom_(1.),
   ratio_numerator_(""),
   ratio_denominator_(""),
@@ -412,26 +412,32 @@ void Hist1D::Print(double luminosity,
     top->RedrawAxis();
     top->RedrawAxis("g");
 
-    if(left_label_ != ""){
-      double mindraw = GetMinDraw();
-      double maxdraw = GetMaxDraw()/yaxis_zoom_;
-      double left = xaxis_.Bins().front();
-      double right = xaxis_.Bins().back();
-      TLatex label; 
-      label.SetTextFont(this_opt_.Font()+10);label.SetTextSize(this_opt_.TitleSize()*0.78);
-      label.SetTextAlign(13);
-      label.DrawLatex(left+(right-left)*0.04, mindraw+(maxdraw-mindraw)*1.035, left_label_.c_str());
+    if(left_label_.size()>0){
+      for (unsigned ilabel(0); ilabel<left_label_.size(); ilabel++) {
+        TLatex label; 
+        label.SetTextFont(this_opt_.Font()+10);label.SetTextSize(this_opt_.ExtraLabelSize());
+        label.SetTextAlign(13);
+        size_t num_plots = backgrounds_.size() + signals_.size() + datas_.size();
+        if(this_opt_.DisplayLumiEntry()) ++num_plots;
+        double legend_height = this_opt_.TrueLegendHeight(num_plots);
+        double left_bound = this_opt_.LeftMargin()+0.03;
+        double bottom_bound = 1-legend_height-this_opt_.LegendPad()*2-(ilabel+1)*this_opt_.ExtraLabelSize();
+        label.DrawLatexNDC(left_bound, bottom_bound, left_label_[ilabel].c_str());
+      }
     }
 
-    if(right_label_ != ""){
-      double mindraw = GetMinDraw();
-      double maxdraw = GetMaxDraw()/yaxis_zoom_;
-      double left = xaxis_.Bins().front();
-      double right = xaxis_.Bins().back();
-      TLatex label; 
-      label.SetTextFont(this_opt_.Font()+10);label.SetTextSize(this_opt_.TitleSize()*0.78);
-      label.SetTextAlign(33);
-      label.DrawLatex(right-(right-left)*0.04, mindraw+(maxdraw-mindraw)*1.035, right_label_.c_str());
+    if(right_label_.size()>0){
+      for (unsigned ilabel(0); ilabel<right_label_.size(); ilabel++) {
+        TLatex label; 
+        label.SetTextFont(this_opt_.Font()+10);label.SetTextSize(this_opt_.ExtraLabelSize());
+        label.SetTextAlign(33);
+        size_t num_plots = backgrounds_.size() + signals_.size() + datas_.size();
+        if(this_opt_.DisplayLumiEntry()) ++num_plots;
+        double legend_height = this_opt_.TrueLegendHeight(num_plots);
+        double right_bound = 1-this_opt_.RightMargin()-0.03;
+        double bottom_bound = 1-legend_height-this_opt_.LegendPad()*2-(ilabel+1)*this_opt_.ExtraLabelSize();
+        label.DrawLatexNDC(right_bound, bottom_bound, right_label_[ilabel].c_str());
+      }
     }
 
     vector<shared_ptr<TLatex> > title_text = GetTitleTexts();
@@ -540,12 +546,12 @@ Hist1D & Hist1D::Tag(const string &tag){
   return *this;
 }
 
-Hist1D & Hist1D::LeftLabel(const string &label){
+Hist1D & Hist1D::LeftLabel(const vector<string> &label){
   left_label_ = label;
   return *this;
 }
 
-Hist1D & Hist1D::RightLabel(const string &label){
+Hist1D & Hist1D::RightLabel(const vector<string> &label){
   right_label_ = label;
   return *this;
 }

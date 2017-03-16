@@ -71,8 +71,8 @@ public:
 
   Hist1D & Weight(const NamedFunc &weight);
   Hist1D & Tag(const std::string &tag);
-  Hist1D & LeftLabel(const std::string &label);
-  Hist1D & RightLabel(const std::string &label);
+  Hist1D & LeftLabel(const std::vector<std::string> &label);
+  Hist1D & RightLabel(const std::vector<std::string> &label);
   Hist1D & YAxisZoom(const double &yaxis_zoom);
   Hist1D & RatioTitle(const std::string &numerator,
                       const std::string &denominator);
@@ -81,8 +81,8 @@ public:
   NamedFunc cut_;//!<Event selection
   NamedFunc weight_;//!<Event weight
   std::string tag_;//!<Filename tag to identify plot
-  std::string left_label_;//!<Label to plot under the legend, to the left
-  std::string right_label_;//!<Label to plot under the legend, to the right
+  std::vector<std::string> left_label_;//!<Label to plot under the legend, to the left
+  std::vector<std::string> right_label_;//!<Label to plot under the legend, to the right
   double yaxis_zoom_;//!<Y-axis zoom
   std::string ratio_numerator_;//!<Label for numerator in ratio plot
   std::string ratio_denominator_;//!<Label for denominator in ratio plot

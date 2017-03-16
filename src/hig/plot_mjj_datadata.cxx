@@ -88,11 +88,11 @@ int main(){
     string metlabel = CodeToRootTex(imet)+" GeV"; ReplaceAll(metlabel,"E","p");
     pm.Push<Hist1D>(Axis(20, 0, 200, "higd_am", "#LTm#GT [GeV]",{100.,140.}),
 		    imet, data3b_procs, lin).Weight(wgt).Tag("data3b").RatioTitle("Data 3b","Data 2b")
-      .RightLabel(metlabel).YAxisZoom(0.9);
+      .RightLabel({metlabel}).YAxisZoom(0.9);
 
     pm.Push<Hist1D>(Axis(20, 0, 200, "higd_am", "#LTm#GT [GeV]", {100.,140.}),
 		    imet, data4b_procs, lin).Weight(wgt).Tag("data4b").RatioTitle("Data 4b","Data 2b")
-      .RightLabel(metlabel).YAxisZoom(0.9);
+      .RightLabel({metlabel}).YAxisZoom(0.9);
   } 
 
 
