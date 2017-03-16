@@ -49,9 +49,9 @@ int main(){
         trig_skim1l_mc+"_ZZ_*.root"}, "stitch_met");
 
   auto t1tttt_nc = Process::MakeShared<Baby_full>("T1tttt(1800,100)", Process::Type::signal, colors("t1tttt"),
-    {"/net/cms29/cms29r0/babymaker/babies/2017_02_07/T1tttt/unskimmed/*SMS-T1tttt_mGluino-1800_mLSP-100*.root"});
+    {"/net/cms29/cms29r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"});
   auto t1tttt_c = Process::MakeShared<Baby_full>("T1tttt(1400,1000)", Process::Type::signal, colors("t1tttt"),
-    {"/net/cms29/cms29r0/babymaker/babies/2017_02_07/T1tttt/unskimmed/*SMS-T1tttt_mGluino-1400_mLSP-1000*.root"});
+    {"/net/cms29/cms29r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1400_mLSP-1000*.root"});
   t1tttt_c->SetLineStyle(2);
 
   auto data_1l = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,

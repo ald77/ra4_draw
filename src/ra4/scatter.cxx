@@ -68,7 +68,7 @@ int main(int argc, char *argv[]){
         mc_dir+"*_ZH_HToBB*.root", mc_dir+"*_ZZ_*.root"});
 
   auto t1tttt = Process::MakeShared<Baby_full>("T1tttt(1800,100)", Process::Type::signal, colors("t1tttt"),
-    {base_path+"/cms29r0/babymaker/babies/2017_02_13_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"});
+    {base_path+"/cms29r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"});
   t1tttt->SetMarkerStyle(21);
   t1tttt->SetMarkerSize(0.9);
 
@@ -94,10 +94,10 @@ int main(int argc, char *argv[]){
     for(const auto &nbm_bin: nbm_bins){
       NamedFunc cut = baseline && met_bin && nbm_bin;
       pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", {250., 400.}),
-                      Axis(25, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                      Axis(175, 0., 700., "mt", "m_{T} [GeV]", {140.}),
                       cut, all_procs, bkg_hist);
       pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", {250., 400.}),
-                      Axis(25, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+                      Axis(175, 0., 700., "mt", "m_{T} [GeV]", {140.}),
                       cut, tt_sig, bkg_pts);
     }
   }
