@@ -382,6 +382,20 @@ void AdjustDensityForBinWidth(TH1D &h){
   h.SetEntries(entries);
 }
 
+void getLegendBoxes(TLegend &leg, vector<vector<float> > &boxes){
+  int nRows = leg.GetNRows();
+  boxes = vector<vector<float> > (nRows, vector<float>(4,0.1));
+  float x1 = leg.GetX1(), y1 = leg.GetY1(), x2 = leg.GetX2(), y2 = leg.GetY2();
+  float rowH = (y2-y1)/nRows;
+  for(int row=0; row<nRows; row++){
+    float bx1 = x1+0.038*(x2-x1);
+    float bx2 = x1+0.21*(x2-x1);
+    float by1 = y2-row*rowH-0.2*rowH;
+    float by2 = y2-row*rowH-0.8*rowH;
+    boxes[row] = vector<float>({bx1, by1, bx2, by2});
+  } // Loop over rows
+}
+
 void Normalize(TH1D &h, double normalization, bool norm_per_avg_width){
   int nbins = h.GetNbinsX();
   double low = h.GetBinLowEdge(1);

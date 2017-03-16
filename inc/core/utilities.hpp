@@ -14,6 +14,7 @@
 
 #include "TH1D.h"
 #include "TRandom3.h"
+#include "TLegend.h"
 
 #define ERROR(x) do{throw std::runtime_error(std::string("Error in file ")+__FILE__+" at line "+std::to_string(__LINE__)+" (in "+__func__+"): "+x);}while(false)
 #define DBG(x) do{std::cerr << "In " << __FILE__ << " at line " << __LINE__ << " (in function " << __func__ << "): " << x << std::endl;}while(false)
@@ -40,6 +41,8 @@ std::string execute(const std::string &cmd);
 std::string CodeToPlainText(std::string code);
 std::string CodeToLatex(std::string code);
 std::string CodeToRootTex(std::string code);
+
+void getLegendBoxes(TLegend &leg, std::vector<std::vector<float> > &boxes);
 
 template<typename T>
 std::vector<std::size_t> SortPermutation(const std::vector<T>& vec){
