@@ -725,7 +725,6 @@ TString printTable(abcd_method &abcd, vector<vector<GammaParams> > &allyields,
   //// Setting output file name
   int digits_lumi = 1;
   if(lumi < 1) digits_lumi = 3;
-  if(lumi >= 15) digits_lumi = 0;
   TString lumi_s = RoundNumber(lumi, digits_lumi);
   TString outname = "tables/table_pred_lumi"+lumi_s; outname.ReplaceAll(".","p");
   if(skim.Contains("2015")) outname += "_2015";
@@ -1168,8 +1167,9 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   TCanvas can("can","");
   can.SetFillStyle(4000);
   TLine line; line.SetLineWidth(2); line.SetLineStyle(2);
-  TLatex label; label.SetTextSize(0.05); label.SetTextFont(42); label.SetTextAlign(23);
+  TLatex label; label.SetTextSize(0.045); label.SetTextFont(42); label.SetTextAlign(23);
   if(k_ordered.size()>3) label.SetTextSize(0.04);
+  if(k_ordered.size()>4) label.SetTextSize(0.037);
   TLatex klab; klab.SetTextFont(42); klab.SetTextAlign(23);
 
 
@@ -1273,16 +1273,18 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     line.SetLineStyle(2); line.SetLineWidth(2);
     if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
     // Drawing MET labels
-    if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
-    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.10*maxy, CodeToRootTex(abcd.planecuts[iplane].Data()).c_str());
+    TString metlabel = CodeToRootTex(abcd.planecuts[iplane].Data()) + " GeV";
+    if(label_up) label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., maxy-0.1, metlabel);
+    else label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.10*maxy, metlabel);
   } // Loop over plane cuts
 
   //// Drawing legend and TGraphs
   int digits_lumi = 1;
   if(lumi < 1) digits_lumi = 3;
-  if(lumi >= 15) digits_lumi = 0;
   TString lumi_s = RoundNumber(lumi, digits_lumi);
   double legX(opts.LeftMargin()+0.005), legY(1-0.03), legSingle = 0.05;
+  legX = 0.32;
+  if(only_mc) legX = 0.4;
   if(label_up) legY = 0.8;
   double legW = 0.35, legH = legSingle*(ind_bcuts.size()+1)/2;
   if(ind_bcuts.size()>3) legH = legSingle*((ind_bcuts.size()+1)/2);
@@ -1320,7 +1322,7 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
     leg.AddEntry(&graph[indb], "MC", "p");
     TString data_s = (mm_scen=="data"||mm_scen=="off"||mm_scen=="no_mismeasurement"?"Data":"Pseudodata");
-    leg.AddEntry(&graph_mm[indb], data_s+" "+lumi_s+" fb^{-1}", "p");
+    leg.AddEntry(&graph_mm[indb], data_s+" "+lumi_s+" fb^{-1} (13 TeV)", "p");
     //leg.AddEntry(&graph[indb], CodeToRootTex(ind_bcuts[indb].cut.Data()).c_str(), "p");
 
   } // Loop over TGraphs
@@ -1329,10 +1331,13 @@ void plotKappaMCData(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
   //// Drawing CMS labels and line at 1
   TLatex cmslabel;
+  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
+  TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}";
   cmslabel.SetTextSize(0.06);
   cmslabel.SetNDC(kTRUE);
   cmslabel.SetTextAlign(11);
-  //cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}");
+  if(only_mc) cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSim);
+  else cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsPrel);
   cmslabel.SetTextAlign(31);
   //cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
   cmslabel.SetTextSize(0.053);
