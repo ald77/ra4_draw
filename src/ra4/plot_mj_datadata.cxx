@@ -22,7 +22,7 @@ using namespace PlotOptTypes;
 
 namespace {
   double lumi = 35.9;
-  bool paper = true;
+  bool paper = false;
 }
 
 int main(){
@@ -78,16 +78,20 @@ int main(){
   vector<shared_ptr<Process> > data2lveto_procs = {data2lveto, data_lowmt};
   vector<shared_ptr<Process> > data2l_procs = {data2l, data_lowmt};
 
-  PlotOpt log_lumi("txt/plot_styles.txt", "PRLPaper");
+  string style = "Preliminary";
+  if(paper) style = "PRLPaper";
+  PlotOpt log_lumi("txt/plot_styles.txt", style);
   log_lumi.Title(TitleType::data)
-    .Bottom(BottomType::off)
+    .Bottom(BottomType::ratio)
     .YAxis(YAxisType::log)
     .Stack(StackType::data_norm)
     .RatioMaximum(1.86);
+  if(!paper)log_lumi=log_lumi.Title(TitleType::preliminary);
   PlotOpt lin_lumi = log_lumi().YAxis(YAxisType::linear);
-  PlotOpt log_shapes = log_lumi().Stack(StackType::shapes)
-    .Bottom(BottomType::off)
-    .ShowBackgroundError(false);
+  PlotOpt log_shapes = log_lumi().Stack(StackType::shapes);
+  if(paper) {log_shapes = log_lumi().Stack(StackType::shapes)
+	     .Bottom(BottomType::off)
+      .ShowBackgroundError(false);}
   PlotOpt lin_shapes = log_shapes().YAxis(YAxisType::linear);
   PlotOpt log_lumi_info = log_lumi().Title(TitleType::info);
   PlotOpt lin_lumi_info = lin_lumi().Title(TitleType::info);
@@ -112,8 +116,11 @@ int main(){
       .RightLabel({metlabel+" GeV",nj6+", "+nb2}).YAxisZoom(0.85);
     } else {
       pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]",{250.,400.}),
-          imet + "&&nbm==1", data1l_procs, lin).Tag("data1l1b").RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
+		      imet + "&&nbm==1", data1l_procs, lin).Tag("data1l1b").RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
         .RightLabel({CodeToRootTex(imet)+" GeV",CodeToRootTex("njets>=6&&nbm==1")}).YAxisZoom(0.93);
+      pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]",{250.,400.}),
+		      imet + "&&nbm>=2", data1l_procs, lin).Tag("data1l2b").RatioTitle("Data, "+mt+" > 140 GeV","Data, "+mt+" #leq 140 GeV")
+	.RightLabel({CodeToRootTex(imet)+" GeV",CodeToRootTex("njets>=6&&nbm>=2")}).YAxisZoom(0.93);
       pm.Push<Hist1D>(Axis(20, 0.,1000., "mj14", "M_{J} [GeV]", {250.,400.}),
   		    imet,  data2l_procs, lin).Tag("data2l").RatioTitle("Data 2l","Data 1l, "+mt+" #leq 140 GeV");
 

@@ -82,19 +82,19 @@ int main(int argc, char *argv[]){
 
   PlotOpt style("txt/plot_styles.txt", "Scatter");
   vector<PlotOpt> bkg_hist = {style().Stack(StackType::data_norm).Title(TitleType::preliminary)};
-  vector<PlotOpt> bkg_pts = {style().Stack(StackType::lumi_shapes).Title(TitleType::simulation)};
+  vector<PlotOpt> bkg_pts = {style().Stack(StackType::lumi_shapes).Title(TitleType::simulation_preliminary)};
 
   NamedFunc baseline = "nleps==1&&st>500&&met>150&&njets>=6&&nbm>=1&&nveto==0 && met/met_calo<5.0 && pass_ra2_badmu";
   NamedFunc weight = "weight";
-  vector<NamedFunc> met_bins = {"met>200", "met>150&&met<=200", "met>200&&met<=350", "met>350&&met<=500", "met>500"};
-  vector<NamedFunc> nbm_bins = {"nbm>=1", "nbm==1", "nbm>=2"};
+  vector<NamedFunc> met_bins = {"met>200","met>200&&met<=350", "met>350&&met<=500", "met>500"};
+  vector<NamedFunc> nbm_bins = {"nbm==1", "nbm>=2"};
 
   PlotMaker pm;
   for(const auto &met_bin: met_bins){
     for(const auto &nbm_bin: nbm_bins){
       NamedFunc cut = baseline && met_bin && nbm_bin;
-      pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", {250., 400.}),
-                      Axis(175, 0., 700., "mt", "m_{T} [GeV]", {140.}),
+      pm.Push<Hist2D>(Axis(44, 0., 1100., "mj14", "M_{J} [GeV]", {250., 400.}),
+                      Axis(25, 0., 700., "mt", "m_{T} [GeV]", {140.}),
                       cut, all_procs, bkg_hist);
       pm.Push<Hist2D>(Axis(48, 0., 1200., "mj14", "M_{J} [GeV]", {250., 400.}),
                       Axis(175, 0., 700., "mt", "m_{T} [GeV]", {140.}),

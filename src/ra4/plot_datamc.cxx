@@ -136,6 +136,7 @@ int main(){
     if(ilep==0)  lepcut="nels==1&&nmus==0";
     if(ilep==1)  lepcut="nels==0&&nmus==1";
     if(ilep==2)  lepcut="nleps==1";
+    if(ilep!=2) continue;
 
     for(int inveto=0; inveto<2; inveto++){
       NamedFunc nvetocut(true);

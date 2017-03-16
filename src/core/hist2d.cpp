@@ -357,7 +357,7 @@ vector<shared_ptr<TLatex> > Hist2D::GetLabels(bool bkg_is_hist) const{
   switch(this_opt_.Title()){
   case TitleType::preliminary: extra = "Preliminary"; break;
   case TitleType::simulation: extra = "Simulation"; break;
-  case TitleType::simulation_preliminary: extra = "Simulation Preliminary"; break;
+  case TitleType::simulation_preliminary: extra = "#splitline{Simulation}{Preliminary}"; break;
   case TitleType::supplementary: extra = "Supplementary"; break;
   case TitleType::data: extra = ""; break;
   case TitleType::info: extra = ""; break;
@@ -365,7 +365,12 @@ vector<shared_ptr<TLatex> > Hist2D::GetLabels(bool bkg_is_hist) const{
     ERROR("Did not understand title type "+to_string(static_cast<int>(this_opt_.Title())));
   }
   labels.push_back(make_shared<TLatex>(left, top,
-                                       ("#font[62]{CMS}#scale[0.76]{#font[52]{ "+extra+"}}").c_str()));
+                                       "#font[62]{CMS}"));
+  labels.back()->SetNDC();
+  labels.back()->SetTextAlign(13);
+  labels.back()->SetTextFont(this_opt_.Font());
+  labels.push_back(make_shared<TLatex>(left-0.01, top-0.055,
+                                       ("#scale[0.76]{#font[52]{ "+extra+"}}").c_str()));
   labels.back()->SetNDC();
   labels.back()->SetTextAlign(13);
   labels.back()->SetTextFont(this_opt_.Font());
@@ -415,6 +420,8 @@ void Hist2D::AddEntry(TLegend &l, const SingleHist2D &h, const TGraph &g) const{
     print_rho = true;
     break;
   case TitleType::preliminary:
+    print_rho = false;
+    break;
   case TitleType::simulation:
   case TitleType::simulation_preliminary:
     print_rho = true;
