@@ -15,6 +15,9 @@
 #include "TH1D.h"
 #include "TRandom3.h"
 #include "TLegend.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TH3.h"
 
 #define ERROR(x) do{throw std::runtime_error(std::string("Error in file ")+__FILE__+" at line "+std::to_string(__LINE__)+" (in "+__func__+"): "+x);}while(false)
 #define DBG(x) do{std::cerr << "In " << __FILE__ << " at line " << __LINE__ << " (in function " << __func__ << "): " << x << std::endl;}while(false)
@@ -74,6 +77,14 @@ void MergeOverflow(TH1D &h, bool merge_underflow, bool merge_overflow);
 std::string FixedDigits(double x, int n_digits);
 
 std::string FullTitle(const TH1 &h);
+
+std::vector<double> ScaleBins(const TAxis &a, double scale);
+
+TH1D ScaleAxes(const TH1 &h, double scale, const std::string &axes = "xyz");
+TH2D ScaleAxes(const TH2 &h, double scale, const std::string &axes = "xyz");
+TH3D ScaleAxes(const TH3 &h, double scale, const std::string &axes = "xyz");
+
+void CopyStyle(const TH1 &hin, TH1 &hout);
 
 template<typename T>
 void Append(T &collection, const typename T::value_type &value){

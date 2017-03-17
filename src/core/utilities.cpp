@@ -440,7 +440,98 @@ string FixedDigits(double x, int n_digits){
 string FullTitle(const TH1 &h){
   return string(h.GetTitle())
     +";"+h.GetXaxis()->GetTitle()
-    +";"+h.GetYaxis()->GetTitle();
+    +";"+h.GetYaxis()->GetTitle()
+    +";"+h.GetZaxis()->GetTitle();
+}
+
+std::vector<double> ScaleBins(const TAxis &axis, double scale){
+  vector<double> bins(axis.GetNbins()+1);
+  for(size_t i = 0; i < bins.size(); ++i){
+    bins.at(i) = scale * axis.GetBinLowEdge(i+1);
+  }
+  return bins;
+}
+
+TH1D ScaleAxes(const TH1 &h, double scale, const std::string &axes){
+  double xscale = (Contains(axes,"x") || Contains(axes,"X")) ? scale : 1.;
+  double yscale = (Contains(axes,"y") || Contains(axes,"Y")) ? scale : 1.;
+  //double zscale = (Contains(axes,"z") || Contains(axes,"Z")) ? scale : 1.;
+  
+  vector<double> xbins = ScaleBins(*h.GetXaxis(), xscale);
+  
+  TH1D hout("",FullTitle(h).c_str(),
+            xbins.size()-1, &xbins.front());
+  
+  int nbins = h.GetNcells();
+  for(int bin = 0; bin < nbins; ++bin){
+    hout.SetBinContent(bin, yscale*h.GetBinContent(bin));
+    hout.SetBinError(bin, yscale*h.GetBinError(bin));
+  }
+
+  CopyStyle(h, hout);
+
+  return hout;
+}
+
+TH2D ScaleAxes(const TH2 &h, double scale, const std::string &axes){
+  double xscale = (Contains(axes,"x") || Contains(axes,"X")) ? scale : 1.;
+  double yscale = (Contains(axes,"y") || Contains(axes,"Y")) ? scale : 1.;
+  double zscale = (Contains(axes,"z") || Contains(axes,"Z")) ? scale : 1.;
+  
+  vector<double> xbins = ScaleBins(*h.GetXaxis(), xscale);
+  vector<double> ybins = ScaleBins(*h.GetYaxis(), yscale);
+  
+  TH2D hout("",FullTitle(h).c_str(),
+            xbins.size()-1, &xbins.front(),
+            ybins.size()-1, &ybins.front());
+  
+  int nbins = h.GetNcells();
+  for(int bin = 0; bin < nbins; ++bin){
+    hout.SetBinContent(bin, zscale*h.GetBinContent(bin));
+    hout.SetBinError(bin, zscale*h.GetBinError(bin));
+  }
+
+  CopyStyle(h, hout);
+
+  return hout;
+}
+
+TH3D ScaleAxes(const TH3 &h, double scale, const std::string &axes){
+  double xscale = (Contains(axes,"x") || Contains(axes,"X")) ? scale : 1.;
+  double yscale = (Contains(axes,"y") || Contains(axes,"Y")) ? scale : 1.;
+  double zscale = (Contains(axes,"z") || Contains(axes,"Z")) ? scale : 1.;
+  
+  vector<double> xbins = ScaleBins(*h.GetXaxis(), xscale);
+  vector<double> ybins = ScaleBins(*h.GetYaxis(), yscale);
+  vector<double> zbins = ScaleBins(*h.GetZaxis(), zscale);
+  
+  TH3D hout("",FullTitle(h).c_str(),
+            xbins.size()-1, &xbins.front(),
+            ybins.size()-1, &ybins.front(),
+            zbins.size()-1, &zbins.front());
+  
+  int nbins = h.GetNcells();
+  for(int bin = 0; bin < nbins; ++bin){
+    hout.SetBinContent(bin, h.GetBinContent(bin));
+    hout.SetBinError(bin, h.GetBinError(bin));
+  }
+
+  CopyStyle(h, hout);
+
+  return hout;
+}
+
+void CopyStyle(const TH1 &hin, TH1 &hout){
+  hout.SetLineStyle(hin.GetLineStyle());
+  hout.SetLineWidth(hin.GetLineWidth());
+  hout.SetLineColor(hin.GetLineColor());
+
+  hout.SetFillColor(hin.GetFillColor());
+  hout.SetFillStyle(hin.GetFillStyle());
+
+  hout.SetMarkerStyle(hin.GetMarkerStyle());
+  hout.SetMarkerSize(hin.GetMarkerSize());
+  hout.SetMarkerColor(hin.GetMarkerColor());
 }
 
 TString HoursMinSec(float fseconds){
