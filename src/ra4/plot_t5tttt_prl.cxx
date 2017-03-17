@@ -12,6 +12,9 @@
 #include "TROOT.h"
 #include "TPad.h"
 #include "TLine.h"
+#include "TH2D.h"
+#include "TColor.h"
+#include "TPaletteAxis.h"
 #include "TError.h" // Controls error level reporting
 
 // User includes
@@ -21,9 +24,10 @@
 using namespace std;
 namespace{
   //double cmsH = 0.075;
+  bool do_tev = true;
   double cmsH = 0.03;
-  float legLineH = 0.057;
-  float legTextSize = 0.041;
+  float legLineH = 0.058;
+  float legTextSize = 0.0405;
   float fillTransparency = 0.5;
 
   TString lsp = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
@@ -36,6 +40,8 @@ namespace{
   // int cSus15004_1l(kBlack), cSus15007(kRed), cSus15008(kCyan+2);
 }
 
+
+void SetupColors();
 
 int main(){
   gErrorIgnoreLevel=kWarning; // Turns off ROOT INFO messages
@@ -56,8 +62,8 @@ int main(){
   models.back().add("#tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #rightarrow t#kern[0.4]{#bar{t}}#kern[0.4]{"+lsp+"}", 
 		    folder+"T1tttt_results.root", 
   		    1, "graph_smoothed_Obs", "graph_smoothed_Exp");
-  models.back().add("#tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #rightarrow "+stop+"t,  "+stop
-		    +" #rightarrow #bar{t}#kern[0.4]{"+lsp+"},   "+mstop_s+" - "+mlsp_s+" = 175 GeV", 
+  models.back().add("#tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #rightarrow "+stop+"#bar{t},  "+stop
+		    +" #rightarrow t#kern[0.4]{"+lsp+"},   "+mstop_s+" - "+mlsp_s+" = 175 GeV", 
 		    folder+"T5tttt_results.root", 
   		    kAzure+7, "graph_smoothed_Obs", "graph_smoothed_Exp");
 
@@ -68,7 +74,8 @@ int main(){
   
   // Creating canvas
   gStyle->SetOptStat(0);  
-  float lMargin(0.125), tMargin(0.08), rMargin(0.02), bMargin(0.14);
+  SetupColors();
+  float lMargin(0.1), tMargin(0.08), rMargin(0.127), bMargin(0.13);
   int canW = 800, canH = 600;
   TCanvas can("canvas","", canW, canH);
   setCanvas(can, lMargin, tMargin, rMargin, bMargin);
@@ -96,16 +103,17 @@ int main(){
   for(size_t imodel(0); imodel < models.size(); imodel++){
     model_limits mod(models[imodel]);
 
-    // Creating base histogram and drawing lumi labels
+   // Creating base histogram and drawing lumi labels
     float Xmin(700), Xmax(1750), Ymin(0), Ymax(1800), glu_lsp;
     getModelParams(mod.model, Xmin, Xmax, Ymin, Ymax, glu_lsp);
 
     TH2D hbase = baseHistogram(Xmin, Xmax, Ymin, Ymax);
     hbase.Draw();
     addLabelsTitle(lMargin, tMargin, rMargin, mod.title);
+    TH2D *hxsec_ori;
 
     // Plotting limits
-    int widthCentral = 4, widthErr = 3;
+    int widthCentral = 4, widthErr = 2;
     int styleObs = 1, styleObsErr = 3, styleExp = 7;
     int colorExp = 2;
     size_t ncurves(mod.files.size());
@@ -113,19 +121,39 @@ int main(){
     vector<TGraph*> obsUp(ncurves,0), obsDown(ncurves,0), expUp(ncurves,0), expDown(ncurves,0);
     vector<TGraph*> expArea(ncurves,0);
     // Getting all graphs first because the ones that come from TCanvas mess up the colors
+    vector<TFile*> flimit(ncurves);
     for(size_t file(0); file < ncurves; file++){
-      TFile flimit(mod.files[file]);
-      exp[file] = getGraph(flimit, mod.expnames[file]);
-      obs[file] = getGraph(flimit, mod.obsnames[file]);
-      expUp[file] = getGraph(flimit, "graph_smoothed_ExpP");
-      expDown[file] = getGraph(flimit, "graph_smoothed_ExpM");
-      obsUp[file] = getGraph(flimit, "graph_smoothed_ObsP");
-      obsDown[file] = getGraph(flimit, "graph_smoothed_ObsM");
+      flimit[file] = new TFile(mod.files[file]);
+      exp[file] = getGraph(*flimit[file], mod.expnames[file]);
+      obs[file] = getGraph(*flimit[file], mod.obsnames[file]);
+      expUp[file] = getGraph(*flimit[file], "graph_smoothed_ExpP");
+      expDown[file] = getGraph(*flimit[file], "graph_smoothed_ExpM");
+      obsUp[file] = getGraph(*flimit[file], "graph_smoothed_ObsP");
+      obsDown[file] = getGraph(*flimit[file], "graph_smoothed_ObsM");
       reverseGraph(expDown[file]);
       expArea[file] = joinGraphs(expUp[file], expDown[file]);
+      if(file==0){
+	hxsec_ori = static_cast<TH2D*>(flimit[file]->Get("hXsec_exp_corr"));
+	hxsec_ori->SetDirectory(0);
+      }
     }
+    TH2D hxsec2 = ScaleAxes(*hxsec_ori, 0.001, "XY");
+    TH2D hxsec = ScaleAxes(hxsec2, (do_tev?1000:1.), "Z");
+    hxsec.SetMinimum(do_tev?1:0.001);
+    hxsec.GetZaxis()->SetLabelSize(0.04);
+    hxsec.GetZaxis()->SetTitleSize(0.05);
+    hxsec.GetZaxis()->SetTitleOffset(0.9);
+    hxsec.GetZaxis()->SetTitle("95% upper limit on cross section [fb]");
+    hxsec.Draw("colz same");
+    gPad->Modified();
+    gPad->Update();
+    TPaletteAxis *palette = static_cast<TPaletteAxis*>(hxsec.GetListOfFunctions()->FindObject("palette"));
+    palette->SetX1NDC(1.-rMargin+0.006);
+    palette->SetX2NDC(1.-rMargin+0.035);
+    palette->SetY1NDC(bMargin);
+    palette->SetY2NDC(1.-tMargin);
     for(size_t file(0); file < ncurves; file++){
-      if(mod.labels[file].Contains("175")) glu_lsp += 40;
+      if(mod.labels[file].Contains("175")) glu_lsp += 40*(do_tev?0.001:1.);
       setGraphStyle(obs[file], mod.colors[file], styleObs, widthCentral, glu_lsp);
       setGraphStyle(obsUp[file], mod.colors[file], styleObsErr, widthErr, glu_lsp);
       setGraphStyle(obsDown[file], mod.colors[file], styleObsErr, widthErr, glu_lsp);
@@ -138,6 +166,8 @@ int main(){
       obs[file]->SetName(obsname);
       TString expAreaname("expArea"); expAreaname += imodel; expAreaname += file;
       expArea[file]->SetName(expAreaname);
+      TString expname("exp"); expname += imodel; expname += file;
+      exp[file]->SetName(expname);
 
       // Setting the area style for expected limit
       int areaColor = kOrange;
@@ -148,31 +178,48 @@ int main(){
       expArea[file]->SetLineStyle(styleExp);
       expArea[file]->SetLineWidth(widthCentral);
     } // Loop over curves in each model
+
+    hbase.Draw("axis same");
+
+    // Drawing legends
+    int legEntries = 3;
+    legX = lMargin+0.005; legY = 1-tMargin-0.01;
+    legW = 0.23; 
+    legH = legLineH * legEntries;
+    TLegend limleg(legX, legY-legH, legX+legW, legY);
+    limleg.SetTextSize(legTextSize); limleg.SetFillColor(0); 
+    limleg.SetFillStyle(0); limleg.SetBorderSize(0);
+
+    float bheight = (Ymax-Ymin)*legH/(1-tMargin-bMargin)*1.11;
+    TBox box;
+    Xmin += (Xmax-Xmin)*0.001;
+    Xmax -= (Xmax-Xmin)*0.001;
+    box.SetFillColor(0); box.SetFillStyle(1001);
+    box.SetLineColor(1); box.SetLineWidth(2); box.SetLineStyle(1);
+    box.DrawBox(Xmin, Ymax-bheight, Xmax, Ymax);
+    box.SetFillColor(0); box.SetFillStyle(0);
+    box.SetLineColor(1); box.SetLineWidth(2); box.SetLineStyle(1);
+    box.DrawBox(Xmin, Ymax-bheight, Xmax, Ymax);
+    
     // Plotting the lines on top of the fills
     for(size_t file(0); file < ncurves; file++){
       if(!mod.labels[file].Contains("175")) {
-	expArea[file]->Draw("f same");
-	// expUp[file]->Draw("same");
-	// expDown[file]->Draw("same");
+	// expArea[file]->Draw("f same");
+	expUp[file]->Draw("same");
+	expDown[file]->Draw("same");
 	exp[file]->Draw("same");
 	obsUp[file]->Draw("same");
 	obsDown[file]->Draw("same");
       }
       obs[file]->Draw("same");
+      obs[0]->Draw("same");
     }// Loop over curves in each model
 
-    // Drawing legends
-    legX = lMargin+0.03; legY = 1-tMargin-cmsH;
-    legW = 0.23; 
-    legH = legLineH * 4;
-    TLegend limleg(legX, legY-legH, legX+legW, legY);
-    limleg.SetTextSize(legTextSize); limleg.SetFillColor(0); 
-    limleg.SetFillStyle(0); limleg.SetBorderSize(0);
-    limleg.AddEntry(expArea[1]->GetName(), "95% CL upper limits", "n");
+    //limleg.AddEntry(expArea[1]->GetName(), "95% CL upper limits", "n");
     
     for(size_t file(0); file < ncurves; file++){
       if(!mod.labels[file].Contains("175")) {
-      	limleg.AddEntry(expArea[file]->GetName(), "Expected ("+mod.labels[file]+") #pm #sigma_{experiment}", "f l");
+      	limleg.AddEntry(exp[file]->GetName(), "Expected ("+mod.labels[file]+") #pm #sigma_{experiment}", "l");
       	limleg.AddEntry(obs[file]->GetName(), "Observed ("+mod.labels[file]+") #pm #sigma_{theory}", "l");
       } else limleg.AddEntry(obs[file]->GetName(), "Observed ("+mod.labels[file]+")", "l");
     }
@@ -180,12 +227,19 @@ int main(){
 
     vector<vector<float> > boxes;
     getLegendBoxes(limleg, boxes);
+    int ibox = 0;
     TLine line;
+    // Drawing expected error lines on legend
+    ibox = 0;
+    line.SetLineColor(colorExp);line.SetLineWidth(widthErr);line.SetLineStyle(styleExp);
+    line.DrawLineNDC(boxes[ibox][0], boxes[ibox][1], boxes[ibox][2], boxes[ibox][1]);
+    line.DrawLineNDC(boxes[ibox][0], boxes[ibox][3], boxes[ibox][2], boxes[ibox][3]);
+
+    // Drawing observed error lines on legend
     line.SetLineColor(mod.colors[0]);line.SetLineWidth(widthErr);line.SetLineStyle(styleObsErr);
-    // line.DrawLineNDC(boxes[1][0], boxes[1][1], boxes[1][2], boxes[1][1]);
-    // line.DrawLineNDC(boxes[1][0], boxes[1][3], boxes[1][2], boxes[1][3]);
-    line.DrawLineNDC(boxes[2][0], boxes[2][1], boxes[2][2], boxes[2][1]);
-    line.DrawLineNDC(boxes[2][0], boxes[2][3], boxes[2][2], boxes[2][3]);
+    ibox = 1;
+    line.DrawLineNDC(boxes[ibox][0], boxes[ibox][1], boxes[ibox][2], boxes[ibox][1]);
+    line.DrawLineNDC(boxes[ibox][0], boxes[ibox][3], boxes[ibox][2], boxes[ibox][3]);
 
     legY = 1-legY-legH-0.02-0.1; legH = 0.07;
     obsleg.SetY1NDC(legY-legH); obsleg.SetY2NDC(legY);
@@ -232,6 +286,13 @@ void setGraphStyle(TGraph* graph, int color, int style, int width, double glu_ls
 
   int np(graph->GetN());
   double mglu, iniglu, endglu, mlsp;
+  if(do_tev){
+    for(int point(0); point < np; point++){
+      graph->GetPoint(point, mglu, mlsp);
+      graph->SetPoint(point, mglu/1000., mlsp/1000.);
+    }
+  }
+
   graph->GetPoint(0, iniglu, mlsp);
   graph->GetPoint(np-1, endglu, mlsp);
   // Reversing graph if printed towards decreasing mgluino
@@ -271,16 +332,18 @@ void setGraphStyle(TGraph* graph, int color, int style, int width, double glu_ls
 }
 
 TGraph* joinGraphs(TGraph *graph1, TGraph *graph2){
-  TGraph *graph = graph1;
+  TGraph *graph = new TGraph;
   double mglu, mlsp;
-  // for(int point(0); point < graph1->GetN(); point++) {
-  //   graph1->GetPoint(point, mglu, mlsp);
-  //   graph->SetPoint(graph->GetN(), mglu, mlsp);
-  // } // Points in graph1
+  for(int point(0); point < graph1->GetN(); point++) {
+    graph1->GetPoint(point, mglu, mlsp);
+    graph->SetPoint(graph->GetN(), mglu, mlsp);
+  } // Points in graph1
   for(int point(0); point < graph2->GetN(); point++) {
     graph2->GetPoint(point, mglu, mlsp);
     graph->SetPoint(graph->GetN(), mglu, mlsp);
   } // Points in graph1
+  graph1->GetPoint(0, mglu, mlsp);
+  graph->SetPoint(graph->GetN(), mglu, mlsp);
   TString gname = graph1->GetName(); gname += graph2->GetName();
   graph->SetName(gname);
 
@@ -303,7 +366,7 @@ void reverseGraph(TGraph *graph){
 void getModelParams(TString model, float &Xmin, float &Xmax, float &Ymin, float &Ymax, float &glu_lsp){
   if(model == "T1tttt" || model == "T5tttt"){
     Xmin = 600; Xmax = 2100.;
-    Ymin = 0;   Ymax = 1950;
+    Ymin = 0;   Ymax = 2000;
     glu_lsp = 225;
   }
   if(model == "T1bbbb"){
@@ -316,6 +379,13 @@ void getModelParams(TString model, float &Xmin, float &Xmax, float &Ymin, float 
     Ymin = 0;   Ymax = 1750;
     glu_lsp = 25;
   }    
+  if(do_tev){
+    Xmin *= 0.001;
+    Xmax *= 0.001;
+    Ymin *= 0.001;
+    Ymax *= 0.001;
+    glu_lsp *= 0.001;
+  }
 }
 
 
@@ -344,6 +414,32 @@ void addLabelsTitle(float lMargin, float tMargin, float rMargin, TString title){
   title += " "; ycms += 1;// To avoid non-used warnings
 }
 
+void SetupColors(){
+  // const unsigned num = 5;
+  // const int bands = 255;
+  // int colors[bands];
+  // double stops[num] = {0.00, 0.34, 0.61, 0.84, 1.00};
+  // double red[num] = {0.50, 0.50, 1.00, 1.00, 1.00};
+  // double green[num] = {0.50, 1.00, 1.00, 0.60, 0.50};
+  // double blue[num] = {1.00, 1.00, 0.50, 0.40, 0.50};
+
+  const unsigned num = 4;
+  const int bands = 255;
+  int colors[bands];
+  double stops[num] = {0.00, 0.5, 0.8, 1.00};
+  double red[num] = {0.50, 1.00, 1.00, 1.00};
+  double green[num] = {1.00, 1.00, 0.60, 0.50};
+  double blue[num] = {1.00, 0.50, 0.40, 0.50};
+
+  int fi = TColor::CreateGradientColorTable(num,stops,red,green,blue,bands);
+  for(int i = 0; i < bands; ++i){
+    colors[i] = fi+i;
+  }
+  gStyle->SetNumberContours(bands);
+  gStyle->SetPalette(bands, colors);
+}
+
+
 TH2D baseHistogram(float Xmin, float Xmax, float Ymin, float Ymax){
   TH2D hbase("hbase", "", 1, Xmin, Xmax, 1, Ymin, Ymax);
   hbase.GetXaxis()->SetLabelFont(42);
@@ -352,13 +448,15 @@ TH2D baseHistogram(float Xmin, float Xmax, float Ymin, float Ymax){
   hbase.GetXaxis()->SetTitleSize(0.05);
   hbase.GetXaxis()->SetTitleOffset(1.2);
   hbase.GetXaxis()->SetLabelOffset(0.015);
-  hbase.GetXaxis()->SetTitle(mglu_s+" [GeV]");
+  hbase.GetXaxis()->SetTitle(mglu_s+" [TeV]");
+
   hbase.GetYaxis()->SetLabelFont(42);
   hbase.GetYaxis()->SetLabelSize(0.045);
   hbase.GetYaxis()->SetTitleFont(42);
   hbase.GetYaxis()->SetTitleSize(0.05);
-  hbase.GetYaxis()->SetTitleOffset(1.3);
-  hbase.GetYaxis()->SetTitle(mlsp_s+" [GeV]");
+  hbase.GetYaxis()->SetTitleOffset(0.98);
+  hbase.GetYaxis()->SetTitle(mlsp_s+" [TeV]");
+
   return hbase;
 }
 
