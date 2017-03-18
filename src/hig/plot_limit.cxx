@@ -7,6 +7,7 @@
 #include <getopt.h>
 
 #include "TCanvas.h"
+#include "TFile.h"
 #include "TGraph.h"
 #include "TGraphAsymmErrors.h"
 #include "TH1D.h"
@@ -23,12 +24,12 @@ using namespace std;
 
 namespace{
   TString lumi = "35p9";
-  TString filename = "txt/limits/limits_TChiHH_lumi"+lumi+"_wilk.txt";
+  TString filename = "txt/limits/limits_TChiHH_lumi"+lumi+"_pas.txt";
   TString model = "TChiHH";
   TString datestamp = "";
+  bool do_paper = false;
 }
 
-void higgsinoCrossSection(int hig_mass, float &xsec, float &xsec_unc);
 void GetOptions(int argc, char *argv[]);
 
 int main(int argc, char *argv[]){
@@ -44,7 +45,7 @@ int main(int argc, char *argv[]){
 
   vector<double> vmx, vmy, vxsec, vexsec, vobs, vobsup, vobsdown;
   vector<double> vexp, vup, vdown, v2up, v2down, vsigobs, vsigexp, zeroes, ones;
-  double maxy=-99., miny=1e99;
+  double maxy=-99., miny=1e99, maxsig = -99., minsig = 1e99;
   vector<double> vxsecup, vxsecdown;
   
   string line_s;
@@ -53,7 +54,6 @@ int main(int argc, char *argv[]){
     double pmx, pmy, pxsec, pexsec, pobs, pobsup, pobsdown, pexp, pup, pdown, p2up, p2down, sigobs, sigexp;
     iss >> pmx >> pmy >> pxsec >> pexsec >> pobs >> pobsup >> pobsdown 
 	>> pexp >> pup >> pdown >> p2up >> p2down >> sigobs >> sigexp;
-    if(pmx==175) continue;
     vmx.push_back(pmx);
     vmy.push_back(pmy);
     vxsec.push_back(pxsec);
@@ -72,6 +72,8 @@ int main(int argc, char *argv[]){
     ones.push_back(1);
     if(miny > min(vobs.back(), 1.)) miny = min(vobs.back(), 1.);
     if(maxy < max(vobs.back(), 1.)) maxy = max(vobs.back(), 1.);
+    if(minsig > vsigobs.back()) minsig = vsigobs.back();
+    if(maxsig < vsigobs.back()) maxsig = vsigobs.back();
 
     vxsecup.push_back(1+pexsec);
     vxsecdown.push_back(1-pexsec);
@@ -124,7 +126,11 @@ int main(int argc, char *argv[]){
   TString chi10= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
   TString xsoft= "X#scale[0.85]{_{soft}}";
   TString mass_ = "m#kern[0.1]{#lower[-0.12]{_{";
-  float minh=200, maxh=1000;
+  float minh=200, maxh=1000, maxXsec = 5e3;
+  if(do_paper) {
+    minh = 127;
+    maxXsec = 5e4;
+  }
   TH1D histo("histo", "", 18, minh, maxh);
   histo.SetMinimum(0);
   histo.SetMaximum(4.5);
@@ -135,11 +141,15 @@ int main(int argc, char *argv[]){
   histo.Draw();
 
   int thcolor = kRed+1, thwidth = 3;
-  TLine line;
-  line.SetLineColor(thcolor); line.SetLineStyle(1); line.SetLineWidth(thwidth);
+  TLine linXsec;
+  linXsec.SetLineColor(thcolor); linXsec.SetLineStyle(1); linXsec.SetLineWidth(thwidth);
   TLatex cmslabel;
   
   cmslabel.SetNDC(kTRUE);
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////// 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////// 
+  //// Plotting limits on relative xsec
 
   int cyellow = kOrange, cgreen = kGreen+1;
   TGraphAsymmErrors grexp2(vmx.size(), &(vmx[0]), &(vexp[0]), &(zeroes[0]), &(zeroes[0]), &(v2down[0]), &(v2up[0]));
@@ -162,30 +172,43 @@ int main(int argc, char *argv[]){
   grxsecdown.Draw("same"); 
 
   //// Drawing CMS labels and line at 1
-  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
+  TString cmsLogo = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
+  if(do_paper) cmsLogo = "#font[62]{CMS}";
   TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";
   TString lumiEner = "#font[42]{"+lumi+" fb^{-1} (13 TeV)}"; lumiEner.ReplaceAll("p",".");
   TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.6]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "+xsoft+"#rightarrow hh#tilde{G}#tilde{G} + "+xsoft;
 
   TString mChis = mass_+chi2n+"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}, "+mass_+"#tilde{G}}}} = 1 GeV";
   cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
-  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsPrel);
+  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsLogo);
   cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
-  line.DrawLine(minh, 1, maxh, 1);
+  linXsec.DrawLine(minh, 1, maxh, 1);
 
+  TLine line;
+  int ibox = 0;
+  vector<vector<float> > boxes;
   double legX(0.5), legY(1-opts.TopMargin()-0.24), legSingle = 0.05;
   double legW = 0.26, legH = legSingle*5;
   TLegend leg(legX-legW, legY-legH, legX, legY);
+  leg.SetX1NDC(legX-legW); leg.SetX2NDC(legX); // So that GetX1NDC works in getLegendBoxes
+  leg.SetY1NDC(legY-legH); leg.SetY2NDC(legY); // So that GetX1NDC works in getLegendBoxes
   leg.SetTextSize(0.04); leg.SetFillColor(0); 
   leg.SetFillStyle(0); leg.SetBorderSize(0);
-  leg.AddEntry(&line, "NLO+NLL theory #pm s.d.", "l");
+  leg.AddEntry(&linXsec, "NLO+NLL theory #pm s.d.", "l");
   leg.AddEntry(&grobs, " ", "n");
   leg.AddEntry(&grobs, " ", "n");
   leg.AddEntry(&grobs, "Observed", "l");
   leg.AddEntry(&grexp1, "68% expected");
   leg.AddEntry(&grexp2, "95% expected");
   leg.Draw();
+
+  // Drawing theory error lines on legend
+  getLegendBoxes(leg, boxes);
+  ibox = 0;
+  line.SetLineColor(thcolor);line.SetLineWidth(1);line.SetLineStyle(2);
+  line.DrawLineNDC(boxes[ibox][0], boxes[ibox][1], boxes[ibox][2], boxes[ibox][1]);
+  line.DrawLineNDC(boxes[ibox][0], boxes[ibox][3], boxes[ibox][2], boxes[ibox][3]);
 
   cmslabel.SetTextAlign(12); cmslabel.SetTextSize(0.04); cmslabel.SetTextFont(42); 
   cmslabel.DrawLatex(legX-legW+0.01, legY-legSingle*2, "95% CL upper limits");
@@ -198,10 +221,23 @@ int main(int argc, char *argv[]){
 
 
   histo.Draw("axis same");
-  TString pname = "plots/higgsino_limits_lumi"+lumi;
-  if(datestamp != "") pname += "_"+datestamp;
-  pname += ".pdf";
+  TString basename = "plots/higgsino_limits_lumi"+lumi;
+  if(datestamp != "") basename += "_"+datestamp;
+  basename += ".pdf";
+  TString pname = basename;
   can.SaveAs(pname);
+
+  // Saving root file
+  pname = "CMS-"; if(!do_paper) pname += "PAS";
+  pname += "-SUS-16-044_Figure_9-b.root";
+  TFile file(pname, "recreate");
+  file.cd();
+  grexp2.Write("ExpLimit_2Sigma");
+  grexp1.Write("ExpLimit_1Sigma");
+  grexp.Write("ExpLimit");
+  grobs.Write("ObsLimit");
+  file.Close();
+  cout<<"Saved graphs in "<<pname<<endl<<endl;
 
   // for(size_t i = 0; i < vxsec.size(); ++i) 
   //   cout<<vmx[i]<<" -> "<<vexp[i]<<"+"<<vup[i]<<"++"<<v2up[i]<<" -"<<vdown[i]<<"--"<<v2down[i]<<endl;
@@ -230,7 +266,7 @@ int main(int argc, char *argv[]){
 
   histo.GetXaxis()->SetLabelOffset(0.01);
   histo.SetMinimum(miny/2.);
-  histo.SetMaximum(5*1e3);
+  histo.SetMaximum(maxXsec);
   histo.SetYTitle("#sigma #times BF(hh #rightarrow bbbb) [fb]");
   histo.Draw();
   TGraphAsymmErrors gexp2(vmx.size(), &(vmx[0]), &(vexp[0]), &(zeroes[0]), &(zeroes[0]), &(v2down[0]), &(v2up[0]));
@@ -265,11 +301,17 @@ int main(int argc, char *argv[]){
   cmslabel.SetTextAlign(12); cmslabel.SetTextSize(0.04); cmslabel.SetTextFont(42); 
   cmslabel.DrawLatex(legX-legW+0.01, legY-legSingle*2, "95% CL upper limits");
 
+  // Drawing theory error lines on legend
+  getLegendBoxes(leg, boxes);
+  ibox = 0;
+  line.SetLineColor(thcolor);line.SetLineWidth(1);line.SetLineStyle(2);
+  line.DrawLineNDC(boxes[ibox][0], boxes[ibox][1], boxes[ibox][2], boxes[ibox][1]);
+  line.DrawLineNDC(boxes[ibox][0], boxes[ibox][3], boxes[ibox][2], boxes[ibox][3]);
 
 
   //// Drawing CMS labels
   cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
-  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsPrel);
+  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsLogo);
   cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
 
@@ -284,12 +326,28 @@ int main(int argc, char *argv[]){
   cmslabel.DrawLatex(1-opts.RightMargin()-0.028, 1-opts.TopMargin()-0.095, mChis);
 
   histo.Draw("axis same");
+  pname = basename;
   pname.ReplaceAll("lumi", "fb_lumi");
   can.SaveAs(pname);
 
+  // Saving root file
+  pname = "CMS-"; if(!do_paper) pname += "PAS";
+  pname += "-SUS-16-044_Figure_9-a.root";
+  TFile file2(pname, "recreate");
+  file2.cd();
+  gexp2.Write("ExpLimit_2Sigma");
+  gexp1.Write("ExpLimit_1Sigma");
+  gexp.Write("ExpLimit");
+  gobs.Write("ObsLimit");
+  gxsec.Write("Xsec");
+  gxsecup.Write("XsecUp");
+  gxsecdown.Write("XsecDown");
+  file2.Close();
+  cout<<"Saved graphs in "<<pname<<endl<<endl;
+
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
-  //// Plotting discovery significance
+  //// Plotting expected discovery significance
   can.SetLogy(false);
   histo.GetXaxis()->SetLabelOffset(0.02);
   histo.SetMinimum(0);
@@ -303,7 +361,7 @@ int main(int argc, char *argv[]){
   gsig.Draw("same"); 
   //// Drawing CMS labels
   cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
-  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsSim);
+  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsLogo);
   cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
   //// Drawing process and masses
@@ -312,50 +370,57 @@ int main(int argc, char *argv[]){
   cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.025, ppChiChi);
   cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.09, mChis);
 
-  pname.ReplaceAll("fb_lumi", "significance");
+  pname = basename;
+  pname.ReplaceAll("lumi", "significance");
   can.SaveAs(pname);
 
+  // Saving root file
+  pname = "CMS-"; if(!do_paper) pname += "PAS";
+  pname += "-SUS-16-044_AuxFigure_4_ExpSignificance.root";
+  TFile file3(pname, "recreate");
+  file3.cd();
+  gsig.Write("ExpSignificance");
+  file3.Close();
+  cout<<"Saved graphs in "<<pname<<endl<<endl;
 
-}
+  //////////////////////////////////////////////////////////////////////////////////////////////////////// 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////// 
+  //// Plotting observed significance
+  can.SetLogy(false);
+  histo.GetXaxis()->SetLabelOffset(0.02);
+  histo.SetMinimum(min(0., minsig*2));
+  histo.SetMaximum(maxsig*1.2);
+  histo.SetYTitle("Observed signal significance [#sigma]");
+  histo.Draw();
 
-void higgsinoCrossSection(int hig_mass, float &xsec, float &xsec_unc) {
-  if(hig_mass == 127) { xsec = .5824*.5824*7602.2/1000; xsec_unc = 0.0393921; return;}
-  else if(hig_mass == 150) { xsec = .5824*.5824*3832.31/1000; xsec_unc = 0.0413612; return;}
-  else if(hig_mass == 175) { xsec = .5824*.5824*2267.94/1000; xsec_unc = 0.044299;  return;}
-  else if(hig_mass == 200) { xsec = .5824*.5824*1335.62/1000; xsec_unc = 0.0474362; return;}
-  else if(hig_mass == 225) { xsec = .5824*.5824*860.597/1000; xsec_unc = 0.0504217; return;}
-  else if(hig_mass == 250) { xsec = .5824*.5824*577.314/1000; xsec_unc = 0.0532731; return;}
-  else if(hig_mass == 275) { xsec = .5824*.5824*400.107/1000; xsec_unc = 0.0560232; return;}
-  else if(hig_mass == 300) { xsec = .5824*.5824*284.855/1000; xsec_unc = 0.0586867; return;}
-  else if(hig_mass == 325) { xsec = .5824*.5824* 207.36/1000; xsec_unc = 0.0613554; return;}
-  else if(hig_mass == 350) { xsec = .5824*.5824*153.841/1000; xsec_unc = 0.0640598; return;}
-  else if(hig_mass == 375) { xsec = .5824*.5824*116.006/1000; xsec_unc = 0.066892;  return;}
-  else if(hig_mass == 400) { xsec = .5824*.5824*88.7325/1000; xsec_unc = 0.0697517; return;}
-  else if(hig_mass == 425) { xsec = .5824*.5824*68.6963/1000; xsec_unc = 0.0723531; return;}
-  else if(hig_mass == 450) { xsec = .5824*.5824*53.7702/1000; xsec_unc = 0.0748325; return;}
-  else if(hig_mass == 475) { xsec = .5824*.5824*42.4699/1000; xsec_unc = 0.0775146; return;}
-  else if(hig_mass == 500) { xsec = .5824*.5824*33.8387/1000; xsec_unc = 0.0802572; return;}
-  else if(hig_mass == 525) { xsec = .5824*.5824*27.1867/1000; xsec_unc = 0.0825803; return;}
-  else if(hig_mass == 550) { xsec = .5824*.5824*21.9868/1000; xsec_unc = 0.0849278; return;}
-  else if(hig_mass == 575) { xsec = .5824*.5824*17.9062/1000; xsec_unc = 0.087561;  return;}
-  else if(hig_mass == 600) { xsec = .5824*.5824*14.6677/1000; xsec_unc = 0.0900693; return;}
-  else if(hig_mass == 625) { xsec = .5824*.5824* 12.062/1000; xsec_unc = 0.091959;  return;}
-  else if(hig_mass == 650) { xsec = .5824*.5824*9.96406/1000; xsec_unc = 0.094065;  return;}
-  else if(hig_mass == 675) { xsec = .5824*.5824*8.28246/1000; xsec_unc = 0.0957436; return;}
-  else if(hig_mass == 700) { xsec = .5824*.5824*6.89981/1000; xsec_unc = 0.0982894; return;}
-  else if(hig_mass == 725) { xsec = .5824*.5824*5.78355/1000; xsec_unc = 0.0999915; return;}
-  else if(hig_mass == 750) { xsec = .5824*.5824* 4.8731/1000; xsec_unc = 0.101211;  return;}
-  else if(hig_mass == 775) { xsec = .5824*.5824*4.09781/1000; xsec_unc = 0.104646;  return;}
-  else if(hig_mass == 800) { xsec = .5824*.5824*3.46143/1000; xsec_unc = 0.107618;  return;}
-  else if(hig_mass == 825) { xsec = .5824*.5824* 2.9337/1000; xsec_unc = 0.108353;  return;}
-  else if(hig_mass == 850) { xsec = .5824*.5824* 2.4923/1000; xsec_unc = 0.110016;  return;}
-  else if(hig_mass == 875) { xsec = .5824*.5824*2.13679/1000; xsec_unc = 0.112636;  return;}
-  else if(hig_mass == 900) { xsec = .5824*.5824*1.80616/1000; xsec_unc = 0.1134;    return;}
-  else if(hig_mass == 925) { xsec = .5824*.5824*1.55453/1000; xsec_unc = 0.116949;  return;}
-  else if(hig_mass == 950) { xsec = .5824*.5824*1.32692/1000; xsec_unc = 0.117027;  return;}
-  else if(hig_mass == 975) { xsec = .5824*.5824*1.12975/1000; xsec_unc = 0.121244;  return;}
-  else if(hig_mass ==1000) { xsec = .5824*.5824*0.968853/1000; xsec_unc = 0.126209; return;}
-  else{ xsec = 0; xsec_unc = 0;}
+  TGraph gobssig(vmx.size(), &(vmx[0]), &(vsigobs[0]));
+  gobssig.SetLineWidth(3);  gobssig.SetLineColor(4);
+  gobssig.Draw("same"); 
+  //// Drawing CMS labels
+  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
+  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsLogo);
+  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
+  //// Drawing process and masses
+  cmslabel.SetTextAlign(33); cmslabel.SetTextSize(0.045);
+  cmslabel.SetTextFont(132);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.025, ppChiChi);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.09, mChis);
+
+  pname = basename;
+  pname.ReplaceAll("lumi", "obs_significance");
+  can.SaveAs(pname);
+
+  // Saving root file
+  pname = "CMS-"; if(!do_paper) pname += "PAS";
+  pname += "-SUS-16-044_AuxFigure_3_ObsSignificance.root";
+  TFile file4(pname, "recreate");
+  file4.cd();
+  gobssig.Write("ExpSignificance");
+  file4.Close();
+  cout<<"Saved graphs in "<<pname<<endl<<endl;
+
+
 }
 
 

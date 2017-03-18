@@ -384,8 +384,8 @@ void AdjustDensityForBinWidth(TH1D &h){
 
 void getLegendBoxes(TLegend &leg, vector<vector<float> > &boxes){
   int nRows = leg.GetNRows();
-  boxes = vector<vector<float> > (nRows, vector<float>(4,0.1));
-  float x1 = leg.GetX1(), y1 = leg.GetY1(), x2 = leg.GetX2(), y2 = leg.GetY2();
+  boxes = vector<vector<float> > (nRows, vector<float>(4,0));
+  float x1 = leg.GetX1NDC(), y1 = leg.GetY1NDC(), x2 = leg.GetX2NDC(), y2 = leg.GetY2NDC();
   float rowH = (y2-y1)/nRows;
   for(int row=0; row<nRows; row++){
     float bx1 = x1+0.038*(x2-x1);

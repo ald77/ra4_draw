@@ -27,7 +27,7 @@ namespace{
   bool do_tev = true;
   double cmsH = 0.03;
   float legLineH = 0.058;
-  float legTextSize = 0.0405;
+  float legTextSize = 0.0425;
   float fillTransparency = 0.5;
 
   TString lsp = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
@@ -35,9 +35,7 @@ namespace{
   TString mlsp_s = "m("+lsp+")";
   TString mglu_s = "m(#tilde{g})";
   TString mstop_s = "m("+stop+")";
-  // int c8TeV(kGray+2);
-  // int cSus15002(kBlue), cSus15003(kOrange), cSus15004(kGreen+1), cSus15005(kMagenta+1);
-  // int cSus15004_1l(kBlack), cSus15007(kRed), cSus15008(kCyan+2);
+  TString t1tttt_s = "#tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #kern[-0.2]{#rightarrow} #kern[-0.2]{t}#kern[0.4]{#bar{t}}#kern[0.4]{"+lsp+"}";
 }
 
 
@@ -49,7 +47,6 @@ int main(){
   // Label definitions
   //TString lsp("#tilde{#chi}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}");
   TString pp_gluglu("pp #rightarrow #tilde{g}#kern[0.3]{#tilde{g}}");
-  TString basetitle(pp_gluglu+",  #tilde{g} #rightarrow ");
   TString mj("M#lower[-.1]{_{J}}");
   //TString mt2("M#lower[-.1]{_{T2}}"), mht("#slash{H}#lower[-.1]{_{T}}"), aT("#alpha#lower[-.1]{_{T}}");
 
@@ -59,11 +56,9 @@ int main(){
 
   ///////////////////////////////    Defining T1tttt plot    /////////////////////////////////
   models.push_back(model_limits("T5tttt", pp_gluglu));
-  models.back().add("#tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #rightarrow t#kern[0.4]{#bar{t}}#kern[0.4]{"+lsp+"}", 
-		    folder+"T1tttt_results.root", 
-  		    1, "graph_smoothed_Obs", "graph_smoothed_Exp");
-  models.back().add("#tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #rightarrow "+stop+"#bar{t},  "+stop
-		    +" #rightarrow t#kern[0.4]{"+lsp+"},   "+mstop_s+" - "+mlsp_s+" = 175 GeV", 
+  models.back().add(t1tttt_s, folder+"T1tttt_results.root", 1, "graph_smoothed_Obs", "graph_smoothed_Exp");
+  models.back().add("#tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #kern[-0.2]{#rightarrow} #kern[-0.2]{"+stop+"}#bar{t},  "+stop
+		    +" #rightarrow t#kern[0.4]{"+lsp+"},  "+mstop_s+" #kern[-0.5]{-} #kern[-0.1]{"+mlsp_s+"} = #kern[-0.1]{175} GeV", 
 		    folder+"T5tttt_results.root", 
   		    kAzure+7, "graph_smoothed_Obs", "graph_smoothed_Exp");
 
@@ -75,7 +70,7 @@ int main(){
   // Creating canvas
   gStyle->SetOptStat(0);  
   SetupColors();
-  float lMargin(0.1), tMargin(0.08), rMargin(0.127), bMargin(0.13);
+  float lMargin(0.093), tMargin(0.08), rMargin(0.13), bMargin(0.13);
   int canW = 800, canH = 600;
   TCanvas can("canvas","", canW, canH);
   setCanvas(can, lMargin, tMargin, rMargin, bMargin);
@@ -142,8 +137,8 @@ int main(){
     hxsec.SetMinimum(do_tev?1:0.001);
     hxsec.GetZaxis()->SetLabelSize(0.04);
     hxsec.GetZaxis()->SetTitleSize(0.05);
-    hxsec.GetZaxis()->SetTitleOffset(0.9);
-    hxsec.GetZaxis()->SetTitle("95% upper limit on cross section [fb]");
+    hxsec.GetZaxis()->SetTitleOffset(0.88);
+    hxsec.GetZaxis()->SetTitle("95% upper limit on #sigma("+t1tttt_s+") [fb]");
     hxsec.Draw("colz same");
     gPad->Modified();
     gPad->Update();
@@ -219,8 +214,8 @@ int main(){
     
     for(size_t file(0); file < ncurves; file++){
       if(!mod.labels[file].Contains("175")) {
-      	limleg.AddEntry(exp[file]->GetName(), "Expected ("+mod.labels[file]+") #pm #sigma_{experiment}", "l");
-      	limleg.AddEntry(obs[file]->GetName(), "Observed ("+mod.labels[file]+") #pm #sigma_{theory}", "l");
+      	limleg.AddEntry(exp[file]->GetName(), "Expected ("+mod.labels[file]+") #pm s.d._{experiment}", "l");
+      	limleg.AddEntry(obs[file]->GetName(), "Observed ("+mod.labels[file]+") #pm s.d._{theory}", "l");
       } else limleg.AddEntry(obs[file]->GetName(), "Observed ("+mod.labels[file]+")", "l");
     }
     limleg.Draw();
@@ -454,7 +449,7 @@ TH2D baseHistogram(float Xmin, float Xmax, float Ymin, float Ymax){
   hbase.GetYaxis()->SetLabelSize(0.045);
   hbase.GetYaxis()->SetTitleFont(42);
   hbase.GetYaxis()->SetTitleSize(0.05);
-  hbase.GetYaxis()->SetTitleOffset(0.98);
+  hbase.GetYaxis()->SetTitleOffset(0.9);
   hbase.GetYaxis()->SetTitle(mlsp_s+" [TeV]");
 
   return hbase;
