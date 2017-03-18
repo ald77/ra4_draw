@@ -1116,17 +1116,16 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   TH2D h_corr("", "Correlation Matrix",
 	      covar.size(), -0.5, covar.size()-0.5,
 	      covar.size(), -0.5, covar.size()-0.5);
-  float labelSize = 0.05, markerSize = 1.9;
+  float labelSizeX = 0.05, labelSizeY = 0.05, markerSize = 1.9;
   if(!r4_only) {
-    labelSize = 0.02;
-    markerSize = 0.9;
+    labelSizeX = 0.03;
+    labelSizeY = 0.035;
+    markerSize = 0.7;
   }
-  h_covar.SetLabelSize(labelSize, "xy");
+  h_covar.SetLabelSize(labelSizeX, "x");
+  h_covar.SetLabelSize(labelSizeY, "y");
   h_covar.SetMarkerSize(markerSize);
   h_covar.SetTickLength(0., "xy");
-  h_corr.SetLabelSize(labelSize, "xy");
-  h_corr.SetMarkerSize(markerSize);
-  h_corr.SetTickLength(0., "xy");
   for(size_t x = 0; x < yields.size(); ++x){
     string name = yields.at(x)->GetName();
     auto pos = name.find("_BIN_");
@@ -1143,16 +1142,14 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   }
   h_covar.LabelsOption("vd","X");
   h_corr.LabelsOption("vd","X");
-  h_corr.SetMinimum(-1.);
-  h_corr.SetMaximum(1.);
 
-  const unsigned num = 3;
   const int bands = 255;
+  const unsigned num = 2;
   int colors[bands];
-  double stops[num] = {0., 0.5, 1.};
-  double red[num] =   {137/255., 1., 207/255.};
-  double green[num] = {162/255., 1., 131/255.};
-  double blue[num] =  {215/255., 1., 132/255.};
+  double stops[num] = {0., 1.};
+  double red[num] =   {1., 207/255.};
+  double green[num] = {1., 131/255.};
+  double blue[num] =  {1., 132/255.};
   int fi = TColor::CreateGradientColorTable(num, stops, red, green, blue, bands);
   for(int ib = 0; ib < bands; ++ib){
     colors[ib] = fi+ib;
@@ -1160,36 +1157,66 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   gStyle->SetNumberContours(bands);
   gStyle->SetPalette(bands, colors);
 
-  float LeftMargin = 0.2, RightMargin = 0.09, BottomMargin = 0.15, TopMargin = 0.07;
+  float LeftMargin = 0.12, RightMargin = 0.15, BottomMargin = 0.15, TopMargin = 0.07;
   TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
   TString lumiEner = "#font[42]{35.9 fb^{-1} (13 TeV)}"; 
   TLatex cmslabel;  
   cmslabel.SetNDC(kTRUE);
 
+  //////// Covariance matrix
   gStyle->SetOptStat(0);              // No Stats box
+  gStyle->SetTextFont(42);
   TCanvas c("", "", 1024, 700);
   c.SetMargin(LeftMargin, RightMargin, BottomMargin, TopMargin);
-  gStyle->SetPaintTextFormat("6.1f");
+  gStyle->SetPaintTextFormat("5.1f");
   h_covar.SetTitle(""); h_corr.SetTitle("");
-  h_covar.GetXaxis()->SetLabelOffset(0.0085);
-  h_corr.GetXaxis()->SetLabelOffset(0.0085);
+  if(!r4_only) h_covar.GetXaxis()->LabelsOption("v");
+  h_covar.GetZaxis()->SetTitle("Covariance");
+  h_covar.GetZaxis()->SetTitleSize(0.045);
+  h_covar.GetZaxis()->CenterTitle(true);
+  if(r4_only) h_covar.GetXaxis()->SetLabelOffset(0.0085);
   h_covar.Draw("axis");
-  h_corr.Draw("col same");
+  h_covar.Draw("colz same");
   h_covar.Draw("text same");
-  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
+  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.045);
   cmslabel.DrawLatex(LeftMargin+0.005, 1-TopMargin+0.015, cmsPrel);
-  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
+  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.041);
   cmslabel.DrawLatex(1-RightMargin-0.005, 1-TopMargin+0.015, lumiEner);
-  //c.SaveAs(covar_file_name.c_str());
+  c.SaveAs(covar_file_name.c_str());
 
-  gStyle->SetPaintTextFormat("6.2f");
+  const unsigned num2 = 3;
+  int colors2[bands];
+  double stops2[num2] = {0., 0.5, 1.};
+  double red2[num2] =   {137/255., 1., 207/255.};
+  double green2[num2] = {162/255., 1., 131/255.};
+  double blue2[num2] =  {215/255., 1., 132/255.};
+  int fi2 = TColor::CreateGradientColorTable(num2, stops2, red2, green2, blue2, bands);
+  for(int ib = 0; ib < bands; ++ib){
+    colors2[ib] = fi2+ib;
+  }
+  gStyle->SetNumberContours(bands);
+  gStyle->SetPalette(bands, colors2);
+
+  //////// Correlation matrix
+  gStyle->SetPaintTextFormat("5.2f");
   c.SetLogz(false);
-  h_corr.Draw("col");
+  h_corr.SetMinimum(-1.);
+  h_corr.SetMaximum(1.);
+  if(!r4_only) h_corr.GetXaxis()->LabelsOption("v");
+  h_corr.SetLabelSize(labelSizeX, "x");
+  h_corr.SetLabelSize(labelSizeY, "y");
+  h_corr.SetMarkerSize(markerSize);
+  h_corr.SetTickLength(0., "xy");
+  h_corr.GetZaxis()->SetTitle("Correlation");
+  h_corr.GetZaxis()->SetTitleSize(0.045);
+  h_corr.GetZaxis()->CenterTitle(true);
+  if(r4_only) h_corr.GetXaxis()->SetLabelOffset(0.0085);
+  h_corr.Draw("colz");
   h_corr.Draw("text same");
   ReplaceAll(covar_file_name, "_covar.pdf", "_corr.pdf");
-  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
+  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.045);
   cmslabel.DrawLatex(LeftMargin+0.005, 1-TopMargin+0.015, cmsPrel);
-  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
+  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.041);
   cmslabel.DrawLatex(1-RightMargin-0.005, 1-TopMargin+0.015, lumiEner);
   c.SaveAs(covar_file_name.c_str());
 
@@ -1202,6 +1229,7 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   TFile file(pname, "recreate");
   file.cd();
   h_corr.Write("CorrelationMatrix_"+fitname+"Fit");
+  h_covar.Write("CovarianceMatrix_"+fitname+"Fit");
   file.Close();
   cout<<"Saved correlation matrix in "<<pname<<endl<<endl;
 }
@@ -1215,14 +1243,16 @@ string PrettyBinName(string name){
   ReplaceAll(name, "2b_", "2b, ");
   ReplaceAll(name, "3b_", "3b, ");
   ReplaceAll(name, "4b_", "4b, ");
-  ReplaceAll(name, "met0", "150<E_{T}^{miss}#leq 200");
-  ReplaceAll(name, "met1", "200<E_{T}^{miss}#leq 300");
-  ReplaceAll(name, "met2", "300<E_{T}^{miss}#leq 450");
-  ReplaceAll(name, "met3", "E_{T}^{miss}>450");
-  // ReplaceAll(name, "met0", "150<MET<200");
-  // ReplaceAll(name, "met1", "200<MET<300");
-  // ReplaceAll(name, "met2", "300<MET<450");
-  // ReplaceAll(name, "met3", "MET>450");
+
+  // ReplaceAll(name, "met0", "150<p_{T}^{miss}#leq 200");
+  // ReplaceAll(name, "met1", "200<p_{T}^{miss}#leq 300");
+  // ReplaceAll(name, "met2", "300<p_{T}^{miss}#leq 450");
+  // ReplaceAll(name, "met3", "p_{T}^{miss}>450");
+
+  ReplaceAll(name, "met0", "MET1");
+  ReplaceAll(name, "met1", "MET2");
+  ReplaceAll(name, "met2", "MET3");
+  ReplaceAll(name, "met3", "MET4");
   return name;
 }
 
