@@ -41,8 +41,8 @@ int main(){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higtight/");
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_unskimmed/");
+  string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_26/TChiHH/merged_higmc_unskimmed/");
 
   map<string, set<string>> mctags; 
   mctags["all"]     = set<string>({"*TTJets_*Lep*", "*_TTZ*.root", "*_TTW*.root",
@@ -72,7 +72,8 @@ int main(){
   string c_drmax = "hig_drmax<=2.2";
   string hig = "hig_drmax<=2.2 && hig_am<=200 && hig_dm <= 40 && (hig_am>100 && hig_am<=140)";
   string sbd = "hig_drmax<=2.2 && hig_am<=200 && hig_dm <= 40 && !(hig_am>100 && hig_am<=140)";
-  string trim = "hig_drmax<=2.2 && hig_am<=200 && hig_dm <= 40";
+  // string trim = "hig_drmax<=2.2 && hig_am<=200 && hig_dm <= 40";
+  string trim = "hig_drmax<=2.2 && hig_dm <= 40";
 
   NamedFunc wgt = Higfuncs::weight_hig * Higfuncs::eff_higtrig;
 
@@ -87,7 +88,8 @@ int main(){
     c_drmax  = "higd_drmax<=2.2";
     hig = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && (higd_am>100 && higd_am<=140)";
     sbd = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40 && !(higd_am>100 && higd_am<=140)";
-    trim = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40";
+    // trim = "higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40";
+    trim = "higd_drmax<=2.2 && higd_dm <= 40";
 
     wgt = Higfuncs::weight_higd * Higfuncs::eff_higtrig;
   }
@@ -100,46 +102,24 @@ int main(){
   string name = "csv";
   if (deep) name = "deepcsv";
   pm.Push<Table>(name, vector<TableRow>{
- //  TableRow("No selection                ", 
- //    sigonly,0,0, Higfuncs::weight_higd * "1/eff_jetid"),
- //  TableRow("$0\\ell$, $\\text{4-5 jets}$  ", 
- //    baseline+"&&"+sigonly,0,0, Higfuncs::weight_higd * "1/eff_jetid"),
- //  TableRow("$N_{\\text{b,T}}\\geq 2$      ", 
- //    baseline+"&&"+sigonly + " &&" +c_2bt,0,0, Higfuncs::weight_higd * "1/eff_jetid"),
-	// TableRow("$E_{T}^{miss} > 150$, trigger efficiency", 
-	// 	baseline + " && met>150 &&" + c_2bt,0,0, wgt),
-	// TableRow("Track veto", 
-	// 	baseline + " && ntks==0 && met>150 &&" + c_2bt,0,0, wgt),
-	// TableRow("$\\Delta\\phi_{1,2}>0.5,\\Delta\\phi_{3,4}>0.3$",        
-	// 	baseline + " && ntks==0 && met>150 &&"+c_2bt+"   && !low_dphi",0,0, wgt),
-	// TableRow("$|\\Delta m| < 40$",     
-	// 	baseline + " && ntks==0 && met>150 &&"+c_2bt+"   && !low_dphi && "+c_hig_dm,0,0, wgt),
-	// TableRow("$\\Delta R_{\\text{max}} < 2.2$",                    
-	// 	baseline +"  && ntks==0 && met>150 &&"+c_2bt+"   && !low_dphi && "+c_hig_dm+" && "+c_drmax,0,1,wgt),
-
-  // TableRow("\\multicolumn{"+ncols+"}{c}{HIG: $100<\\left< m \\right>\\leq140$}\\\\%", 
-  //   "met>1e6",0,1, wgt),
   TableRow("No pre-selection, $\\geq$ 2b", 
     sigonly+"&&"+c_2bt,0,0, Higfuncs::weight_higd * "1/eff_jetid"),
-    TableRow("No pre-selection, $\\geq$ 3b", 
+  TableRow("No pre-selection, $\\geq$ 3b",  
     sigonly+"&&"+c_ge3b,0,0, Higfuncs::weight_higd * "1/eff_jetid"),
-      TableRow("No pre-selection, 4b", 
+  TableRow("No pre-selection, 4b", 
     sigonly+"&&"+c_4b,0,0, Higfuncs::weight_higd * "1/eff_jetid"),
-  TableRow("baseline, $E_{T}^{miss}>150$, $\\geq$ 2b", 
+  TableRow("Baseline, $p_{\\rm T}^{\\rm miss}>150$, $\\geq$ 2b", 
     baseline + " && ntks==0 && met>150 &&"+c_2bt+" && !low_dphi && "+trim,0,0, wgt),
-	TableRow("baseline, $E_{T}^{miss}>150$, $\\geq$ 3b", 
+	TableRow("Baseline, $p_{\\rm T}^{\\rm miss}>150$, $\\geq$ 3b", 
     baseline +"  && ntks==0 && met>150 &&"+c_ge3b+"&& !low_dphi && "+trim,0,0,wgt),
-  TableRow("baseline, $E_{T}^{miss}>150$, 4b", 
+  TableRow("Baseline, $p_{\\rm T}^{\\rm miss}>150$, 4b", 
     baseline + " && ntks==0 && met>150 &&"+c_4b+"  && !low_dphi && "+trim,0,0, wgt),
-  TableRow("baseline, $E_{T}^{miss}>300$, $\\geq$ 2b", 
+  TableRow("Baseline, $p_{\\rm T}^{\\rm miss}>300$, $\\geq$ 2b", 
     baseline + " && ntks==0 && met>300 &&"+c_2bt+" && !low_dphi && "+trim,0,0, wgt),
-  TableRow("baseline, $E_{T}^{miss}>300$, $\\geq$ 3b", 
+  TableRow("Baseline, $p_{\\rm T}^{\\rm miss}>300$, $\\geq$ 3b", 
     baseline +"  && ntks==0 && met>300 &&"+c_ge3b+"&& !low_dphi && "+trim,0,0,wgt),
-  TableRow("baseline, $E_{T}^{miss}>300$, 4b", 
+  TableRow("Baseline, $p_{\\rm T}^{\\rm miss}>300$, 4b", 
     baseline + " && ntks==0 && met>300 &&"+c_4b+"  && !low_dphi && "+trim,0,0, wgt),
-
-
-
 	},procs,0);
 
 
