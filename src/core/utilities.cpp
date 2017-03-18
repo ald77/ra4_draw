@@ -382,6 +382,18 @@ void AdjustDensityForBinWidth(TH1D &h){
   h.SetEntries(entries);
 }
 
+string ChangeExtension(string path, const string &new_ext){
+  auto pos = path.rfind(".");
+  if(pos == string::npos){
+    path += new_ext;
+  }else{
+    auto count = path.size() - pos;
+    path = path.replace(pos, count, new_ext);
+  }
+  return path;
+}
+
+
 void getLegendBoxes(TLegend &leg, vector<vector<float> > &boxes){
   int nRows = leg.GetNRows();
   boxes = vector<vector<float> > (nRows, vector<float>(4,0));

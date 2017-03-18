@@ -36,6 +36,7 @@ std::string CopyReplaceAll(const std::string str, const std::string &orig, const
 std::string LeftStrip(std::string str);
 std::string RightStrip(std::string str);
 std::string Strip(std::string str);
+std::string ChangeExtension(std::string path, const std::string &new_ext);
 
 bool FileExists(const std::string &path);
 
