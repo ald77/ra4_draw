@@ -44,9 +44,9 @@
   CanvasH	  = 700
   TitleSize	  = 0.055
   LabelSize	  = 0.052
-  xTitleOffset	  = 1.2
-  yTitleOffset	  = 1.2
-  PadLeftMargin	  = 0.15
+  xTitleOffset	  = 1.26
+  yTitleOffset	  = 0.88
+  PadLeftMargin	  = 0.1
   PadRightMargin  = 0.05
   PadTopMargin	  = 0.09
   PadBottomMargin = 0.15

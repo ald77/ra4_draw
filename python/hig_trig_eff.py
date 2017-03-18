@@ -124,24 +124,34 @@ gStyle.SetPalette(kBird)
 htbins = [0,200,600,800,1000,1400]
 metbins = range(150,200,5) + range(200,250,10) + range(250,301,25) + [400]
 
+bMargin = 0.12
+lMargin = 0.11
+rMargin = 0.15
 can = TCanvas()
-can.SetBottomMargin(0.11)
+can.SetBottomMargin(bMargin)
+can.SetLeftMargin(lMargin)
+can.SetRightMargin(rMargin)
 hist = TH2D('hist','hist',len(metbins)-1, array('d', metbins),len(htbins)-1, array('d', htbins))
 
 for i, imet in enumerate(metbins):
     for j, iht in enumerate(htbins):
         hist.SetBinContent(i+1, j+1, trig_eff(iht+1, imet+1)[0])
 
+hist.GetXaxis().SetTitle("p_{T}^{miss} [GeV]")
+hist.GetXaxis().SetTitleSize(0.045)
+hist.GetXaxis().SetTitleOffset(1.15)
+hist.GetXaxis().SetLabelSize(0.04)
+hist.GetXaxis().SetLabelOffset(0.015)
+
 hist.GetYaxis().SetTitle("H_{T} [GeV]")
 hist.GetYaxis().SetTitleSize(0.045)
 hist.GetYaxis().SetLabelSize(0.04)
-hist.GetYaxis().SetTitleOffset(1.1)
-hist.GetXaxis().SetTitle("p_{T}^{miss} [GeV]")
-hist.GetXaxis().SetTitleSize(0.045)
-hist.GetXaxis().SetTitleOffset(1.04)
-hist.GetXaxis().SetLabelSize(0.04)
-hist.GetXaxis().SetLabelOffset(0.015)
+hist.GetYaxis().SetTitleOffset(1.26)
+
 hist.GetZaxis().SetRangeUser(0.,1.)
+hist.GetZaxis().SetTitle("MET[100 || 110 || 120] trigger efficiency")
+hist.GetZaxis().SetTitleSize(0.045)
+hist.GetZaxis().CenterTitle(True)
 hist.Draw("COLZ")
 
 for i in range(len(htbins)-2):
@@ -159,16 +169,17 @@ for i in range(len(metbins)-2):
     a.DrawLine(metbins[i+1],htbins[0],metbins[i+1],htbins[-1])
 
 cmslabel = TLatex()
-cmslabel.DrawLatexNDC(0.1, 0.915,"#font[62]{CMS}#scale[0.76]{#font[52]{ Preliminary}}")
+cmslabel.DrawLatexNDC(lMargin, 0.915,"#font[62]{CMS}#scale[0.76]{#font[52]{ Preliminary}}")
 
 lumilabel = TLatex()
 lumilabel.SetTextAlign(31)
-lumilabel.DrawLatexNDC(0.9, 0.915,"#font[42]{35.9 fb^{-1} (13 TeV)}")
+lumilabel.DrawLatexNDC(1-rMargin, 0.915,"#font[42]{35.9 fb^{-1} (13 TeV)}")
 
 can.Print("hig_trigeff.pdf")
 
-f = TFile("SUS-16-044_trig_eff.root","RECREATE")
-hist.Write()
+rootname = "CMS-PAS-SUS-16-044_AuxFigure_5_TrigEff.root"
+f = TFile(rootname,"RECREATE")
+hist.Write("MetTrigEfficiency")
 f.Close()
-
+print "Saved histogram in "+rootname+"\n"
 

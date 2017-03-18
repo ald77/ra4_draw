@@ -1150,9 +1150,9 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   const int bands = 255;
   int colors[bands];
   double stops[num] = {0., 0.5, 1.};
-  double red[num] =   {207/255., 1., 137/255.};
-  double green[num] = {131/255., 1., 162/255.};
-  double blue[num] =  {132/255., 1., 215/255.};
+  double red[num] =   {137/255., 1., 207/255.};
+  double green[num] = {162/255., 1., 131/255.};
+  double blue[num] =  {215/255., 1., 132/255.};
   int fi = TColor::CreateGradientColorTable(num, stops, red, green, blue, bands);
   for(int ib = 0; ib < bands; ++ib){
     colors[ib] = fi+ib;

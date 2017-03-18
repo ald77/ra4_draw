@@ -376,7 +376,7 @@ int main(int argc, char *argv[]){
 
   // Saving root file
   pname = "CMS-"; if(!do_paper) pname += "PAS";
-  pname += "-SUS-16-044_AuxFigure_4_ExpSignificance.root";
+  pname += "-SUS-16-044_AuxFigure_3_ExpSignificance.root";
   TFile file3(pname, "recreate");
   file3.cd();
   gsig.Write("ExpSignificance");
@@ -388,8 +388,8 @@ int main(int argc, char *argv[]){
   //// Plotting observed significance
   can.SetLogy(false);
   histo.GetXaxis()->SetLabelOffset(0.02);
-  histo.SetMinimum(min(0., minsig*2));
-  histo.SetMaximum(maxsig*1.2);
+  histo.SetMinimum(-2.5);
+  histo.SetMaximum(2.5);
   histo.SetYTitle("Observed signal significance [#sigma]");
   histo.Draw();
 
@@ -413,7 +413,7 @@ int main(int argc, char *argv[]){
 
   // Saving root file
   pname = "CMS-"; if(!do_paper) pname += "PAS";
-  pname += "-SUS-16-044_AuxFigure_3_ObsSignificance.root";
+  pname += "-SUS-16-044_AuxFigure_4_ObsSignificance.root";
   TFile file4(pname, "recreate");
   file4.cd();
   gobssig.Write("ExpSignificance");
