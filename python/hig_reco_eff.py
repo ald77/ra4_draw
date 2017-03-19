@@ -8,16 +8,24 @@ gStyle.SetOptStat(0)
 gStyle.SetOptTitle(0)
 gStyle.SetPaintTextFormat("6.2f")
 
-pt_cuts = range(50,651,50)
+pt_cuts = range(50,1001,50)
 
-cuts = ['all-nj4',
-        'all-nj',
-        'nj-dr',
-        'nj-dm',
-        'nj-am',
-        'nj_dr-am',
-        'nj_dm-am',
-        'nj_dr_dm-am']
+cuts = [#'all-nj4',
+        # 'all-nj',
+        'all-good_reco',
+        # 'all_noisr-good_reco',
+        # 'nj-dr',
+        # 'nj-dm',
+        # 'nj-am',
+        # 'nj_dr-am',
+        # 'nj_dm-am',
+        # 'nj_dr_dm-am',
+        # 'nj_am-dr',
+        # 'nj_am-dm',
+        'good_reco-am']
+        # 'good_reco-dr',
+        # 'good_reco-dm',
+        # 'good_reco_noisr-am']
 
 def getEfficiency(mass, outname, quick):
 
@@ -72,39 +80,74 @@ def getEfficiency(mass, outname, quick):
 
         wgt = 1 #c.weight/c.w_btag*c.w_bhig_deep 
 
+        # cut definitions
         pass_nj = c.njets>=4 and c.njets<=5
         pass_dr = c.higd_drmax<2.2
         pass_dm = c.higd_dm<40
-        pass_hig = c.higd_am>100 and c.higd_am<140
+        pass_am = c.higd_am>100 and c.higd_am<140
+        pass_noisr = c.isr_tru_pt<20
+        pass_goodreco = c.njets>=4
+        for ijet in xrange(len(c.jets_pt)):
+            if c.jets_h1d[ijet] or c.jets_h2d[ijet]:
+                if not c.jets_hflavor[ijet]==5:
+                    pass_goodreco = False
         
-        # fill denom and num for each cut
-        den['all-nj4'].Fill(h1pt, h2pt, wgt)
-        if c.njets>=4: num['all-nj4'].Fill(h1pt, h2pt, wgt)
+        # fill denom and num for each cut combination
+        # den['all-nj4'].Fill(h1pt, h2pt, wgt)
+        # if c.njets>=4: num['all-nj4'].Fill(h1pt, h2pt, wgt)
 
-        den['all-nj'].Fill(h1pt, h2pt, wgt)
-        if pass_nj: num['all-nj'].Fill(h1pt, h2pt, wgt)
+        # den['all-nj'].Fill(h1pt, h2pt, wgt)
+        # if pass_nj: num['all-nj'].Fill(h1pt, h2pt, wgt)
 
-        if pass_nj:
-            den['nj-dr'].Fill(h1pt, h2pt, wgt)
-            if pass_dr: num['nj-dr'].Fill(h1pt, h2pt, wgt)
+        den['all-good_reco'].Fill(h1pt, h2pt, wgt)
+        if pass_goodreco: num['all-good_reco'].Fill(h1pt, h2pt, wgt)
+
+        # if pass_noisr:
+        #     den['all_noisr-good_reco'].Fill(h1pt, h2pt, wgt)
+        #     if pass_goodreco: num['all_noisr-good_reco'].Fill(h1pt, h2pt, wgt)
+
+        # if pass_nj:
+        #     den['nj-dr'].Fill(h1pt, h2pt, wgt)
+        #     if pass_dr: num['nj-dr'].Fill(h1pt, h2pt, wgt)
         
-            den['nj-dm'].Fill(h1pt, h2pt, wgt)
-            if pass_dm: num['nj-dm'].Fill(h1pt, h2pt, wgt)
+        #     den['nj-dm'].Fill(h1pt, h2pt, wgt)
+        #     if pass_dm: num['nj-dm'].Fill(h1pt, h2pt, wgt)
         
-            den['nj-am'].Fill(h1pt, h2pt, wgt)
-            if pass_hig: num['nj-am'].Fill(h1pt, h2pt, wgt)
+        #     den['nj-am'].Fill(h1pt, h2pt, wgt)
+        #     if pass_am: num['nj-am'].Fill(h1pt, h2pt, wgt)
         
-        if pass_nj and pass_dr: 
-            den['nj_dr-am'].Fill(h1pt, h2pt, wgt)
-            if pass_hig: num['nj_dr-am'].Fill(h1pt, h2pt, wgt)
+        # if pass_nj and pass_dr: 
+        #     den['nj_dr-am'].Fill(h1pt, h2pt, wgt)
+        #     if pass_am: num['nj_dr-am'].Fill(h1pt, h2pt, wgt)
 
-        if pass_nj and pass_dm: 
-            den['nj_dm-am'].Fill(h1pt, h2pt, wgt)
-            if pass_hig: num['nj_dm-am'].Fill(h1pt, h2pt, wgt)
+        # if pass_nj and pass_dm: 
+        #     den['nj_dm-am'].Fill(h1pt, h2pt, wgt)
+        #     if pass_am: num['nj_dm-am'].Fill(h1pt, h2pt, wgt)
 
-        if pass_nj and pass_dr and pass_dm: 
-            den['nj_dr_dm-am'].Fill(h1pt, h2pt, wgt)
-            if pass_hig: num['nj_dr_dm-am'].Fill(h1pt, h2pt, wgt)
+        # if pass_nj and pass_dr and pass_dm: 
+        #     den['nj_dr_dm-am'].Fill(h1pt, h2pt, wgt)
+        #     if pass_am: num['nj_dr_dm-am'].Fill(h1pt, h2pt, wgt)
+
+        # if pass_am: 
+        #     den['nj_am-dm'].Fill(h1pt, h2pt, wgt)
+        #     if pass_dm: num['nj_am-dm'].Fill(h1pt, h2pt, wgt)
+
+        #     den['nj_am-dr'].Fill(h1pt, h2pt, wgt)
+        #     if pass_dr: num['nj_am-dr'].Fill(h1pt, h2pt, wgt)
+
+        if pass_goodreco: 
+            den['good_reco-am'].Fill(h1pt, h2pt, wgt)
+            if pass_am: num['good_reco-am'].Fill(h1pt, h2pt, wgt)
+
+        #     den['good_reco-dr'].Fill(h1pt, h2pt, wgt)
+        #     if pass_dr: num['good_reco-dr'].Fill(h1pt, h2pt, wgt)
+
+        #     den['good_reco-dm'].Fill(h1pt, h2pt, wgt)
+        #     if pass_dm: num['good_reco-dm'].Fill(h1pt, h2pt, wgt)
+
+        # if pass_goodreco and pass_noisr: 
+        #     den['good_reco_noisr-am'].Fill(h1pt, h2pt, wgt)
+        #     if pass_am: num['good_reco_noisr-am'].Fill(h1pt, h2pt, wgt)
 
     eff ={}
     for cut in cuts:
@@ -112,40 +155,49 @@ def getEfficiency(mass, outname, quick):
         eff[cut].SetTitle(num[cut].GetTitle().replace( "num_",", denom: ").replace( "-",", num cut: "))
         eff[cut].Divide(den[cut])
 
-    outfile = TFile(outname, "recreate")
     for cut in cuts:
-        num[cut].Write()
-        den[cut].Write()
+        outfile = TFile(cut+'_'+outname, "recreate")
+        # num[cut].Write()
+        # den[cut].Write()
         eff[cut].Write()
-    outfile.Close()
+        outfile.Close()
 
 def makePlot(fname):
     gStyle.SetPalette(kBird)
 
-    file = TFile(fname, "read")
-
     for cut in cuts:
-        for hname in ['num','den','eff']:
+        file = TFile(cut+'_'+fname, "read")
+
+        for hname in ['eff']:#'num','den','eff']:
             hname+='_'+cut
+            
+            tMargin = 0.1
+            bMargin = 0.12
+            lMargin = 0.11
+            rMargin = 0.15
             can = TCanvas()
-            can.SetBottomMargin(0.11)
-            can.SetRightMargin(0.15)
+            can.SetBottomMargin(bMargin)
+            can.SetLeftMargin(lMargin)
+            can.SetRightMargin(rMargin)
             hist = file.Get(hname)
 
-            hist.GetXaxis().SetTitle("Leading Higgs boson p_{T} [GeV]")
             hist.GetXaxis().SetTitleSize(0.045)
-            hist.GetXaxis().SetTitleOffset(1.06)
+            hist.GetXaxis().SetTitleOffset(1.15)
             hist.GetXaxis().SetLabelSize(0.04)
             hist.GetXaxis().SetLabelOffset(0.015)
-            hist.GetYaxis().SetTitle("Subleading Higgs boson p_{T} [GeV]")
+
             hist.GetYaxis().SetTitleSize(0.045)
             hist.GetYaxis().SetLabelSize(0.04)
-            hist.GetYaxis().SetTitleOffset(1.05)
+            hist.GetYaxis().SetTitleOffset(1.26)
+
             hist.GetZaxis().SetRangeUser(0.,1.)
-            hist.GetZaxis().SetTitle("Higgs boson reconstruction efficiency")
             hist.GetZaxis().SetTitleSize(0.045)
-            hist.GetZaxis().SetLabelSize(0.04)
-            hist.Draw("COLZTEXTe")
+            hist.GetZaxis().CenterTitle(True)
+
+            hist.GetXaxis().SetTitle("Leading Higgs boson p_{T} [GeV]")
+            hist.GetYaxis().SetTitle("Subleading Higgs boson p_{T} [GeV]")
+            hist.GetZaxis().SetTitle("Efficiency")
+            hist.Draw("COLZTEXT")
 
             for i in range(len(pt_cuts)-2):
                 a = TLine()
@@ -156,15 +208,45 @@ def makePlot(fname):
                 a.DrawLine(pt_cuts[i+1],pt_cuts[0],   pt_cuts[i+1], pt_cuts[-1])
 
 
-            title_label = TLatex()
-            title_label.DrawLatexNDC(0.1, 0.915,"#font[42]{"+hist.GetTitle()+"}")
+            # title_label = TLatex()
+            # title_label.DrawLatexNDC(0.1, 0.915,"#font[42]{"+hist.GetTitle()+"}")
 
-            # cmslabel = TLatex()
-            # cmslabel.DrawLatexNDC(0.1, 0.915,"#font[62]{CMS}#scale[0.76]{#font[52]{ Preliminary}}")
+            cmslabel = TLatex()
+            cmslabel.DrawLatexNDC(lMargin, 0.915,"#font[62]{CMS}#scale[0.76]{#font[52]{ Simulation Preliminary}}")
 
-            # lumilabel = TLatex()
-            # lumilabel.SetTextAlign(31)
-            # lumilabel.DrawLatexNDC(0.9, 0.915,"#font[42]{35.9 fb^{-1} (13 TeV)}")
+            lumilabel = TLatex()
+            lumilabel.SetTextAlign(31)
+            lumilabel.DrawLatexNDC(1-rMargin, 0.915,"#font[42]{35.9 fb^{-1} (13 TeV)}")
+
+            Xmin, Xmax, Ymin, Ymax = 85, 730, 780, 975
+            box = TBox()
+            box.SetFillColor(0) 
+            box.SetFillStyle(1001)
+            box.SetLineColor(1) 
+            box.SetLineWidth(2) 
+            box.SetLineStyle(1)
+            box.DrawBox(Xmin, Ymin, Xmax, Ymax)
+            box.SetFillColor(0) 
+            box.SetFillStyle(0)
+            box.SetLineColor(1) 
+            box.SetLineWidth(2) 
+            box.SetLineStyle(1)
+            box.DrawBox(Xmin, Ymin, Xmax, Ymax)
+
+            num = cut.split("-")[0]
+            denom = cut.split("-")[1]
+            caption = TLatex()
+            caption.SetTextAlign(13)
+            caption.SetTextSize(0.03)
+            if cut=="all-good_reco":
+                caption.DrawLatex(Xmin+13, Ymax-25, "#font[72]{Den:}#font[42]{ all b-quarks from hh#rightarrow4b have p_{T}>30 GeV, |#eta|<2.4}")
+                caption.DrawLatex(Xmin+13, Ymax-80, "#font[72]{Num:}#font[42]{ Den. + all jets in di-Higgs reconstruction}")
+                caption.DrawLatex(Xmin+13, Ymax-135,"#font[72]{        }#font[42]{ matched to B-hadrons}")
+            if cut=="good_reco-am":
+                caption.DrawLatex(Xmin+13, Ymax-25, "#font[72]{Den:}#font[42]{ all b-quarks from hh#rightarrow4b have p_{T}>30 GeV, |#eta|<2.4}")
+                caption.DrawLatex(Xmin+13, Ymax-80, "#font[42]{ + all jets in di-Higgs reconstruction matched to B-hadrons}")
+                caption.DrawLatex(Xmin+13, Ymax-135, "#font[72]{Num:}#font[42]{ Den. + 100 < #LTm#GT < 140 GeV}")
+
 
             can.Print("plots/"+hname+fname.replace(".root",".pdf"))
 
