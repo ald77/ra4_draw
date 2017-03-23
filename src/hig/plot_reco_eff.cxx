@@ -43,7 +43,7 @@ namespace{
 
 void GetOptions(int argc, char *argv[]);
 
-void makePlot(TH2D hden, TH2D hnum);
+void makePlot(TH2D hnum, TH2D hden);
 
 int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
 
   string folder(bfolder+"/cms2r0/babymaker/babies/2017_03_17/TChiHH/merged_higmc_unskimmed/");
 
-  Baby_full baby(std::set<std::string>{(folder+"*ino-*_*root")});
+  Baby_full baby(std::set<std::string>{(folder+"*ino-7*_*root")});
   auto activator = baby.Activate();
 
 
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
   vector<TString> scuts({"all", "nj4", "goodreco", "gr_am"});
 
   //// Setting plot style
-  PlotOpt opts("txt/plot_styles.txt", "Scatter");
+  PlotOpt opts("txt/plot_styles.txt", "Eff2D");
   setPlotStyle(opts);
 
   int nbins = 19;
@@ -126,8 +126,8 @@ int main(int argc, char *argv[]){
   } // Loop over entries
 
   cout<<endl;
-  makePlot(histos[all], histos[goodreco]);
-  makePlot(histos[goodreco], histos[gr_am]);
+  makePlot(histos[goodreco], histos[all]);
+  makePlot(histos[gr_am], histos[goodreco]);
 
   double seconds = (chrono::duration<double>(chrono::high_resolution_clock::now() - begTime)).count();
   TString hhmmss = HoursMinSec(seconds);
@@ -139,18 +139,21 @@ int main(int argc, char *argv[]){
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void makePlot(TH2D hden, TH2D hnum){
+void makePlot(TH2D hnum, TH2D hden){
   gStyle->SetPaintTextFormat("5.2f");
   TCanvas can("can","");
 
   hnum.Divide(&hden);
   hnum.GetXaxis()->SetTitleSize(0.045);
-  hnum.GetXaxis()->SetTitleOffset(1.15);
+  hnum.GetXaxis()->SetTitleOffset(1.3);
   hnum.GetXaxis()->SetLabelSize(0.04);
   hnum.GetXaxis()->SetLabelOffset(0.015);
+
   hnum.GetYaxis()->SetTitleSize(0.045);
   hnum.GetYaxis()->SetLabelSize(0.04);
-  hnum.GetYaxis()->SetTitleOffset(1.26);
+  hnum.GetYaxis()->SetTitleOffset(1.22);
+
+  hnum.GetZaxis()->SetLabelSize(0.04);
   hnum.GetZaxis()->SetRangeUser(0.,1.);
   hnum.GetZaxis()->SetTitleSize(0.045);
   hnum.GetZaxis()->CenterTitle(true);
@@ -158,6 +161,21 @@ void makePlot(TH2D hden, TH2D hnum){
   hnum.GetYaxis()->SetTitle("Subleading Higgs boson p_{T} [GeV]");
   hnum.GetZaxis()->SetTitle("Efficiency");
   hnum.Draw("COLZTEXT");
+
+  TString title = "Den: "; title += hden.GetTitle();
+  title += "   -   Num: "; title += hnum.GetTitle();
+  hnum.SetTitle(title);
+
+  int nbx = hnum.GetNbinsX(), nby = hnum.GetNbinsY();
+  float minX = hnum.GetXaxis()->GetBinLowEdge(1), maxX = hnum.GetXaxis()->GetBinLowEdge(nbx+1);
+  float minY = hnum.GetYaxis()->GetBinLowEdge(1), maxY = hnum.GetYaxis()->GetBinLowEdge(nby+1);
+  TLine line; line.SetLineWidth(1); line.SetLineStyle(3); line.SetLineColor(kBlack);
+  for(int binx=1; binx<nbx; binx++){
+    line.DrawLine(hnum.GetXaxis()->GetBinLowEdge(binx+1), minY, hnum.GetXaxis()->GetBinLowEdge(binx+1),maxY);  
+  } // Loop over x bins
+  for(int biny=1; biny<nby; biny++){
+    line.DrawLine(minX,  hnum.GetYaxis()->GetBinLowEdge(biny+1), maxX, hnum.GetYaxis()->GetBinLowEdge(biny+1));  
+  } // Loop over y bins
   
   TString hname = "plots/eff_"; 
   hname += hnum.GetName(); hname += "_";
