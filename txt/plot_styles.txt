@@ -42,14 +42,14 @@
 [Std1D]
   CanvasW	  = 1100
   CanvasH	  = 700
-  TitleSize	  = 0.055
-  LabelSize	  = 0.052
-  xTitleOffset	  = 1.26
-  yTitleOffset	  = 0.88
-  PadLeftMargin	  = 0.1
+  TitleSize	  = 0.052
+  LabelSize	  = 0.05
+  xTitleOffset	  = 1.05
+  yTitleOffset	  = 0.79
+  PadLeftMargin	  = 0.09
   PadRightMargin  = 0.05
   PadTopMargin	  = 0.09
-  PadBottomMargin = 0.15
+  PadBottomMargin = 0.12
   LegendEntrySize = 0.041
   NDivisions	  = 708
   Font		  = 42

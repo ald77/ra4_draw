@@ -42,7 +42,7 @@ int main(){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/");
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_26/TChiHH/merged_higmc_unskimmed/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_03_17/TChiHH/merged_higmc_unskimmed/");
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({"*TTJets_*Lep*", "*_TTZ*.root", "*_TTW*.root",
@@ -121,13 +121,13 @@ int main(){
     baseline+"&&"+sigonly,0,0, Higfuncs::weight_higd * "1/eff_jetid"),
   TableRow("$N_{\\text{b,T}}\\geq 2$      ", 
     baseline+"&&"+sigonly + " &&" +c_2bt,0,0, Higfuncs::weight_higd * "1/eff_jetid"),
-	TableRow("$E_{T}^{miss} > 150$, trigger efficiency", 
+	TableRow("$p_{\\rm T}^{\\rm miss}>150$ GeV", 
 		baseline + " && met>150 &&" + c_2bt,0,0, wgt),
 	TableRow("Track veto", 
 		baseline + " && ntks==0 && met>150 &&" + c_2bt,0,0, wgt),
 	TableRow("$\\Delta\\phi_{1,2}>0.5,\\Delta\\phi_{3,4}>0.3$",        
 		baseline + " && ntks==0 && met>150 &&"+c_2bt+"   && !low_dphi",0,0, wgt),
-	TableRow("$|\\Delta m| < 40$",     
+	TableRow("$|\\Delta m| < 40$ GeV",     
 		baseline + " && ntks==0 && met>150 &&"+c_2bt+"   && !low_dphi && "+c_hig_dm,0,0, wgt),
 	TableRow("$\\Delta R_{\\text{max}} < 2.2$",                    
 		baseline +"  && ntks==0 && met>150 &&"+c_2bt+"   && !low_dphi && "+c_hig_dm+" && "+c_drmax,0,1,wgt),
@@ -135,17 +135,17 @@ int main(){
   TableRow("\\multicolumn{"+ncols+"}{c}{HIG: $100<\\left< m \\right>\\leq140$}\\\\%", 
     "met>1e6",0,1, wgt),
 
-  TableRow("HIG", 
+  TableRow("$100<\\left< m \\right>\\leq140$ GeV", 
     baseline + " && ntks==0 && met>150 &&"+c_2bt+"   && !low_dphi &&"+hig,0,0, wgt),
 	TableRow("3b + 4b", 
     baseline +"  && ntks==0 && met>150 &&"+c_ge3b+"&& !low_dphi &&"+hig,0,0,wgt),
   TableRow("4b", 
     baseline + " && ntks==0 && met>150 &&"+c_4b+"  && !low_dphi &&"+hig,0,0, wgt),
-  TableRow("$E_{T}^{miss}>200$", 
+  TableRow("$p_{\\rm T}^{\\rm miss}>200$ GeV", 
     baseline + " && ntks==0 && met>200 &&"+c_4b+"  && !low_dphi &&"+hig,0,0,wgt),
-  TableRow("$E_{T}^{miss}>300$", 
+  TableRow("$p_{\\rm T}^{\\rm miss}>300$ GeV", 
     baseline + " && ntks==0 && met>300 &&"+c_4b+"  && !low_dphi &&"+hig,0,0,wgt),
-  TableRow("$E_{T}^{miss}>450$", 
+  TableRow("$p_{\\rm T}^{\\rm miss}>450$ GeV", 
     baseline + " && ntks==0 && met>450 &&"+c_4b+"  && !low_dphi &&"+hig,0,1,wgt),
 
   TableRow("\\multicolumn{"+ncols+"}{c}{SBD: $\\left< m\\right> <100$ or $140<\\left< m\\right>\\leq200$}\\\\%", 
@@ -153,17 +153,17 @@ int main(){
 
   TableRow("CHECK:: SBD 2b, MET 150-200", 
     baseline + " && ntks==0 && met>150 && met<=200 &&"+c_2b+"   && !low_dphi &&"+sbd,0,0, wgt),
-  TableRow("SBD", 
+  TableRow("$\\left< m\\right> <100$ or $140<\\left< m\\right>\\leq200$ GeV", 
     baseline + " && ntks==0 && met>150 &&"+c_2bt+"   && !low_dphi &&"+sbd,0,0, wgt),
   TableRow("3b + 4b", 
     baseline +"  && ntks==0 && met>150 &&"+c_ge3b+"&& !low_dphi &&"+sbd,0,0,wgt),
   TableRow("4b", 
     baseline + " && ntks==0 && met>150 &&"+c_4b+"  && !low_dphi &&"+sbd,0,0, wgt),
-  TableRow("$E_{T}^{miss}>200$", 
+  TableRow("$p_{\\rm T}^{\\rm miss}>200$ GeV", 
     baseline + " && ntks==0 && met>200 &&"+c_4b+"  && !low_dphi &&"+sbd,0,0,wgt),
-  TableRow("$E_{T}^{miss}>300$", 
+  TableRow("$p_{\\rm T}^{\\rm miss}>300$ GeV", 
     baseline + " && ntks==0 && met>300 &&"+c_4b+"  && !low_dphi &&"+sbd,0,0,wgt),
-  TableRow("$E_{T}^{miss}>450$", 
+  TableRow("$p_{\\rm T}^{\\rm miss}>450$ GeV", 
     baseline + " && ntks==0 && met>450 &&"+c_4b+"  && !low_dphi &&"+sbd,0,0,wgt),
 
 	},procs,0);

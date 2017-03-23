@@ -27,7 +27,9 @@ namespace{
   TString filename = "txt/limits/limits_TChiHH_lumi"+lumi+"_pas.txt";
   TString model = "TChiHH";
   TString datestamp = "";
-  bool do_paper = false;
+  bool do_paper = true;
+
+  const double hh4b_bf = 0.5824*0.5824;
 }
 
 void GetOptions(int argc, char *argv[]);
@@ -56,8 +58,8 @@ int main(int argc, char *argv[]){
 	>> pexp >> pup >> pdown >> p2up >> p2down >> sigobs >> sigexp;
     vmx.push_back(pmx);
     vmy.push_back(pmy);
-    vxsec.push_back(pxsec);
-    vexsec.push_back(pexsec);
+    vxsec.push_back(pxsec/hh4b_bf);
+    vexsec.push_back(pexsec/hh4b_bf);
     vobs.push_back(pobs);
     vobsup.push_back(pobsup);
     vobsdown.push_back(pobsdown);
@@ -118,24 +120,24 @@ int main(int argc, char *argv[]){
   TCanvas can;
   //can.SetGrid(); 
   can.SetFillStyle(4000);
-  TString chi1n = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
-  TString chi2n = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.]{#scale[0.85]{_{2}}}";
-  TString chi1pm= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{#pm}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
-  TString chii= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0,#pm}}}#kern[-3.]{#scale[0.85]{_{i}}}";
-  TString chij= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0,#mp}}}#kern[-3.]{#scale[0.85]{_{j}}}";
-  TString chi10= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
+  TString chi1n = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.99]{^{0}}}#kern[-1.3]{#scale[0.99]{_{1}}}";
+  TString chi2n = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.99]{^{0}}}#kern[-1.]{#scale[0.99]{_{2}}}";
+  TString chi1pm= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.99]{^{#pm}}}#kern[-1.3]{#scale[0.99]{_{1}}}";
+  TString chii= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.99]{^{0,#pm}}}#kern[-3.]{#scale[0.99]{_{i}}}";
+  TString chij= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.99]{^{0,#mp}}}#kern[-3.]{#scale[0.99]{_{j}}}";
+  TString chi10= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.99]{^{0}}}#kern[-1.3]{#scale[0.99]{_{1}}}";
   TString xsoft= "X#scale[0.85]{_{soft}}";
   TString mass_ = "m#kern[0.1]{#lower[-0.12]{_{";
   float minh=200, maxh=1000, maxXsec = 5e3;
   if(do_paper) {
     minh = 127;
-    maxXsec = 5e4;
+    maxXsec = 5e5;
   }
   TH1D histo("histo", "", 18, minh, maxh);
   histo.SetMinimum(0);
   histo.SetMaximum(4.5);
   histo.GetYaxis()->CenterTitle(true);
-  histo.GetXaxis()->SetLabelOffset(0.02);
+  histo.GetXaxis()->SetLabelOffset(0.01);
   histo.SetXTitle("Higgsino mass "+mass_+chi1n+"}}} [GeV]");
   histo.SetYTitle("#sigma_{excl}^{95% CL}/#sigma_{theory}");
   histo.Draw();
@@ -181,14 +183,14 @@ int main(int argc, char *argv[]){
   TString mChis = mass_+chi2n+"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}, "+mass_+"#tilde{G}}}} = 1 GeV";
   cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
   cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsLogo);
-  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
+  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.05);
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
   linXsec.DrawLine(minh, 1, maxh, 1);
 
   TLine line;
   int ibox = 0;
   vector<vector<float> > boxes;
-  double legX(0.5), legY(1-opts.TopMargin()-0.24), legSingle = 0.05;
+  double legX(0.45), legY(1-opts.TopMargin()-0.24), legSingle = 0.05;
   double legW = 0.26, legH = legSingle*5;
   TLegend leg(legX-legW, legY-legH, legX, legY);
   leg.SetX1NDC(legX-legW); leg.SetX2NDC(legX); // So that GetX1NDC works in getLegendBoxes
@@ -213,10 +215,10 @@ int main(int argc, char *argv[]){
   cmslabel.SetTextAlign(12); cmslabel.SetTextSize(0.04); cmslabel.SetTextFont(42); 
   cmslabel.DrawLatex(legX-legW+0.01, legY-legSingle*2, "95% CL upper limits");
   //// Drawing process and masses
-  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.045);
+  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.054);
   cmslabel.SetTextFont(132);
-  cmslabel.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.65, ppChiChi);
-  cmslabel.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.6, mChis);
+  cmslabel.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.70, ppChiChi);
+  cmslabel.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.643, mChis);
 
 
 
@@ -228,7 +230,7 @@ int main(int argc, char *argv[]){
   can.SaveAs(pname);
 
   // Saving root file
-  pname = "CMS-"; if(!do_paper) pname += "PAS";
+  pname = "CMS"; if(!do_paper) pname += "-PAS";
   pname += "-SUS-16-044_Figure_9-b.root";
   TFile file(pname, "recreate");
   file.cd();
@@ -267,7 +269,7 @@ int main(int argc, char *argv[]){
   histo.GetXaxis()->SetLabelOffset(0.01);
   histo.SetMinimum(miny/2.);
   histo.SetMaximum(maxXsec);
-  histo.SetYTitle("#sigma #times BF(hh #rightarrow bbbb) [fb]");
+  histo.SetYTitle("#sigma [fb]");
   histo.Draw();
   TGraphAsymmErrors gexp2(vmx.size(), &(vmx[0]), &(vexp[0]), &(zeroes[0]), &(zeroes[0]), &(v2down[0]), &(v2up[0]));
   gexp2.SetLineColor(1); gexp2.SetFillColor(cyellow); gexp2.SetLineWidth(3); gexp2.SetLineStyle(2);
@@ -320,10 +322,10 @@ int main(int argc, char *argv[]){
   // cmslabel.SetTextFont(132);
   // cmslabel.DrawLatex(opts.LeftMargin()+0.03, opts.BottomMargin()+0.09, ppChiChi);
   // cmslabel.DrawLatex(opts.LeftMargin()+0.03, opts.BottomMargin()+0.04, mChis);
-  cmslabel.SetTextAlign(33); cmslabel.SetTextSize(0.045);
+  cmslabel.SetTextAlign(33); cmslabel.SetTextSize(0.05);
   cmslabel.SetTextFont(132);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.028, 1-opts.TopMargin()-0.03, ppChiChi);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.028, 1-opts.TopMargin()-0.095, mChis);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, 1-opts.TopMargin()-0.03, ppChiChi);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, 1-opts.TopMargin()-0.102, mChis);
 
   histo.Draw("axis same");
   pname = basename;
@@ -331,7 +333,7 @@ int main(int argc, char *argv[]){
   can.SaveAs(pname);
 
   // Saving root file
-  pname = "CMS-"; if(!do_paper) pname += "PAS";
+  pname = "CMS"; if(!do_paper) pname += "-PAS";
   pname += "-SUS-16-044_Figure_9-a.root";
   TFile file2(pname, "recreate");
   file2.cd();
@@ -349,7 +351,7 @@ int main(int argc, char *argv[]){
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
   //// Plotting expected discovery significance
   can.SetLogy(false);
-  histo.GetXaxis()->SetLabelOffset(0.02);
+  histo.GetXaxis()->SetLabelOffset(0.01);
   histo.SetMinimum(0);
   histo.SetMaximum(4.5);
   if(lumi=="40") histo.SetMaximum(4.5);
@@ -367,15 +369,15 @@ int main(int argc, char *argv[]){
   //// Drawing process and masses
   cmslabel.SetTextAlign(33); cmslabel.SetTextSize(0.045);
   cmslabel.SetTextFont(132);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.025, ppChiChi);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.09, mChis);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, 1-opts.TopMargin()-0.025, ppChiChi);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, 1-opts.TopMargin()-0.09, mChis);
 
   pname = basename;
   pname.ReplaceAll("lumi", "significance");
   can.SaveAs(pname);
 
   // Saving root file
-  pname = "CMS-"; if(!do_paper) pname += "PAS";
+  pname = "CMS"; if(!do_paper) pname += "-PAS";
   pname += "-SUS-16-044_AuxFigure_3_ExpSignificance.root";
   TFile file3(pname, "recreate");
   file3.cd();
@@ -387,7 +389,7 @@ int main(int argc, char *argv[]){
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
   //// Plotting observed significance
   can.SetLogy(false);
-  histo.GetXaxis()->SetLabelOffset(0.02);
+  histo.GetXaxis()->SetLabelOffset(0.01);
   histo.SetMinimum(-2.5);
   histo.SetMaximum(2.5);
   histo.SetYTitle("Observed signal significance [#sigma]");
@@ -404,15 +406,15 @@ int main(int argc, char *argv[]){
   //// Drawing process and masses
   cmslabel.SetTextAlign(33); cmslabel.SetTextSize(0.045);
   cmslabel.SetTextFont(132);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.025, ppChiChi);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.023, 1-opts.TopMargin()-0.09, mChis);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, 1-opts.TopMargin()-0.025, ppChiChi);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, 1-opts.TopMargin()-0.09, mChis);
 
   pname = basename;
   pname.ReplaceAll("lumi", "obs_significance");
   can.SaveAs(pname);
 
   // Saving root file
-  pname = "CMS-"; if(!do_paper) pname += "PAS";
+  pname = "CMS"; if(!do_paper) pname += "-PAS";
   pname += "-SUS-16-044_AuxFigure_4_ObsSignificance.root";
   TFile file4(pname, "recreate");
   file4.cd();
