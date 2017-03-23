@@ -9,6 +9,29 @@ using namespace std;
 
 namespace Higfuncs{
 
+const NamedFunc hig_pt1("hig_pt1",[](const Baby &b) -> NamedFunc::ScalarType{
+    float higpt(0);
+    for (unsigned i(0); i<b.mc_pt()->size(); i++){
+      if (b.mc_id()->at(i)!=25) continue;
+      if (b.mc_pt()->at(i)>higpt) higpt = b.mc_pt()->at(i);
+    }
+    return higpt;
+});
+
+const NamedFunc hig_pt2("hig_pt2",[](const Baby &b) -> NamedFunc::ScalarType{
+    float higpt1(0), higpt2(0);
+    for (unsigned i(0); i<b.mc_pt()->size(); i++){
+      if (b.mc_id()->at(i)!=25) continue;
+      if (b.mc_pt()->at(i)>higpt1) {
+	higpt2 = higpt1;
+	higpt1 = b.mc_pt()->at(i);
+      } else if (b.mc_pt()->at(i)>higpt2) {
+	higpt2 = b.mc_pt()->at(i);
+      }
+    }
+    return higpt2;
+});
+
 const NamedFunc ntrub("ntrub",[](const Baby &b) -> NamedFunc::ScalarType{
   int tmp_ntrub(0);
   for (unsigned i(0); i<b.jets_pt()->size(); i++){

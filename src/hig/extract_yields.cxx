@@ -63,7 +63,7 @@ int main(int argc, char *argv[]){
   }
   if(fit_s != nullptr){
     //PrintDebug(*w, *fit_s, ChangeExtension(file_wspace, "_sig_debug.tex"));
-    // PrintTable(*w, *fit_s, ChangeExtension(file_wspace, "_sig_table.tex"));
+    PrintTable(*w, *fit_s, ChangeExtension(file_wspace, "_sig_table.tex"));
     //MakeYieldPlot(*w, *fit_s, ChangeExtension(file_wspace, "_sig_plot.pdf"));
   }
 
@@ -163,7 +163,11 @@ void PrintDebug(RooWorkspace &w,
 void PrintTable(RooWorkspace &w,
                 const RooFitResult &f,
                 const string &file_name){
-  SetVariables(w, f);
+  RooRealVar *r_var = SetVariables(w, f);
+  if(r_var != nullptr && !r_var->isConstant()){
+    cout<<"Signal strength: "<<r_var->getVal() << " + " << GetError(*r_var, f, 1) 
+	<< " - " << GetError(*r_var, f, -1) << endl;
+  }
 
   string sig_name = GetSignalName(w);
   vector<string> prc_names = GetProcessNames(w);
