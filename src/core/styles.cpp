@@ -25,6 +25,6 @@ void setPlotStyle(PlotOpt opts){
   gStyle->SetTextSize(opts.TitleSize());		// Set global text size
   gStyle->SetTitleFontSize(opts.TitleSize());		// Set top title size
   gStyle->SetTitleSize(opts.TitleSize(),"xyz");		// Set the 2 axes title size
-  gStyle->SetLabelSize(opts.LabelSize(),"xyz");		// Set the 2 axes label size
+  gStyle->SetLabelSize(opts.LabelSize(),"xy");		// Set the 2 axes label size
 
 }

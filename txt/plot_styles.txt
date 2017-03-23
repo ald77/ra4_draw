@@ -107,6 +107,29 @@
   UseCMYK = 0
   ShowBackgroundError = 0
 
+[Eff2D]
+  CanvasW = 700
+  CanvasH = 500
+  TitleSize = 0.05
+  LabelSize = 0.05
+  xTitleOffset = 1.2
+  yTitleOffset = 1.2
+  zTitleOffset = 1.15
+  PadLeftMargin = 0.11
+  PadRightMargin = 0.15
+  PadTopMargin = 0.09
+  PadBottomMargin = 0.13
+  LegendEntrySize = 0.035
+  LegendMaxSize = 0.28
+  LegendMarkerWidth = 0.12
+  LegendPad = 0.028
+  LegendDensity = 1.
+  LogMinimum = 0.01
+  NDivisions = 810
+  Font = 42
+  UseCMYK = 0
+  ShowBackgroundError = 0
+
 [PRLPaper]
   CanvasW = 600
   CanvasH = 750
