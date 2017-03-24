@@ -32,7 +32,7 @@ def getEfficiency(mass, outname, quick):
     TH1.SetDefaultSumw2()
     TH2.SetDefaultSumw2()
 
-    folder = "/cms2r0/babymaker/babies/2017_02_26/TChiHH/merged_higmc_unskimmed/"
+    folder = "/cms2r0/babymaker/babies/2017_03_17/TChiHH/merged_higmc_unskimmed/"
 
     c = TChain("tree", "tree")
     if (mass=="all"):
@@ -63,7 +63,7 @@ def getEfficiency(mass, outname, quick):
         nb_in_acc = 0
         h1pt, h2pt = -999, -999
         for imc in xrange(len(c.mc_pt)):
-            if abs(c.mc_mom[imc])==25:
+            if abs(c.mc_id[imc])==25:
                 if c.mc_pt[imc]>h1pt: 
                     h2pt = h1pt
                     h1pt = c.mc_pt[imc]
