@@ -198,7 +198,7 @@ int main(int argc, char *argv[]){
   if (skim=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep1/";
   if (skim=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep2/";
   if (skim=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higqcd/";
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_26/TChiHH/merged_higmc_higloose/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_03_17/TChiHH/merged_higmc_higloose/");
 
   Palette colors("txt/colors.txt", "default");
 

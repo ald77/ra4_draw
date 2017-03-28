@@ -4,7 +4,7 @@ import os
 masses = ['127']
 masses.extend([str(i) for i in range(150,1001,25)])
 
-infolder = "/cms2r0/babymaker/babies/2017_02_26/TChiHH/merged_higmc_unskimmed/"
+infolder = "/cms2r0/babymaker/babies/2017_03_17/TChiHH/merged_higsys_higsys/"
 
 os.system("./compile.py")
 for mass in masses:
