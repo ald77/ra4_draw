@@ -235,7 +235,7 @@ void makePlot(TH2D hnum, TH2D hden, TString num_s, TString den_s, TString extra_
   float lMargin = opts.LeftMargin(), rMargin = opts.RightMargin(), tMargin = opts.TopMargin();
   TLatex label; label.SetTextFont(42); label.SetTextSize(0.05);
   if(do_aux) {
-    TString cmsLogo = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}";
+    TString cmsLogo = "#font[62]{CMS}#scale[0.8]{#font[52]{ Simulation Supplementary}}";
     TString lumiEner = "#font[42]{13 TeV}";
     label.SetTextAlign(11); label.SetTextSize(0.06);
     label.DrawLatexNDC(lMargin+0.005, 1-tMargin+0.015, cmsLogo);

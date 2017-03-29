@@ -45,7 +45,7 @@
   TitleSize	  = 0.052
   LabelSize	  = 0.05
   xTitleOffset	  = 1.05
-  yTitleOffset	  = 0.79
+  yTitleOffset	  = 0.84
   PadLeftMargin	  = 0.09
   PadRightMargin  = 0.05
   PadTopMargin	  = 0.09

@@ -169,7 +169,7 @@ for i in range(len(metbins)-2):
     a.DrawLine(metbins[i+1],htbins[0],metbins[i+1],htbins[-1])
 
 cmslabel = TLatex()
-cmslabel.DrawLatexNDC(lMargin, 0.915,"#font[62]{CMS}#scale[0.76]{#font[52]{ Preliminary}}")
+cmslabel.DrawLatexNDC(lMargin, 0.915,"#font[62]{CMS}#scale[0.76]{#font[52]{ Supplementary}}")
 
 lumilabel = TLatex()
 lumilabel.SetTextAlign(31)
@@ -177,7 +177,7 @@ lumilabel.DrawLatexNDC(1-rMargin, 0.915,"#font[42]{35.9 fb^{-1} (13 TeV)}")
 
 can.Print("hig_trigeff.pdf")
 
-rootname = "CMS-PAS-SUS-16-044_AuxFigure_5_TrigEff.root"
+rootname = "CMS-SUS-16-044_AuxFigure_3_TrigEff.root"
 f = TFile(rootname,"RECREATE")
 hist.Write("MetTrigEfficiency")
 f.Close()

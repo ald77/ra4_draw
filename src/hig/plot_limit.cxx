@@ -24,21 +24,22 @@ using namespace std;
 
 namespace{
   TString lumi = "35p9";
-  TString filename = "txt/limits/limits_TChiHH_lumi"+lumi+"_pas.txt";
+  TString filename = "txt/limits/limits_TChiHH_lumi"+lumi+"_paper.txt";
   TString model = "TChiHH";
   TString datestamp = "";
   bool do_paper = true;
 
+  PlotOpt opts("txt/plot_styles.txt", "Std1D");
   const double hh4b_bf = 0.5824*0.5824;
 }
 
 void GetOptions(int argc, char *argv[]);
+void DrawCMSLabels(TString type);
 
 int main(int argc, char *argv[]){
   GetOptions(argc, argv);
 
   //// Setting plot style
-  PlotOpt opts("txt/plot_styles.txt", "Std1D");
   setPlotStyle(opts);
   gStyle->SetGridStyle(3);
 
@@ -145,9 +146,7 @@ int main(int argc, char *argv[]){
   int thcolor = kRed+1, thwidth = 3;
   TLine linXsec;
   linXsec.SetLineColor(thcolor); linXsec.SetLineStyle(1); linXsec.SetLineWidth(thwidth);
-  TLatex cmslabel;
-  
-  cmslabel.SetNDC(kTRUE);
+  TLatex label;  label.SetNDC(kTRUE);
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
@@ -174,17 +173,13 @@ int main(int argc, char *argv[]){
   grxsecdown.Draw("same"); 
 
   //// Drawing CMS labels and line at 1
-  TString cmsLogo = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
-  if(do_paper) cmsLogo = "#font[62]{CMS}";
-  TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";
-  TString lumiEner = "#font[42]{"+lumi+" fb^{-1} (13 TeV)}"; lumiEner.ReplaceAll("p",".");
-  TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.6]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "+xsoft+"#rightarrow hh#tilde{G}#tilde{G} + "+xsoft;
+  TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.6]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "
+    +xsoft+"#rightarrow hh#tilde{G}#tilde{G} + "+xsoft;
+  double ppSize = 0.055, ppY = 1-opts.TopMargin()-0.03, ppY2 = 1-opts.TopMargin()-0.11;
 
-  TString mChis = mass_+chi2n+"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}, "+mass_+"#tilde{G}}}} = 1 GeV";
-  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
-  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsLogo);
-  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.05);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
+  TString mChis = mass_+chi2n+"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}, "
+    +mass_+"#tilde{G}}}} = 1 GeV";
+  DrawCMSLabels("Supplementary");
   linXsec.DrawLine(minh, 1, maxh, 1);
 
   TLine line;
@@ -212,13 +207,13 @@ int main(int argc, char *argv[]){
   line.DrawLineNDC(boxes[ibox][0], boxes[ibox][1], boxes[ibox][2], boxes[ibox][1]);
   line.DrawLineNDC(boxes[ibox][0], boxes[ibox][3], boxes[ibox][2], boxes[ibox][3]);
 
-  cmslabel.SetTextAlign(12); cmslabel.SetTextSize(0.04); cmslabel.SetTextFont(42); 
-  cmslabel.DrawLatex(legX-legW+0.01, legY-legSingle*2, "95% CL upper limits");
+  label.SetTextAlign(12); label.SetTextSize(0.04); label.SetTextFont(42); 
+  label.DrawLatex(legX-legW+0.01, legY-legSingle*2, "95% CL upper limits");
   //// Drawing process and masses
-  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.054);
-  cmslabel.SetTextFont(132);
-  cmslabel.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.70, ppChiChi);
-  cmslabel.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.643, mChis);
+  label.SetTextAlign(11); label.SetTextSize(ppSize/1.07);
+  label.SetTextFont(132);
+  label.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.70, ppChiChi);
+  label.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.643, mChis);
 
 
 
@@ -229,17 +224,17 @@ int main(int argc, char *argv[]){
   TString pname = basename;
   can.SaveAs(pname);
 
-  // Saving root file
-  pname = "CMS"; if(!do_paper) pname += "-PAS";
-  pname += "-SUS-16-044_Figure_9-b.root";
-  TFile file(pname, "recreate");
-  file.cd();
-  grexp2.Write("ExpLimit_2Sigma");
-  grexp1.Write("ExpLimit_1Sigma");
-  grexp.Write("ExpLimit");
-  grobs.Write("ObsLimit");
-  file.Close();
-  cout<<"Saved graphs in "<<pname<<endl<<endl;
+  // // Saving root file
+  // pname = "CMS"; if(!do_paper) pname += "-PAS";
+  // pname += "-SUS-16-044_AuxFigure_9-b.root";
+  // TFile file(pname, "recreate");
+  // file.cd();
+  // grexp2.Write("ExpLimit_2Sigma");
+  // grexp1.Write("ExpLimit_1Sigma");
+  // grexp.Write("ExpLimit");
+  // grobs.Write("ObsLimit");
+  // file.Close();
+  // cout<<"Saved graphs in "<<pname<<endl<<endl;
 
   // for(size_t i = 0; i < vxsec.size(); ++i) 
   //   cout<<vmx[i]<<" -> "<<vexp[i]<<"+"<<vup[i]<<"++"<<v2up[i]<<" -"<<vdown[i]<<"--"<<v2down[i]<<endl;
@@ -296,12 +291,12 @@ int main(int argc, char *argv[]){
   can.SetLogy(true);
 
   legX = 1-opts.RightMargin()-0.09;
-  legY += 0.05;
+  legY += 0.02;
   leg.SetX1NDC(legX-legW); leg.SetX2NDC(legX);
   leg.SetY1NDC(legY-legH); leg.SetY2NDC(legY);
   leg.Draw();
-  cmslabel.SetTextAlign(12); cmslabel.SetTextSize(0.04); cmslabel.SetTextFont(42); 
-  cmslabel.DrawLatex(legX-legW+0.01, legY-legSingle*2, "95% CL upper limits");
+  label.SetTextAlign(12); label.SetTextSize(0.04); label.SetTextFont(42); 
+  label.DrawLatex(legX-legW+0.01, legY-legSingle*2, "95% CL upper limits");
 
   // Drawing theory error lines on legend
   getLegendBoxes(leg, boxes);
@@ -312,20 +307,14 @@ int main(int argc, char *argv[]){
 
 
   //// Drawing CMS labels
-  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
-  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsLogo);
-  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
+  if(do_paper) DrawCMSLabels("");
+  else DrawCMSLabels("Preliminary");
 
   //// Drawing process and masses
-  // cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.045);
-  // cmslabel.SetTextFont(132);
-  // cmslabel.DrawLatex(opts.LeftMargin()+0.03, opts.BottomMargin()+0.09, ppChiChi);
-  // cmslabel.DrawLatex(opts.LeftMargin()+0.03, opts.BottomMargin()+0.04, mChis);
-  cmslabel.SetTextAlign(33); cmslabel.SetTextSize(0.05);
-  cmslabel.SetTextFont(132);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, 1-opts.TopMargin()-0.03, ppChiChi);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, 1-opts.TopMargin()-0.102, mChis);
+  label.SetTextAlign(33); label.SetTextSize(ppSize);
+  label.SetTextFont(132);
+  label.DrawLatex(1-opts.RightMargin()-0.03, ppY, ppChiChi);
+  label.DrawLatex(1-opts.RightMargin()-0.03, ppY2, mChis);
 
   histo.Draw("axis same");
   pname = basename;
@@ -334,7 +323,7 @@ int main(int argc, char *argv[]){
 
   // Saving root file
   pname = "CMS"; if(!do_paper) pname += "-PAS";
-  pname += "-SUS-16-044_Figure_9-a.root";
+  pname += "-SUS-16-044_Figure_9.root";
   TFile file2(pname, "recreate");
   file2.cd();
   gexp2.Write("ExpLimit_2Sigma");
@@ -350,7 +339,6 @@ int main(int argc, char *argv[]){
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
   //// Plotting expected discovery significance
-  cmsLogo = "#font[62]{CMS} #scale[0.8]{#font[52]{Supplementary}}";
 
   can.SetLogy(false);
   histo.GetXaxis()->SetLabelOffset(0.01);
@@ -363,29 +351,28 @@ int main(int argc, char *argv[]){
   TGraph gsig(vmx.size(), &(vmx[0]), &(vsigexp[0]));
   gsig.SetLineWidth(3);  gsig.SetLineColor(4);
   gsig.Draw("same"); 
+
   //// Drawing CMS labels
-  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
-  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsLogo);
-  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
+  if(do_paper) DrawCMSLabels("Supplementary");
+  else DrawCMSLabels("Preliminary");
   //// Drawing process and masses
-  cmslabel.SetTextAlign(33); cmslabel.SetTextSize(0.045);
-  cmslabel.SetTextFont(132);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, 1-opts.TopMargin()-0.025, ppChiChi);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, 1-opts.TopMargin()-0.09, mChis);
+  label.SetTextAlign(33); label.SetTextSize(ppSize);
+  label.SetTextFont(132);
+  label.DrawLatex(1-opts.RightMargin()-0.03, ppY, ppChiChi);
+  label.DrawLatex(1-opts.RightMargin()-0.03, ppY2, mChis);
 
-  pname = basename;
-  pname.ReplaceAll("lumi", "significance");
-  can.SaveAs(pname);
+  // pname = basename;
+  // pname.ReplaceAll("lumi", "exp_significance");
+  // can.SaveAs(pname);
 
-  // Saving root file
-  pname = "CMS"; if(!do_paper) pname += "-PAS";
-  pname += "-SUS-16-044_AuxFigure_3_ExpSignificance.root";
-  TFile file3(pname, "recreate");
-  file3.cd();
-  gsig.Write("ExpSignificance");
-  file3.Close();
-  cout<<"Saved graphs in "<<pname<<endl<<endl;
+  // // Saving root file
+  // pname = "CMS"; if(!do_paper) pname += "-PAS";
+  // pname += "-SUS-16-044_AuxFigure_3_ExpSignificance.root";
+  // TFile file3(pname, "recreate");
+  // file3.cd();
+  // gsig.Write("ExpSignificance");
+  // file3.Close();
+  // cout<<"Saved graphs in "<<pname<<endl<<endl;
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
@@ -400,32 +387,92 @@ int main(int argc, char *argv[]){
   TGraph gobssig(vmx.size(), &(vmx[0]), &(vsigobs[0]));
   gobssig.SetLineWidth(3);  gobssig.SetLineColor(4);
   gobssig.Draw("same"); 
+
   //// Drawing CMS labels
-  cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
-  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsLogo);
-  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.056);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
+  if(do_paper) DrawCMSLabels("Supplementary");
+  else DrawCMSLabels("Preliminary");
+
   //// Drawing process and masses
-  cmslabel.SetTextAlign(33); cmslabel.SetTextSize(0.045);
-  cmslabel.SetTextFont(132);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, 1-opts.TopMargin()-0.025, ppChiChi);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.03, 1-opts.TopMargin()-0.09, mChis);
+  label.SetTextAlign(33); label.SetTextSize(ppSize);
+  label.SetTextFont(132);
+  label.DrawLatex(1-opts.RightMargin()-0.03, ppY, ppChiChi);
+  label.DrawLatex(1-opts.RightMargin()-0.03, ppY2, mChis);
+
+  // pname = basename;
+  // pname.ReplaceAll("lumi", "obs_significance");
+  // can.SaveAs(pname);
+
+  // // Saving root file
+  // pname = "CMS"; if(!do_paper) pname += "-PAS";
+  // pname += "-SUS-16-044_AuxFigure_4_ObsSignificance.root";
+  // TFile file4(pname, "recreate");
+  // file4.cd();
+  // gobssig.Write("ObsSignificance");
+  // file4.Close();
+  // cout<<"Saved graphs in "<<pname<<endl<<endl;
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////// 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////// 
+  //// Plotting observed and expected significance
+  can.SetLogy(false);
+  histo.GetXaxis()->SetLabelOffset(0.01);
+  histo.SetMinimum(-1);
+  histo.SetMaximum(5);
+  histo.SetYTitle("Signal significance [#sigma]");
+  histo.Draw();
+
+  gsig.SetLineStyle(2);  gsig.SetLineColor(kRed+1);  
+  gsig.Draw("same"); 
+  gobssig.Draw("same"); 
+
+  //// Drawing CMS labels
+  if(do_paper) DrawCMSLabels("Supplementary");
+  else DrawCMSLabels("Preliminary");
+
+  //// Drawing process and masses
+  label.SetTextAlign(33); label.SetTextSize(ppSize);
+  label.SetTextFont(132);
+  label.DrawLatex(1-opts.RightMargin()-0.03, ppY, ppChiChi);
+  label.DrawLatex(1-opts.RightMargin()-0.03, ppY2, mChis);
+
+  //// Drawing legend
+  legX = 1- opts.RightMargin()-0.03, legY = ppY2 - 0.2; legSingle = 0.07;
+  legW = 0.16; legH = legSingle*2;
+  TLegend leg2(legX-legW, legY-legH, legX, legY);
+  leg2.SetTextSize(0.04); leg2.SetFillColor(0); 
+  leg2.SetFillStyle(0); leg2.SetBorderSize(0);
+  leg2.AddEntry(&gsig, "Expected", "l");
+  leg2.AddEntry(&gobssig, "Observed", "l");
+  leg2.Draw();
 
   pname = basename;
-  pname.ReplaceAll("lumi", "obs_significance");
+  pname.ReplaceAll("lumi", "significance");
   can.SaveAs(pname);
 
-  // Saving root file
-  pname = "CMS"; if(!do_paper) pname += "-PAS";
-  pname += "-SUS-16-044_AuxFigure_4_ObsSignificance.root";
-  TFile file4(pname, "recreate");
-  file4.cd();
-  gobssig.Write("ExpSignificance");
-  file4.Close();
-  cout<<"Saved graphs in "<<pname<<endl<<endl;
+  // // Saving root file
+  // pname = "CMS"; if(!do_paper) pname += "-PAS";
+  // pname += "-SUS-16-044_AuxFigure_3_Significance.root";
+  // TFile file5(pname, "recreate");
+  // file5.cd();
+  // gobssig.Write("ObsSignificance");
+  // gsig.Write("ExpSignificance");
+  // file5.Close();
+  // cout<<"Saved graphs in "<<pname<<endl<<endl;
 
 
 }
+
+void DrawCMSLabels(TString type){
+  TString cmsLogo = "#font[62]{CMS}#scale[0.8]{#font[52]{ "+type+"}}";
+  TString lumiEner = "#font[42]{"+lumi+" fb^{-1} (13 TeV)}"; lumiEner.ReplaceAll("p",".");
+
+  TLatex cmslabel;
+  cmslabel.SetNDC(kTRUE); cmslabel.SetTextAlign(11); cmslabel.SetTextSize(0.06);
+  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015, cmsLogo);
+  cmslabel.SetTextAlign(31); cmslabel.SetTextSize(0.054);
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, lumiEner);
+}
+
 
 
 

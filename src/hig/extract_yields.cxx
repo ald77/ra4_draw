@@ -32,10 +32,10 @@
 using namespace std;
 
 namespace{
-  string file_wspace("/cms2r0/babymaker/fits/2017_02_26/TChiHH/wspace_TChiHH_mGluino-1000_mLSP-1_xsecNom_nbTTML_lumi35p9_sig0_higgsCombine.root");
+  string file_wspace("/cms2r0/babymaker/fits/2017_02_26/TChiHH/wspace_nor4_TChiHH_mGluino-1000_mLSP-1_xsecNom_nbTTML_lumi35p9_sig0_higgsCombine.root");
   string name_wspace("w");
   bool table_clean(false);
-  bool r4_only(false);
+  bool r4_only(true);
 }
 
 int main(int argc, char *argv[]){
@@ -1162,7 +1162,7 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   gStyle->SetPalette(bands, colors);
 
   float LeftMargin = 0.12, RightMargin = 0.15, BottomMargin = 0.15, TopMargin = 0.07;
-  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
+  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Supplementary}}";
   TString lumiEner = "#font[42]{35.9 fb^{-1} (13 TeV)}"; 
   TLatex cmslabel;  
   cmslabel.SetNDC(kTRUE);
@@ -1224,10 +1224,10 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   cmslabel.DrawLatex(1-RightMargin-0.005, 1-TopMargin+0.015, lumiEner);
   c.SaveAs(covar_file_name.c_str());
 
-  TString pname = "CMS-PAS-SUS-16-044_AuxFigure_2_CorrGlobalFit.root";
+  TString pname = "CMS-SUS-16-044_AuxFigure_2_CorrGlobalFit.root";
   TString fitname = "Global";
   if(Contains(covar_file_name, "nor4")) {
-    pname = "CMS-PAS-SUS-16-044_AuxFigure_1_CorrPredFit.root";
+    pname = "CMS-SUS-16-044_AuxFigure_1_CorrPredFit.root";
     fitname = "Predictive";
   }
   TFile file(pname, "recreate");
@@ -1375,7 +1375,7 @@ void GetOptionsExtract(int argc, char *argv[]){
       file_wspace = optarg;
       break;
     case '4':
-      r4_only = true;
+      r4_only = false;
       break;
     case 'c':
       table_clean = true;
