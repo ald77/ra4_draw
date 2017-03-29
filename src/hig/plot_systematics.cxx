@@ -386,14 +386,14 @@ int main(int argc, char *argv[]){
     mm_scen = GetScenario(method.Data());
 
     if(skim.Contains("zll")){
-      caption = "$N_{\\rm leps}=2$ CR";
-      abcd_title = "Dilepton CR";
+      caption = "$N_{\\rm leps}=2$ control region";
+      abcd_title = "Dilepton control region";
    } else if(skim.Contains("qcd")){
-      caption = "Low $\\Delta\\phi$ CR";
-      abcd_title = "Low #Delta#phi CR";
+      caption = "Low $\\Delta\\phi$ control region";
+      abcd_title = "Low #Delta#phi control region";
     } else if(skim.Contains("ttbar")){
-      caption = "$N_{\\rm leps}=1$ CR";
-      abcd_title = "Single-lepton CR";
+      caption = "$N_{\\rm leps}=1$ control region";
+      abcd_title = "Single-lepton control region";
     } else {
       caption = "Search bins";
       abcd_title = "Search bins";
@@ -1093,8 +1093,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   //if(ind_bcuts.size()>1) leg.Draw();
 
   //// Drawing CMS labels and line at 1
-  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
-  TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}";
+  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{}}";
+  TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";
   TLatex cmslabel;
   cmslabel.SetTextSize(0.06);
   cmslabel.SetNDC(kTRUE);

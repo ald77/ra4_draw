@@ -68,10 +68,10 @@ int main(int argc, char *argv[]){
   time(&begtime);
 
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
-  log_lumi.Title(TitleType::preliminary)
+  log_lumi.Title(TitleType::data)
     .Bottom(BottomType::off)
     .YAxis(YAxisType::log)
-    .Stack(StackType::data_norm);
+    .Stack(StackType::data_norm).LegendColumns(3);
   PlotOpt lin_lumi = log_lumi().YAxis(YAxisType::linear);
   PlotOpt log_shapes = log_lumi().Stack(StackType::shapes)
     .ShowBackgroundError(false);
@@ -144,9 +144,9 @@ int main(int argc, char *argv[]){
   } 
 
   string cr_label = "";
-  if (sample=="zll") cr_label = "Dilepton CR";
-  if (sample=="qcd") cr_label = "Low #Delta CR";
-  if (sample=="ttbar") cr_label = "Single-lepton CR";
+  if (sample=="zll") cr_label = "Dilepton";
+  if (sample=="qcd") cr_label = "Low #Delta";
+  if (sample=="ttbar") cr_label = "Single-lepton";
 
   vector<shared_ptr<Process> > procs;
   if (!subtr_ttx) 
@@ -300,10 +300,10 @@ int main(int argc, char *argv[]){
           if (ixcut.first=="nm1") { 
             pm.Push<Hist1D>(Axis(24/div,0,240,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
               ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&higd_dm<40", 
-              procs, linplot).Weight(wgt).Tag(sample).RightLabel({cr_label});
+                            procs, linplot).Weight(wgt).Tag(sample).RightLabel({cr_label, "control region"});
             pm.Push<Hist1D>(Axis(24/div,0,240,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
               ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb]+"&&higd_dm<40 && higd_drmax<=2.2", 
-              procs, linplot).Weight(wgt).Tag(sample).RightLabel({cr_label});
+              procs, linplot).Weight(wgt).Tag(sample).RightLabel({cr_label, "control region"});
             tmp_seln = ixcut.second+"&&"+metcuts[imet]+"&&"+nbcuts[inb];
             if(!note) pm.Push<Hist1D>(Axis(15,0,150,"higd_dm", "#Deltam [GeV]", {40.}), 
               tmp_seln, procs, linplot).Weight(wgt).Tag(sample);

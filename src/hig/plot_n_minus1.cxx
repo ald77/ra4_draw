@@ -95,15 +95,15 @@ int main(int argc, char *argv[]){
   lin_norm_info.Title(TitleType::info)   
     .Bottom(BottomType::off)
     .YAxis(YAxisType::linear)
-    .Stack(StackType::data_norm);
+    .Stack(StackType::data_norm).LegendColumns(3);
   PlotOpt log_norm_info = lin_norm_info().YAxis(YAxisType::log);
   vector<PlotOpt> plt_norm_info = {lin_norm_info, log_norm_info};
 
-  PlotOpt log_norm = lin_norm_info().YAxis(YAxisType::log).Title(TitleType::info).LogMinimum(.7).Bottom(BottomType::ratio);
+  PlotOpt log_norm = lin_norm_info().YAxis(YAxisType::log).Title(TitleType::info).LogMinimum(.2).Bottom(BottomType::ratio);
   PlotOpt lin_norm = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info).Bottom(BottomType::ratio);
   if (paper) {
-    lin_norm.Title(TitleType::preliminary);
-    log_norm.Title(TitleType::preliminary);
+    lin_norm.Title(TitleType::data);
+    log_norm.Title(TitleType::data);
   }
   vector<PlotOpt> plt_lin = {lin_norm};
   vector<PlotOpt> plt_log = {log_norm};
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]){
   //string folderhigmc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
   string folderhigmc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higloose/";
   string folderhigdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_26/TChiHH/merged_higmc_higloose/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_03_17/TChiHH/merged_higmc_higloose/");
 
   map<string, set<string>> mctags; 
   mctags["tt"]     = set<string>({"*_TTJets*Lept*.root"});
@@ -160,7 +160,7 @@ int main(int argc, char *argv[]){
     Process::Type::background, kGreen+1,           attach_folder(folderhigmc,mctags["other"]),   base_func&&"stitch"));      
 
   vector<string> sig2m = {"225","400","700"}; 
-  vector<int> sig2_colors = {kGreen, kRed, kBlue}; // need sigm.size() >= sig_colors.size()
+  vector<int> sig2_colors = {kGreen, kRed, kCyan}; // need sigm.size() >= sig_colors.size()
   for (unsigned isig(0); isig<sig2m.size(); isig++)
     procs_hig.push_back(Process::MakeShared<Baby_full>("TChiHH("+sig2m[isig]+",1)", Process::Type::signal, 
 			sig2_colors[isig], {foldersig+"*TChiHH_mGluino-"+sig2m[isig]+"*.root"}, base_func));

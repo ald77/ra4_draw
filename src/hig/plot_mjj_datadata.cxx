@@ -35,7 +35,7 @@ int main(){
   Palette colors("txt/colors.txt", "default");
   
   string fdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
-  string fsig = bfolder+"/cms2r0/babymaker/babies/2017_02_26/TChiHH/merged_higmc_higloose/";
+  string fsig = bfolder+"/cms2r0/babymaker/babies/2017_03_17/TChiHH/merged_higmc_higloose/";
 
   NamedFunc baseline = "pass_ra2_badmu && met/met_calo<5 && nvleps==0 && ntks==0 && !low_dphi && njets>=4 && njets<=5 && nbdt>=2 && met>150 && higd_drmax<=2.2 && higd_am<=200 && higd_dm <= 40";
 
@@ -69,7 +69,7 @@ int main(){
   vector<shared_ptr<Process> > data4b_procs = {data_4b,tchi225_4b,data_2b,tchi400_4b};
 
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
-  log_lumi.Title(TitleType::preliminary)
+  log_lumi.Title(TitleType::data)
     .Bottom(BottomType::ratio)
     .YAxis(YAxisType::log)
     .Stack(StackType::data_norm); 

@@ -109,11 +109,11 @@ string CodeToPlainText(string code){
   ReplaceAll(code, "(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))>80&&(mumu_m*(mumu_m>0&&mumu_pt1>30)+elel_m*(elel_m>0&&elel_pt1>30))<100", "zmasswindow");
   ReplaceAll(code, "nbdm==0","0b");
   ReplaceAll(code, "nbdm==1","1b");
-  ReplaceAll(code, "nbdt>=2","ge2b");
   ReplaceAll(code, "nbdt==2&&nbdm==2","2b");
   ReplaceAll(code, "nbdt>=2&&nbdm==3&&nbdl==3","3b");
   ReplaceAll(code, "nbdt>=2&&nbdm>=3&&nbdl>=4","4b");
   ReplaceAll(code, "nbdt>=2&&nbdm>=3","ge3b");
+  ReplaceAll(code, "nbdt>=2","ge2b");
   ReplaceAll(code, "pass&&stitch&&nvleps==0&&ntks==0&&!low_dphi&&njets>=4&&njets<=5","preseln");
   ReplaceAll(code, "higd_am>100&&higd_am<=140&&higd_dm<=40","HIG");
   ReplaceAll(code, "(higd_am<=100||(higd_am>140&&higd_am<=200))&&higd_dm<=40","SBD");

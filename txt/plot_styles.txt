@@ -1,8 +1,8 @@
 [CMSPaper]
   CanvasW = 600
   CanvasH = 600
-  TitleSize = 0.045
-  LabelSize = 0.04
+  TitleSize = 0.048
+  LabelSize = 0.043
   AutoYAxis = 1
   xTitleOffset = 1.
   yTitleOffset = 2.2
@@ -10,12 +10,13 @@
   PadRightMargin = 0.055
   PadTopMargin = 0.07
   PadBottomMargin = 0.12
-  LegendEntrySize = 0.04
+  LegendEntrySize = 0.041
   LegendMaxSize = 0.28
   BottomPlotHeight = 0.33
   LegendMarkerWidth = 0.12
   LegendPad = 0.028
   LegendDensity = 1.
+  ExtraLabelSize = 0.043
   LogMinimum = 0.03
   NDivisions = 606
   NDivisionsBottom = 606

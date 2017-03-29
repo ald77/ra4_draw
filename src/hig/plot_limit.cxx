@@ -132,7 +132,7 @@ int main(int argc, char *argv[]){
   float minh=200, maxh=1000, maxXsec = 5e3;
   if(do_paper) {
     minh = 127;
-    maxXsec = 5e5;
+    maxXsec = 1e5;
   }
   TH1D histo("histo", "", 18, minh, maxh);
   histo.SetMinimum(0);
@@ -176,6 +176,7 @@ int main(int argc, char *argv[]){
   TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.6]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "
     +xsoft+"#rightarrow hh#tilde{G}#tilde{G} + "+xsoft;
   double ppSize = 0.055, ppY = 1-opts.TopMargin()-0.03, ppY2 = 1-opts.TopMargin()-0.11;
+  double legSize = 0.044;
 
   TString mChis = mass_+chi2n+"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}, "
     +mass_+"#tilde{G}}}} = 1 GeV";
@@ -185,12 +186,12 @@ int main(int argc, char *argv[]){
   TLine line;
   int ibox = 0;
   vector<vector<float> > boxes;
-  double legX(0.45), legY(1-opts.TopMargin()-0.24), legSingle = 0.05;
+  double legX(0.45), legY(1-opts.TopMargin()-0.24), legSingle = 0.053;
   double legW = 0.26, legH = legSingle*5;
   TLegend leg(legX-legW, legY-legH, legX, legY);
   leg.SetX1NDC(legX-legW); leg.SetX2NDC(legX); // So that GetX1NDC works in getLegendBoxes
   leg.SetY1NDC(legY-legH); leg.SetY2NDC(legY); // So that GetX1NDC works in getLegendBoxes
-  leg.SetTextSize(0.04); leg.SetFillColor(0); 
+  leg.SetTextSize(legSize); leg.SetFillColor(0); 
   leg.SetFillStyle(0); leg.SetBorderSize(0);
   leg.AddEntry(&linXsec, "NLO+NLL theory #pm s.d.", "l");
   leg.AddEntry(&grobs, " ", "n");
@@ -207,7 +208,7 @@ int main(int argc, char *argv[]){
   line.DrawLineNDC(boxes[ibox][0], boxes[ibox][1], boxes[ibox][2], boxes[ibox][1]);
   line.DrawLineNDC(boxes[ibox][0], boxes[ibox][3], boxes[ibox][2], boxes[ibox][3]);
 
-  label.SetTextAlign(12); label.SetTextSize(0.04); label.SetTextFont(42); 
+  label.SetTextAlign(12); label.SetTextSize(legSize); label.SetTextFont(42); 
   label.DrawLatex(legX-legW+0.01, legY-legSingle*2, "95% CL upper limits");
   //// Drawing process and masses
   label.SetTextAlign(11); label.SetTextSize(ppSize/1.07);
@@ -290,12 +291,12 @@ int main(int argc, char *argv[]){
 
   can.SetLogy(true);
 
-  legX = 1-opts.RightMargin()-0.09;
+  legX = 1-opts.RightMargin()-0.1;
   legY += 0.02;
   leg.SetX1NDC(legX-legW); leg.SetX2NDC(legX);
   leg.SetY1NDC(legY-legH); leg.SetY2NDC(legY);
   leg.Draw();
-  label.SetTextAlign(12); label.SetTextSize(0.04); label.SetTextFont(42); 
+  label.SetTextAlign(12); label.SetTextSize(legSize); label.SetTextFont(42); 
   label.DrawLatex(legX-legW+0.01, legY-legSingle*2, "95% CL upper limits");
 
   // Drawing theory error lines on legend
@@ -439,7 +440,7 @@ int main(int argc, char *argv[]){
   legX = 1- opts.RightMargin()-0.03, legY = ppY2 - 0.2; legSingle = 0.07;
   legW = 0.16; legH = legSingle*2;
   TLegend leg2(legX-legW, legY-legH, legX, legY);
-  leg2.SetTextSize(0.04); leg2.SetFillColor(0); 
+  leg2.SetTextSize(legSize); leg2.SetFillColor(0); 
   leg2.SetFillStyle(0); leg2.SetBorderSize(0);
   leg2.AddEntry(&gsig, "Expected", "l");
   leg2.AddEntry(&gobssig, "Observed", "l");
