@@ -1028,7 +1028,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
       label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.03*maxy, metlabel);
       if (iplane==0) {
         double lmargin(opts.LeftMargin()), rmargin(opts.RightMargin()), bmargin(opts.BottomMargin());
-        if (skim=="zll") label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/2., bmargin-0.08, "p_{T}(ll) [GeV]");
+        if (skim=="zll") label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/2., bmargin-0.08, 
+                                            "p_{T}(l#kern[0.11]{#lower[-0.25]{^{+}}}#kern[0.3]{l#kern[0.05]{#lower[0.36]{^{#scale[1.3]{-}}}}}) [GeV]");
         else label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/2., bmargin-0.08, "p_{T}^{miss} [GeV]");
       }
     } else {
