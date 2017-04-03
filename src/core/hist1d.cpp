@@ -793,11 +793,11 @@ void Hist1D::StyleHisto(TH1D &h) const{
     }
   case StackType::shapes:
     if(xaxis_.units_ == "" && bin_width == 1){
-      title << "% "<<yunit;
+      title << "Percentage of "<<yunit;
       break;
     }
     else{
-      title << "% "<<yunit<<"/(" << bin_width;
+      title << "Percentage of "<<yunit<<"/(" << bin_width;
       if(xaxis_.units_ != "") title << " " << xaxis_.units_;
       title << ")";
       break;

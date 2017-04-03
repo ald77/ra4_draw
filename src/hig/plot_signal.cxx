@@ -33,10 +33,11 @@ vector<unsigned> higidx(const Baby &b);
 
 namespace{
   bool single_thread = true;
+  bool do_twiki = true;
   double lumi = 35.9;
 
-  vector<string> sigm = {"225","300", "400","700","1000"}; 
-  vector<int> sig_colors = {kGreen+1, kTeal-4, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
+  vector<string> sigm = {"225","400","700","1000"}; 
+  vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
   // extended list
   // vector<string> sigm = {"127","300","400","500","600","700","850","1000"}; 
   // vector<int> sig_colors = {kAzure, kGreen+2, kRed, kViolet-6, kYellow, kMagenta+1, kCyan+1, kOrange-3};
@@ -51,7 +52,7 @@ int main(int argc, char *argv[]){
   GetOptions(argc, argv);
 
 
-  string foldersig = "/cms2r0/babymaker/babies/2017_01_27/TChiHH/merged_higmc_unskimmed/";
+  string foldersig = "/cms2r0/babymaker/babies/2017_03_17/TChiHH/merged_higmc_unskimmed/";
 
   Palette colors("txt/colors.txt", "default");
   vector<shared_ptr<Process> > procs;
@@ -60,7 +61,7 @@ int main(int argc, char *argv[]){
       sig_colors[isig], {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, "1"));
 
   PlotOpt log_lumi("txt/plot_styles.txt", "CMSPaper");
-  log_lumi.Title(TitleType::preliminary)
+  log_lumi.Title(TitleType::simulation_preliminary)
     .Bottom(BottomType::off)
     .YAxis(YAxisType::log)
     .Stack(StackType::data_norm);
@@ -74,6 +75,10 @@ int main(int argc, char *argv[]){
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info);
   vector<PlotOpt> linplt = {lin_shapes_info};
   vector<PlotOpt> logplt = {log_shapes_info};
+  if (do_twiki){
+    linplt = {lin_shapes};
+    logplt = {log_shapes};    
+  }
 
   PlotMaker pm;
 
@@ -107,7 +112,8 @@ int main(int argc, char *argv[]){
                   b.mc_eta()->at(idx[1]), b.mc_phi()->at(idx[1]));
   });  
 
-  string baseline("njets>=4 && njets<=5 && met>150");
+  string baseline("njets>=4");
+  string nj4 = "N#kern[-0.1]{#scale[1.15]{#lower[-0.15]{_{jets}}}}#kern[0.2]{#geq}#kern[0.2]{4}";
 
   string c2b = "nbdt==2&&nbdm==2";
   string c3b = "nbdt>=2&&nbdm==3&&nbdl==3";
@@ -115,45 +121,50 @@ int main(int argc, char *argv[]){
 
   NamedFunc wgt = weight_higd;// * eff_higtrig;
 
-  pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat, "b-tag categories (TTML)"), 
-    "met>150" && higd_bcat>0., procs, linplt).Weight(wgt);  
-  pm.Push<Hist1D>(Axis(17,150,1000,"met", "E_{T}^{miss} [GeV]", {150, 200, 300, 450}),
-    baseline, procs, logplt).Weight(wgt);
-  pm.Push<Hist1D>(Axis(20,0,1000,lead_higs_pt, "Leading Higgs p_{T} [GeV]"),
-    "met>150", procs, linplt).Weight(wgt);
-  pm.Push<Hist1D>(Axis(20,0,4,"higd_drmax", "#DeltaR_{max} [GeV]", {2.2}),
-    baseline && higd_bcat>=3 && "higd_am>100 && higd_am<=140", procs, linplt).Weight(wgt);
-  pm.Push<Hist1D>(Axis(20,0,4,"higd_drmax", "#DeltaR_{max} [GeV]", {2.2}),
-    baseline, procs, linplt).Weight(wgt);
-  pm.Push<Hist1D>(Axis(20,0,200,"higd_am", "#LTm#GT [GeV]", {100, 140}),
-    baseline && c2b, procs, linplt).Weight(wgt);
-  pm.Push<Hist1D>(Axis(20,0,200,"higd_am", "#LTm#GT [GeV]", {100, 140}),
-    baseline && c3b, procs, linplt).Weight(wgt);
-  pm.Push<Hist1D>(Axis(20,0,200,"higd_am", "#LTm#GT [GeV]", {100, 140}),
-    baseline && c4b, procs, linplt).Weight(wgt);
+  pm.Push<Hist1D>(Axis(20,0,1000,"met", "p_{T}^{miss} [GeV]", {150, 200, 300, 450}),
+    "1", procs, logplt).Weight(wgt);
+  pm.Push<Hist1D>(Axis(25,0,250,"higd_am", "#LTm#GT [GeV]", {100, 140}),
+    baseline && c4b, procs, linplt).Weight(wgt).RightLabel({"","4b category"});;
+  pm.Push<Hist1D>(Axis(20,0,200,"higd_dm", "#Deltam [GeV]", {40}),
+    baseline && c4b, procs, linplt).Weight(wgt).RightLabel({"","4b category"});;
 
-  pm.Push<Hist1D>(Axis(20,0,200,"higd_am", "#LTm#GT [GeV]", {100, 140}),
-    baseline && "higd_dm<=40 &&"+c2b, procs, linplt).Weight(wgt);
-  pm.Push<Hist1D>(Axis(20,0,200,"higd_am", "#LTm#GT [GeV]", {100, 140}),
-    baseline && "higd_dm<=40 &&"+c3b, procs, linplt).Weight(wgt);
-  pm.Push<Hist1D>(Axis(20,0,200,"higd_am", "#LTm#GT [GeV]", {100, 140}),
-    baseline && "higd_dm<=40 &&"+c4b, procs, linplt).Weight(wgt);
+  if (!do_twiki) {
+    pm.Push<Hist1D>(Axis(5,0.5,5.5,higd_bcat, "b-tag categories (TTML)"), 
+      "met>150" && higd_bcat>0., procs, linplt).Weight(wgt);  
+    pm.Push<Hist1D>(Axis(20,0,1000,lead_higs_pt, "Leading Higgs p_{T} [GeV]"),
+      "met>150", procs, linplt).Weight(wgt);
+    pm.Push<Hist1D>(Axis(20,0,4,"higd_drmax", "#DeltaR_{max} [GeV]", {2.2}),
+      baseline && higd_bcat>=3 && "higd_am>100 && higd_am<=140", procs, linplt).Weight(wgt);
+    pm.Push<Hist1D>(Axis(20,0,4,"higd_drmax", "#DeltaR_{max} [GeV]", {2.2}),
+      baseline, procs, linplt).Weight(wgt);
+    pm.Push<Hist1D>(Axis(20,0,200,"higd_am", "#LTm#GT [GeV]", {100, 140}),
+      baseline && c2b, procs, linplt).Weight(wgt);
+    pm.Push<Hist1D>(Axis(20,0,200,"higd_am", "#LTm#GT [GeV]", {100, 140}),
+      baseline && c3b, procs, linplt).Weight(wgt);
 
-  pm.Push<Hist1D>(Axis(16,0,3.2,hig_dphi, "#Delta#phi(h1, h2) [GeV]"),
-    baseline, procs, linplt).Weight(wgt);
-  pm.Push<Hist1D>(Axis(20,0,1,rel_lsp_dpt, "#Delta p_{T}(G_{1}, G_{2})/Max(p_{T}(G_{1}), p_{T}(G_{2}))[GeV]"),
-    baseline, procs, linplt).Weight(wgt);
-  pm.Push<Hist1D>(Axis(20,0,1,rel_lsp_dpt, "#Delta p_{T}(G_{1}, G_{2})/Max(p_{T}(G_{1}), p_{T}(G_{2}))[GeV]"),
-    "njets>=4 && njets<=5", procs, linplt).Weight(wgt);
 
-  pm.Push<Hist1D>(Axis(16,0,3.2,"dphi2", "#Delta#Phi_{2}"),
-    baseline, procs, linplt).Weight(wgt);
-  pm.Push<Hist1D>(Axis(16,0,3.2,"dphi2", "#Delta#Phi_{2}"),
-    "njets>=4 && njets<=5", procs, linplt).Weight(wgt);
+    pm.Push<Hist1D>(Axis(20,0,200,"higd_am", "#LTm#GT [GeV]", {100, 140}),
+      baseline && "higd_dm<=40 &&"+c2b, procs, linplt).Weight(wgt);
+    pm.Push<Hist1D>(Axis(20,0,200,"higd_am", "#LTm#GT [GeV]", {100, 140}),
+      baseline && "higd_dm<=40 &&"+c3b, procs, linplt).Weight(wgt);
+    pm.Push<Hist1D>(Axis(20,0,200,"higd_am", "#LTm#GT [GeV]", {100, 140}),
+      baseline && "higd_dm<=40 &&"+c4b, procs, linplt).Weight(wgt);
 
-  pm.Push<Hist1D>(Axis(16,0,3.2,"isr_tru_pt", "Higgsino system p_{T} [GeV]"),
-    "njets>=4 && njets<=5 && met>150", procs, linplt).Weight(wgt);
+    pm.Push<Hist1D>(Axis(16,0,3.2,hig_dphi, "#Delta#phi(h1, h2) [GeV]"),
+      baseline, procs, linplt).Weight(wgt);
+    pm.Push<Hist1D>(Axis(20,0,1,rel_lsp_dpt, "#Delta p_{T}(G_{1}, G_{2})/Max(p_{T}(G_{1}), p_{T}(G_{2}))[GeV]"),
+      baseline, procs, linplt).Weight(wgt);
+    pm.Push<Hist1D>(Axis(20,0,1,rel_lsp_dpt, "#Delta p_{T}(G_{1}, G_{2})/Max(p_{T}(G_{1}), p_{T}(G_{2}))[GeV]"),
+      "njets>=4 && njets<=5", procs, linplt).Weight(wgt);
 
+    pm.Push<Hist1D>(Axis(16,0,3.2,"dphi2", "#Delta#Phi_{2}"),
+      baseline, procs, linplt).Weight(wgt);
+    pm.Push<Hist1D>(Axis(16,0,3.2,"dphi2", "#Delta#Phi_{2}"),
+      "njets>=4 && njets<=5", procs, linplt).Weight(wgt);
+
+    pm.Push<Hist1D>(Axis(16,0,3.2,"isr_tru_pt", "Higgsino system p_{T} [GeV]"),
+      "njets>=4 && njets<=5 && met>150", procs, linplt).Weight(wgt);
+  }
 
   if(single_thread) pm.multithreaded_ = false;
   pm.min_print_ = true;
