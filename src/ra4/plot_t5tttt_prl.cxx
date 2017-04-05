@@ -105,7 +105,7 @@ int main(){
     TH2D hbase = baseHistogram(Xmin, Xmax, Ymin, Ymax);
     hbase.Draw();
     addLabelsTitle(lMargin, tMargin, rMargin, mod.title);
-    TH2D *hxsec_ori;
+    TH2D *hxsec_ori = nullptr;
 
     // Plotting limits
     int widthCentral = 4, widthErr = 2;

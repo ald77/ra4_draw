@@ -36,29 +36,29 @@ int main(int argc, char *argv[]){
   gErrorIgnoreLevel = 6000;
   GetOptions(argc, argv);
 
-  double lumi = 12.9;
+  double lumi = 35.9;
 
   string base_path = "";
   string hostname = execute("echo $HOSTNAME");
   if(Contains(hostname, "cms") || Contains(hostname,"compute-")){
-    base_path = "/net/cms2";
+    base_path = "/net/cms29";
   }
-  string mc_dir = base_path+"/cms2r0/babymaker/babies/2016_08_10/mc/merged_mcbase_stdnj5/";
+  string mc_dir = base_path+"/cms29r0/babymaker/babies/2017_01_27/mc/merged_mcbase_standard/";
 
   Palette colors("txt/colors.txt", "default");
 
-  auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors("tt_1l"),
-    {mc_dir+"*_TTJets*Lept*.root", mc_dir+"*_TTJets_HT*.root"},
-    "ntruleps<=1&&stitch");
+  auto tt1l = Process::MakeShared<Baby_full>("t#bar{t} (1l)", Process::Type::background, colors.RGB(1,57,166),
+    {mc_dir+"*_TTJets*Lept*.root"},
+    "ntruleps<=1&&stitch_met");
   tt1l->SetMarkerStyle(23);
   tt1l->SetMarkerSize(0.8);
-  auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors("tt_2l"),
-    {mc_dir+"*_TTJets*Lept*.root", mc_dir+"*_TTJets_HT*.root"},
-    "ntruleps>=2&&stitch");
-  tt1l->SetMarkerStyle(22);
-  tt1l->SetMarkerSize(0.8);
+  auto tt2l = Process::MakeShared<Baby_full>("t#bar{t} (2l)", Process::Type::background, colors.RGB(86,160,211),
+    {mc_dir+"*_TTJets*Lept*.root"},
+    "ntruleps>=2&&stitch_met");
+  tt2l->SetMarkerStyle(22);
+  tt2l->SetMarkerSize(0.8);
   auto wjets = Process::MakeShared<Baby_full>("W+jets", Process::Type::background, colors("wjets"),
-    {mc_dir+"*_WJetsToLNu*.root"});
+    {mc_dir+"*_WJetsToLNu*.root"},"stitch");
   auto single_t = Process::MakeShared<Baby_full>("Single t", Process::Type::background, colors("single_t"),
     {mc_dir+"*_ST_*.root"});
   auto ttv = Process::MakeShared<Baby_full>("t#bar{t}V", Process::Type::background, colors("ttv"),
@@ -71,18 +71,19 @@ int main(int argc, char *argv[]){
         mc_dir+"*_WH_HToBB*.root", mc_dir+"*_WZTo*.root",
         mc_dir+"*_ZH_HToBB*.root", mc_dir+"*_ZZ_*.root"});
 
-  auto t1tttt_nc = Process::MakeShared<Baby_full>("T1tttt(1500,100)", Process::Type::signal, colors("t1tttt"),
-    {mc_dir+"*SMS-T1tttt_mGluino-1500_mLSP-100*.root"});
+  auto t1tttt_nc = Process::MakeShared<Baby_full>("T1tttt(1800,100)", Process::Type::signal, colors("t1tttt"),
+    {base_path+"/cms29r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"});
   t1tttt_nc->SetMarkerStyle(21);
   t1tttt_nc->SetMarkerSize(0.9);
-  auto t1tttt_c = Process::MakeShared<Baby_full>("T1tttt(1200,800)", Process::Type::signal, colors("t1tttt"),
-    {mc_dir+"*SMS-T1tttt_mGluino-1200_mLSP-800*.root"});
+
+  auto t1tttt_c = Process::MakeShared<Baby_full>("T1tttt(1800,100)", Process::Type::signal, colors("t1tttt"),
+    {base_path+"/cms29r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"});
   t1tttt_c->SetLineStyle(2);
   t1tttt_c->SetMarkerStyle(21);
   t1tttt_c->SetMarkerSize(0.9);
 
   auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
-    {base_path+"/cms2r0/babymaker/babies/2016_08_10/data/merged_database_stdnj5/*.root"},"pass&&trig_ra4&&json12p9");
+    {base_path+"/cms29r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/*.root"},"pass&&trig_ra4");
   data->SetMarkerStyle(20);
   data->SetMarkerSize(1.);
 
@@ -106,7 +107,7 @@ int main(int argc, char *argv[]){
   PlotOpt style2D("txt/plot_styles.txt", "Scatter");
   vector<PlotOpt> bkg_hist = {style2D().Stack(StackType::data_norm).Title(TitleType::preliminary)};
   vector<PlotOpt> bkg_pts = {style2D().Stack(StackType::lumi_shapes).Title(TitleType::info)};
-  
+
   PlotMaker pm;
   pm.Push<Hist1D>(Axis(7, -0.5, 6.5, "nleps", "Num. Leptons", {0.5, 1.5}),
                   "st>500&&met>200&&njets>=6&&nbm>=1", full_trig_skim, all_plot_types);

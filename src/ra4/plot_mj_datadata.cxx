@@ -22,7 +22,7 @@ using namespace PlotOptTypes;
 
 namespace {
   double lumi = 35.9;
-  bool paper = false;
+  bool paper = true;
 }
 
 int main(){
@@ -86,12 +86,18 @@ int main(){
     .YAxis(YAxisType::log)
     .Stack(StackType::data_norm)
     .RatioMaximum(1.86);
-  if(!paper)log_lumi=log_lumi.Title(TitleType::preliminary);
+  if(paper){
+    log_lumi.Bottom(BottomType::off);
+  }else{
+    log_lumi=log_lumi.Title(TitleType::preliminary);
+  }
   PlotOpt lin_lumi = log_lumi().YAxis(YAxisType::linear);
   PlotOpt log_shapes = log_lumi().Stack(StackType::shapes);
-  if(paper) {log_shapes = log_lumi().Stack(StackType::shapes)
-	     .Bottom(BottomType::off)
-      .ShowBackgroundError(false);}
+  if(paper){
+    log_shapes = log_lumi().Stack(StackType::shapes)
+      .Bottom(BottomType::off)
+      .ShowBackgroundError(false);
+  }
   PlotOpt lin_shapes = log_shapes().YAxis(YAxisType::linear);
   PlotOpt log_lumi_info = log_lumi().Title(TitleType::info);
   PlotOpt lin_lumi_info = lin_lumi().Title(TitleType::info);

@@ -147,6 +147,8 @@ Hist1D::SingleHist1D::SingleHist1D(const Hist1D &figure,
   val_vector_(){
   raw_hist_.Sumw2();
   scaled_hist_.Sumw2();
+  raw_hist_.SetBinErrorOption(TH1::kPoisson);
+  scaled_hist_.SetBinErrorOption(TH1::kPoisson);
 }
 
 void Hist1D::SingleHist1D::RecordEvent(const Baby &baby){
@@ -400,7 +402,7 @@ void Hist1D::Print(double luminosity,
     DrawAll(backgrounds_, draw_opt);
     if(this_opt_.ShowBackgroundError() && backgrounds_.size()) bkg_error.Draw("2 same");
     DrawAll(signals_, draw_opt, true);
-    ReplaceAll(draw_opt, "hist", "ep");
+    ReplaceAll(draw_opt, "hist", "e0p");
     DrawAll(datas_, draw_opt, true);
     for(auto &cut: cut_vals) cut.Draw();
 
@@ -581,6 +583,7 @@ void Hist1D::RefreshScaledHistos(){
   ScaleHistos();
   StackHistos();
   NormalizeHistos();
+  FixAsymmErrors();
 }
 
 /*!\brief Sets all Hist1D::SingleHist1D::scaled_hist_ to corresponding
@@ -702,6 +705,42 @@ void Hist1D::NormalizeHistos() const{
     for(auto &hist: datas_){
       Normalize(hist->scaled_hist_, 100., true);
     }
+  }
+}
+
+/*!\brief Restore asymmetric error bars if histogram unweighted"
+ */
+void Hist1D::FixAsymmErrors() const{
+  for(const auto &hist: backgrounds_){
+    FixAsymmErrors(hist);
+  }
+  for(const auto &hist: signals_){
+    FixAsymmErrors(hist);
+  }
+  for(const auto &hist: datas_){
+    FixAsymmErrors(hist);
+  }
+}
+
+/*!\brief Restore asymmetric error bars if histogram unweighted"
+ */
+void Hist1D::FixAsymmErrors(const unique_ptr<SingleHist1D> &sh1d) const{
+  TH1D &h = sh1d->scaled_hist_;
+  const TArrayD *sumw2 = h.GetSumw2();
+
+  double tolerance = 4.*numeric_limits<double>::epsilon();
+
+  bool turn_off_sumw2 = true;
+  for(int bin = 0; turn_off_sumw2 && bin < h.GetNcells(); ++bin){
+    double w2 = sumw2->At(bin);
+    double content = h.GetBinContent(bin);
+    if(fabs(w2-content) > tolerance*content){
+      turn_off_sumw2 = false;
+    }
+  }
+
+  if(turn_off_sumw2){
+    h.Sumw2(false);
   }
 }
 
