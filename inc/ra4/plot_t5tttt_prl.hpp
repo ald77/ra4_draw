@@ -28,7 +28,9 @@ public:
 void setCanvas(TCanvas &can, float lMargin, float tMargin, float rMargin, float bMargin);
 TH2D baseHistogram(float Xmin, float Xmax, float Ymin, float Ymax);
 void addLabelsTitle(float lMargin, float tMargin, float rMargin, TString title);
-TGraph* getGraph(TFile &flimit, TString gname);
+TString altName(const TString &name);
+TH2D* getHist2D(TFile &flimit, TString hname, bool allow_name_change = true);
+TGraph* getGraph(TFile &flimit, TString gname, bool allow_name_change = true);
 TGraph* joinGraphs(TGraph *graph1, TGraph *graph2);
 void setGraphStyle(TGraph *graph, int color, int style, int width, double glu_lsp);
 void getModelParams(TString model, float &Xmin, float &Xmax, float &Ymin, float &Ymax, float &glu_lsp);

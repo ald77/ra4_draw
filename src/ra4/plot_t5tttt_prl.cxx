@@ -128,7 +128,7 @@ int main(){
       reverseGraph(expDown[file]);
       expArea[file] = joinGraphs(expUp[file], expDown[file]);
       if(file==0){
-	hxsec_ori = static_cast<TH2D*>(flimit[file]->Get("hXsec_exp_corr"));
+	hxsec_ori = getHist2D(*flimit[file], "hXsec_exp_corr");
 	hxsec_ori->SetDirectory(0);
       }
     }
@@ -138,7 +138,7 @@ int main(){
     hxsec.GetZaxis()->SetLabelSize(0.04);
     hxsec.GetZaxis()->SetTitleSize(0.05);
     hxsec.GetZaxis()->SetTitleOffset(0.88);
-    hxsec.GetZaxis()->SetTitle("95% upper limit on #sigma("+t1tttt_s+") [fb]");
+    hxsec.GetZaxis()->SetTitle("95% CL upper limit on #sigma("+t1tttt_s+") [fb]");
     hxsec.Draw("colz same");
     gPad->Modified();
     gPad->Update();
@@ -249,17 +249,70 @@ int main(){
   cout<<endl<<endl;
 }
 
+TString altName(const TString &name){
+  if(name == "hXsec_exp_corr"){
+    return "T5ttttObservedExcludedXsec";
+  }else if(name == "graph_smoothed_Obs"){
+    return "T5ttttObservedLimit";
+  }else if(name == "graph_smoothed_ObsP"){
+    return "T5ttttObservedLimitUp";
+  }else if(name == "graph_smoothed_ObsM"){
+    return "T5ttttObservedLimitDown";
+  }else if(name == "graph_smoothed_Exp"){
+    return "T5ttttExpectedLimit";
+  }else if(name == "graph_smoothed_ExpP"){
+    return "T5ttttExpectedLimitUp";
+  }else if(name == "graph_smoothed_ExpM"){
+    return "T5ttttExpectedLimitDown";
+  }else if(name ==  "T5ttttObservedExcludedXsec"){
+    return "hXsec_exp_corr";
+  }else if(name ==  "T5ttttObservedLimit"){
+    return "graph_smoothed_Obs";
+  }else if(name ==  "T5ttttObservedLimitUp"){
+    return "graph_smoothed_ObsP";
+  }else if(name ==  "T5ttttObservedLimitDown"){
+    return "graph_smoothed_ObsM";
+  }else if(name ==  "T5ttttExpectedLimit"){
+    return "graph_smoothed_Exp";
+  }else if(name ==  "T5ttttExpectedLimitUp"){
+    return "graph_smoothed_ExpP";
+  }else if(name ==  "T5ttttExpectedLimitDown"){
+    return "graph_smoothed_ExpM";
+  }else{
+    return name;
+  }
+}
 
-TGraph* getGraph(TFile &flimit, TString gname){
-  TGraph *graph = static_cast<TGraph*>(flimit.Get(gname));
-  // If the TGraph is not directly provided in the root file, try to extract it from a TCanvas
-  if(graph==0) {
+TH2D* getHist2D(TFile &flimit, TString hname, bool allow_name_change){
+  TH2D *hist = static_cast<TH2D*>(flimit.Get(hname));
+  // If the TH2D is not directly provided in the root file, try to extract it from a TCanvas
+  if(hist==nullptr) {
     TPad *current_pad = static_cast<TPad*>(gPad);
     TCanvas *c1 = static_cast<TCanvas*>(flimit.Get("c1"));
     current_pad->cd();
-    if(c1==0) return 0;
-    graph = static_cast<TGraph*>(c1->GetListOfPrimitives()->FindObject(gname));
-    if(graph==0) return 0;
+    if(c1!=nullptr){
+      hist = static_cast<TH2D*>(c1->GetListOfPrimitives()->FindObject(hname));
+    }
+  }
+  if(hist == nullptr && allow_name_change){
+    hist = getHist2D(flimit, altName(hname), false);
+  }
+  return hist;
+}
+
+TGraph* getGraph(TFile &flimit, TString gname, bool allow_name_change){
+  TGraph *graph = static_cast<TGraph*>(flimit.Get(gname));
+  // If the TGraph is not directly provided in the root file, try to extract it from a TCanvas
+  if(graph==nullptr) {
+    TPad *current_pad = static_cast<TPad*>(gPad);
+    TCanvas *c1 = static_cast<TCanvas*>(flimit.Get("c1"));
+    current_pad->cd();
+    if(c1!=nullptr){
+      graph = static_cast<TGraph*>(c1->GetListOfPrimitives()->FindObject(gname));
+    }
+  }
+  if(graph == nullptr && allow_name_change){
+    graph = getGraph(flimit, altName(gname), false);
   }
   return graph;
 }
