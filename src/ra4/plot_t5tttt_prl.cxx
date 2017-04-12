@@ -182,6 +182,8 @@ int main(){
     legW = 0.23; 
     legH = legLineH * legEntries;
     TLegend limleg(legX, legY-legH, legX+legW, legY);
+    limleg.SetX1NDC(legX); limleg.SetX2NDC(legX+legW); // So that GetX1NDC works in getLegendBoxes
+    limleg.SetY1NDC(legY-legH); limleg.SetY2NDC(legY); // So that GetX1NDC works in getLegendBoxes
     limleg.SetTextSize(legTextSize); limleg.SetFillColor(0); 
     limleg.SetFillStyle(0); limleg.SetBorderSize(0);
 
@@ -224,6 +226,7 @@ int main(){
     getLegendBoxes(limleg, boxes);
     int ibox = 0;
     TLine line;
+
     // Drawing expected error lines on legend
     ibox = 0;
     line.SetLineColor(colorExp);line.SetLineWidth(widthErr);line.SetLineStyle(styleExp);
