@@ -110,6 +110,7 @@ std::vector<float> jets_m
 std::vector<float> jets_csv
 std::vector<float> jets_csvd
 std::vector<float> jets_pt_res
+std::vector<float> jets_gen_pt
 std::vector<bool>  jets_islep
 std::vector<bool>  jets_isisr
 std::vector<int>   jets_gs_index
@@ -120,6 +121,7 @@ std::vector<int>   jets_fjet08_index
 std::vector<int>   jets_fjet12_index
 std::vector<int>   jets_fjet14_index
 std::vector<int>   jets_hflavor
+std::vector<int>   jets_pflavor
 std::vector<bool>  jets_h1
 std::vector<bool>  jets_h1d
 std::vector<bool>  jets_h2
@@ -361,6 +363,7 @@ std::vector<int> fjets08_nconst
 ################  Truth   ##################
 int nisr_me
 float ht_isr_me
+float ptll_me
 std::vector<float> mc_pt
 std::vector<float> mc_eta
 std::vector<float> mc_phi

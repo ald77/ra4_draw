@@ -148,8 +148,8 @@
   LegendColumns = 1
   LegendMaxSize = 0.5
   BottomPlotHeight = 0.33
-  LegendMarkerWidth = 0.12
-  LegendPad = 0.02
+  LegendMarkerWidth = 0.16
+  LegendPad = 0.038
   LegendDensity = 1
   LogMinimum = 0.03
   NDivisions = 606

@@ -207,10 +207,7 @@ NamedFunc::ScalarType trig_hig_decision(const Baby &b){
     bool eltrig = b.trig()->at(22)||b.trig()->at(40)||b.trig()->at(24)||b.trig()->at(41);
     bool mutrig = b.trig()->at(19)||b.trig()->at(55)||b.trig()->at(21);
 
-    if(b.nvleps()==0){
-      if(mettrig) return 1;
-      else return -1;
-    } else if(b.nels()==1 && b.nmus()==0){
+    if(b.nels()==1 && b.nmus()==0){
       if(mettrig || eltrig) return 1;
       else return -1;
     } else if(b.nels()==0 && b.nmus()==1){
@@ -221,6 +218,9 @@ NamedFunc::ScalarType trig_hig_decision(const Baby &b){
       else return -1;
     } else if(b.nels()==0 && b.nmus()==2){
       if(mutrig) return 1;
+      else return -1;
+    } else if(b.nvleps()==0){
+      if(mettrig) return 1;
       else return -1;
     }
 

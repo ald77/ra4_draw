@@ -422,7 +422,7 @@ void Hist1D::Print(double luminosity,
         size_t num_plots = backgrounds_.size() + signals_.size() + datas_.size();
         if(this_opt_.DisplayLumiEntry()) ++num_plots;
         double legend_height = this_opt_.TrueLegendHeight(num_plots);
-        double left_bound = this_opt_.LeftMargin()+0.03;
+        double left_bound = this_opt_.LeftMargin()+0.05;
         double bottom_bound = 1-legend_height-this_opt_.LegendPad()*2-(ilabel+1)*this_opt_.ExtraLabelSize();
         label.DrawLatexNDC(left_bound, bottom_bound, left_label_[ilabel].c_str());
       }
