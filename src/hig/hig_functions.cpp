@@ -219,6 +219,9 @@ NamedFunc::ScalarType trig_hig_decision(const Baby &b){
     } else if(b.nels()==0 && b.nmus()==2){
       if(mutrig) return 1;
       else return -1;
+    } else if(b.nels()==1 && b.nmus()==1){
+      if(eltrig || mutrig) return 1;
+      else return -1;
     } else if(b.nvleps()==0){
       if(mettrig) return 1;
       else return -1;
