@@ -820,14 +820,13 @@ void Hist1D::StyleHisto(TH1D &h) const{
   case StackType::signal_on_top:
   case StackType::data_norm:
   case StackType::lumi_shapes:
-    if((xaxis_.units_ == "" && bin_width == 1) || this_opt_.Title()==TitleType::data){
+    if(xaxis_.units_ == "" && bin_width == 1){
       title << Yunit;    
       break;
     }
     else{
-      title << Yunit<<"/(" << bin_width;
+      title << Yunit<<" / " << bin_width;
       if(xaxis_.units_ != "") title << " " << xaxis_.units_;
-      title << ")";
       break;
     }
   case StackType::shapes:
@@ -836,9 +835,8 @@ void Hist1D::StyleHisto(TH1D &h) const{
       break;
     }
     else{
-      title << "Percentage of "<<yunit<<"/(" << bin_width;
+      title << "Percentage of "<<yunit<<" / " << bin_width;
       if(xaxis_.units_ != "") title << " " << xaxis_.units_;
-      title << ")";
       break;
     }
   }
