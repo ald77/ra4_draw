@@ -41,30 +41,30 @@ int main(){
   string lsp = "{#lower[-0.1]{#tilde{#chi}}#lower[0.2]{#scale[0.95]{^{0}}}#kern[-1.3]{#scale[0.95]{_{1}}}}";
   string t1t_label = "#scale[0.95]{#tilde{g}#kern[0.2]{#tilde{g}}, #tilde{g}#rightarrowt#kern[0.18]{#bar{t}}#kern[0.18]"+lsp;
   string mt = "m#lower[-0.1]{_{T}}";
-  string etmiss = "E#lower[-0.1]{_{T}}#kern[-0.25]{#scale[1.15]{#lower[0.15]{^{miss}}}}";
+  string etmiss = "p#lower[-0.1]{_{T}}#kern[-0.25]{#scale[1.15]{#lower[0.15]{^{miss}}}}";
   string nj6 = "N#kern[-0.1]{#scale[1.15]{#lower[-0.15]{_{jets}}}}#kern[0.2]{#geq}#kern[0.2]{6}";
   string nb2 = "N#kern[-0.15]{#scale[1.15]{#lower[-0.15]{_{b}}}}#kern[0.2]{#geq}#kern[0.2]{2}";
 
-  auto data_highmt = Process::MakeShared<Baby_full>("Data, "+mt+" > 140 GeV", Process::Type::data, kBlack,
+  auto data_highmt = Process::MakeShared<Baby_full>(" Data, "+mt+" > 140 GeV", Process::Type::data, kBlack,
     {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
-  auto data_lowmt = Process::MakeShared<Baby_full>("Data, "+mt+" #leq 140 GeV", Process::Type::background, kBlack,
+  auto data_lowmt = Process::MakeShared<Baby_full>(" Data, "+mt+" #leq 140 GeV", Process::Type::background, kBlack,
     {fdata+ntupletag},"pass && trig_ra4 && st>500 && mt<=140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   data_lowmt->SetFillColor(kWhite);
   data_lowmt->SetLineColor(kBlue-7);
   data_lowmt->SetLineWidth(2);
 
-  auto data2lveto = Process::MakeShared<Baby_full>("Data 2l or l+trk", Process::Type::data, kBlue+2,
+  auto data2lveto = Process::MakeShared<Baby_full>(" Data 2l or l+trk", Process::Type::data, kBlue+2,
     {fdata+ntupletag},
     "pass && trig_ra4 && st>500 && ((nleps==2 && njets>=5 && nbm<=2) || (nleps==1 && nveto==1 && njets>=6 && nbm>=1 && mt>140)) && met/met_calo<5.0 && pass_ra2_badmu");
 
-  auto data2l = Process::MakeShared<Baby_full>("Data 2l", Process::Type::data, kMagenta+3,
+  auto data2l = Process::MakeShared<Baby_full>(" Data 2l", Process::Type::data, kMagenta+3,
     {fdata+ntupletag},
     "pass && trig_ra4 && st>500 && (nleps==2 && njets>=5 && nbm<=2) && met/met_calo<5.0 && pass_ra2_badmu");
 
-  auto t1tttt = Process::MakeShared<Baby_full>(t1t_label+" (1800,100)}", Process::Type::signal, colors("t1tttt"),
+  auto t1tttt = Process::MakeShared<Baby_full>(" "+t1t_label+" (1800,100)}", Process::Type::signal, colors("t1tttt"),
     {bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1800_mLSP-100_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   t1tttt->SetLineWidth(2);
-  auto t1ttttc = Process::MakeShared<Baby_full>(t1t_label+" (1400,1000)}", Process::Type::signal, colors("t1tttt"),
+  auto t1ttttc = Process::MakeShared<Baby_full>(" "+t1t_label+" (1400,1000)}", Process::Type::signal, colors("t1tttt"),
     {bfolder+"/cms2r0/babymaker/babies/2017_02_22_grooming/T1tttt/renormed/*SMS-T1tttt_mGluino-1400_mLSP-1000_*.root"},"st>500 && mt>140 && nleps==1 && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5.0 && pass_ra2_badmu");
   t1ttttc->SetLineWidth(2);
   t1ttttc->SetLineStyle(2);

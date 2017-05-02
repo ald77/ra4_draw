@@ -820,7 +820,7 @@ void Hist1D::StyleHisto(TH1D &h) const{
   case StackType::signal_on_top:
   case StackType::data_norm:
   case StackType::lumi_shapes:
-    if(xaxis_.units_ == "" && bin_width == 1){
+    if((xaxis_.units_ == "" && bin_width == 1) || this_opt_.Title()==TitleType::data){
       title << Yunit;    
       break;
     }
