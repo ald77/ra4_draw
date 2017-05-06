@@ -830,14 +830,27 @@ void Hist1D::StyleHisto(TH1D &h) const{
       break;
     }
   case StackType::shapes:
-    if(xaxis_.units_ == "" && bin_width == 1){
-      title << "Percentage of "<<yunit;
-      break;
+    if(this_opt_.Title() == TitleType::simulation_supplementary){
+      if(xaxis_.units_ == "" && bin_width == 1){
+	title << "% "<<yunit;
+	break;
+      }
+      else{
+	title << "% "<<yunit<<" / " << bin_width;
+	if(xaxis_.units_ != "") title << " " << xaxis_.units_;
+	break;
+      }
     }
-    else{
-      title << "Percentage of "<<yunit<<" / " << bin_width;
-      if(xaxis_.units_ != "") title << " " << xaxis_.units_;
-      break;
+    else{  
+      if(xaxis_.units_ == "" && bin_width == 1){
+	title << "Percentage of "<<yunit;
+	break;
+      }
+      else{
+	title << "Percentage of "<<yunit<<" / " << bin_width;
+	if(xaxis_.units_ != "") title << " " << xaxis_.units_;
+	break;
+      }
     }
   }
   
@@ -976,14 +989,17 @@ vector<shared_ptr<TLatex> > Hist1D::GetTitleTexts() const{
     case TitleType::preliminary: extra = "Preliminary"; break;
     case TitleType::simulation: extra = "Simulation"; break;
     case TitleType::simulation_preliminary: extra = "Simulation Preliminary"; break;
+    case TitleType::simulation_supplementary: extra = "Simulation Supplementary"; break;
     case TitleType::supplementary: extra = "Supplementary"; break;
     case TitleType::data: extra = ""; break;
     case TitleType::info:
     default:
       ERROR("Did not understand title type "+to_string(static_cast<int>(this_opt_.Title())));
     }
+   
     out.push_back(make_shared<TLatex>(left, bottom+0.2*(top-bottom),
-                                      ("#font[62]{CMS}#scale[0.76]{#font[52]{ "+extra+"}}").c_str()));
+				      ("#font[62]{CMS}#scale[0.74]{#font[52]{ "+extra+"}}").c_str()));
+   
     out.back()->SetNDC();
     out.back()->SetTextAlign(11);
     out.back()->SetTextFont(this_opt_.Font());

@@ -29,9 +29,27 @@ void GetOptions(int argc, char *argv[]);
 
 namespace{
   string sample = "tt";
-  bool do_ra4 = true;
-  bool do_pie = false;
 }
+
+
+NamedFunc max_b_pt("max_b_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+    float maxPt=-999.;
+    for (unsigned i(0); i<b.mc_pt()->size(); i++){
+      if (abs(b.mc_id()->at(i))!=5) continue;
+      if(b.mc_pt()->at(i) > maxPt) maxPt = b.mc_pt()->at(i);
+    }
+    return maxPt;
+  });
+
+NamedFunc max_t_pt("max_t_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+    float maxPt=-999.;
+    for (unsigned i(0); i<b.mc_pt()->size(); i++){
+      if (abs(b.mc_id()->at(i))!=6) continue;
+      if(b.mc_pt()->at(i) > maxPt) maxPt = b.mc_pt()->at(i);
+    }
+    return maxPt;
+  });
+
 
 int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
@@ -55,14 +73,22 @@ int main(int argc, char *argv[]){
   PlotOpt log_norm_info = lin_norm_info.YAxis(YAxisType::log);
   vector<PlotOpt> plt_norm_info = {lin_norm_info, log_norm_info};
 
-  PlotOpt log_norm = lin_norm_info.YAxis(YAxisType::log).Title(TitleType::simulation_preliminary).LogMinimum(.7).Bottom(BottomType::off).ShowBackgroundError(false);
-  PlotOpt lin_norm = lin_norm_info.YAxis(YAxisType::linear).Title(TitleType::simulation_preliminary).Bottom(BottomType::off).ShowBackgroundError(false);
-  vector<PlotOpt> plt_norm = {lin_norm, log_norm};
+  PlotOpt log_norm = lin_norm_info.YAxis(YAxisType::log).Title(TitleType::simulation_supplementary).LogMinimum(.7).Bottom(BottomType::off).ShowBackgroundError(false);
+  PlotOpt lin_norm = lin_norm_info.YAxis(YAxisType::linear).Title(TitleType::simulation_supplementary).Bottom(BottomType::off).ShowBackgroundError(false);
 
-  PlotOpt lin_shapes = lin_norm.Stack(StackType::shapes).Bottom(BottomType::ratio);
-  vector<PlotOpt> plt_shapes = {lin_shapes};
+  PlotOpt log_norm_ratio = lin_norm_info.YAxis(YAxisType::log).Title(TitleType::supplementary).Bottom(BottomType::ratio).LogMinimum(.7).ShowBackgroundError(false);
+  vector<PlotOpt> plt_norm = {lin_norm};
+  vector<PlotOpt> data_opts={log_norm_ratio};
 
 
+ PlotOpt log_shapes("txt/plot_styles.txt", "CMSPaper");
+  log_shapes.Title(TitleType::simulation_supplementary)
+  .Bottom(BottomType::ratio)
+  .YAxis(YAxisType::log)
+  .Stack(StackType::shapes)
+  .RatioMaximum(2.8);
+  PlotOpt lin_shapes = log_shapes().YAxis(YAxisType::linear);
+  vector<PlotOpt> plot_types = {lin_shapes};
 
   //////////////////////////////////// PROCESSES /////////////////////////////
   string bfolder("");
@@ -71,7 +97,7 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   // Baseline definitions
-  string baseline("nleps==1  && nveto==0 && njets>=6 && nbm>=2 && met/met_calo<5. && pass");
+  string baseline("nleps==1  && nveto==0 && njets>=6 && nbm>=1 && met/met_calo<5. && pass && pass_ra2_badmu");
 
   string foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_mcbase_stdnj5/";
   string folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_database_stdnj5/";
@@ -103,63 +129,48 @@ int main(int argc, char *argv[]){
   auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, kBlack,
     {folderdata+"*.root"},baseline+"&&trig_ra4");
 
-  vector<shared_ptr<Process> > procs = {t1tttt_nc, t1tttt_c, tt1l, tt2l, wjets, single_t, ttv, other};
-  vector<shared_ptr<Process> > procs_tt = {tt2l, tt1l};
 
+  vector<shared_ptr<Process> > procs = {t1tttt_nc, t1tttt_c, tt1l, tt2l, wjets, single_t, ttv, other};
+  vector<shared_ptr<Process> > procs_data = {data,t1tttt_nc, t1tttt_c, tt1l, tt2l, wjets, single_t, ttv, other};
+
+  set<string> ttfiles = {foldermc+"*_TTJets*Lept*.root"};
+  auto proc_tt1l_lomt = Process::MakeShared<Baby_full>("t#bar{t} 1l, m_{T}#leq140", Process::Type::background, 
+						       1, ttfiles, 
+						       baseline && "stitch_met && ntruleps<=1 && mt<=140");
+  auto proc_ttltau = Process::MakeShared<Baby_full>("t#bar{t} l#tau_{h}, m_{T}>140", Process::Type::background, 
+						    kBlue-6, ttfiles, 
+						    baseline && "stitch_met && ntruels+ntrumus+ntrutausl==1 && ntrutaush==1 && mt>140");
+  auto proc_tt2l = Process::MakeShared<Baby_full>("t#bar{t} 2l, m_{T}>140", Process::Type::background, 
+						  colors("tt_2l"), ttfiles, 
+						  baseline && "stitch_met && ntruels+ntrumus+ntrutausl==2 && mt>140");
+  auto proc_tt1l_ghimt = Process::MakeShared<Baby_full>("t#bar{t} 1l, m_{T}>140, m_{T}^{tru}>140", Process::Type::background, 
+							kGreen-3, ttfiles, 
+							baseline && "stitch_met && ntruleps<=1 && mt>140&&mt_tru>140");
+  auto proc_tt1l_bhimt = Process::MakeShared<Baby_full>("t#bar{t} 1l, m_{T}>140, m_{T}^{tru}#leq140", Process::Type::background, 
+							kRed-4, ttfiles, 
+							baseline && "stitch_met && ntruleps<=1 && mt>140&&mt_tru<140");
+
+  
+
+  vector<shared_ptr<Process> > tt_procs = {proc_tt1l_lomt, proc_tt2l, proc_ttltau, proc_tt1l_ghimt, proc_tt1l_bhimt};
 
 
   string cuts = "nbm>=2";
   PlotMaker pm;
-  if(do_ra4){
-    cuts = "nbm>=2&&mt<=140&&met>350";
-    pm.Push<Hist1D>(Axis(13, 25., 1000., "mj14", "M_{J} [GeV]", {250,400.}),cuts, procs, plt_norm).Tag("ra4");
-    cuts = "nbm>=2&&mt>140&&met>350";
-    pm.Push<Hist1D>(Axis(13, 25., 1000., "mj14", "M_{J} [GeV]", {250,400.}),cuts, procs, plt_norm).Tag("ra4");
-    // cuts = "nbm>=2&&mt<=140";
-    // pm.Push<Hist1D>(Axis(13, 25., 1000., "mj14", "M_{J} [GeV]", {250,400.}),cuts, procs, plt_norm).Tag("ra4");
-    // cuts = "nbm>=2&&mt>140";
-    // pm.Push<Hist1D>(Axis(13, 25., 1000., "mj14", "M_{J} [GeV]", {250,400.}),cuts, procs, plt_norm).Tag("ra4");
-    cuts = "nbm>=2&&mj14>250&&met>350";
-    pm.Push<Hist1D>(Axis(14, 0., 280., "mt", "m_{T} [GeV]", {140.}),cuts, procs, plt_norm).Tag("ra4");
-    // cuts = "mj14>250";
-    // pm.Push<Hist1D>(Axis(7, 5.5, 12.5, "njets", "N_{jets}", {8.5}),cuts, procs_tt, plt_shapes).Tag("ra4");
-  } // do_ra4
+
+  cuts = "nbm>=2&&mt<=140&&met>350";
+  pm.Push<Hist1D>(Axis(13, 25., 1000., "mj14", "M_{J} [GeV]", {250,400.}),cuts, procs, plt_norm).Tag("sup").RightLabel({"#scale[0.73]{#font[82]{arXiv:xxxx.xxxxx}}"}).YAxisZoom(0.85);
+  cuts = "nbm>=2&&mt>140&&met>350";
+  pm.Push<Hist1D>(Axis(13, 25., 1000., "mj14", "M_{J} [GeV]", {250,400.}),cuts, procs, plt_norm).Tag("sup").RightLabel({"#scale[0.73]{#font[82]{arXiv:xxxx.xxxxx}}"}).YAxisZoom(0.85);
+
+  cuts = "nbm>=2&&mj14>250&&met>350";
+  pm.Push<Hist1D>(Axis(14, 0., 280., "mt", "m_{T} [GeV]", {140.}),cuts, procs, plt_norm).Tag("sup").RightLabel({"#scale[0.73]{#font[82]{arXiv:xxxx.xxxxx}}"}).YAxisZoom(0.85);
+  
+  cuts = "met>200";
+  pm.Push<Hist1D>(Axis(14, 0., 280., "mt", "m_{T} [GeV]", {140.}),cuts, procs_data, data_opts).Tag("sup").RightLabel({"#scale[0.73]{#font[82]{arXiv:xxxx.xxxxx}}"}).YAxisZoom(0.85);
 
 
-  ///////////////////// PIE CHARTS /////////////////// (Not updated since Manuel's 02_22 seminar macro)
-  vector<TString> metcuts;
-  metcuts.push_back("met>100 && met<=150");
-  metcuts.push_back("met>150 && met<=200");
-  metcuts.push_back("met>200 && met<=350");
-  metcuts.push_back("met>350 && met<=500");
-  metcuts.push_back("met>500");
-  //  metcuts.push_back("met>300");
-
-  vector<TString> nbcuts;
-  nbcuts.push_back("nbm>=2");
-
-  vector<TString> njcuts;
-  njcuts.push_back("njets>=6");
-
-  vector<TString> mtcuts({"mt<=140", "mt>140"});
-  //vector<TString> mjcuts({"mj14>250&&mj14<=400", "mj14>400"});
-  vector<TString> mjcuts({"mj14>250"});
-
-  vector<TString> piecuts;
-  vector<TableRow> table_cuts;
-
-  //// nleps = 1
-  for(auto &imet: metcuts) 
-    for(auto &inb: nbcuts) 
-      for(auto &inj: njcuts) 
-	for(auto &imj: mjcuts) 
-	  for(auto &imt: mtcuts) {
-	    piecuts.push_back("nleps==1 && nveto==0 && "+imet+"&&"+inb+"&&"+inj+"&&"+imt+"&&"+imj);
-	  }
-
-  for(size_t icut=0; icut<piecuts.size(); icut++)
-    table_cuts.push_back(TableRow("$"+CodeToLatex(piecuts[icut].Data())+"$", piecuts[icut].Data()));  
-  if(do_pie) pm.Push<Table>("chart_full",  table_cuts, procs, true, true, true, false);
+  pm.Push<Hist1D>(Axis(20,100.,850.,"mj14","M_{J} [GeV]",{250., 400.}),"met>100&&njets>=6", tt_procs, plot_types).Tag("sup").RightLabel({"#scale[0.73]{#font[82]{arXiv:xxxx.xxxxx}}"}).YAxisZoom(0.85);
 
   pm.min_print_ = true;
   pm.MakePlots(35.9);

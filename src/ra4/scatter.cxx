@@ -81,8 +81,8 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > tt_sig = {tt1l, tt2l, t1tttt};
 
   PlotOpt style("txt/plot_styles.txt", "Scatter");
-  vector<PlotOpt> bkg_hist = {style().Stack(StackType::data_norm).Title(TitleType::preliminary)};
-  vector<PlotOpt> bkg_pts = {style().Stack(StackType::lumi_shapes).Title(TitleType::simulation_preliminary)};
+  vector<PlotOpt> bkg_hist = {style().Stack(StackType::data_norm).Title(TitleType::supplementary)};
+  vector<PlotOpt> bkg_pts = {style().Stack(StackType::lumi_shapes).Title(TitleType::simulation_supplementary)};
 
   NamedFunc baseline = "nleps==1&&st>500&&met>150&&njets>=6&&nbm>=1&&nveto==0 && met/met_calo<5.0 && pass_ra2_badmu";
   NamedFunc weight = "weight";
@@ -103,6 +103,7 @@ int main(int argc, char *argv[]){
   }
 
   if(single_thread) pm.multithreaded_ = false;
+  pm.min_print_=true;
   pm.MakePlots(lumi);
 }
 

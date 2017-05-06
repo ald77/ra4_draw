@@ -107,7 +107,7 @@ int main(int argc, char *argv[]){
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
-    bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
+    bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   string ntupletag="";
   // if(only_method!="" && !only_method.Contains("allmet") && !only_method.Contains("onemet")){
@@ -1048,10 +1048,10 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas){
   cmslabel.SetTextSize(0.06);
   cmslabel.SetNDC(kTRUE);
   cmslabel.SetTextAlign(11);
-  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}");
+  cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Supplementary}}");
   cmslabel.SetTextAlign(31);
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
-
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.155, 1-opts.TopMargin()+0.015,"#scale[0.76]{#font[82]{arXiv:xxxx.xxxxx}}");
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
 
