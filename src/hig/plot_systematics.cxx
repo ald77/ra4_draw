@@ -1013,7 +1013,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     } // Loop over bin cuts
 
     // Drawing line separating MET planes
-    if (iplane==k_ordered.size()-2 && do_onemet) {line.SetLineStyle(1); line.SetLineWidth(2); line.SetLineColor(kOrange+3);}
+    if (iplane==k_ordered.size()-2 && do_onemet) {line.SetLineStyle(1); line.SetLineWidth(2); line.SetLineColor(kGray+2);}
     else {line.SetLineStyle(2); line.SetLineWidth(2); line.SetLineColor(kBlack);}
     if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
     // Drawing MET labels
