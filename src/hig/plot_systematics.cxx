@@ -1022,7 +1022,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
       TString metdef = "met";
       if (skim=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
       if (metlabel.Contains("&&")) { metlabel.ReplaceAll(metdef+">","").ReplaceAll(metdef+"<=","").ReplaceAll("&&"," - "); }
-      else { metlabel.ReplaceAll(metdef+">",""); metlabel += "+"; }
+      else { metlabel.ReplaceAll(metdef+">","> "); }
+      if(metlabel == "> 0") metlabel = "Inclusive";
       label.SetTextSize(0.05);
       label.SetTextAlign(23);
       label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.03*maxy, metlabel);
@@ -1044,11 +1045,11 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   if(lumi < 1) digits_lumi = 3;
   if(lumi-floor(lumi)==0) digits_lumi = 0;
   TString lumi_s = RoundNumber(lumi, digits_lumi);
-  double legX(opts.LeftMargin()+0.005), legY(1-0.03), legSingle = 0.05;
-  legX = 0.32;
-  if(only_mc) legX = 0.4;
+  double legX(opts.LeftMargin()+0.005), legY(1-0.035), legSingle = 0.05;
+  legX = 0.595;
+  if(only_mc) legX = 0.65;
   if(label_up) legY = 0.8;
-  double legW = 0.35, legH = legSingle*(ind_bcuts.size()+1)/2;
+  double legW = 0.15, legH = legSingle*(ind_bcuts.size()+1)/2;
   if(ind_bcuts.size()>3) legH = legSingle*((ind_bcuts.size()+1)/2);
   TLegend leg(legX, legY-legH, legX+legW, legY);
   leg.SetTextSize(opts.LegendEntryHeight()*1.15); leg.SetFillColor(0);
@@ -1085,7 +1086,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     leg.AddEntry(&graph[indb], "MC", "p");
     TString data_s = (mm_scen=="data"||mm_scen=="off"||mm_scen=="no_mismeasurement"?"Data":"Pseudodata");
     if(mm_scen!="mc_as_data" && mm_scen!="syst_mcstat") 
-      leg.AddEntry(&graph_mm[indb], data_s+" "+lumi_s+" fb^{-1} (13 TeV)", "p");
+      leg.AddEntry(&graph_mm[indb], data_s, "p");
     //leg.AddEntry(&graph[indb], CodeToRootTex(ind_bcuts[indb].cut.Data()).c_str(), "p");
 
   } // Loop over TGraphs
@@ -1105,10 +1106,18 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   cmslabel.SetTextAlign(31);
   //cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
   cmslabel.SetTextSize(0.053);
-  TString title = "#font[42]{"+abcd.title+"}";
+
+  ///// Luminosity and energy
+  TString title = "";
+  if(mm_scen!="mc_as_data" && mm_scen!="syst_mcstat") title = "#font[42]{"+lumi_s+" fb^{-1} (13 TeV)}";
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.02, title);
+
+  ///// Sample name
+  cmslabel.SetTextAlign(11);
+  title = "#font[42]{"+abcd.title+"}";
   TString newSignal = "#color["; newSignal += cSignal; newSignal += "]{Signal}";
   title.ReplaceAll("Signal", newSignal);
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.03, title);
+  cmslabel.DrawLatex(opts.LeftMargin()+0.14, 1-opts.TopMargin()+0.02, title);
 
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
