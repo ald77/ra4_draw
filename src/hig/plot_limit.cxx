@@ -174,7 +174,7 @@ int main(int argc, char *argv[]){
 
   //// Drawing CMS labels and line at 1
   TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.6]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "
-    +xsoft+"#rightarrow hh#tilde{G}#tilde{G} + "+xsoft;
+    +xsoft+"#rightarrow HH#tilde{G}#tilde{G} + "+xsoft;
   double ppSize = 0.055, ppY = 1-opts.TopMargin()-0.03, ppY2 = 1-opts.TopMargin()-0.11;
   double legSize = 0.044;
 
@@ -399,18 +399,18 @@ int main(int argc, char *argv[]){
   label.DrawLatex(1-opts.RightMargin()-0.03, ppY, ppChiChi);
   label.DrawLatex(1-opts.RightMargin()-0.03, ppY2, mChis);
 
-  // pname = basename;
-  // pname.ReplaceAll("lumi", "obs_significance");
-  // can.SaveAs(pname);
+  pname = basename;
+  pname.ReplaceAll("lumi", "obs_significance");
+  can.SaveAs(pname);
 
-  // // Saving root file
-  // pname = "CMS"; if(!do_paper) pname += "-PAS";
-  // pname += "-SUS-16-044_AuxFigure_4_ObsSignificance.root";
-  // TFile file4(pname, "recreate");
-  // file4.cd();
-  // gobssig.Write("ObsSignificance");
-  // file4.Close();
-  // cout<<"Saved graphs in "<<pname<<endl<<endl;
+  // Saving root file
+  pname = "CMS"; if(!do_paper) pname += "-PAS";
+  pname += "-SUS-16-044_AuxFigure_4_ObsSignificance.root";
+  TFile file4(pname, "recreate");
+  file4.cd();
+  gobssig.Write("ObsSignificance");
+  file4.Close();
+  cout<<"Saved graphs in "<<pname<<endl<<endl;
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 

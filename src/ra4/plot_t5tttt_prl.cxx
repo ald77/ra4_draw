@@ -139,6 +139,7 @@ int main(){
     hxsec.GetZaxis()->SetTitleSize(0.05);
     hxsec.GetZaxis()->SetTitleOffset(0.88);
     hxsec.GetZaxis()->SetTitle("95% CL upper limit on #sigma("+t1tttt_s+") [fb]");
+    hxsec.GetZaxis()->SetTitle("Upper limit (95% CL) on #sigma("+t1tttt_s+") [fb]");
     hxsec.Draw("colz same");
     gPad->Modified();
     gPad->Update();
