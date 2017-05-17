@@ -14,6 +14,7 @@
 #include "core/process.hpp"
 #include "core/named_func.hpp"
 #include "core/plot_maker.hpp"
+#include "core/event_scan.hpp"
 #include "core/palette.hpp"
 #include "core/table.hpp"
 #include "core/hist1d.hpp"
@@ -73,6 +74,10 @@ int main(int argc, char *argv[]){
                   attach_folder(foldermc, mctags["ttx"]),c_ps));
   procs.push_back(Process::MakeShared<Baby_full>("Data", Process::Type::data, 1,
                   {folderdata+"*root"}, Higfuncs::trig_hig>0. && "pass"));
+
+  auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, 1,
+                  {folderdata+"*root"}, Higfuncs::trig_hig>0. && "pass");
+  procs.push_back(data);
 
   if (doSignal) {
     vector<string> sigm({"225","400", "700"});
@@ -170,6 +175,12 @@ int main(int argc, char *argv[]){
   TableRow("HIG, 4b", baseline + " && met>450 &&"             +c_4b+"&&"+hig,0,1, wgt),
 	},procs,0);
 
+  string listname = "eventlist";
+  if (csv) listname +="_csv";
+
+  pm.Push<EventScan>(listname, baseline && "met>150 && nbdt>=2 && nbdm>=3" && hig, 
+                     vector<NamedFunc>{"run", "lumiblock", "event"},
+                     vector<shared_ptr<Process> >{data});
 
   pm.min_print_ = true;
   pm.MakePlots(lumi);

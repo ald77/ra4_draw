@@ -117,24 +117,24 @@ int main(int argc, char *argv[]){
   } else {
     // Higgsino analysis
     nom_wgt = "weight/w_btag*w_bhig_deep*eff_trig"; // nominal weight to use
-    v_sys.push_back(sysdef("Trigger efficiency", "trig", kWeight));
+    v_sys.push_back(sysdef("Trigger efficiency", "trig_HH", kWeight));
     for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_trig["+to_string(i)+"]"); // the TChiHH babies have relative mutliplicative sys_trig
-    v_sys.push_back(sysdef("B-tag efficiency", "bchig_deep", kWeight));
+    v_sys.push_back(sysdef("B-tag efficiency", "btag_HF_deep_HH", kWeight));
     for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_bchig_deep["+to_string(i)+"]/w_bhig_deep");
-    v_sys.push_back(sysdef("B-tag efficiency FS", "fs_bchig_deep", kWeight));
+    v_sys.push_back(sysdef("B-tag efficiency FS", "btag_FS_HF_deep_HH", kWeight));
     for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_bchig_deep["+to_string(i)+"]/w_bhig_deep");
-    v_sys.push_back(sysdef("Mistag efficiency", "udsghig_deep", kWeight));
+    v_sys.push_back(sysdef("Mistag efficiency", "btag_LF_deep_HH", kWeight));
     for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_udsghig_deep["+to_string(i)+"]/w_bhig_deep");
-    v_sys.push_back(sysdef("Mistag efficiency FS", "fs_udsghig_deep",kWeight));
+    v_sys.push_back(sysdef("Mistag efficiency FS", "btag_FS_LF_deep_HH",kWeight));
     for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_udsghig_deep["+to_string(i)+"]/w_bhig_deep");
   }
 
-  v_sys.push_back(sysdef("Gen vs reco MET FS", "fs_genmet",kMetSwap));
+  v_sys.push_back(sysdef("Gen vs reco MET FS", "MET",kMetSwap));
   
-  v_sys.push_back(sysdef("Jet energy corrections", "jec", kCorr));
+  v_sys.push_back(sysdef("Jet energy corrections", "JESsig", kCorr));
   v_sys.back().shift_index = 1; // JEC Up index in sys_met, etc.
   if (model=="TChiHH") {
-    v_sys.push_back(sysdef("Jet energy resolution", "jer", kSmear));
+    v_sys.push_back(sysdef("Jet energy resolution", "JER_HH", kSmear));
     v_sys.back().shift_index = 0; // JER index in sys_met, etc.
   }
   // v_sys.push_back(sysdef("PDFs", "pdf", kWeight));
@@ -148,11 +148,11 @@ int main(int argc, char *argv[]){
   //   v_sys.back().v_wgts.push_back("sys_muf["+to_string(i)+"]");
   //   v_sys.back().v_wgts.push_back("sys_murf["+to_string(i)+"]");
   // }
-  v_sys.push_back(sysdef("ISR", "isr", kWeight));
+  v_sys.push_back(sysdef("ISR", "ISR", kWeight));
   for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_isr["+to_string(i)+"]/w_isr");
-  v_sys.push_back(sysdef("Jet ID FS", "jetid", kConst));
+  v_sys.push_back(sysdef("Jet ID FS", "JetID_HH", kConst));
   v_sys.back().v_wgts.push_back("0.01");
-  v_sys.push_back(sysdef("Pile up", "pu", kPU));
+  v_sys.push_back(sysdef("Pile up", "PUsig", kPU));
   v_sys.push_back(sysdef("Luminosity", "lumi", kConst));
   v_sys.back().v_wgts.push_back("0.026");
 
@@ -479,35 +479,35 @@ void fillTtbarSys(ofstream &fsys){
 
 void fillHiggsinoSys(ofstream &fsys){
     // statistical
-    fsys << "SYSTEMATIC stat_3bmet0" << endl;
+    fsys << "SYSTEMATIC stat_3bmet0_HH" << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_3b_met0    0.08"  << endl << endl;
-    fsys << "SYSTEMATIC stat_4bmet0" << endl;
+    fsys << "SYSTEMATIC stat_4bmet0_HH" << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_4b_met0    0.15"  << endl << endl;
-    fsys << "SYSTEMATIC stat_3bmet1" << endl;
+    fsys << "SYSTEMATIC stat_3bmet1_HH" << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_3b_met1    0.05"  << endl << endl;
-    fsys << "SYSTEMATIC stat_4bmet1" << endl;
+    fsys << "SYSTEMATIC stat_4bmet1_HH" << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_4b_met1    0.37"  << endl << endl;
-    fsys << "SYSTEMATIC stat_3bmet2" << endl;
+    fsys << "SYSTEMATIC stat_3bmet2_HH" << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_3b_met2    0.19"  << endl << endl;
-    fsys << "SYSTEMATIC stat_4bmet2" << endl;
+    fsys << "SYSTEMATIC stat_4bmet2_HH" << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_4b_met2    0.23"  << endl << endl;
-    fsys << "SYSTEMATIC stat_3bmet3" << endl;
+    fsys << "SYSTEMATIC stat_3bmet3_HH" << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_3b_met3    0.59"  << endl << endl;
-    fsys << "SYSTEMATIC stat_4bmet3" << endl;
+    fsys << "SYSTEMATIC stat_4bmet3_HH" << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_4b_met3    0.75"  << endl << endl;
-    fsys << "SYSTEMATIC wilks"       << endl;
+    fsys << "SYSTEMATIC wilks_HH"       << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_4b_met3    10.0"  << endl << endl;
     // ttbar closure
-    fsys << "SYSTEMATIC ttx_closure" << endl;
+    fsys << "SYSTEMATIC ttx_closure_HH" << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_3b_met0    0.03"  << endl;
     fsys << "  sbd_4b_met0    0.05"  << endl;
@@ -518,7 +518,7 @@ void fillHiggsinoSys(ofstream &fsys){
     fsys << "  sbd_3b_met3    0.02"  << endl;
     fsys << "  sbd_4b_met3    0.03"  << endl << endl;
     // zll closure
-    fsys << "SYSTEMATIC zll_closure" << endl;
+    fsys << "SYSTEMATIC zll_closure_HH" << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_3b_met0    0.01"  << endl;
     fsys << "  sbd_4b_met0    0.01"  << endl;
@@ -529,7 +529,7 @@ void fillHiggsinoSys(ofstream &fsys){
     fsys << "  sbd_3b_met3    0.08"  << endl;
     fsys << "  sbd_4b_met3    0.09"  << endl << endl;
     // qcd closure
-    fsys << "SYSTEMATIC qcd_closure" << endl;
+    fsys << "SYSTEMATIC qcd_closure_HH" << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_3b_met0    0.02"  << endl;
     fsys << "  sbd_4b_met0    0.02"  << endl;
@@ -540,7 +540,7 @@ void fillHiggsinoSys(ofstream &fsys){
     fsys << "  sbd_3b_met3    0.01"  << endl;
     fsys << "  sbd_4b_met3    0.01"  << endl << endl;
     // bkg. composition closure
-    fsys << "SYSTEMATIC bkg_comp" << endl;
+    fsys << "SYSTEMATIC bkg_comp_HH" << endl;
     fsys << " PROCESSES ttbar,other" << endl;
     fsys << "  sbd_3b_met0   -0.03"  << endl;
     fsys << "  sbd_4b_met0   -0.05"  << endl;

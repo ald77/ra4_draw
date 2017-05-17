@@ -221,6 +221,7 @@ int main(int argc, char *argv[]){
   scuts.push_back("1");
   // if (sample=="qcd") scuts.push_back("ntks==0");
   if (sample=="search") scuts.push_back("ntks==0 && !low_dphi");
+  if (sample=="ttbar") scuts.push_back("!low_dphi");
   
 
   PlotMaker pm;
@@ -237,7 +238,7 @@ int main(int argc, char *argv[]){
 
       pm.Push<Hist1D>(Axis(10,0,200,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
         baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Weight(wgt).Tag(sample+"_shape_bcats")
-        .RatioTitle("Bkg.(nb)","Bkg.(2b)");
+        .RatioTitle("Bkg. (nb)","Bkg. (2b)");
 
       pm.Push<Hist1D>(Axis(10,0,200,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
         baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Weight(wgt).Tag(sample+"_shape_trub");

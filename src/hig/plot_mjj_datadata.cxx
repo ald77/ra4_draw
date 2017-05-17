@@ -47,23 +47,23 @@ int main(){
     {fdata+"*.root"},baseline && Higfuncs::trig_hig>0. && "pass && nbdt==2&&nbdm==2");
   data_2b->SetFillColor(kWhite);
   data_2b->SetLineColor(kAzure-2);//kBlue-7);
-  data_2b->SetLineWidth(2);
+  data_2b->SetLineWidth(3);
 
   string filters = "pass_ra2_badmu&&pass_goodv&&pass_ecaldeadcell&&pass_hbhe&&pass_hbheiso&&pass_fsmet";
   auto tchi225_3b = Process::MakeShared<Baby_full>("TChiHH(225,1) 3b", Process::Type::signal, kRed,
     {fsig+"*TChiHH*225*.root"}, baseline && filters+"&& nbdt>=2&&nbdm==3&&nbdl==3");
-  tchi225_3b->SetLineWidth(2);
+  tchi225_3b->SetLineWidth(3);
   tchi225_3b->SetLineStyle(2);
   auto tchi225_4b = Process::MakeShared<Baby_full>("TChiHH(225,1) 4b", Process::Type::signal, kRed,
     {fsig+"*TChiHH*225*.root"}, baseline && filters+"&& nbdt>=2&&nbdm>=3&&nbdl>=4");
-  tchi225_4b->SetLineWidth(2);
+  tchi225_4b->SetLineWidth(3);
   tchi225_4b->SetLineStyle(2);
   auto tchi400_3b = Process::MakeShared<Baby_full>("TChiHH(400,1) 3b", Process::Type::signal, kRed,
     {fsig+"*TChiHH*400*.root"}, baseline && filters+"&& nbdt>=2&&nbdm==3&&nbdl==3");
-  tchi400_3b->SetLineWidth(2);
+  tchi400_3b->SetLineWidth(3);
   auto tchi400_4b = Process::MakeShared<Baby_full>("TChiHH(400,1) 4b", Process::Type::signal, kRed,
     {fsig+"*TChiHH*400*.root"}, baseline && filters+"&& nbdt>=2&&nbdm>=3&&nbdl>=4");
-  tchi400_4b->SetLineWidth(2);
+  tchi400_4b->SetLineWidth(3);
 
   vector<shared_ptr<Process> > data3b_procs = {data_3b,tchi225_3b,data_2b,tchi400_3b};
   vector<shared_ptr<Process> > data4b_procs = {data_4b,tchi225_4b,data_2b,tchi400_4b};

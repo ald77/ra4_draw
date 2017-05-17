@@ -29,7 +29,7 @@ void GetOptions(int argc, char *argv[]);
 
 namespace{
   string sample = "tt";
-  bool paper = true;
+  bool paper = false;
 }
 
 const NamedFunc fakeb_fromw("fakeb_fromw",[](const Baby &b) -> NamedFunc::ScalarType{
@@ -155,16 +155,17 @@ int main(int argc, char *argv[]){
   procs_hig.push_back(Process::MakeShared<Baby_full>("V+jets",     
     Process::Type::background, kOrange+1,          attach_folder(folderhigmc,mctags["vjets"]),   base_func&&"stitch"));
   procs_hig.push_back(Process::MakeShared<Baby_full>("Single t",   
-    Process::Type::background, colors("single_t"), attach_folder(folderhigmc,mctags["singlet"]), base_func&&"stitch"));
+    Process::Type::background, kViolet-7, attach_folder(folderhigmc,mctags["singlet"]), base_func&&"stitch"));
   procs_hig.push_back(Process::MakeShared<Baby_full>("Other",      
-    Process::Type::background, kGreen+1,           attach_folder(folderhigmc,mctags["other"]),   base_func&&"stitch"));      
+    Process::Type::background, kGreen-2,           attach_folder(folderhigmc,mctags["other"]),   base_func&&"stitch"));      
 
   vector<string> sig2m = {"225","400","700"}; 
   vector<int> sig2_colors = {kGreen, kRed, kCyan}; // need sigm.size() >= sig_colors.size()
-  for (unsigned isig(0); isig<sig2m.size(); isig++)
+  for (unsigned isig(0); isig<sig2m.size(); isig++){
     procs_hig.push_back(Process::MakeShared<Baby_full>("TChiHH("+sig2m[isig]+",1)", Process::Type::signal, 
 			sig2_colors[isig], {foldersig+"*TChiHH_mGluino-"+sig2m[isig]+"*.root"}, base_func));
-
+    if (isig==0) procs_hig.back()->SetLineStyle(5);
+  }
 
   /////////////// MC+DATA PROCESSES
   vector<shared_ptr<Process> > procs_data = procs_hig;
@@ -176,9 +177,10 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > procs_sig;
   vector<string> sigm = {"225","300", "400","700","1000"}; 
   vector<int> sig_colors = {kGreen+1, kTeal-4, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
-  for (unsigned isig(0); isig<sigm.size(); isig++)
+  for (unsigned isig(0); isig<sigm.size(); isig++) {
     procs_sig.push_back(Process::MakeShared<Baby_full>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
 			sig_colors[isig], {foldersig+"*TChiHH_mGluino-"+sigm[isig]+"*.root"}, base_func));
+  } 
 
   /////////////// TTBAR ONLY PROCESSES
   vector<shared_ptr<Process> > procs_tt;
@@ -210,7 +212,7 @@ int main(int argc, char *argv[]){
     cuts, procs_data, plt_lin).Weight(wgt).Tag("n1");
 
   cuts = "nbdt>=2&&nbdm>=3&&nbdl>=4&&met>150&&higd_dm<40&&njets>=4&&njets<=5";
-  pm.Push<Hist1D>(Axis(20,0,4,"higd_drmax", "#DeltaR_{max} [GeV]", {2.2}),
+  pm.Push<Hist1D>(Axis(20,0,4,"higd_drmax", "#DeltaR_{max}", {2.2}),
     cuts, procs_data, plt_lin).Weight(wgt).Tag("n1");
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -152,7 +152,9 @@ int main(int argc, char *argv[]){
   if (!subtr_ttx) 
   procs.push_back(Process::MakeShared<Baby_full>("QCD",        
     Process::Type::background, colors("other"),    attach_folder(foldermc,mctags["qcd"]),     
-    base_func+"&& pass && pass_ra2_badmu && stitch_met" + ((sample=="qcd"&&!subtr_ttx) ? "&&weight<10":""))); 
+    base_func+"&& pass && pass_ra2_badmu && stitch_met" 
+    + ((sample=="qcd"&&!subtr_ttx) ? "&&weight<10":"") 
+    + (sample=="zll" ? "&&higd_am>20":""))); // kill the huge error band in the ratio plot 
   procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", 
       Process::Type::background, colors("tt_1l"),    attach_folder(foldermc,mctags["ttx"]),     
       base_func+"&& pass && pass_ra2_badmu && stitch_met"));
@@ -160,10 +162,10 @@ int main(int argc, char *argv[]){
     Process::Type::background, kOrange+1,          attach_folder(foldermc,mctags["vjets"]),   
     base_func+"&& pass && pass_ra2_badmu && stitch_met"));
   procs.push_back(Process::MakeShared<Baby_full>("Single t",   
-    Process::Type::background, colors("single_t"), attach_folder(foldermc,mctags["singlet"]), 
+    Process::Type::background, kViolet-7, attach_folder(foldermc,mctags["singlet"]), 
     base_func+"&& pass && pass_ra2_badmu && stitch_met"));
   procs.push_back(Process::MakeShared<Baby_full>("Other",      
-    Process::Type::background, kGreen+1,           attach_folder(foldermc,mctags["other"]),   
+    Process::Type::background, kGreen-2,           attach_folder(foldermc,mctags["other"]),   
     base_func+"&& pass && pass_ra2_badmu && stitch_met"));      
 
   if (do_data) {
