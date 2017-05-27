@@ -169,11 +169,11 @@ for i in range(len(metbins)-2):
     a.DrawLine(metbins[i+1],htbins[0],metbins[i+1],htbins[-1])
 
 cmslabel = TLatex()
-cmslabel.DrawLatexNDC(lMargin, 0.915,"#font[62]{CMS}#scale[0.76]{#font[52]{ Supplementary}}")
+cmslabel.DrawLatexNDC(lMargin, 0.915,"#font[62]{CMS}#scale[0.76]{#font[52]{ Supplementary}} #scale[0.73]{#font[82]{arXiv:xxxx.xxxxx}}")
 
 lumilabel = TLatex()
 lumilabel.SetTextAlign(31)
-lumilabel.DrawLatexNDC(1-rMargin, 0.915,"#font[42]{35.9 fb^{-1} (13 TeV)}")
+lumilabel.DrawLatexNDC(1-rMargin, 0.915,"#scale[0.91]{#font[42]{35.9 fb^{-1} (13 TeV)}}")
 
 can.Print("hig_trigeff.pdf")
 

@@ -1162,7 +1162,7 @@ void MakeCovarianceMatrix(RooWorkspace &w,
   gStyle->SetPalette(bands, colors);
 
   float LeftMargin = 0.12, RightMargin = 0.15, BottomMargin = 0.15, TopMargin = 0.07;
-  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Supplementary}}";
+  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Supplementary}}  #scale[0.73]{#font[82]{arXiv:xxxx.xxxxx}}";
   TString lumiEner = "#font[42]{35.9 fb^{-1} (13 TeV)}"; 
   TLatex cmslabel;  
   cmslabel.SetNDC(kTRUE);

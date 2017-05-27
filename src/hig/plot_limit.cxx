@@ -465,6 +465,7 @@ int main(int argc, char *argv[]){
 
 void DrawCMSLabels(TString type){
   TString cmsLogo = "#font[62]{CMS}#scale[0.8]{#font[52]{ "+type+"}}";
+  if(type.Contains("Supplementary")) cmsLogo += "  #scale[0.73]{#font[82]{arXiv:xxxx.xxxxx}}";
   TString lumiEner = "#font[42]{"+lumi+" fb^{-1} (13 TeV)}"; lumiEner.ReplaceAll("p",".");
 
   TLatex cmslabel;

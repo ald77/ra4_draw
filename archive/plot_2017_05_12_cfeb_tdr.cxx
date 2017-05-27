@@ -86,7 +86,7 @@ int main(int argc, char *argv[]){
   histoModel.SetXTitle("Instantaneous luminosity [10^{34} s^{-1} cm^{-2}]");
   histoModel.SetYTitle("Event loss fraction");
   histoModel.SetTitle("Event loss for 750 kHz L1A rate, 12.5 #mus latency");
-  histoModel.SetTitle("Validation of the statistical model for CFEB losses");
+  histoModel.SetTitle("Validation of the statistical model for ME2/1");
   histoModel.Draw();
 
   readFile("txt/tdr/cfeb_model.txt", 5, vals);
@@ -100,7 +100,7 @@ int main(int argc, char *argv[]){
   grData.SetMarkerStyle(20); grData.SetMarkerSize(0.8); grData.SetLineColor(kBlack); 
   grData.Draw("same p"); 
 
-  legH = legSingle*2; legY = 0.45; legX = 0.57;
+  legH = legSingle*2; legY = 0.4; legX = 0.54;
   TLegend legModel(legX-legW, legY-legH, legX, legY);
   legModel.SetTextSize(legSize); legModel.SetFillColor(0); 
   legModel.SetFillStyle(0); legModel.SetBorderSize(0);

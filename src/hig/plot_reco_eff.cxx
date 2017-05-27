@@ -259,6 +259,12 @@ void makePlot(TH2D hnum, TH2D hden, TString num_s, TString den_s, TString extra_
       extra_s.ReplaceAll("Numer-","");
       label.DrawLatex(Xmin+xoffset+70, Ymax-135, extra_s);
     }
+    Xmin = 120; Xmax = 380; Ymin = 705; Ymax = 745;
+    box.SetFillColor(0); box.SetFillStyle(1001);
+    box.SetLineColor(1); box.SetLineWidth(2); box.SetLineStyle(1);
+    box.DrawBox(Xmin, Ymin, Xmax, Ymax);
+    label.SetTextAlign(12);
+    label.DrawLatex(Xmin+10, (Ymax+Ymin)/2., "#scale[1]{#font[82]{arXiv:xxxx.xxxxx}}");
   } else {
     //// Printing histo title
     TString title = "#font[72]{Den}: "; 
