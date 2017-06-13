@@ -82,6 +82,7 @@ int main(int argc, char *argv[]){
   histoModel.SetMinimum(minY);
   histoModel.SetMaximum(maxY);
   histoModel.GetYaxis()->CenterTitle(true);
+  histoModel.GetXaxis()->CenterTitle(true);
   histoModel.GetXaxis()->SetLabelOffset(0.01);
   histoModel.SetXTitle("Instantaneous luminosity [10^{34} s^{-1} cm^{-2}]");
   histoModel.SetYTitle("Event loss fraction");
@@ -120,6 +121,7 @@ int main(int argc, char *argv[]){
   TH1D histo("histo", "", 18, 0, 9);
   histo.SetMinimum(minY);
   histo.SetMaximum(maxY);
+  histo.GetXaxis()->CenterTitle(true);
   histo.GetYaxis()->CenterTitle(true);
   histo.GetXaxis()->SetLabelOffset(0.01);
   histo.SetXTitle("Instantaneous luminosity [10^{34} s^{-1} cm^{-2}]");
@@ -174,6 +176,7 @@ int main(int argc, char *argv[]){
   TH1D histoDCFEB("histoDCFEB", "", 18, 0, 38);
   histoDCFEB.SetMinimum(minY);
   histoDCFEB.SetMaximum(maxY);
+  histoDCFEB.GetXaxis()->CenterTitle(true);
   histoDCFEB.GetYaxis()->CenterTitle(true);
   histoDCFEB.GetXaxis()->SetLabelOffset(0.01);
   histoDCFEB.SetXTitle("Instantaneous luminosity [10^{34} s^{-1} cm^{-2}]");
@@ -215,6 +218,7 @@ int main(int argc, char *argv[]){
   TH1D histoIntro("histoIntro", "", 18, 0, 33);
   histoIntro.SetMinimum(minY);
   histoIntro.SetMaximum(maxY);
+  histoIntro.GetXaxis()->CenterTitle(true);
   histoIntro.GetYaxis()->CenterTitle(true);
   histoIntro.GetXaxis()->SetLabelOffset(0.01);
   histoIntro.SetXTitle("Instantaneous luminosity [10^{34} s^{-1} cm^{-2}]");

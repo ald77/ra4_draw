@@ -165,9 +165,9 @@ int main(int argc, char *argv[]){
   TString acc_s = "p_{T} > "+RoundNumber(minpt,0)+" GeV, |#eta| < "+RoundNumber(maxeta,1);
   if(do_aux){
     makePlot(histos[goodreco], histos[acc], "all jets in di-Higgs reconstruction", 
-             "all b-quarks from hh#rightarrow4b have "+acc_s, "Numer-matched to B-hadrons");
+             "all b-quarks from HH#rightarrow4b have "+acc_s, "Numer-matched to B-hadrons");
     makePlot(histos[gr_am], histos[goodreco], "100 < #LTm#GT < 140 GeV",
-             "all b-quarks from hh#rightarrow4b have "+acc_s,
+             "all b-quarks from HH#rightarrow4b have "+acc_s,
              "Denom-+ all jets in di-Higgs reco. matched to B-hadrons");
   } else {
     makePlot(histos[goodreco], histos[acc], "all di-Higgs jets TM-ed", 
@@ -278,7 +278,7 @@ void makePlot(TH2D hnum, TH2D hden, TString num_s, TString den_s, TString extra_
 
     //// Printing legend
     label.SetTextAlign(13); label.SetTextSize(0.032);
-    TString acc_s = "All b quarks from hh#rightarrow4b have p_{T} > "+RoundNumber(minpt,0)+" GeV, |#eta| < "
+    TString acc_s = "All b quarks from HH#rightarrow4b have p_{T} > "+RoundNumber(minpt,0)+" GeV, |#eta| < "
       +RoundNumber(maxeta,1);
     label.DrawLatex(Xmin+20, Ymax-25,acc_s);
     TString cut_s = (low_isr?"ISR p_{T} < 20 GeV":"All ISR");

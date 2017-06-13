@@ -1021,7 +1021,7 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
       TString metlabel = abcd.planecuts[iplane]; 
       TString metdef = "met";
       if (skim=="zll") metdef = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))";
-      if (metlabel.Contains("&&")) { metlabel.ReplaceAll(metdef+">","").ReplaceAll(metdef+"<=","").ReplaceAll("&&"," - "); }
+      if (metlabel.Contains("&&")) { metlabel.ReplaceAll(metdef+">","").ReplaceAll(metdef+"<=","").ReplaceAll("&&","#minus"); }
       else { metlabel.ReplaceAll(metdef+">","> "); }
       if(metlabel == "> 0") metlabel = "Inclusive";
       label.SetTextSize(0.05);
@@ -1110,14 +1110,15 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   ///// Luminosity and energy
   TString title = "";
   if(mm_scen!="mc_as_data" && mm_scen!="syst_mcstat") title = "#font[42]{"+lumi_s+" fb^{-1} (13 TeV)}";
-  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.02, title);
+  if(abcd.title.Contains("Search") && only_mc) title = "#font[42]{"+abcd.title+"}";
+  cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, title);
 
   ///// Sample name
   cmslabel.SetTextAlign(11);
   title = "#font[42]{"+abcd.title+"}";
   TString newSignal = "#color["; newSignal += cSignal; newSignal += "]{Signal}";
   title.ReplaceAll("Signal", newSignal);
-  cmslabel.DrawLatex(opts.LeftMargin()+0.14, 1-opts.TopMargin()+0.02, title);
+  if(!(abcd.title.Contains("Search") && only_mc)) cmslabel.DrawLatex(opts.LeftMargin()+0.14, 1-opts.TopMargin()+0.015, title);
 
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
