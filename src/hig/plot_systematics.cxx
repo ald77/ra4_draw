@@ -395,8 +395,8 @@ int main(int argc, char *argv[]){
       caption = "$N_{\\rm leps}=1$ control region";
       abcd_title = "Single-lepton control region";
     } else {
-      caption = "Search bins";
-      abcd_title = "Search bins";
+      caption = "Search region";
+      abcd_title = "Search region";
     }
     if (do_loose) abcd_title += " (no #DeltaR#lower[-0.1]{_{max}} cut)";
 
@@ -905,8 +905,8 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
   histo.GetXaxis()->SetLabelOffset(0.008);
   TString ytitle = "#kappa";
   if(mm_scen!="data" && mm_scen!="syst_mcstat") ytitle += " (Scen. = "+mm_scen+")";
-  histo.SetTitleOffset(0.45,"y");
-  histo.SetTitleSize(0.06,"y");
+  histo.SetTitleOffset(0.57,"y");
+  histo.SetTitleSize(0.07,"y");
   histo.SetYTitle(ytitle);
   histo.Draw();
 
@@ -1083,10 +1083,10 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
     graph_mm[indb].SetLineColor(1); graph_mm[indb].SetLineWidth(2);
     if(mm_scen!="mc_as_data" && mm_scen!="syst_mcstat") graph_mm[indb].Draw("p0 same");
 
-    leg.AddEntry(&graph[indb], "MC", "p");
+    leg.AddEntry(&graph[indb], "MC", "ep");
     TString data_s = (mm_scen=="data"||mm_scen=="off"||mm_scen=="no_mismeasurement"?"Data":"Pseudodata");
     if(mm_scen!="mc_as_data" && mm_scen!="syst_mcstat") 
-      leg.AddEntry(&graph_mm[indb], data_s, "p");
+      leg.AddEntry(&graph_mm[indb], data_s, "ep");
     //leg.AddEntry(&graph[indb], CodeToRootTex(ind_bcuts[indb].cut.Data()).c_str(), "p");
 
   } // Loop over TGraphs
@@ -1109,13 +1109,14 @@ void plotKappa(abcd_method &abcd, vector<vector<vector<float> > > &kappas,
 
   ///// Luminosity and energy
   TString title = "";
+  TString fontstyle = RoundNumber(opts.Font()+10,0);
   if(mm_scen!="mc_as_data" && mm_scen!="syst_mcstat") title = "#font[42]{"+lumi_s+" fb^{-1} (13 TeV)}";
-  if(abcd.title.Contains("Search") && only_mc) title = "#font[42]{"+abcd.title+"}";
+  if(abcd.title.Contains("Search") && only_mc) title = "#font["+fontstyle+"]{"+abcd.title+"}";
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, title);
 
   ///// Sample name
   cmslabel.SetTextAlign(11);
-  title = "#font[42]{"+abcd.title+"}";
+  title = "#font["+fontstyle+"]{"+abcd.title+"}";
   TString newSignal = "#color["; newSignal += cSignal; newSignal += "]{Signal}";
   title.ReplaceAll("Signal", newSignal);
   if(!(abcd.title.Contains("Search") && only_mc)) cmslabel.DrawLatex(opts.LeftMargin()+0.14, 1-opts.TopMargin()+0.015, title);

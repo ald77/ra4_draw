@@ -1,7 +1,7 @@
 [CMSPaper]
   CanvasW = 600
   CanvasH = 600
-  TitleSize = 0.042
+  TitleSize = 0.048
   LabelSize = 0.043
   AutoYAxis = 1
   xTitleOffset = 1.
@@ -30,8 +30,8 @@
   TitleSize	  = 0.076
   LabelSize	  = 0.054
   xTitleOffset	  = 1.
-  yTitleOffset	  = 0.3
-  PadLeftMargin	  = 0.06
+  yTitleOffset	  = 0.5
+  PadLeftMargin	  = 0.075
   PadRightMargin  = 0.01
   PadTopMargin	  = 0.09
   PadBottomMargin = 0.15

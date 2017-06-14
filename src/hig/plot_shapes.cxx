@@ -130,17 +130,17 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > procs = vector<shared_ptr<Process> >();
   for (unsigned inb(firstnb); inb<nbcuts.size(); inb++){
     // if (sample=="qcd" && inb==nbcuts.size()-1) continue;
-    procs.push_back(Process::MakeShared<Baby_full>(samplename+" ("+RoundNumber(inb,0).Data()+"b)", 
+    procs.push_back(Process::MakeShared<Baby_full>(samplename+" "+RoundNumber(inb,0).Data()+"b", 
       Process::Type::background, colors[inb], allfiles, baseline +"&&stitch_met&&" + cutsProcs +"&&"+ nbcuts[inb]));
   }
   vector<int> colors_trub = {kAzure-4, kTeal-8, kOrange-4, kPink+2, kMagenta-1};
   vector<shared_ptr<Process> > procs_trub = vector<shared_ptr<Process> >();
   for (unsigned inb(firstnb); inb<nbcuts.size(); inb++){
     if ((sample=="zll" || sample=="qcd") && inb==nbcuts.size()-1) { // merge 4b into 3b
-      procs_trub.push_back(Process::MakeShared<Baby_full>(samplename+" (#geq"+RoundNumber(inb,0).Data()+" B-hadrons)", 
+      procs_trub.push_back(Process::MakeShared<Baby_full>(samplename+" #geq"+RoundNumber(inb,0).Data()+" B-hadrons", 
         Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub>=inb &&baseline+"&&stitch_met&&"+cutsProcs));
     } else {
-      procs_trub.push_back(Process::MakeShared<Baby_full>(samplename+" ("+RoundNumber(inb,0).Data()+" B-hadrons)", 
+      procs_trub.push_back(Process::MakeShared<Baby_full>(samplename+" "+RoundNumber(inb,0).Data()+" B-hadrons", 
         Process::Type::background, colors_trub[inb], allfiles, Higfuncs::ntrub==inb && baseline +"&&stitch_met&&"+cutsProcs));
     }
   }
@@ -238,7 +238,7 @@ int main(int argc, char *argv[]){
 
       pm.Push<Hist1D>(Axis(10,0,200,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
         baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs, plt_types).Weight(wgt).Tag(sample+"_shape_bcats")
-        .RatioTitle("Bkg. (nb)","Bkg. (2b)");
+        .RatioTitle("Bkg. nb","Bkg. 2b");
 
       pm.Push<Hist1D>(Axis(10,0,200,"higd_am", "#LTm#GT [GeV]", {100., 140.}),
         baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_trub, plt_types).Weight(wgt).Tag(sample+"_shape_trub");

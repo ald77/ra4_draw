@@ -121,13 +121,13 @@ int main(int argc, char *argv[]){
   TCanvas can;
   //can.SetGrid(); 
   can.SetFillStyle(4000);
-  TString chi1n = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.99]{^{0}}}#kern[-1.3]{#scale[0.99]{_{1}}}";
-  TString chi2n = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.99]{^{0}}}#kern[-1.]{#scale[0.99]{_{2}}}";
-  TString chi1pm= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.99]{^{#pm}}}#kern[-1.3]{#scale[0.99]{_{1}}}";
-  TString chii= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.99]{^{0,#pm}}}#kern[-3.]{#scale[0.99]{_{i}}}";
-  TString chij= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.99]{^{0,#mp}}}#kern[-3.]{#scale[0.99]{_{j}}}";
-  TString chi10= "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.99]{^{0}}}#kern[-1.3]{#scale[0.99]{_{1}}}";
-  TString xsoft= "X#scale[0.85]{_{soft}}";
+  TString chi1n = "#lower[-0.12]{#tilde{#chi}}#kern[+0.2]{#lower[0.2]{#scale[0.99]{^{0}}}}#kern[-1.3]{#scale[0.99]{_{1}}}";
+  TString chi2n = "#lower[-0.12]{#tilde{#chi}}#kern[+0.2]{#lower[0.2]{#scale[0.99]{^{0}}}}#kern[-1.]{#scale[0.99]{_{2}}}";
+  TString chi1pm= "#lower[-0.12]{#tilde{#chi}}#kern[+0.2]{#lower[-0.2]{#scale[0.99]{^{#pm}}}}#kern[-1.3]{#scale[0.99]{_{1}}}";
+  TString chii= "#lower[-0.12]{#tilde{#chi}}#kern[+0.1]{#lower[0.2]{#scale[0.99]{^{0,#kern[+0.2]{#lower[-0.15]{#pm}}}}}}#kern[-4]{#scale[0.99]{_{i}}}";
+  TString chij= "#lower[-0.12]{#tilde{#chi}}#kern[+0.1]{#lower[0.2]{#scale[0.99]{^{0,#kern[+0.2]{#lower[0.15]{#mp}}}}}}#kern[-4]{#scale[0.99]{_{j}}}";
+  TString chi10= "#lower[-0.12]{#tilde{#chi}}#kern[+0.2]{#lower[0.2]{#scale[0.99]{^{0}}}}#kern[-1.3]{#scale[0.99]{_{1}}}";
+  TString xsoft= "X#lower[-0.2]{#scale[0.85]{_{soft}}}";
   TString mass_ = "m#kern[0.1]{#lower[-0.12]{_{";
   float minh=200, maxh=1000, maxXsec = 5e3;
   if(do_paper) {
@@ -173,12 +173,12 @@ int main(int argc, char *argv[]){
   grxsecdown.Draw("same"); 
 
   //// Drawing CMS labels and line at 1
-  TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.6]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "
+  TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.7]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "
     +xsoft+"#rightarrow HH#tilde{G}#tilde{G} + "+xsoft;
   double ppSize = 0.055, ppY = 1-opts.TopMargin()-0.03, ppY2 = 1-opts.TopMargin()-0.11;
   double legSize = 0.044;
 
-  TString mChis = mass_+chi2n+"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}, "
+  TString mChis = mass_+chi2n+"}}} #approx "+mass_+chi1pm+"}}} #approx "+mass_+chi1n+"}}}#kern[0.5]{,} "
     +mass_+"#tilde{G}}}} = 1 GeV";
   DrawCMSLabels("Supplementary");
   linXsec.DrawLine(minh, 1, maxh, 1);
@@ -193,7 +193,7 @@ int main(int argc, char *argv[]){
   leg.SetY1NDC(legY-legH); leg.SetY2NDC(legY); // So that GetX1NDC works in getLegendBoxes
   leg.SetTextSize(legSize); leg.SetFillColor(0); 
   leg.SetFillStyle(0); leg.SetBorderSize(0);
-  leg.AddEntry(&linXsec, "NLO+NLL theory #pm s.d.", "l");
+  leg.AddEntry(&linXsec, "NLO+NLL theory #kern[+0.2]{#pm} s.d.", "l");
   leg.AddEntry(&grobs, " ", "n");
   leg.AddEntry(&grobs, " ", "n");
   leg.AddEntry(&grobs, "Observed", "l");

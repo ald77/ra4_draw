@@ -843,11 +843,11 @@ void Hist1D::StyleHisto(TH1D &h) const{
     }
     else{  
       if(xaxis_.units_ == "" && bin_width == 1){
-	title << "Percentage of "<<yunit;
+	title << "% of "<<yunit;
 	break;
       }
       else{
-	title << "Percentage of "<<yunit<<" / " << bin_width;
+	title << "% of "<<yunit<<" / " << bin_width;
 	if(xaxis_.units_ != "") title << " " << xaxis_.units_;
 	break;
       }
