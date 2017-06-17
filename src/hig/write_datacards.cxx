@@ -9,10 +9,12 @@
 #include <ctime>
 #include <algorithm>
 #include <unistd.h> // getopt in Macs
+#include <stdlib.h> // atof
 #include <getopt.h>
 
 #include "TSystem.h"
 #include "TString.h"
+#include "TMath.h"
 #include "TError.h" // Controls error level reporting
 
 #include "core/named_func.hpp"
@@ -22,14 +24,18 @@
 using namespace std;
 namespace {
   bool fake_PU = false;
+  float bf = 1.;
+  bool incl_nonbb = false;
+  bool incl_nonhh = false;
+  bool old_cards = false;
   TString luminosity = "35.9";
   TString nom_wgt = "weight*eff_trig"; // nominal weight to use
   TString infolder = "/cms2r0/babymaker/babies/2017_03_17/TChiHH/merged_higsys_higsys/";
   TString infile = "*SMS-TChiHH_mGluino-200_mLSP-1_*.root";
   TString outfolder = ".";
 
-  // vector<string> metbins = {"met0"};
-  vector<string> metbins = {"met0","met1","met2","met3"};
+  vector<string> metbins = {"met0","met1","met2"};
+  // vector<string> metbins = {"met0","met1","met2","met3"};
   bool do_3bonly = false;
   enum SysType {kConst, kWeight, kSmear, kCorr, kMetSwap, kPU};
   bool nosys = false;
@@ -81,20 +87,21 @@ vector<double> getYields(Baby_full &baby, const NamedFunc &baseline, const vecto
 void GetOptions(int argc, char *argv[]);
 
 int main(int argc, char *argv[]){
-  gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
+  gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing bfanches
   time_t begtime, endtime;
   time(&begtime);
   
   GetOptions(argc, argv);
   gSystem->mkdir(outfolder, kTRUE);
-  if (nosys) infolder.ReplaceAll("higsys_higsys","higmc_higtight");
+  // if (nosys) infolder.ReplaceAll("higsys_higsys","higmc_higtight");
   // TString infile = "/cms2r0/babymaker/babies/2015_11_27/sms/split_sms/renorm/baby_SMS-T1tttt_mGluino-1500_mLSP-100_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_RunIISpring15FSPremix-MCRUN2_74_V9_renorm.root";
   string prs = infile.Data();
   int mglu = stoi(prs.substr(prs.find("ino-")+4,prs.find("_mLSP")-prs.find("ino-")-4));
   int mlsp = stoi(prs.substr(prs.find("LSP-")+4,prs.find("_Tune")-prs.find("LSP-")-4));
   cout<<"Working on: mGluino = "<<mglu<<" mLSP = "<<mlsp<<endl;
   string glu_lsp("mGluino-"+to_string(mglu)+"_mLSP-"+to_string(mlsp));
-  string model = "TChiHH";
+  string model = "TChiHZ";
+  if (infolder.Contains("03_17")) model = "TChiHH";
 
   //------------- SYSTEMATICS DEFINITIONS -----------------------------
   //// tables has a vector of the tables you want to print
@@ -147,6 +154,19 @@ int main(int argc, char *argv[]){
     }
   }
 
+  // ------------ fits for extrapolating yields including contamination ---------------
+  map<TString, vector<double> > hz_fit;
+  hz_fit["sbd_2b"] = { 1.79760e+00, -1.42525e-01 };
+  hz_fit["hig_2b"] = { 7.47671e-01,  1.83420e-01 };
+  hz_fit["sbd_3b"] = { 6.07960e-01, -1.03622e+00 };
+  hz_fit["hig_3b"] = { 1.25460e-01, -2.26228e+00 };
+
+  map<TString, vector<double> > zz_fit;
+  zz_fit["sbd_2b"] = { 1.81166e+00, -1.42525e-01 };
+  zz_fit["hig_2b"] = { 7.85145e-02, -1.19438e+00 };
+  zz_fit["sbd_3b"] = { 3.62738e-01, -1.18628e+00 };
+  zz_fit["hig_3b"] = { 8.91456e-03, -3.97757e+00 };
+
   //------------- SYSTEMATICS DEFINITIONS -----------------------------
   vector<sysdef> v_sys;
   // order as they will appear in latex table
@@ -186,6 +206,45 @@ int main(int argc, char *argv[]){
 
   /////////////////////////////  No more changes needed down here to add systematics ///////////////////////
   // prepare the vector of bincuts used to get the yields
+  NamedFunc bf_wgt("bf_wgt", [&](const Baby &b){
+    float wgt_ = 1;
+    if (b.type()==-999999){
+      int nh(0), nh_nonbb(0);
+      for (unsigned i(0); i<b.mc_id()->size(); i++) {
+        if (b.mc_id()->at(i)==25) nh++;
+        if (b.mc_mom()->at(i)==25 && abs(b.mc_id()->at(i))!=5) nh_nonbb++;
+      }
+      nh_nonbb /=2;
+      if (incl_nonhh) wgt_ *= (bf*bf/.25*(nh==2) + 2*bf*(1-bf)/.5*(nh==1) + (1-bf)*(1-bf)/.25*(nh==0));
+      else wgt_ *= (bf*bf/.25*(nh==2));
+      if (!incl_nonbb) wgt_ *= (nh_nonbb==0);
+    } else if (incl_nonhh) {
+      float mass = b.mgluino();
+      double hz_wgt(0), zz_wgt(0);
+      if (b.nbdt()==2 && b.nbdm()==2){
+        if (b.higd_am()>100 && b.higd_am()<140 && b.higd_dm()<40) {
+          hz_wgt = hz_fit["hig_2b"][0]+TMath::Exp(hz_fit["hig_2b"][1]-1e-05*mass*mass);
+          zz_wgt = zz_fit["hig_2b"][0]+TMath::Exp(zz_fit["hig_2b"][1]-1e-05*mass*mass);
+        } else {
+          hz_wgt = hz_fit["sbd_2b"][0]+TMath::Exp(hz_fit["sbd_2b"][1]-1e-05*mass*mass);
+          zz_wgt = zz_fit["sbd_2b"][0]+TMath::Exp(zz_fit["sbd_2b"][1]-1e-05*mass*mass);
+        }
+      } else {
+        if (b.higd_am()>100 && b.higd_am()<140 && b.higd_dm()<40) {
+          hz_wgt = hz_fit["hig_3b"][0]+TMath::Exp(hz_fit["hig_3b"][1]-1e-05*mass*mass);
+          zz_wgt = zz_fit["hig_3b"][0]+TMath::Exp(zz_fit["hig_3b"][1]-1e-05*mass*mass);
+        } else {
+          hz_wgt = hz_fit["sbd_3b"][0]+TMath::Exp(hz_fit["sbd_3b"][1]-1e-05*mass*mass);
+          zz_wgt = zz_fit["sbd_3b"][0]+TMath::Exp(zz_fit["sbd_3b"][1]-1e-05*mass*mass);
+        }
+      }
+      wgt_ *= bf*bf + 2*bf*(1-bf)*hz_wgt + (1-bf)*(1-bf)*zz_wgt;
+    } else {
+      wgt_ *= bf*bf;
+    }
+    return wgt_;
+  });
+
   vector<NamedFunc> bcuts;
   sysdef nom = v_sys[0];
   if (nom.tag != "nominal"){
@@ -199,26 +258,26 @@ int main(int argc, char *argv[]){
     } else if (sys.sys_type == kWeight) {
       for (auto &bin: v_bins) {
         for (auto &wgt: sys.v_wgts) {
-          bcuts.emplace_back("("+baseline+"&&"+bin.cut+")*"+nom_wgt+"*"+wgt);
+          bcuts.emplace_back(("("+baseline+"&&"+bin.cut+")*"+nom_wgt+"*"+wgt) * bf_wgt);
         }
       }
     } else if (sys.sys_type == kCorr || sys.sys_type == kSmear) {
       for (auto &bin: v_bins) {
-        bcuts.emplace_back(nom2sys_bin("("+baseline+"&&"+bin.cut, sys.shift_index)+")*"+nom_wgt);
+        bcuts.emplace_back((nom2sys_bin("("+baseline+"&&"+bin.cut, sys.shift_index)+")*"+nom_wgt) * bf_wgt);
         if (sys.sys_type == kCorr) { //if it is a correction, need to push the 'down' variation as well
-          bcuts.emplace_back(nom2sys_bin("("+baseline+"&&"+bin.cut, sys.shift_index+1)+")*"+nom_wgt);
+          bcuts.emplace_back((nom2sys_bin("("+baseline+"&&"+bin.cut, sys.shift_index+1)+")*"+nom_wgt) * bf_wgt);
         }
       }
     } else if (sys.sys_type == kMetSwap){
       for (auto &bin: v_bins) {
-        bcuts.emplace_back(nom2genmet("("+baseline+"&&"+bin.cut)+")*"+nom_wgt);
+        bcuts.emplace_back((nom2genmet("("+baseline+"&&"+bin.cut)+")*"+nom_wgt) * bf_wgt);
       }
     } else if (sys.sys_type == kPU) {
       for(const auto &bin: v_bins){
-        bcuts.emplace_back("("+baseline+"&&"+bin.cut+"&&"+"npv<=20)*"+nom_wgt);
-        bcuts.emplace_back("(npv<=20)*"+nom_wgt);
-        bcuts.emplace_back("("+baseline+"&&"+bin.cut+"&&"+"npv>=21)*"+nom_wgt);
-        bcuts.emplace_back("(npv>=21)*"+nom_wgt);
+        bcuts.emplace_back(("("+baseline+"&&"+bin.cut+"&&"+"npv<=20)*"+nom_wgt) * bf_wgt);
+        bcuts.emplace_back(("(npv<=20)*"+nom_wgt) * bf_wgt);
+        bcuts.emplace_back(("("+baseline+"&&"+bin.cut+"&&"+"npv>=21)*"+nom_wgt) * bf_wgt);
+        bcuts.emplace_back(("(npv>=21)*"+nom_wgt) * bf_wgt);
       }
     }
   }
@@ -231,25 +290,21 @@ int main(int argc, char *argv[]){
   entries = getYields(baby, baseline, bcuts, yields, w2, luminosity.Atof());
 
   // --------- Writing datacard -----------------------
-  TString outpath = outfolder+"/datacard_SMS-"+TString(model)+"_"+glu_lsp+"_"+luminosity.ReplaceAll(".","p")+"ifb.txt";
-  cout<<"Writing to "<<outpath<<endl;
+  TString outpath = outfolder+"/datacard_SMS-"+TString(model)+"_"+glu_lsp+"_bfH-"+RoundNumber(bf*100, 0);
+  if (incl_nonbb) outpath += "_allHigDecays";
+  if (incl_nonhh && bf<1.) outpath += "_withZContam";
+  outpath += "_"+luminosity.ReplaceAll(".","p")+"ifb";
+  if (old_cards) outpath += "_old";
+  outpath += ".txt";
+  cout<<"open "<<outpath<<endl;
   unsigned wname(25), wdist(5), wbin(15);
   unsigned nbins(v_bins.size());
   unsigned nmet(metbins.size());
-  // ---------- count nuisances
-  int nnuis(0);
-  nnuis = 3; //common parameter + one ratio constraint
-  if (!do_3bonly) nnuis += 1; // one more ratio constraint per nb bin
-  nnuis *= nmet; // same number for all met planes
-  nnuis +=8; //MC stats closure uncertainty
-  nnuis +=5; //background closure uncertainties + wilks
-  nnuis +=24; // signal statistical uncertainties
-  nnuis +=12; // signal systematics
   // --------- write header
   ofstream fcard(outpath);
   fcard<<"imax "<<nbins<<"  number of channels\n";
   fcard<<"jmax 1  number of backgrounds\n";
-  fcard<<"kmax "<<nnuis<<"  number of nuisance parameters\n";
+  fcard<<"kmax *  number of nuisance parameters\n";
   fcard<<"shapes * * FAKE\n";
   fcard<<endl<<setw(wname)<<"bin"<<setw(wdist)<<" ";
   for (size_t ibin(0); ibin<nbins; ibin++) fcard<<setw(wbin)<<" "<<setw(wbin)<<v_bins[ibin].tag;
@@ -263,71 +318,40 @@ int main(int argc, char *argv[]){
   fcard<<endl<<setw(wname)<<"process"<<setw(wdist)<<" ";
   for (size_t ibin(0); ibin<nbins; ibin++) fcard<<setw(wbin)<<"0"<<setw(wbin)<<"1";
   fcard<<endl<<setw(wname)<<"rate"<<setw(wdist)<<" ";
-  for (size_t ibin(0); ibin<nbins; ibin++) fcard<<setw(wbin)<<Form("%.2f",yields[ibin])<<setw(wbin)<<global_fit[ibin];
+  if (old_cards) for (size_t ibin(0); ibin<nbins; ibin++) fcard<<setw(wbin)<<Form("%.2f",yields[ibin])<<setw(wbin)<<global_fit[ibin];
+  else           for (size_t ibin(0); ibin<nbins; ibin++) fcard<<setw(wbin)<<Form("%.2f",yields[ibin])<<setw(wbin)<<"1";
   fcard<<endl<<endl;
+  cout<<"Wrote headers"<<endl;
 
   //--------- Writing ABCD constraints----------------------------
   unsigned nnb = 2;
   if (!do_3bonly) nnb = 3;
 
-  for (size_t imet(0); imet<nmet; imet++) {
-    double cnb(0); TString cnbstr;
-    for (size_t inb(0); inb<nnb; inb++) {
-      fcard<<setw(wname)<<"c_"+metbins[imet]+"_"+to_string(inb+2)+"b_HH"<<setw(wdist)<<"lnU";
-      if (observed[imet*2*nnb+2*inb]<0.1) cnb = 99999.;
-      else cnb = 1+6/sqrt(observed[imet*2*nnb+2*inb]); // <-- based on observed in SBD for this nb category
-      cnbstr = Form("%.2f",cnb);
-      for (size_t jmet(0); jmet<nmet; jmet++) {    
-        for (size_t jnb(0); jnb<nnb; jnb++) {
-          if (imet==jmet && inb==jnb) fcard<<setw(wbin)<<"-"<<setw(wbin)<<cnbstr<<setw(wbin)<<"-"<<setw(wbin)<<cnbstr;
-          else fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-        }
-      }
-      fcard<<endl;
-    }
-    fcard<<setw(wname)<<"c_"+metbins[imet]+"_allnb_HH"<<setw(wdist)<<"lnU";
-    for (size_t jmet(0); jmet<nmet; jmet++) {    
-      for (size_t jnb(0); jnb<nnb; jnb++) {
-        if (imet==jmet) fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<cnbstr;
-        else fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-      }
-    }
-    fcard<<endl;
-  }
-
-  //--------- MC statistical uncertainty ----------------------------
-  vector<double> mcstat_unc = {0.08, 0.15, 0.05, 0.37, 0.19, 0.23, 0.59, 0.75};
-  if (nmet<4 || do_3bonly) {cout<<"Datacards with uncertainty not supported for partial binning"<<endl; exit(0);}
-  for (size_t imet(0); imet<nmet; imet++) {
-    for (size_t inb(0); inb<nnb; inb++) {
-      if (inb==0) continue;
-      fcard<<setw(wname)<<"mcstat_"+metbins[imet]+"_"+to_string(inb+2)+"b_HH"<<setw(wdist)<<"lnN";
-      TString uncstr = Form("%.2f",1+mcstat_unc[imet*(nnb-1)+inb-1]);
-      for (size_t jmet(0); jmet<nmet; jmet++) {    
-        for (size_t jnb(0); jnb<nnb; jnb++) {
-          if (imet==jmet && inb==jnb) fcard<<setw(wbin)<<"-"<<setw(wbin)<<uncstr<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-          else fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-        }
-      }
-      fcard<<endl;
-    }
-  }  
-  // ------------ Closure uncertainties
-  vector<TString> closure_unc_names; vector< vector<double> > closure_unc;
-  closure_unc_names.push_back("wilks_HH"); closure_unc.push_back({-9999, -9999, -9999, -9999, -9999, -9999, -9999, 10.});
-  closure_unc_names.push_back("ttx_closure_HH"); closure_unc.push_back({0.03, 0.05, 0.03, 0.06, 0.02, 0.04, 0.02, 0.03});
-  closure_unc_names.push_back("zll_closure_HH"); closure_unc.push_back({0.01, 0.01, 0.03, 0.01, 0.06, 0.04, 0.08, 0.09});
-  closure_unc_names.push_back("qcd_closure_HH"); closure_unc.push_back({0.02, 0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01});
-  closure_unc_names.push_back("bkg_comp_HH"); closure_unc.push_back({-0.03, -0.05,  0.03,  0.01, -0.04,  0.02,  0.06,  0.06});
-  for (size_t iunc(0); iunc<closure_unc.size(); iunc++) {
-    fcard<<setw(wname)<<closure_unc_names[iunc]<<setw(wdist)<<"lnN";
-    for (size_t imet(0); imet<nmet; imet++) {    
+  if (old_cards) {
+    for (size_t imet(0); imet<nmet; imet++) {
+      double cnb(0); TString cnbstr;
       for (size_t inb(0); inb<nnb; inb++) {
-        if (inb==0 || closure_unc[iunc][imet*(nnb-1)+inb-1]<-10) fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-";
-        else fcard<<setw(wbin)<<"-"<<setw(wbin)<<Form("%.2f",1+closure_unc[iunc][imet*(nnb-1)+inb-1])<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+        fcard<<setw(wname)<<"c_"+metbins[imet]+"_"+to_string(inb+2)+"b_HH"<<setw(wdist)<<"lnU";
+        if (observed[imet*2*nnb+2*inb]<0.1) cnb = 99999.;
+        else cnb = 1+6/sqrt(observed[imet*2*nnb+2*inb]); // <-- based on observed in SBD for this nb category
+        cnbstr = Form("%.2f",cnb);
+        for (size_t jmet(0); jmet<nmet; jmet++) {    
+          for (size_t jnb(0); jnb<nnb; jnb++) {
+            if (imet==jmet && inb==jnb) fcard<<setw(wbin)<<"-"<<setw(wbin)<<cnbstr<<setw(wbin)<<"-"<<setw(wbin)<<cnbstr;
+            else fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+          }
+        }
+        fcard<<endl;
       }
+      fcard<<setw(wname)<<"c_"+metbins[imet]+"_allnb_HH"<<setw(wdist)<<"lnU";
+      for (size_t jmet(0); jmet<nmet; jmet++) {    
+        for (size_t jnb(0); jnb<nnb; jnb++) {
+          if (imet==jmet) fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<cnbstr;
+          else fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+        }
+      }
+      fcard<<endl;
     }
-    fcard<<endl;
   }
 
   //--------- Signal statistical uncertainties ----------------------------
@@ -341,67 +365,146 @@ int main(int argc, char *argv[]){
     }
     fcard<<endl;
   }
+  cout<<"Wrote signal stat. uncertainties"<<endl;
 
-  for (auto &sys: v_sys) {
-    if (sys.tag == "nominal") continue;
-    fcard<<setw(wname)<<sys.tag<<setw(wdist)<<"lnN";
-    for (size_t ibin = 0; ibin<nbins; ++ibin) {
-      const double nom_yield(yields[ibin]);
-      double up(0.), dn(0.);
-      if (sys.sys_type == kConst) {
-        up = stod(sys.v_wgts[0].Data());
-        dn = -up;
-      } else if (sys.sys_type == kWeight) {
-        up = yields[sys.ind + 2*ibin]/nom_yield - 1;
-        dn = yields[sys.ind + 2*ibin + 1]/nom_yield - 1;
-      } else if (sys.sys_type == kSmear) {
-        up = yields[sys.ind + ibin]/nom_yield - 1;
-        dn = -up;
-      } else if (sys.sys_type == kMetSwap) {
-        //Use average of met yield and met_tru yield as central value
-        dn = yields[sys.ind + ibin]/(0.5*(yields[sys.ind + ibin]+nom_yield)) - 1;
-        up = -dn;
-      } else if (sys.sys_type == kCorr) {
-        up = yields[sys.ind + 2*ibin]/nom_yield - 1;
-        dn = yields[sys.ind + 2*ibin + 1]/nom_yield - 1;
-      } else if (sys.sys_type == kPU ) {
-        double eff_low  = yields[sys.ind+4*ibin+0]/yields[sys.ind+4*ibin+1];
-        double eff_high = yields[sys.ind+4*ibin+2]/yields[sys.ind+4*ibin+3];
-        double m = (eff_high-eff_low)/(pu_high-pu_low);
-        double b = (eff_low*pu_high-eff_high*pu_low)/(pu_high-pu_low);
-        double eff_data = 0., eff_mc = 0.;
-        for(size_t i = 0; i < v_data_npv.size(); ++i){
-          double fx = m*static_cast<double>(i)+b;
-          eff_data += fx*h_data_npv.GetBinContent(i+1);
-          eff_mc += fx*h_mc_npv.GetBinContent(i+1);
-        }
-        up = (eff_data-eff_mc)/eff_mc;
-        dn = -up;
-
-        //Temporary stand-in until better method available
-        if(fake_PU){
-          if((v_bins.at(ibin).tag.Contains("lowmet") || v_bins.at(ibin).tag.Contains("medmet"))
-             && (v_bins.at(ibin).tag.Contains("lownj") || v_bins.at(ibin).tag.Contains("r1_") || v_bins.at(ibin).tag.Contains("r3_"))){
-            up = 0.1;
-            dn = -0.1;
-          }else{
-            up = 0.15;
-            dn = -0.15;
+  //--------- MC statistical uncertainty ----------------------------
+  vector<double> mcstat_unc = {0.08, 0.15, 0.05, 0.37, 0.19, 0.23, 0.59, 0.75};
+  if (nmet<4 || do_3bonly) {
+    cout<<"Datacards with uncertainty not supported for partial binning"<<endl; 
+  } else {
+    for (size_t imet(0); imet<nmet; imet++) {
+      for (size_t inb(0); inb<nnb; inb++) {
+        if (inb==0) continue;
+        fcard<<setw(wname)<<"mcstat_"+metbins[imet]+"_"+to_string(inb+2)+"b_HH"<<setw(wdist)<<"lnN";
+        TString uncstr = Form("%.2f",1+mcstat_unc[imet*(nnb-1)+inb-1]);
+        for (size_t jmet(0); jmet<nmet; jmet++) {    
+          for (size_t jnb(0); jnb<nnb; jnb++) {
+            if (imet==jmet && inb==jnb) fcard<<setw(wbin)<<"-"<<setw(wbin)<<uncstr<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+            else fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-";
           }
         }
+        fcard<<endl;
       }
-      // convert to ra4_stats input and write to file
-      // double ln = (up>0 ? 1:-1)*max(up>0 ? up : (1/(1+up)-1), dn>0 ? dn : (1/(1+dn)-1));
-      double ln = max(up>0 ? 1+up : 1/(fabs(up)+1), dn>0 ? 1+dn : 1/(fabs(dn)+1));
-      if (std::isnan(ln) || std::isinf(ln)) {
-        cout <<" Found bad unc. set to 0 -> "<<std::left<<setw(10)<<sys.tag <<std::left<<setw(10)<<v_bins[ibin].tag <<" "<<std::right<<setprecision(0)<<setw(25)<<entries[ibin] <<" "<<setprecision(5)<<setw(15)<<yields[ibin] <<" "<<setprecision(10)<<setw(15)<<w2[ibin] <<endl;  
-        ln = 0;
-      } 
-      if (sys.sys_type == kConst) ln = 1+up;
-      fcard<<setw(wbin)<<Form("%.2f",ln)<<setw(wbin)<<"-";
-    } // loop over bins
+    }  
+    cout<<"Wrote MC stat. closure uncertainties"<<endl;
+
+    // ------------ Closure uncertainties
+    vector<TString> closure_unc_names; vector< vector<double> > closure_unc;
+    if (old_cards) {closure_unc_names.push_back("wilks_HH"); closure_unc.push_back({-9999, -9999, -9999, -9999, -9999, -9999, -9999, 10.});}
+    closure_unc_names.push_back("ttx_closure_HH"); closure_unc.push_back({0.03, 0.05, 0.03, 0.06, 0.02, 0.04, 0.02, 0.03});
+    closure_unc_names.push_back("zll_closure_HH"); closure_unc.push_back({0.01, 0.01, 0.03, 0.01, 0.06, 0.04, 0.08, 0.09});
+    closure_unc_names.push_back("qcd_closure_HH"); closure_unc.push_back({0.02, 0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01});
+    closure_unc_names.push_back("bkg_comp_HH"); closure_unc.push_back({-0.03, -0.05,  0.03,  0.01, -0.04,  0.02,  0.06,  0.06});
+    for (size_t iunc(0); iunc<closure_unc.size(); iunc++) {
+      fcard<<setw(wname)<<closure_unc_names[iunc]<<setw(wdist)<<"lnN";
+      for (size_t imet(0); imet<nmet; imet++) {    
+        for (size_t inb(0); inb<nnb; inb++) {
+          if (inb==0 || closure_unc[iunc][imet*(nnb-1)+inb-1]<-10) fcard<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+          else fcard<<setw(wbin)<<"-"<<setw(wbin)<<Form("%.2f",1+closure_unc[iunc][imet*(nnb-1)+inb-1])<<setw(wbin)<<"-"<<setw(wbin)<<"-";
+        }
+      }
+      fcard<<endl;
+    }
+    cout<<"Wrote CR-based closure uncertainties"<<endl;
+
+    for (auto &sys: v_sys) {
+      if (sys.tag == "nominal") continue;
+      fcard<<setw(wname)<<sys.tag<<setw(wdist)<<"lnN";
+      for (size_t ibin = 0; ibin<nbins; ++ibin) {
+        const double nom_yield(yields[ibin]);
+        double up(0.), dn(0.);
+        if (sys.sys_type == kConst) {
+          up = stod(sys.v_wgts[0].Data());
+          dn = -up;
+        } else if (sys.sys_type == kWeight) {
+          up = yields[sys.ind + 2*ibin]/nom_yield - 1;
+          dn = yields[sys.ind + 2*ibin + 1]/nom_yield - 1;
+        } else if (sys.sys_type == kSmear) {
+          up = yields[sys.ind + ibin]/nom_yield - 1;
+          dn = -up;
+        } else if (sys.sys_type == kMetSwap) {
+          //Use average of met yield and met_tru yield as central value
+          dn = yields[sys.ind + ibin]/(0.5*(yields[sys.ind + ibin]+nom_yield)) - 1;
+          up = -dn;
+        } else if (sys.sys_type == kCorr) {
+          up = yields[sys.ind + 2*ibin]/nom_yield - 1;
+          dn = yields[sys.ind + 2*ibin + 1]/nom_yield - 1;
+        } else if (sys.sys_type == kPU ) {
+          double eff_low  = yields[sys.ind+4*ibin+0]/yields[sys.ind+4*ibin+1];
+          double eff_high = yields[sys.ind+4*ibin+2]/yields[sys.ind+4*ibin+3];
+          double m = (eff_high-eff_low)/(pu_high-pu_low);
+          double b = (eff_low*pu_high-eff_high*pu_low)/(pu_high-pu_low);
+          double eff_data = 0., eff_mc = 0.;
+          for(size_t i = 0; i < v_data_npv.size(); ++i){
+            double fx = m*static_cast<double>(i)+b;
+            eff_data += fx*h_data_npv.GetBinContent(i+1);
+            eff_mc += fx*h_mc_npv.GetBinContent(i+1);
+          }
+          up = (eff_data-eff_mc)/eff_mc;
+          dn = -up;
+
+          //Temporary stand-in until better method available
+          if(fake_PU){
+            if((v_bins.at(ibin).tag.Contains("lowmet") || v_bins.at(ibin).tag.Contains("medmet"))
+               && (v_bins.at(ibin).tag.Contains("lownj") || v_bins.at(ibin).tag.Contains("r1_") || v_bins.at(ibin).tag.Contains("r3_"))){
+              up = 0.1;
+              dn = -0.1;
+            }else{
+              up = 0.15;
+              dn = -0.15;
+            }
+          }
+        }
+        // convert to ra4_stats input and write to file
+        // double ln = (up>0 ? 1:-1)*max(up>0 ? up : (1/(1+up)-1), dn>0 ? dn : (1/(1+dn)-1));
+        double ln = max(up>0 ? 1+up : 1/(fabs(up)+1), dn>0 ? 1+dn : 1/(fabs(dn)+1));
+        if (std::isnan(ln) || std::isinf(ln)) {
+          cout <<" Found bad unc. set to 0 -> "<<std::left<<setw(10)<<sys.tag <<std::left<<setw(10)<<v_bins[ibin].tag <<" "<<std::right<<setprecision(0)<<setw(25)<<entries[ibin] <<" "<<setprecision(5)<<setw(15)<<yields[ibin] <<" "<<setprecision(10)<<setw(15)<<w2[ibin] <<endl;  
+          ln = 0;
+        } 
+        if (sys.sys_type == kConst) ln = 1+up;
+        fcard<<setw(wbin)<<Form("%.2f",ln)<<setw(wbin)<<"-";
+      } // loop over bins
+      fcard<<endl;
+    } // loop over systematics
+    cout<<"Wrote systematics"<<endl;
+  }
+
+  if (!old_cards) {
     fcard<<endl;
-  } // loop over systematics
+    for (unsigned imet(0); imet<metbins.size(); imet++) {
+      if (metbins[imet]=="met0") {
+        fcard<<"rp_hig_3b_met0 rateParam hig_3b_met0 bkg (@0*@1/@2) rp_sbd_3b_met0,rp_hig_2b_met0,rp_sbd_2b_met0"<<endl;
+        if (!do_3bonly) fcard<<"rp_hig_4b_met0 rateParam hig_4b_met0 bkg (@0*@1/@2) rp_sbd_4b_met0,rp_hig_2b_met0,rp_sbd_2b_met0"<<endl;
+        fcard<<"rp_sbd_2b_met0 rateParam sbd_2b_met0 bkg 1559"<<endl;
+        fcard<<"rp_hig_2b_met0 rateParam hig_2b_met0 bkg 658"<<endl;
+        fcard<<"rp_sbd_3b_met0 rateParam sbd_3b_met0 bkg 145"<<endl;
+        if (!do_3bonly) fcard<<"rp_sbd_4b_met0 rateParam sbd_4b_met0 bkg 45"<<endl<<endl;
+      } else if (metbins[imet]=="met1") {
+        fcard<<"rp_hig_3b_met1 rateParam hig_3b_met1 bkg (@0*@1/@2) rp_sbd_3b_met1,rp_hig_2b_met1,rp_sbd_2b_met1"<<endl;
+        if (!do_3bonly) fcard<<"rp_hig_4b_met1 rateParam hig_4b_met1 bkg (@0*@1/@2) rp_sbd_4b_met1,rp_hig_2b_met1,rp_sbd_2b_met1"<<endl;
+        fcard<<"rp_sbd_2b_met1 rateParam sbd_2b_met1 bkg 585"<<endl;
+        fcard<<"rp_hig_2b_met1 rateParam hig_2b_met1 bkg 336"<<endl;
+        fcard<<"rp_sbd_3b_met1 rateParam sbd_3b_met1 bkg 61"<<endl;
+        if (!do_3bonly) fcard<<"rp_sbd_4b_met1 rateParam sbd_4b_met1 bkg 13"<<endl<<endl;
+      } else if (metbins[imet]=="met2") {
+        fcard<<"rp_hig_3b_met2 rateParam hig_3b_met2 bkg (@0*@1/@2) rp_sbd_3b_met2,rp_hig_2b_met2,rp_sbd_2b_met2"<<endl;
+        if (!do_3bonly) fcard<<"rp_hig_4b_met2 rateParam hig_4b_met2 bkg (@0*@1/@2) rp_sbd_4b_met2,rp_hig_2b_met2,rp_sbd_2b_met2"<<endl;
+        fcard<<"rp_sbd_2b_met2 rateParam sbd_2b_met2 bkg 74"<<endl;
+        fcard<<"rp_hig_2b_met2 rateParam hig_2b_met2 bkg 39"<<endl;
+        fcard<<"rp_sbd_3b_met2 rateParam sbd_3b_met2 bkg 4"<<endl;
+        if (!do_3bonly) fcard<<"rp_sbd_4b_met2 rateParam sbd_4b_met2 bkg 2"<<endl<<endl;
+      } else if (metbins[imet]=="met3") {
+        fcard<<"rp_hig_3b_met3 rateParam hig_3b_met3 bkg (@0*@1/@2) rp_sbd_3b_met3,rp_hig_2b_met3,rp_sbd_2b_met3"<<endl;
+        if (!do_3bonly) fcard<<"rp_hig_4b_met3 rateParam hig_4b_met3 bkg (@0*@1/@2) rp_sbd_4b_met3,rp_hig_2b_met3,rp_sbd_2b_met3"<<endl;
+        fcard<<"rp_sbd_2b_met3 rateParam sbd_2b_met3 bkg 5"<<endl;
+        fcard<<"rp_hig_2b_met3 rateParam hig_2b_met3 bkg 5"<<endl;
+        fcard<<"rp_sbd_3b_met3 rateParam sbd_3b_met3 bkg 1"<<endl;
+        if (!do_3bonly) fcard<<"rp_sbd_4b_met3 rateParam sbd_4b_met3 bkg 0"<<endl;
+      }
+    }
+  } 
+
   fcard.close();
 
   cout<<" open "<<outpath<<endl;
@@ -446,13 +549,11 @@ vector<double> getYields(Baby_full &baby, const NamedFunc &/*baseline*/, const v
     h_mc_npv.SetBinContent(i+1, 0.);
     h_mc_npv.SetBinError(i+1, 0.);
   }
-  
   vector<double> entries = vector<double>(bincuts.size(), 0);
   yield = vector<double>(bincuts.size(), 0);
   w2 = yield;
 
   long nentries = baby.GetEntries();
-
   for(long entry = 0; entry < nentries; ++entry){
     baby.GetEntry(entry);
     h_mc_npv.Fill(baby.npv(), baby.weight()*baby.eff_trig());
@@ -510,7 +611,10 @@ void GetOptions(int argc, char *argv[]){
       {"infile", required_argument, 0, 'f'},
       {"outfolder", required_argument, 0, 'o'},
       {"lumi", required_argument, 0, 'l'},
-      {"alt_bin", no_argument, 0, 'b'},
+      {"bf", required_argument, 0, 0},
+      {"incl_nonbb", no_argument, 0, 0},
+      {"incl_nonhh", no_argument, 0, 0},
+      {"old", no_argument, 0, 0},
       {"fake_PU", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
@@ -531,6 +635,14 @@ void GetOptions(int argc, char *argv[]){
       optname = long_options[option_index].name;
       if(optname == "fake_PU"){
         fake_PU = true;
+      }else if(optname == "incl_nonbb"){
+        incl_nonbb = true;
+      }else if(optname == "incl_nonhh"){
+        incl_nonhh = true;
+      }else if(optname == "bf"){
+        bf = atof(optarg);
+      }else if(optname == "old"){
+        old_cards = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
       }
