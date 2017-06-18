@@ -34,8 +34,9 @@ namespace {
   TString infile = "*SMS-TChiHH_mGluino-200_mLSP-1_*.root";
   TString outfolder = ".";
 
-  vector<string> metbins = {"met0","met1","met2"};
-  // vector<string> metbins = {"met0","met1","met2","met3"};
+  // vector<string> metbins = {"met0"};
+  // vector<string> metbins = {"met0","met1","met2"};
+  vector<string> metbins = {"met0","met1","met2","met3"};
   bool do_3bonly = false;
   enum SysType {kConst, kWeight, kSmear, kCorr, kMetSwap, kPU};
   bool nosys = false;
@@ -153,6 +154,8 @@ int main(int argc, char *argv[]){
       }
     }
   }
+  unsigned nbins(v_bins.size());
+
 
   // ------------ fits for extrapolating yields including contamination ---------------
   map<TString, vector<double> > hz_fit;
@@ -281,13 +284,24 @@ int main(int argc, char *argv[]){
       }
     }
   }
-  
+
   // get yields from the baby for all the cut strings
   cout<<"Running on: "<<infolder+"/"+infile<<endl;
   Baby_full baby(std::set<std::string>{(infolder+"/"+infile).Data()});
   auto activator = baby.Activate();
   vector<double> yields, w2, entries;
   entries = getYields(baby, baseline, bcuts, yields, w2, luminosity.Atof());
+
+  // calculate average of yields with GEN and RECO MET
+  vector<float> nom_met_avg_yield, nom_met_avg_w2;
+  for (auto &sys: v_sys) {
+    if (sys.sys_type == kMetSwap) {
+      for (size_t ibin = 0; ibin<nbins; ++ibin) {
+        nom_met_avg_yield.push_back(0.5*(yields[sys.ind + ibin]+yields[ibin]));
+        nom_met_avg_w2.push_back(0.5*(w2[sys.ind + ibin]+w2[ibin]));
+      }
+    }
+  }
 
   // --------- Writing datacard -----------------------
   TString outpath = outfolder+"/datacard_SMS-"+TString(model)+"_"+glu_lsp+"_bfH-"+RoundNumber(bf*100, 0);
@@ -298,7 +312,6 @@ int main(int argc, char *argv[]){
   outpath += ".txt";
   cout<<"open "<<outpath<<endl;
   unsigned wname(25), wdist(5), wbin(15);
-  unsigned nbins(v_bins.size());
   unsigned nmet(metbins.size());
   // --------- write header
   ofstream fcard(outpath);
@@ -318,8 +331,8 @@ int main(int argc, char *argv[]){
   fcard<<endl<<setw(wname)<<"process"<<setw(wdist)<<" ";
   for (size_t ibin(0); ibin<nbins; ibin++) fcard<<setw(wbin)<<"0"<<setw(wbin)<<"1";
   fcard<<endl<<setw(wname)<<"rate"<<setw(wdist)<<" ";
-  if (old_cards) for (size_t ibin(0); ibin<nbins; ibin++) fcard<<setw(wbin)<<Form("%.2f",yields[ibin])<<setw(wbin)<<global_fit[ibin];
-  else           for (size_t ibin(0); ibin<nbins; ibin++) fcard<<setw(wbin)<<Form("%.2f",yields[ibin])<<setw(wbin)<<"1";
+  if (old_cards) for (size_t ibin(0); ibin<nbins; ibin++) fcard<<setw(wbin)<<Form("%.2f",nom_met_avg_yield[ibin])<<setw(wbin)<<global_fit[ibin];
+  else           for (size_t ibin(0); ibin<nbins; ibin++) fcard<<setw(wbin)<<Form("%.2f",nom_met_avg_yield[ibin])<<setw(wbin)<<"1";
   fcard<<endl<<endl;
   cout<<"Wrote headers"<<endl;
 
@@ -357,7 +370,7 @@ int main(int argc, char *argv[]){
   //--------- Signal statistical uncertainties ----------------------------
   for (size_t ibin(0); ibin<nbins; ibin++) {
     fcard<<setw(wname)<<"sig_stat_"+v_bins[ibin].tag+"_HH"<<setw(wdist)<<"lnN";
-    TString sig_stat = Form("%.2f",1.+sqrt(w2[ibin])/yields[ibin]);
+    TString sig_stat = Form("%.2f",1.+sqrt(nom_met_avg_w2[ibin])/nom_met_avg_yield[ibin]);
     if (yields[ibin]<0.00001) sig_stat = "99999.00";
     for (size_t jbin(0); jbin<nbins; jbin++) {
       if (ibin==jbin) fcard<<setw(wbin)<<sig_stat<<setw(wbin)<<"-";
@@ -371,7 +384,7 @@ int main(int argc, char *argv[]){
   vector<double> mcstat_unc = {0.08, 0.15, 0.05, 0.37, 0.19, 0.23, 0.59, 0.75};
   if (nmet<4 || do_3bonly) {
     cout<<"Datacards with uncertainty not supported for partial binning"<<endl; 
-  } else {
+  } else if (!nosys){
     for (size_t imet(0); imet<nmet; imet++) {
       for (size_t inb(0); inb<nnb; inb++) {
         if (inb==0) continue;
@@ -390,7 +403,7 @@ int main(int argc, char *argv[]){
 
     // ------------ Closure uncertainties
     vector<TString> closure_unc_names; vector< vector<double> > closure_unc;
-    if (old_cards) {closure_unc_names.push_back("wilks_HH"); closure_unc.push_back({-9999, -9999, -9999, -9999, -9999, -9999, -9999, 10.});}
+    closure_unc_names.push_back("wilks_HH"); closure_unc.push_back({-9999, -9999, -9999, -9999, -9999, -9999, -9999, 10.});
     closure_unc_names.push_back("ttx_closure_HH"); closure_unc.push_back({0.03, 0.05, 0.03, 0.06, 0.02, 0.04, 0.02, 0.03});
     closure_unc_names.push_back("zll_closure_HH"); closure_unc.push_back({0.01, 0.01, 0.03, 0.01, 0.06, 0.04, 0.08, 0.09});
     closure_unc_names.push_back("qcd_closure_HH"); closure_unc.push_back({0.02, 0.02, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01});
@@ -457,7 +470,7 @@ int main(int argc, char *argv[]){
         }
         // convert to ra4_stats input and write to file
         // double ln = (up>0 ? 1:-1)*max(up>0 ? up : (1/(1+up)-1), dn>0 ? dn : (1/(1+dn)-1));
-        double ln = max(up>0 ? 1+up : 1/(fabs(up)+1), dn>0 ? 1+dn : 1/(fabs(dn)+1));
+        double ln = max(up>0 ? 1+up : 1/(up+1), dn>0 ? 1+dn : 1/(dn+1));
         if (std::isnan(ln) || std::isinf(ln)) {
           cout <<" Found bad unc. set to 0 -> "<<std::left<<setw(10)<<sys.tag <<std::left<<setw(10)<<v_bins[ibin].tag <<" "<<std::right<<setprecision(0)<<setw(25)<<entries[ibin] <<" "<<setprecision(5)<<setw(15)<<yields[ibin] <<" "<<setprecision(10)<<setw(15)<<w2[ibin] <<endl;  
           ln = 0;
@@ -476,31 +489,31 @@ int main(int argc, char *argv[]){
       if (metbins[imet]=="met0") {
         fcard<<"rp_hig_3b_met0 rateParam hig_3b_met0 bkg (@0*@1/@2) rp_sbd_3b_met0,rp_hig_2b_met0,rp_sbd_2b_met0"<<endl;
         if (!do_3bonly) fcard<<"rp_hig_4b_met0 rateParam hig_4b_met0 bkg (@0*@1/@2) rp_sbd_4b_met0,rp_hig_2b_met0,rp_sbd_2b_met0"<<endl;
-        fcard<<"rp_sbd_2b_met0 rateParam sbd_2b_met0 bkg 1559"<<endl;
-        fcard<<"rp_hig_2b_met0 rateParam hig_2b_met0 bkg 658"<<endl;
-        fcard<<"rp_sbd_3b_met0 rateParam sbd_3b_met0 bkg 145"<<endl;
-        if (!do_3bonly) fcard<<"rp_sbd_4b_met0 rateParam sbd_4b_met0 bkg 45"<<endl<<endl;
+        fcard<<"rp_sbd_2b_met0 rateParam sbd_2b_met0 bkg "<<global_fit[0]<<endl;
+        fcard<<"rp_hig_2b_met0 rateParam hig_2b_met0 bkg "<<global_fit[1]<<endl;
+        fcard<<"rp_sbd_3b_met0 rateParam sbd_3b_met0 bkg "<<global_fit[2]<<endl;
+        if (!do_3bonly) fcard<<"rp_sbd_4b_met0 rateParam sbd_4b_met0 bkg "<<global_fit[4]<<endl<<endl;
       } else if (metbins[imet]=="met1") {
         fcard<<"rp_hig_3b_met1 rateParam hig_3b_met1 bkg (@0*@1/@2) rp_sbd_3b_met1,rp_hig_2b_met1,rp_sbd_2b_met1"<<endl;
         if (!do_3bonly) fcard<<"rp_hig_4b_met1 rateParam hig_4b_met1 bkg (@0*@1/@2) rp_sbd_4b_met1,rp_hig_2b_met1,rp_sbd_2b_met1"<<endl;
-        fcard<<"rp_sbd_2b_met1 rateParam sbd_2b_met1 bkg 585"<<endl;
-        fcard<<"rp_hig_2b_met1 rateParam hig_2b_met1 bkg 336"<<endl;
-        fcard<<"rp_sbd_3b_met1 rateParam sbd_3b_met1 bkg 61"<<endl;
-        if (!do_3bonly) fcard<<"rp_sbd_4b_met1 rateParam sbd_4b_met1 bkg 13"<<endl<<endl;
+        fcard<<"rp_sbd_2b_met1 rateParam sbd_2b_met1 bkg "<<global_fit[6]<<endl;
+        fcard<<"rp_hig_2b_met1 rateParam hig_2b_met1 bkg "<<global_fit[7]<<endl;
+        fcard<<"rp_sbd_3b_met1 rateParam sbd_3b_met1 bkg "<<global_fit[8]<<endl;
+        if (!do_3bonly) fcard<<"rp_sbd_4b_met1 rateParam sbd_4b_met1 bkg "<<global_fit[10]<<endl<<endl;
       } else if (metbins[imet]=="met2") {
         fcard<<"rp_hig_3b_met2 rateParam hig_3b_met2 bkg (@0*@1/@2) rp_sbd_3b_met2,rp_hig_2b_met2,rp_sbd_2b_met2"<<endl;
         if (!do_3bonly) fcard<<"rp_hig_4b_met2 rateParam hig_4b_met2 bkg (@0*@1/@2) rp_sbd_4b_met2,rp_hig_2b_met2,rp_sbd_2b_met2"<<endl;
-        fcard<<"rp_sbd_2b_met2 rateParam sbd_2b_met2 bkg 74"<<endl;
-        fcard<<"rp_hig_2b_met2 rateParam hig_2b_met2 bkg 39"<<endl;
-        fcard<<"rp_sbd_3b_met2 rateParam sbd_3b_met2 bkg 4"<<endl;
-        if (!do_3bonly) fcard<<"rp_sbd_4b_met2 rateParam sbd_4b_met2 bkg 2"<<endl<<endl;
+        fcard<<"rp_sbd_2b_met2 rateParam sbd_2b_met2 bkg "<<global_fit[12]<<endl;
+        fcard<<"rp_hig_2b_met2 rateParam hig_2b_met2 bkg "<<global_fit[13]<<endl;
+        fcard<<"rp_sbd_3b_met2 rateParam sbd_3b_met2 bkg "<<global_fit[14]<<endl;
+        if (!do_3bonly) fcard<<"rp_sbd_4b_met2 rateParam sbd_4b_met2 bkg "<<global_fit[16]<<endl<<endl;
       } else if (metbins[imet]=="met3") {
         fcard<<"rp_hig_3b_met3 rateParam hig_3b_met3 bkg (@0*@1/@2) rp_sbd_3b_met3,rp_hig_2b_met3,rp_sbd_2b_met3"<<endl;
-        if (!do_3bonly) fcard<<"rp_hig_4b_met3 rateParam hig_4b_met3 bkg (@0*@1/@2) rp_sbd_4b_met3,rp_hig_2b_met3,rp_sbd_2b_met3"<<endl;
-        fcard<<"rp_sbd_2b_met3 rateParam sbd_2b_met3 bkg 5"<<endl;
-        fcard<<"rp_hig_2b_met3 rateParam hig_2b_met3 bkg 5"<<endl;
-        fcard<<"rp_sbd_3b_met3 rateParam sbd_3b_met3 bkg 1"<<endl;
-        if (!do_3bonly) fcard<<"rp_sbd_4b_met3 rateParam sbd_4b_met3 bkg 0"<<endl;
+        // if (!do_3bonly) fcard<<"rp_hig_4b_met3 rateParam hig_4b_met3 bkg (@0*@1/@2) rp_sbd_4b_met3,rp_hig_2b_met3,rp_sbd_2b_met3"<<endl;
+        fcard<<"rp_sbd_2b_met3 rateParam sbd_2b_met3 bkg "<<global_fit[18]<<endl;
+        fcard<<"rp_hig_2b_met3 rateParam hig_2b_met3 bkg "<<global_fit[19]<<endl;
+        fcard<<"rp_sbd_3b_met3 rateParam sbd_3b_met3 bkg "<<global_fit[20]<<endl;
+        // if (!do_3bonly) fcard<<"rp_sbd_4b_met3 rateParam sbd_4b_met3 bkg "<<global_fit[22]<<endl;
       }
     }
   } 
