@@ -154,7 +154,8 @@ int main(){
       setGraphStyle(obsUp[file], mod.colors[file], styleObsErr, widthErr, glu_lsp);
       setGraphStyle(obsDown[file], mod.colors[file], styleObsErr, widthErr, glu_lsp);
 
-      setGraphStyle(exp[file], colorExp, styleExp, widthCentral, glu_lsp);
+      if(mod.labels[file].Contains("175")) setGraphStyle(exp[file], mod.colors[file], styleExp, widthCentral-1, glu_lsp);
+      else setGraphStyle(exp[file], colorExp, styleExp, widthCentral, glu_lsp);
       setGraphStyle(expUp[file], colorExp, styleExp, widthErr, glu_lsp);
       setGraphStyle(expDown[file], colorExp, styleExp, widthErr, glu_lsp);
 
@@ -178,7 +179,7 @@ int main(){
     hbase.Draw("axis same");
 
     // Drawing legends
-    int legEntries = 3;
+    int legEntries = 4;
     legX = lMargin+0.005; legY = 1-tMargin-0.01;
     legW = 0.23; 
     legH = legLineH * legEntries;
@@ -205,10 +206,10 @@ int main(){
 	// expArea[file]->Draw("f same");
 	expUp[file]->Draw("same");
 	expDown[file]->Draw("same");
-	exp[file]->Draw("same");
 	obsUp[file]->Draw("same");
 	obsDown[file]->Draw("same");
       }
+      exp[file]->Draw("same");
       obs[file]->Draw("same");
       obs[0]->Draw("same");
     }// Loop over curves in each model
@@ -219,7 +220,10 @@ int main(){
       if(!mod.labels[file].Contains("175")) {
       	limleg.AddEntry(exp[file]->GetName(), "Expected ("+mod.labels[file]+") #pm s.d._{experiment}", "l");
       	limleg.AddEntry(obs[file]->GetName(), "Observed ("+mod.labels[file]+") #pm s.d._{theory}", "l");
-      } else limleg.AddEntry(obs[file]->GetName(), "Observed ("+mod.labels[file]+")", "l");
+      } else {
+        limleg.AddEntry(exp[file]->GetName(), "Expected ("+mod.labels[file]+")", "l");
+        limleg.AddEntry(obs[file]->GetName(), "Observed ("+mod.labels[file]+")", "l");
+      }
     }
     limleg.Draw();
 
