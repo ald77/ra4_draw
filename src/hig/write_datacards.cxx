@@ -34,7 +34,7 @@ namespace {
   TString infile = "*SMS-TChiHH_mGluino-200_mLSP-1_*.root";
   TString outfolder = ".";
 
-  // vector<string> metbins = {"met0"};
+  // vector<string> metbins = {"met3"};
   // vector<string> metbins = {"met0","met1","met2"};
   vector<string> metbins = {"met0","met1","met2","met3"};
   bool do_3bonly = false;
@@ -165,10 +165,10 @@ int main(int argc, char *argv[]){
   hz_fit["hig_3b"] = { 1.25460e-01, -2.26228e+00 };
 
   map<TString, vector<double> > zz_fit;
-  zz_fit["sbd_2b"] = { 1.81166e+00, -1.42525e-01 };
-  zz_fit["hig_2b"] = { 7.85145e-02, -1.19438e+00 };
-  zz_fit["sbd_3b"] = { 3.62738e-01, -1.18628e+00 };
-  zz_fit["hig_3b"] = { 8.91456e-03, -3.97757e+00 };
+  zz_fit["sbd_2b"] = { 1.83532e+00,  6.26855e-01 };
+  zz_fit["hig_2b"] = { 8.31874e-02, -6.92802e-01 };
+  zz_fit["sbd_3b"] = { 3.67293e-01, -6.38853e-01 };
+  zz_fit["hig_3b"] = { 9.35245e-03, -3.55249e+00 };
 
   //------------- SYSTEMATICS DEFINITIONS -----------------------------
   vector<sysdef> v_sys;
@@ -177,6 +177,7 @@ int main(int argc, char *argv[]){
   v_sys.push_back(sysdef("Nominal", "nominal", kWeight)); 
   v_sys.back().v_wgts.push_back("1.");
   nom_wgt = "weight/w_btag*w_bhig_deep*eff_trig"; // nominal weight to use
+  v_sys.push_back(sysdef("Gen vs reco MET FS", "MET",kMetSwap));
   if (!nosys) {
     v_sys.push_back(sysdef("Trigger efficiency", "trig_HH", kWeight));
     for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_trig["+to_string(i)+"]"); // the TChiHH babies have relative mutliplicative sys_trig
@@ -188,8 +189,6 @@ int main(int argc, char *argv[]){
     for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_udsghig_deep["+to_string(i)+"]/w_bhig_deep");
     v_sys.push_back(sysdef("Mistag efficiency FS", "btag_FS_LF_deep_HH",kWeight));
     for (size_t i = 0; i<2; ++i) v_sys.back().v_wgts.push_back("sys_fs_udsghig_deep["+to_string(i)+"]/w_bhig_deep");
-
-    v_sys.push_back(sysdef("Gen vs reco MET FS", "MET",kMetSwap));
     
     v_sys.push_back(sysdef("Jet energy corrections", "JESsig", kCorr));
     v_sys.back().shift_index = 1; // JEC Up index in sys_met, etc.
@@ -227,18 +226,18 @@ int main(int argc, char *argv[]){
       if (b.nbdt()==2 && b.nbdm()==2){
         if (b.higd_am()>100 && b.higd_am()<140 && b.higd_dm()<40) {
           hz_wgt = hz_fit["hig_2b"][0]+TMath::Exp(hz_fit["hig_2b"][1]-1e-05*mass*mass);
-          zz_wgt = zz_fit["hig_2b"][0]+TMath::Exp(zz_fit["hig_2b"][1]-1e-05*mass*mass);
+          zz_wgt = zz_fit["hig_2b"][0]+TMath::Exp(zz_fit["hig_2b"][1]-1.5e-05*mass*mass);
         } else {
           hz_wgt = hz_fit["sbd_2b"][0]+TMath::Exp(hz_fit["sbd_2b"][1]-1e-05*mass*mass);
-          zz_wgt = zz_fit["sbd_2b"][0]+TMath::Exp(zz_fit["sbd_2b"][1]-1e-05*mass*mass);
+          zz_wgt = zz_fit["sbd_2b"][0]+TMath::Exp(zz_fit["sbd_2b"][1]-1.5e-05*mass*mass);
         }
       } else {
         if (b.higd_am()>100 && b.higd_am()<140 && b.higd_dm()<40) {
           hz_wgt = hz_fit["hig_3b"][0]+TMath::Exp(hz_fit["hig_3b"][1]-1e-05*mass*mass);
-          zz_wgt = zz_fit["hig_3b"][0]+TMath::Exp(zz_fit["hig_3b"][1]-1e-05*mass*mass);
+          zz_wgt = zz_fit["hig_3b"][0]+TMath::Exp(zz_fit["hig_3b"][1]-1.5e-05*mass*mass);
         } else {
           hz_wgt = hz_fit["sbd_3b"][0]+TMath::Exp(hz_fit["sbd_3b"][1]-1e-05*mass*mass);
-          zz_wgt = zz_fit["sbd_3b"][0]+TMath::Exp(zz_fit["sbd_3b"][1]-1e-05*mass*mass);
+          zz_wgt = zz_fit["sbd_3b"][0]+TMath::Exp(zz_fit["sbd_3b"][1]-1.5e-05*mass*mass);
         }
       }
       wgt_ *= bf*bf + 2*bf*(1-bf)*hz_wgt + (1-bf)*(1-bf)*zz_wgt;
@@ -309,6 +308,7 @@ int main(int argc, char *argv[]){
   if (incl_nonhh && bf<1.) outpath += "_withZContam";
   outpath += "_"+luminosity.ReplaceAll(".","p")+"ifb";
   if (old_cards) outpath += "_old";
+  if (nosys)  outpath += "_nosys";
   outpath += ".txt";
   cout<<"open "<<outpath<<endl;
   unsigned wname(25), wdist(7), wbin(15);
@@ -423,6 +423,7 @@ int main(int argc, char *argv[]){
     cout<<"Wrote CR-based closure uncertainties"<<endl;
 
     for (auto &sys: v_sys) {
+      if (nosys) break;
       if (sys.tag == "nominal") continue;
       fcard<<setw(wname)<<sys.tag<<setw(wdist)<<"lnN";
       for (size_t ibin = 0; ibin<nbins; ++ibin) {
@@ -505,17 +506,17 @@ int main(int argc, char *argv[]){
       } else if (metbins[imet]=="met2") {
         fcard<<"rp_hig_3b_met2 rateParam hig_3b_met2 bkg (@0*@1/@2) rp_sbd_3b_met2,rp_hig_2b_met2,rp_sbd_2b_met2"<<endl;
         if (!do_3bonly) fcard<<"rp_hig_4b_met2 rateParam hig_4b_met2 bkg (@0*@1/@2) rp_sbd_4b_met2,rp_hig_2b_met2,rp_sbd_2b_met2"<<endl;
-        fcard<<"rp_sbd_2b_met2 rateParam sbd_2b_met2 bkg "<<global_fit[12]<<endl;
-        fcard<<"rp_hig_2b_met2 rateParam hig_2b_met2 bkg "<<global_fit[13]<<endl;
-        fcard<<"rp_sbd_3b_met2 rateParam sbd_3b_met2 bkg "<<global_fit[14]<<endl;
-        if (!do_3bonly) fcard<<"rp_sbd_4b_met2 rateParam sbd_4b_met2 bkg "<<global_fit[16]<<endl<<endl;
+        fcard<<"rp_sbd_2b_met2 rateParam sbd_2b_met2 bkg "<<global_fit[12]<<" [0,200]"<<endl;
+        fcard<<"rp_hig_2b_met2 rateParam hig_2b_met2 bkg "<<global_fit[13]<<" [0,200]"<<endl;
+        fcard<<"rp_sbd_3b_met2 rateParam sbd_3b_met2 bkg "<<global_fit[14]<<" [0,200]"<<endl;
+        if (!do_3bonly) fcard<<"rp_sbd_4b_met2 rateParam sbd_4b_met2 bkg "<<global_fit[16]<<" [0,200]"<<endl<<endl;
       } else if (metbins[imet]=="met3") {
         fcard<<"rp_hig_3b_met3 rateParam hig_3b_met3 bkg (@0*@1/@2) rp_sbd_3b_met3,rp_hig_2b_met3,rp_sbd_2b_met3"<<endl;
         if (!do_3bonly) fcard<<"rp_hig_4b_met3 rateParam hig_4b_met3 bkg (@0*@1/@2) rp_sbd_4b_met3,rp_hig_2b_met3,rp_sbd_2b_met3"<<endl;
-        fcard<<"rp_sbd_2b_met3 rateParam sbd_2b_met3 bkg "<<global_fit[18]<<endl;
-        fcard<<"rp_hig_2b_met3 rateParam hig_2b_met3 bkg "<<global_fit[19]<<endl;
-        fcard<<"rp_sbd_3b_met3 rateParam sbd_3b_met3 bkg "<<global_fit[20]<<endl;
-        if (!do_3bonly) fcard<<"rp_sbd_4b_met3 rateParam sbd_4b_met3 bkg 0.0001"<<endl;//global_fit[22]<<endl;
+        fcard<<"rp_sbd_2b_met3 rateParam sbd_2b_met3 bkg "<<global_fit[18]<<" [0,100]"<<endl;
+        fcard<<"rp_hig_2b_met3 rateParam hig_2b_met3 bkg "<<global_fit[19]<<" [0,100]"<<endl;
+        fcard<<"rp_sbd_3b_met3 rateParam sbd_3b_met3 bkg "<<global_fit[20]<<" [0,100]"<<endl;
+        if (!do_3bonly) fcard<<"rp_sbd_4b_met3 rateParam sbd_4b_met3 bkg "<<global_fit[22]<<" [0,100]"<<endl;
       }
     }
   } 

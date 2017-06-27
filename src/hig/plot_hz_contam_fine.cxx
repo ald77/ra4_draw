@@ -126,24 +126,24 @@ int main(int argc, char *argv[]){
   PlotMaker pm;
   string tabname = "regions";
   pm.Push<Table>(tabname, vector<TableRow>{
-  // TableRow("SBD, 2b", baseline + " && met>150 && met<=200 &&" +c_2b+"&&"+sbd,0,0, wgt),
-  // TableRow("HIG, 2b", baseline + " && met>150 && met<=200 &&" +c_2b+"&&"+hig,0,1, wgt),
-  // TableRow("SBD, 3b", baseline + " && met>150 && met<=200 &&" +c_3b+"&&"+sbd,0,0, wgt),
-  // TableRow("HIG, 3b", baseline + " && met>150 && met<=200 &&" +c_3b+"&&"+hig,0,1, wgt),
+  TableRow("SBD, 2b", baseline + " && met>150 && met<=200 &&" +c_2b+"&&"+sbd,0,0, wgt),
+  TableRow("HIG, 2b", baseline + " && met>150 && met<=200 &&" +c_2b+"&&"+hig,0,1, wgt),
+  TableRow("SBD, 3b", baseline + " && met>150 && met<=200 &&" +c_3b+"&&"+sbd,0,0, wgt),
+  TableRow("HIG, 3b", baseline + " && met>150 && met<=200 &&" +c_3b+"&&"+hig,0,1, wgt),
   // TableRow("SBD, 4b", baseline + " && met>150 && met<=200 &&" +c_4b+"&&"+sbd,0,0, wgt),
   // TableRow("HIG, 4b", baseline + " && met>150 && met<=200 &&" +c_4b+"&&"+hig,0,1, wgt),
   
-  // TableRow("SBD, 2b", baseline + " && met>200 && met<=300 &&" +c_2b+"&&"+sbd,0,0, wgt),
-  // TableRow("HIG, 2b", baseline + " && met>200 && met<=300 &&" +c_2b+"&&"+hig,0,1, wgt),
-  // TableRow("SBD, 3b", baseline + " && met>200 && met<=300 &&" +c_3b+"&&"+sbd,0,0, wgt),
-  // TableRow("HIG, 3b", baseline + " && met>200 && met<=300 &&" +c_3b+"&&"+hig,0,1, wgt),
+  TableRow("SBD, 2b", baseline + " && met>200 && met<=300 &&" +c_2b+"&&"+sbd,0,0, wgt),
+  TableRow("HIG, 2b", baseline + " && met>200 && met<=300 &&" +c_2b+"&&"+hig,0,1, wgt),
+  TableRow("SBD, 3b", baseline + " && met>200 && met<=300 &&" +c_3b+"&&"+sbd,0,0, wgt),
+  TableRow("HIG, 3b", baseline + " && met>200 && met<=300 &&" +c_3b+"&&"+hig,0,1, wgt),
   // TableRow("SBD, 4b", baseline + " && met>200 && met<=300 &&" +c_4b+"&&"+sbd,0,0, wgt),
   // TableRow("HIG, 4b", baseline + " && met>200 && met<=300 &&" +c_4b+"&&"+hig,0,1, wgt),
   
-  TableRow("SBD, 2b", baseline + " && met>150 &&" +c_2b+"&&"+sbd,0,0, wgt),
-  TableRow("HIG, 2b", baseline + " && met>150 &&" +c_2b+"&&"+hig,0,1, wgt),
-  TableRow("SBD, 3b", baseline + " && met>150 &&" +c_3b+"&&"+sbd,0,0, wgt),
-  TableRow("HIG, 3b", baseline + " && met>150 &&" +c_3b+"&&"+hig,0,1, wgt)
+  TableRow("SBD, 2b", baseline + " && met>300 &&" +c_2b+"&&"+sbd,0,0, wgt),
+  TableRow("HIG, 2b", baseline + " && met>300 &&" +c_2b+"&&"+hig,0,1, wgt),
+  TableRow("SBD, 3b", baseline + " && met>300 &&" +c_3b+"&&"+sbd,0,0, wgt),
+  TableRow("HIG, 3b", baseline + " && met>300 &&" +c_3b+"&&"+hig,0,1, wgt),
   // TableRow("SBD, 4b", baseline + " && met>300 &&" +c_4b+"&&"+sbd,0,0, wgt),
   // TableRow("HIG, 4b", baseline + " && met>300 &&" +c_4b+"&&"+hig,0,1, wgt)
 	},procs,0);
@@ -264,7 +264,7 @@ int main(int argc, char *argv[]){
   // fname += (ibin==0 ? "sbd":"hig");
   if (hz_only) fname += "_hz";
   else fname += "_zz";
-  fname += ".pdf";
+  fname += "_fine.pdf";
   can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl; 
   

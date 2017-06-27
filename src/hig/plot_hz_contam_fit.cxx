@@ -258,8 +258,8 @@ int main(int argc, char *argv[]){
     leg.AddEntry(&graph[ibin], binnames[ibin], "p");
     TString fn_name = "fn";
     fn_name += ibin;
-    f1[ibin] = new TF1(fn_name,"[0]+TMath::Exp([1]-1e-05*x*x)");
-    if (zz_only && ibin==0) f1[ibin]->FixParameter(1,-1.42525e-01);
+    if (zz_only) f1[ibin] = new TF1(fn_name,"[0]+TMath::Exp([1]-1.5e-05*x*x)");
+    else f1[ibin] = new TF1(fn_name,"[0]+TMath::Exp([1]-1e-05*x*x)");
     f1[ibin]->SetLineColor(kGray+2);
     graph[ibin].Fit(fn_name,"EX0 +");
   }

@@ -346,6 +346,8 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
 
     for(size_t i = 0; i < signals_.size(); ++i){
       file << " & " << luminosity*signals_.at(i)->sumw_.at(irow);
+      // file << " & " << luminosity*signals_.at(i)->sumw_.at(irow) << "$\\pm$" 
+      //         << luminosity*sqrt(signals_.at(i)->sumw2_.at(irow));
       if(do_zbi_){
 	file << " & " << RooStats::NumberCountingUtils::BinomialExpZ(luminosity*signals_.at(i)->sumw_.at(irow),
 								     luminosity*GetYield(backgrounds_, irow),

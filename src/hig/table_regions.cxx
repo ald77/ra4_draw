@@ -51,7 +51,7 @@ int main(int argc, char *argv[]){
 
   string foldermc(bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higtight/");
   string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/");
-  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_02_26/TChiHH/merged_higmc_higtight/");
+  string foldersig(bfolder+"/cms2r0/babymaker/babies/2017_03_17/TChiHH/merged_higmc_higtight/");
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({"*TTJets_*Lept*", "*_TTZ*.root", "*_TTW*.root",
@@ -72,8 +72,6 @@ int main(int argc, char *argv[]){
 							    attach_folder(foldermc,mctags["vjets"]),c_ps));
   procs.push_back(Process::MakeShared<Baby_full>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
                   attach_folder(foldermc, mctags["ttx"]),c_ps));
-  procs.push_back(Process::MakeShared<Baby_full>("Data", Process::Type::data, 1,
-                  {folderdata+"*root"}, Higfuncs::trig_hig>0. && "pass"));
 
   auto data = Process::MakeShared<Baby_full>("Data", Process::Type::data, 1,
                   {folderdata+"*root"}, Higfuncs::trig_hig>0. && "pass");
