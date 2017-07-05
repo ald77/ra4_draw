@@ -32,7 +32,7 @@ TString altName(const TString &name);
 TH2D* getHist2D(TFile &flimit, TString hname, bool allow_name_change = true);
 TGraph* getGraph(TFile &flimit, TString gname, bool allow_name_change = true);
 TGraph* joinGraphs(TGraph *graph1, TGraph *graph2);
-void setGraphStyle(TGraph *graph, int color, int style, int width, double glu_lsp);
+void setGraphStyle(TGraph *graph, int color, int style, int width, double glu_lsp, TString model);
 void getModelParams(TString model, float &Xmin, float &Xmax, float &Ymin, float &Ymax, float &glu_lsp);
 void reverseGraph(TGraph *graph);
 void printExclGlu(TGraph *gobs, TGraph *gexp, std::vector<float> &mLSPs, TString label);

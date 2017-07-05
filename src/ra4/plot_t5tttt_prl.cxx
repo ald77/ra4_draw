@@ -56,11 +56,10 @@ int main(){
 
   ///////////////////////////////    Defining T1tttt plot    /////////////////////////////////
   models.push_back(model_limits("T5tttt", pp_gluglu));
-  models.back().add(t1tttt_s, folder+"T1tttt_results.root", 1, "graph_smoothed_Obs", "graph_smoothed_Exp");
+  models.back().add(t1tttt_s, folder+"T1tttt_limit_scan_smooth4.root", 1, "T1ttttObservedLimit", "T1ttttExpectedLimit");
   models.back().add("#tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #kern[-0.2]{#rightarrow} #kern[-0.2]{"+stop+"}#bar{t},  "+stop
 		    +" #rightarrow t#kern[0.4]{"+lsp+"},  "+mstop_s+" #kern[-0.5]{-} #kern[-0.1]{"+mlsp_s+"} = #kern[-0.1]{175} GeV", 
-		    folder+"T5tttt_results.root", 
-  		    kAzure+7, "graph_smoothed_Obs", "graph_smoothed_Exp");
+		    folder+"T5tttt_limit_scan_smooth4.root", kAzure+7, "T5ttttObservedLimit", "T5ttttExpectedLimit");
 
 
   //////////////////////////////////////////////////////////////////////////////////////// 
@@ -121,15 +120,15 @@ int main(){
       flimit[file] = new TFile(mod.files[file]);
       exp[file] = getGraph(*flimit[file], mod.expnames[file]);
       obs[file] = getGraph(*flimit[file], mod.obsnames[file]);
-      expUp[file] = getGraph(*flimit[file], "graph_smoothed_ExpP");
-      expDown[file] = getGraph(*flimit[file], "graph_smoothed_ExpM");
-      obsUp[file] = getGraph(*flimit[file], "graph_smoothed_ObsP");
-      obsDown[file] = getGraph(*flimit[file], "graph_smoothed_ObsM");
+      expUp[file] = getGraph(*flimit[file], mod.expnames[file]+"Up");
+      expDown[file] = getGraph(*flimit[file], mod.expnames[file]+"Down");
+      obsUp[file] = getGraph(*flimit[file], mod.obsnames[file]+"Up");
+      obsDown[file] = getGraph(*flimit[file], mod.obsnames[file]+"Down");
       reverseGraph(expDown[file]);
       expArea[file] = joinGraphs(expUp[file], expDown[file]);
       if(file==0){
-	hxsec_ori = getHist2D(*flimit[file], "hXsec_exp_corr");
-	hxsec_ori->SetDirectory(0);
+       hxsec_ori = getHist2D(*flimit[file], "hXsec_exp_corr");
+       hxsec_ori->SetDirectory(0);
       }
     }
     TH2D hxsec2 = ScaleAxes(*hxsec_ori, 0.001, "XY");
@@ -149,15 +148,19 @@ int main(){
     palette->SetY1NDC(bMargin);
     palette->SetY2NDC(1.-tMargin);
     for(size_t file(0); file < ncurves; file++){
-      if(mod.labels[file].Contains("175")) glu_lsp += 40*(do_tev?0.001:1.);
-      setGraphStyle(obs[file], mod.colors[file], styleObs, widthCentral, glu_lsp);
-      setGraphStyle(obsUp[file], mod.colors[file], styleObsErr, widthErr, glu_lsp);
-      setGraphStyle(obsDown[file], mod.colors[file], styleObsErr, widthErr, glu_lsp);
+      TString model_name = "T1tttt";
+      if(mod.labels[file].Contains("175")) {
+        model_name = "T5tttt";
+        glu_lsp += 40*(do_tev?0.001:1.);
+      }
+      setGraphStyle(obs[file], mod.colors[file], styleObs, widthCentral, glu_lsp, model_name);
+      setGraphStyle(obsUp[file], mod.colors[file], styleObsErr, widthErr, glu_lsp, model_name);
+      setGraphStyle(obsDown[file], mod.colors[file], styleObsErr, widthErr, glu_lsp, model_name);
 
-      if(mod.labels[file].Contains("175")) setGraphStyle(exp[file], mod.colors[file], styleExp, widthCentral-1, glu_lsp);
-      else setGraphStyle(exp[file], colorExp, styleExp, widthCentral, glu_lsp);
-      setGraphStyle(expUp[file], colorExp, styleExp, widthErr, glu_lsp);
-      setGraphStyle(expDown[file], colorExp, styleExp, widthErr, glu_lsp);
+      if(mod.labels[file].Contains("175")) setGraphStyle(exp[file], mod.colors[file], styleExp, widthCentral-1, glu_lsp, model_name);
+      else setGraphStyle(exp[file], colorExp, styleExp, widthCentral, glu_lsp, model_name);
+      setGraphStyle(expUp[file], colorExp, styleExp, widthErr, glu_lsp, model_name);
+      setGraphStyle(expDown[file], colorExp, styleExp, widthErr, glu_lsp, model_name);
 
       TString obsname("obs"); obsname += imodel; obsname += file;
       obs[file]->SetName(obsname);
@@ -259,19 +262,19 @@ int main(){
 
 TString altName(const TString &name){
   if(name == "hXsec_exp_corr"){
-    return "T5ttttObservedExcludedXsec";
+    return "T1ttttObservedExcludedXsec";
   }else if(name == "graph_smoothed_Obs"){
-    return "T5ttttObservedLimit";
+    return "T1ttttObservedLimit";
   }else if(name == "graph_smoothed_ObsP"){
-    return "T5ttttObservedLimitUp";
+    return "T1ttttObservedLimitUp";
   }else if(name == "graph_smoothed_ObsM"){
-    return "T5ttttObservedLimitDown";
+    return "T1ttttObservedLimitDown";
   }else if(name == "graph_smoothed_Exp"){
-    return "T5ttttExpectedLimit";
+    return "T1ttttExpectedLimit";
   }else if(name == "graph_smoothed_ExpP"){
-    return "T5ttttExpectedLimitUp";
+    return "T1ttttExpectedLimitUp";
   }else if(name == "graph_smoothed_ExpM"){
-    return "T5ttttExpectedLimitDown";
+    return "T1ttttExpectedLimitDown";
   }else if(name ==  "T5ttttObservedExcludedXsec"){
     return "hXsec_exp_corr";
   }else if(name ==  "T5ttttObservedLimit"){
@@ -325,9 +328,9 @@ TGraph* getGraph(TFile &flimit, TString gname, bool allow_name_change){
   return graph;
 }
 
-void setGraphStyle(TGraph* graph, int color, int style, int width, double glu_lsp){
+void setGraphStyle(TGraph* graph, int color, int style, int width, double glu_lsp, TString model_name){
   if(graph==0) return;
-
+  cout<<"Model "<<model_name<<endl;
   // Setting graph style
   graph->SetLineColor(color);
   graph->SetLineStyle(style);
@@ -363,10 +366,17 @@ void setGraphStyle(TGraph* graph, int color, int style, int width, double glu_ls
   for(int point(0); point < np; point++){
     graph->GetPoint(point, mglu, mlsp);
     if(mlsp > mglu-glu_lsp){
-      while(point <= graph->GetN()) 
-	graph->RemovePoint(graph->GetN()-1);
+      while(point <= graph->GetN()) {
+       graph->RemovePoint(graph->GetN()-1);
+       np--;
+     }
       break;
     }
+  }
+
+  if (model_name=="T5tttt") {
+    graph->RemovePoint(graph->GetN()-1);
+    np--;
   }
   // Finding intersection of line between last 2 points and mlsp = mglu - glu_lsp
   double x1, y1, x2, y2;
